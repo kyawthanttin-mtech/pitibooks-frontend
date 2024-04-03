@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/pitibooks-frontend/static/css/main.5b5961e5.css",
+    "main.js": "/pitibooks-frontend/static/js/main.9adb9a9d.js",
+    "static/js/453.1d75a97c.chunk.js": "/pitibooks-frontend/static/js/453.1d75a97c.chunk.js",
+    "static/media/Roboto-Regular.ttf": "/pitibooks-frontend/static/media/Roboto-Regular.fc2b5060f7accec5cf74.ttf",
+    "static/media/Roboto-Bold.ttf": "/pitibooks-frontend/static/media/Roboto-Bold.f80816a5455d171f948d.ttf",
+    "static/media/AccountantOutlined.svg": "/pitibooks-frontend/static/media/AccountantOutlined.da56d373000c863039aceacc9c57fec1.svg",
+    "static/media/AccountOutlinedVariant.svg": "/pitibooks-frontend/static/media/AccountOutlinedVariant.e817f56c1a378e408681b68a0219d58c.svg",
+    "static/media/PivotColumnOutlined.svg": "/pitibooks-frontend/static/media/PivotColumnOutlined.0b543770236f362873d679107e404c83.svg",
+    "static/media/ImageOutlined.svg": "/pitibooks-frontend/static/media/ImageOutlined.cd6a34a62235f98a0be958f23b42a513.svg",
+    "static/media/StarOutlined.svg": "/pitibooks-frontend/static/media/StarOutlined.221c4a3336f724135b40e1fdd55f3253.svg",
+    "index.html": "/pitibooks-frontend/index.html",
+    "static/media/SwapOutlined.svg": "/pitibooks-frontend/static/media/SwapOutlined.f4ab532ed13fe4e5cc990d33d7de4c35.svg",
+    "static/media/ArrowEllipseFilled.svg": "/pitibooks-frontend/static/media/ArrowEllipseFilled.475a83f849cd0909985e4670afa61935.svg",
+    "static/media/ReportOutlined.svg": "/pitibooks-frontend/static/media/ReportOutlined.1b7157d1c1f6d5ccf0723aac4cfea3e4.svg",
+    "static/media/TreeIndicatorOutlined.svg": "/pitibooks-frontend/static/media/TreeIndicatorOutlined.57096dd74d916068f4bf9f82154729ce.svg",
+    "main.5b5961e5.css.map": "/pitibooks-frontend/static/css/main.5b5961e5.css.map",
+    "main.9adb9a9d.js.map": "/pitibooks-frontend/static/js/main.9adb9a9d.js.map",
+    "453.1d75a97c.chunk.js.map": "/pitibooks-frontend/static/js/453.1d75a97c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5b5961e5.css",
+    "static/js/main.9adb9a9d.js"
+  ]
+}
