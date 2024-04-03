@@ -1,0 +1,43 @@
+.new-manual-journal-table {
+  margin-top: 2rem;
+}
+
+.new-manual-journal-table-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  height: 8rem;
+  box-sizing: border-box;
+}
+
+.new-manual-journal-table-footer table {
+  background-color: var(--main-bg-color);
+  width: 35rem;
+  height: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  border-radius: 0.313rem;
+}
+
+.new-manual-journal-table-footer .add-row-button {
+  background-color: var(--main-bg-color);
+  color: black;
+  height: 2.5rem;
+  border-color: var(--main-bg-color);
+}
+
+.new-manual-journal-table-footer .add-row-button .add-row-icon {
+  color: var(--primary-color);
+}
+
+.attachment-upload p {
+  font-size: 0.625rem;
+}
+
+.attachment-upload-button {
+  height: 2.5rem;
+}
+.custom-select {
+  width: 100% !important;
+  height: 100%;
+}

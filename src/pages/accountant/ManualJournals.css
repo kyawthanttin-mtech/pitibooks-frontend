@@ -1,0 +1,27 @@
+.new-journal-buttons-container {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.new-journal-button {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.new-journal-dropdown {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  width: 4rem;
+}
+
+/* compact columns */
+
+.column-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-journal-modal .ant-modal-content .ant-modal-body {
+  padding-left: 1rem;
+}

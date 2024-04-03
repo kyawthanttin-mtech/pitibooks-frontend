@@ -1,0 +1,36 @@
+.product-details-section {
+  margin-bottom: 3.5rem;
+}
+
+.product-details-header-row {
+  border: none;
+}
+
+.product-details-content-column-full-row {
+  padding-top: 0;
+}
+
+.overview-table {
+  margin-top: 2rem;
+}
+
+.overview-data {
+  padding-top: 1rem;
+  font-size: 0.75rem;
+  opacity: 70%;
+}
+
+.ant-tabs-top > .ant-tabs-nav {
+  margin: 0;
+}
+
+.stock-locations-table
+  .ant-table.ant-table-bordered
+  > .ant-table-container
+  > .ant-table-content
+  > table
+  > thead
+  > tr
+  > th {
+  text-align: center !important;
+}

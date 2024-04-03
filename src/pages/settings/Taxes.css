@@ -1,0 +1,104 @@
+.list-column {
+  width: 15.8125rem;
+  height: calc(100vh - 10.3125rem);
+  padding: 0;
+  background: white;
+}
+
+.taxes-page-container {
+  display: flex;
+  height: 100%;
+}
+
+.taxes-page-header {
+  width: 15.8125rem;
+}
+
+.content-column {
+  height: 100%;
+  padding: 0;
+  margin-left: 1.5px;
+}
+
+.nav-pills {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  padding-left: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.nav-item:hover,
+.active-menu {
+  color: var(--primary-color);
+}
+
+.content-header {
+  height: 5rem;
+  background-color: white;
+  margin-bottom: 2px;
+}
+
+.header-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.content-body {
+  height: 100%;
+}
+
+/* tax rates style */
+
+.note-container {
+  margin-top: 0.5rem;
+}
+
+.note-container span {
+  font-size: 0.75rem;
+  color: #484848;
+}
+
+.note-container .note-info {
+  opacity: 70%;
+}
+
+.main-table {
+  padding-left: 0.5rem;
+}
+
+/* tax settings style */
+.settings-form-item {
+  width: 46.875rem;
+  height: 9.5rem;
+  display: flex;
+  align-items: center;
+  margin-left: 1.5rem;
+  margin-bottom: 0;
+}
+
+.settings-form-item p {
+  font-size: 0.75rem;
+  opacity: 70%;
+  margin-left: 1.5rem;
+}
+
+.settings-form > :first-child {
+  margin-top: 1rem;
+}
+
+.tax-table .ant-table-row > .ant-table-cell:first-child {
+  padding-left: 1rem;
+}
+
+.tax-table .ant-table-tbody > tr > td {
+  padding: 5px 16px;
+}

@@ -1,0 +1,9 @@
+.adjust-stock-form {
+  margin-top: 2rem;
+}
+
+.label {
+  display: inline-flex;
+  font-size: var(--label-font-size);
+  height: 32px;
+}

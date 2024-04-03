@@ -1,0 +1,142 @@
+.upload-container {
+  width: 16.625rem;
+  height: 14rem;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  border-radius: 0.4rem;
+  width: 12.5rem;
+  height: 14rem;
+  padding-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.image-action-delete .action-icon-delete {
+  float: right;
+}
+
+.image-actions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.7rem 0.3rem 0.7rem;
+}
+
+.image-actions a {
+  font-size: 0.8rem;
+}
+
+.primary-indicator {
+  font-size: 0.8rem;
+}
+
+.action-icons {
+  display: flex;
+}
+
+.primary-image-container {
+  position: relative;
+  width: 90%;
+  height: 10rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ant-image-mask {
+  border-radius: 0.3rem;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+}
+
+.image-mask {
+  height: 10rem;
+  width: 14rem;
+  position: fixed;
+}
+
+.primary-image {
+  position: relative;
+  max-width: 100%;
+  max-height: 10rem;
+  padding: 0.3rem;
+  background: white;
+}
+
+.primary-image-container:hover .overlay {
+  opacity: 1; /* Show overlay on hover */
+}
+
+.eye-icon {
+  margin-right: 0.3rem;
+}
+
+.upload-list-container {
+  display: flex;
+  justify-content: center;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  gap: 0.5rem;
+}
+
+.file-item {
+  height: 3.125rem;
+  width: 3.125rem;
+  border-radius: 0.3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  padding: 0.1rem;
+  border: 1px solid #eee;
+  cursor: pointer;
+}
+
+.file-item.selected {
+  border: 1px solid var(--primary-color);
+}
+
+.file-item img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.upload-button {
+  border: 1px dashed var(--border-color);
+  height: 3.125rem;
+  width: 3.125rem;
+  border-radius: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-circle-icon {
+  color: var(--primary-color);
+}

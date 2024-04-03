@@ -1,0 +1,33 @@
+.adjustment-status {
+  color: white;
+  background-color: var(--primary-color);
+  width: fit-content;
+  text-transform: uppercase;
+  padding: 2px 3px;
+}
+
+.adjustment-details-table .ant-table-thead > tr > th,
+.adjustment-details-table .ant-table-thead > tr > td {
+  background-color: var(--main-bg-color);
+}
+
+.table-view p {
+  font-size: 1rem;
+  margin: 1.406rem 1rem;
+}
+
+.adjustment-details-table
+  .ant-table-container
+  table
+  > thead
+  > tr:first-child
+  > *:last-child {
+  text-align: right;
+}
+
+.adjustment-details-table
+  .ant-table-container
+  .ant-table-row
+  > .ant-table-cell:last-child {
+  text-align: right;
+}

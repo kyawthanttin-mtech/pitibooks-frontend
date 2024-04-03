@@ -1,0 +1,49 @@
+.organization-id {
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 3.125rem;
+  background: var(--bg-color1);
+}
+
+.upload-logo-section {
+  margin-bottom: 3rem;
+  width: 46rem;
+}
+
+.upload-logo-text {
+  font-size: 1rem;
+}
+
+.upload-logo-container {
+  display: flex;
+  gap: 2rem;
+}
+
+.upload-logo-dragger {
+  width: 15rem;
+  height: 6.125rem;
+  display: flex;
+  gap: 1rem;
+  flex-direction: row;
+}
+
+.upload-dragger-text {
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.upload-logo-information {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.logo-dimensions {
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+}
+
+.ant-form-item .ant-form-item-label > label {
+  font-size: var(--label-font-size);
+}

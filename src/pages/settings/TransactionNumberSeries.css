@@ -1,0 +1,79 @@
+.main-table .ant-table-wrapper .ant-table-thead > tr > th,
+.main-table .ant-table-wrapper .ant-table-thead > tr > td {
+  background: var(--main-bg-color);
+}
+
+.ant-table-tbody .ant-table-row {
+  height: 2rem !important;
+}
+
+.custom-row > td {
+  height: 1rem !important;
+}
+
+.action-icon {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.action-placeholder {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ant-dropdown {
+  background-color: white;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item-active {
+  background-color: var(--primary-color) !important;
+  color: white;
+}
+
+.main-table {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper
+  .ant-table-container
+  table
+  > thead
+  > tr:first-child
+  > *:first-child {
+  border-start-start-radius: 0;
+}
+
+.ant-table-wrapper
+  .ant-table-container
+  table
+  > thead
+  > tr:first-child
+  > *:last-child {
+  border-start-end-radius: 0;
+}
+
+.modal-table
+  .ant-table.ant-table-bordered
+  > .ant-table-container
+  > .ant-table-content
+  > table
+  > tbody
+  > tr
+  > td {
+  padding: 0;
+}
+
+.modal-table
+  .ant-table.ant-table-bordered
+  > .ant-table-container
+  > .ant-table-content
+  > table
+  > tbody
+  > tr
+  > :first-child {
+  padding-left: 1.5rem;
+}
+
+.modal-table .ant-input {
+  border: none;
+}

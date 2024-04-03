@@ -1,0 +1,23 @@
+.ant-btn .back-button .ant-btn-icon-only {
+  width: 2.5rem !important;
+  height: 2.5rem;
+}
+
+.back-button.ant-btn > .ant-btn-icon-only > .anticon {
+  width: 2.5rem;
+}
+
+.add-icon {
+  color: var(--primary-color);
+}
+
+.opening-stock-table .ant-table-tbody > tr > td {
+  vertical-align: top;
+  border: 0;
+}
+
+.opening-stock-table .ant-table-thead > tr > th,
+.opening-stock-table .ant-table-thead > tr > td {
+  background-color: var(--main-bg-color);
+  border: none;
+}

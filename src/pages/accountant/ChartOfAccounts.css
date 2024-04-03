@@ -1,0 +1,39 @@
+.tree-indicator-icon {
+  color: var(--primary-color);
+  position: absolute;
+  bottom: 1.625rem;
+}
+
+.content-column-balance-detail {
+  height: 7.938rem;
+  background-color: rgba(89, 166, 53, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-left: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px dashed var(--primary-color);
+}
+
+.content-column-balance-detail .closing-balance-text {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.content-column-balance-detail .closing-balance-description {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.transaction-table .ant-table-thead > tr > th,
+.transaction-table .ant-table-thead > tr > td {
+  background-color: var(--main-bg-color);
+}
+
+.recent-transaction-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+}
