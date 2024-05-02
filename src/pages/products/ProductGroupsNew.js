@@ -1,16 +1,13 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  useCallback,
-} from "react";
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import React, { useState, useEffect, useMemo, useRef } from "react";
 
 import "./ProductGroupsNew.css";
-import EditableCell from "../../components/EditableCell";
 import UploadImage from "../../components/UploadImage";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
 import {
   Button,
   Row,
@@ -20,7 +17,6 @@ import {
   Form,
   Modal,
   Col,
-  Radio,
   Select,
   Tag,
   Flex,
@@ -35,173 +31,167 @@ import {
   PlusCircleFilled,
 } from "@ant-design/icons";
 import { FormattedMessage } from "react-intl";
+import { ProductGroupMutations } from "../../graphql";
+import { useMutation, useQuery } from "@apollo/client";
+import { CategoryQueries, UnitQueries } from "../../graphql";
+import { useReadQuery } from "@apollo/client";
+const { CREATE_PRODUCT_GROUP } = ProductGroupMutations;
+const { GET_PRODUCT_UNITS } = UnitQueries;
+const { GET_PRODUCT_CATEGORIES } = CategoryQueries;
 
-const dummyProductVariations = [
-  {
-    name: "Size",
-    id: "Size",
-    values: [
-      {
-        value: "Small",
-        id: "SizeSmall0",
-      },
-    ],
-  },
-  {
-    name: "Color",
-    id: "Color",
-    values: [
-      { value: "White", id: "ColorWhite0" },
-      { value: "Black", id: "ColorBlack1" },
-    ],
-  },
-];
-
-const dummyCombination = [
-  {
-    id: 0,
-    productName: "Small / White",
-    costPrice: "458.00",
-    sellingPrice: "33434.00",
-    sku: "8378473",
-    barcode: "93874398",
-  },
-  {
-    id: 1,
-    productName: "Small / Black",
-    costPrice: "343.00",
-    sellingPrice: "93939.00",
-    sku: "3943948",
-    barcode: "3989348",
-  },
-];
+const defaultPrice = "0.00";
 
 const ProductGroupsNew = () => {
   const [productGroupName, setProductGroupName] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [productVariations, setProductVariations] = useState(
-    dummyProductVariations
-  );
-  const [combinationPairs, setCombinationPairs] = useState(dummyCombination);
+  const [productVariations, setProductVariations] = useState([]);
+  const [combinationPairs, setCombinationPairs] = useState([]);
   const [combinationPairsUpdated, setCombinationPairsUpdated] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [editIndex, setEditIndex] = useState();
   const [createFormRef] = Form.useForm();
+  const [createProductFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
-  const renderCount = useRef(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+  const {
+    notiApi,
+    msgApi,
+    allTaxGroupsQueryRef,
+    allTaxesQueryRef,
+    allAccountsQueryRef,
+  } = useOutletContext();
+  // const [imageList, setImageList] = useState([]);
+  const renderCount = useRef(0);
 
   useEffect(() => {
     renderCount.current += 1;
     console.log(`Render count: ${renderCount.current}`);
   });
 
-  const defaultPrice = "0.00";
+  const initialValues = {
+    // productNature: "G",
+  };
 
-  const columns = [
+  // Queries
+  const { data: accountData } = useReadQuery(allAccountsQueryRef);
+  const { data: taxData } = useReadQuery(allTaxesQueryRef);
+  const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
+
+  const { data: unitData, loading: unitLoading } = useQuery(GET_PRODUCT_UNITS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+  });
+
+  const { data: categoryData, loading: categoryLoading } = useQuery(
+    GET_PRODUCT_CATEGORIES,
     {
-      title: "Product Name",
-      dataIndex: "productName",
-      key: "productName",
-      width: "30%",
-      render: (text, record, index) => (
-        <div
-          style={{ height: "2.5rem", display: "flex", alignItems: "center" }}
-        >
-          {text}
-        </div>
-      ),
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
+
+  //Mutations
+  const [createProductGroup, { loading: createLoading }] = useMutation(
+    CREATE_PRODUCT_GROUP,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="productGroup.created"
+            defaultMessage="New Product Group Created"
+          />
+        );
+        if (from === "/") {
+          navigate("/productGroups");
+        } else {
+          navigate(from, { state: location.state, replace: true });
+        }
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
+
+  const loading = createLoading || unitLoading || categoryLoading;
+
+  const taxes = useMemo(() => {
+    return taxData?.listTax?.filter((tax) => tax.isActive === true);
+  }, [taxData]);
+
+  const taxGroups = useMemo(() => {
+    return taxGroupData?.listTaxGroup?.filter((tax) => tax.isActive === true);
+  }, [taxGroupData]);
+
+  const units = useMemo(() => {
+    return unitData?.listProductUnit?.filter((tax) => tax.isActive === true);
+  }, [unitData]);
+
+  const categories = useMemo(() => {
+    return categoryData?.listProductCategory?.filter(
+      (tax) => tax.isActive === true
+    );
+  }, [categoryData]);
+
+  const salesAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.mainType === "Income" && acc.isActive === true
+    );
+  }, [accountData]);
+
+  const purchaseAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.mainType === "Expense" && acc.isActive === true
+    );
+  }, [accountData]);
+
+  const inventoryAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.detailType === "Stock" && acc.isActive === true
+    );
+  }, [accountData]);
+
+  const allTax = [
+    {
+      title: "Tax",
+      taxes: taxes
+        ? [...taxes.map((tax) => ({ ...tax, id: "I" + tax.id }))]
+        : [],
     },
     {
-      title: "SKU",
-      dataIndex: "sku",
-      key: "sku",
-      render: (text, record, index) => (
-        <EditableCell
-          id={record.id}
-          rowIndex={index}
-          name="sku"
-          value={text}
-          onChange={(value) => handleCellEdit(value, "sku", index)}
-        />
-      ),
-    },
-    {
-      title: "Cost Price (MMK)",
-      dataIndex: "costPrice",
-      key: "costPrice",
-      render: (text, record, index) => (
-        <EditableCell
-          id={record.id}
-          rowIndex={index}
-          name="costPrice"
-          value={text}
-          onChange={(value) => handleCellEdit(value, "costPrice", index)}
-          validationRules={[
-            {
-              pattern: /^[0-9]+(\.[0-9]{1,2})?$/,
-              message: "",
-            },
-          ]}
-          textAlign="right"
-        />
-      ),
-    },
-    {
-      title: "Selling Price (MMK)",
-      dataIndex: "sellingPrice",
-      key: "sellingPrice",
-      render: (text, record, index) => (
-        <EditableCell
-          id={record.id}
-          rowIndex={index}
-          name="sellingPrice"
-          value={text}
-          onChange={(value) => handleCellEdit(value, "sellingPrice", index)}
-          validationRules={[
-            {
-              pattern: /^[0-9]+(\.[0-9]{1,2})?$/,
-              message: "",
-            },
-          ]}
-          textAlign="right"
-        />
-      ),
-    },
-    {
-      title: "Barcode",
-      dataIndex: "barcode",
-      key: "barcode",
-      render: (text, record, index) => (
-        <EditableCell
-          id={record.id}
-          rowIndex={index}
-          name="barcode"
-          value={text}
-          onChange={(value) => handleCellEdit(value, "barcode", index)}
-        />
-      ),
+      title: "Tax Group",
+      taxes: taxGroups
+        ? [
+            ...taxGroups.map((group) => ({
+              ...group,
+              id: "G" + group.id,
+            })),
+          ]
+        : [],
     },
   ];
 
-  const handleCellEdit = useCallback(
-    (value, key, index) => {
-      const updatedCombinationPairs = [...combinationPairs];
-      if (key === "costPrice" || key === "sellingPrice") {
-        const isValidNumber = /^\d+(\.\d{1,2})?$/.test(value);
-        updatedCombinationPairs[index][key] = isValidNumber
-          ? parseFloat(value).toFixed(2)
-          : defaultPrice;
-      } else {
-        updatedCombinationPairs[index][key] = value;
+  const groupByDetailType = (accounts) => {
+    return accounts?.reduce((groupedAccounts, account) => {
+      if (!groupedAccounts[account.detailType]) {
+        groupedAccounts[account.detailType] = [];
       }
-      setCombinationPairs(updatedCombinationPairs);
-      console.log("Updated Combinations", updatedCombinationPairs);
-      console.log("Combinations", combinationPairs);
-    },
-    [combinationPairs]
-  );
+      groupedAccounts[account.detailType].push(account);
+      return groupedAccounts;
+    }, {});
+  };
 
   const handleCreateVariation = () => {
     const { variation, options } = createFormRef.getFieldsValue();
@@ -221,7 +211,6 @@ const ProductGroupsNew = () => {
     createFormRef.resetFields();
   };
   console.log("Variants", productVariations);
-  console.log("Edit Record", editRecord);
 
   //Perform when editoutlined is clicked
   const handleEditClick = (record, index) => {
@@ -243,7 +232,6 @@ const ProductGroupsNew = () => {
       variation: editRecord.name,
       options: initialOptions,
     });
-    console.log("POPULATING");
   }
 
   const handleEditVariation = () => {
@@ -308,6 +296,7 @@ const ProductGroupsNew = () => {
     return combinations.map((combination, index) => {
       const combinationObj = {
         key: index,
+        name: combination.map((c) => c.value).join(" / "),
         productName: combination.map((c) => c.value).join(" / "),
         id: index,
       };
@@ -342,8 +331,123 @@ const ProductGroupsNew = () => {
       setCombinationPairs(generateCombinations);
       setCombinationPairsUpdated(false);
     }
-    console.log("Event Triggered");
   }, [combinationPairsUpdated, generateCombinations]);
+
+  const onFinish = (values) => {
+    console.log("values", values);
+
+    const selectedSalesTax = allTax.find((taxGroup) =>
+      taxGroup.taxes.some((tax) => tax.id === values.salesTax)
+    );
+    const salesTaxType =
+      selectedSalesTax && selectedSalesTax.title === "Tax Group" ? "G" : "I";
+
+    const selectedPurchaseTax = allTax.find((taxGroup) =>
+      taxGroup.taxes.some((tax) => tax.id === values.purchaseTax)
+    );
+    const purchaseTaxType =
+      selectedPurchaseTax && selectedPurchaseTax.title === "Tax Group"
+        ? "G"
+        : "I";
+
+    const salesTaxId = values?.salesTax
+      ? parseInt(values?.salesTax?.replace(/[IG]/, ""), 10)
+      : 0;
+    const purchaseTaxId = values?.purchaseTax
+      ? parseInt(values?.purchaseTax?.replace(/[IG]/, ""), 10)
+      : 0;
+
+    const variants = combinationPairs.map((item) => ({
+      name: item.productName,
+      sku: values[`sku${item.key}`],
+      salesPrice: values[`salesPrice${item.key}`],
+      purchasePrice: values[`purchasePrice${item.key}`],
+      barcode: values[`barcode${item.key}`],
+      salesAccountId: values.salesAccount,
+      purchaseAccountId: values.purchaseAccount,
+      inventoryAccountId: values.inventoryAccount,
+      isSalesTaxInclusive: false,
+      productGroupId: 0,
+      salesTaxId,
+      salesTaxType,
+      purchaseTaxId,
+      purchaseTaxType,
+    }));
+    const options = productVariations.map((item) => ({
+      optionName: item.name,
+      optionUnits: item.values.map((item) => item.value).join("|"),
+    }));
+    const input = {
+      // productNature: values.productNature,
+      name: values.productGroupName,
+      description: values.description,
+      unitId: values.unit,
+      categoryId: values.category,
+      supplierId: 2,
+      variants,
+      options,
+    };
+    console.log("input", input);
+    createProductGroup({
+      variables: { input },
+    });
+  };
+
+  const columns = [
+    {
+      title: "Product Name",
+      dataIndex: "productName",
+      key: "productName",
+      width: "30%",
+      render: (text) => (
+        <div
+          style={{ height: "2.5rem", display: "flex", alignItems: "center" }}
+        >
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: "SKU",
+      dataIndex: "sku",
+      key: "sku",
+      render: (_, record) => (
+        <Form.Item name={`sku${record.key}`}>
+          <Input maxLength={100} />
+        </Form.Item>
+      ),
+    },
+    {
+      title: "Cost Price (MMK)",
+      dataIndex: "costPrice",
+      key: "costPrice",
+      render: (_, record) => (
+        <Form.Item name={`purchasePrice${record.key}`}>
+          <Input />
+        </Form.Item>
+      ),
+    },
+    {
+      title: "Selling Price (MMK)",
+      dataIndex: "sellingPrice",
+      key: "sellingPrice",
+      render: (_, record) => (
+        <Form.Item name={`salesPrice${record.key}`}>
+          <Input />
+        </Form.Item>
+      ),
+    },
+    {
+      title: "Barcode",
+      dataIndex: "barcode",
+      key: "barcode",
+      render: (_, record, index) => (
+        <Form.Item name={`barcode${record.key}`}>
+          <Input maxLength={100} />
+        </Form.Item>
+      ),
+    },
+  ];
 
   const createForm = (
     <Form form={createFormRef} onFinish={handleCreateVariation}>
@@ -361,7 +465,7 @@ const ProductGroupsNew = () => {
           },
         ]}
       >
-        <Input placeholder="eg.Size" />
+        <Input maxLength={50} placeholder="eg.Size" />
       </Form.Item>
 
       <Form.List name="options" initialValue={[""]} label="Option Values">
@@ -387,6 +491,7 @@ const ProductGroupsNew = () => {
                   ]}
                 >
                   <Input
+                    maxLength={50}
                     placeholder={`Value ${index + 1}`}
                     suffix={
                       index > 0 && (
@@ -438,7 +543,7 @@ const ProductGroupsNew = () => {
           },
         ]}
       >
-        <Input placeholder="eg.Size" />
+        <Input maxLength={50} placeholder="eg.Size" />
       </Form.Item>
 
       <Form.List name="options" initialValue={[""]} label="Option Values">
@@ -464,6 +569,7 @@ const ProductGroupsNew = () => {
                   ]}
                 >
                   <Input
+                    maxLength={50}
                     placeholder={`Value ${index + 1}`}
                     suffix={
                       index > 0 && (
@@ -495,82 +601,49 @@ const ProductGroupsNew = () => {
     </Form>
   );
 
-  const unitOptions = [
-    "box",
-    "cm",
-    "dz",
-    "ft",
-    "gm",
-    "kg",
-    "km",
-    "lb",
-    "mg",
-    "ml",
-    "m",
-    "pcs",
-  ];
-
-  const taxOptionGroups = [
-    {
-      title: "Tax",
-      options: ["Commercial Tax [5%]", "Consumer Tax [5%]", "Tax 1 [2%]"],
-    },
-    {
-      title: "Tax Group",
-      options: ["Group Tax [17.7%]", "Group Tax 2 [12.35%]"],
-    },
-  ];
-
-  const accountOptionGroups = [
-    {
-      title: "Income",
-      options: [
-        "Discount",
-        "General Income",
-        "Interest Income",
-        "Latefree Income",
-        "Sales",
-        "Shipping Charge",
-      ],
-    },
-  ];
-
-  const purchaseOptionGroups = [
-    {
-      title: "Expense",
-      options: [
-        "Salaries and employee wages",
-        "Telephone Accessories",
-        "Telephone Expense",
-        "Travel Expense",
-        "Uncatagorized",
-      ],
-    },
-    {
-      title: "Cost of Goods Sold",
-      options: ["Cost of Goods Sold"],
-    },
-  ];
-
   const productNewForm = (
-    <Form className="product-new-form">
+    <Form
+      initialValues={initialValues}
+      className="product-new-form"
+      form={createProductFormRef}
+      onFinish={onFinish}
+    >
       <Row>
         <Col lg={14}>
           <Row>
-            <Col lg={18}>
-              <Form.Item label="Type" labelCol={{ span: 5 }} labelAlign="left">
-                <Radio.Group defaultValue="goods">
-                  <Radio value="goods"> Goods </Radio>
-                  <Radio value="service"> Service </Radio>
+            <Col lg={19}>
+              {/* <Form.Item
+                label={
+                  <FormattedMessage id="label.type" defaultMessage="Type" />
+                }
+                labelCol={{ span: 5 }}
+                labelAlign="left"
+                name="productNature"
+              >
+                <Radio.Group>
+                  <Radio value="G"> Goods </Radio>
+                  <Radio value="S"> Service </Radio>
                 </Radio.Group>
-              </Form.Item>
+              </Form.Item> */}
               <Form.Item
                 name="productGroupName"
                 label="Product Group Name"
                 labelCol={{ span: 5 }}
                 labelAlign="left"
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.productName.required"
+                        defaultMessage="Product name must be defined"
+                      />
+                    ),
+                  },
+                ]}
               >
                 <Input
+                  maxLength={100}
                   onBlur={(e) => {
                     const trimmedValue = e.target.value.trim();
                     if (
@@ -592,7 +665,7 @@ const ProductGroupsNew = () => {
                 labelCol={{ span: 5 }}
                 labelAlign="left"
               >
-                <Input.TextArea rows={4}></Input.TextArea>
+                <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
               </Form.Item>
             </Col>
           </Row>
@@ -605,10 +678,23 @@ const ProductGroupsNew = () => {
       </Row>
       <Row>
         <Col lg={7}>
-          <Form.Item label="Unit" labelCol={{ span: 8 }} labelAlign="left">
-            <Select placeholder="Select or type to add" showSearch allowClear>
-              {unitOptions.map((option) => (
-                <Select.Option value={option} key={option}></Select.Option>
+          <Form.Item
+            label={<FormattedMessage id="label.unit" defaultMessage="Unit" />}
+            labelCol={{ span: 8 }}
+            labelAlign="left"
+            name="unit"
+          >
+            <Select
+              placeholder="Select or type to add"
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {units?.map((unit) => (
+                <Select.Option key={unit.id} value={unit.id} label={unit.name}>
+                  {unit.abbreviation}
+                </Select.Option>
               ))}
             </Select>
           </Form.Item>
@@ -616,61 +702,225 @@ const ProductGroupsNew = () => {
       </Row>
       <Row>
         <Col lg={7}>
-          <Form.Item label="Tax" labelCol={{ span: 8 }} labelAlign="left">
-            <Select placeholder="Select or type to add" showSearch allowClear>
-              {taxOptionGroups.map((group) => (
-                <Select.OptGroup key={group.title} label={group.title}>
-                  {group.options.map((option) => (
-                    <Select.Option key={option}>{option}</Select.Option>
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.salesTax"
+                defaultMessage="Sales Tax"
+              />
+            }
+            labelCol={{ span: 8 }}
+            labelAlign="left"
+            name="salesTax"
+          >
+            <Select
+              placeholder="Select or type to add"
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {allTax?.map((taxGroup) => (
+                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+                  {taxGroup.taxes.map((tax) => (
+                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                      {tax.name}
+                    </Select.Option>
                   ))}
                 </Select.OptGroup>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item label="Supplier" labelCol={{ span: 8 }} labelAlign="left">
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.purchaseTax"
+                defaultMessage="Purchase Tax"
+              />
+            }
+            labelCol={{ span: 8 }}
+            labelAlign="left"
+            name="purchaseTax"
+          >
+            <Select
+              placeholder="Select or type to add"
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {allTax?.map((taxGroup) => (
+                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+                  {taxGroup.taxes.map((tax) => (
+                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                      {tax.name}
+                    </Select.Option>
+                  ))}
+                </Select.OptGroup>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+            }
+            labelCol={{ span: 8 }}
+            labelAlign="left"
+            name="supplier"
+          >
             <Select
               placeholder="Select a Supplier"
               showSearch
               allowClear
+              loading={loading}
             ></Select>
           </Form.Item>
-          <Form.Item label="Category" labelCol={{ span: 8 }} labelAlign="left">
+          <Form.Item
+            label={
+              <FormattedMessage id="label.category" defaultMessage="category" />
+            }
+            labelCol={{ span: 8 }}
+            labelAlign="left"
+            name="category"
+          >
             <Select
               placeholder="Select Category"
               showSearch
               allowClear
-            ></Select>
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {categories?.map((cat) => (
+                <Select.Option key={cat.id} value={cat.id} label={cat.name}>
+                  {cat.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
         </Col>
         <Col lg={7} offset={1}>
           <Form.Item
-            label="Sales Account"
+            label={
+              <FormattedMessage
+                id="label.salesAccount"
+                defaultMessage="Sales Account"
+              />
+            }
             labelCol={{ span: 8 }}
             labelAlign="left"
+            name="salesAccount"
           >
-            <Select defaultValue={accountOptionGroups[0].options[4]}>
-              {accountOptionGroups.map((group) => (
-                <Select.OptGroup key={group.title} label={group.title}>
-                  {group.options.map((option) => (
-                    <Select.Option key={option}>{option}</Select.Option>
-                  ))}
-                </Select.OptGroup>
-              ))}
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              loading={loading}
+              placeholder={
+                <FormattedMessage
+                  id="label.account.placeholder"
+                  defaultMessage="Select an account"
+                />
+              }
+            >
+              {groupByDetailType(salesAccounts) &&
+                Object.entries(groupByDetailType(salesAccounts)).map(
+                  ([detailType, accounts]) => (
+                    <Select.OptGroup label={detailType} key={detailType}>
+                      {accounts.map((account) => (
+                        <Select.Option
+                          key={account.id}
+                          value={account.id}
+                          label={account.name}
+                        >
+                          {account.name}
+                        </Select.Option>
+                      ))}
+                    </Select.OptGroup>
+                  )
+                )}
             </Select>
           </Form.Item>
           <Form.Item
-            label="Purchase Account"
+            label={
+              <FormattedMessage
+                id="label.purchaseAccount"
+                defaultMessage="Purchase Account"
+              />
+            }
             labelAlign="left"
             labelCol={{ span: 8 }}
+            name="purchaseAccount"
           >
-            <Select></Select>
+            <Select
+              loading={loading}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={
+                <FormattedMessage
+                  id="label.account.placeholder"
+                  defaultMessage="Select an account"
+                />
+              }
+            >
+              {groupByDetailType(purchaseAccounts) &&
+                Object.entries(groupByDetailType(purchaseAccounts)).map(
+                  ([detailType, accounts]) => (
+                    <Select.OptGroup label={detailType} key={detailType}>
+                      {accounts.map((account) => (
+                        <Select.Option
+                          key={account.id}
+                          value={account.id}
+                          label={account.name}
+                        >
+                          {account.name}
+                        </Select.Option>
+                      ))}
+                    </Select.OptGroup>
+                  )
+                )}
+            </Select>
           </Form.Item>
           <Form.Item
-            label="Inventory Account"
+            label={
+              <FormattedMessage
+                id="label.inventoryAccount"
+                defaultMessage="Inventory Account"
+              />
+            }
             labelCol={{ span: 8 }}
             labelAlign="left"
+            name="inventoryAccount"
           >
-            <Select></Select>
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              loading={loading}
+              placeholder={
+                <FormattedMessage
+                  id="label.account.placeholder"
+                  defaultMessage="Select an account"
+                />
+              }
+            >
+              {groupByDetailType(inventoryAccounts) &&
+                Object.entries(groupByDetailType(inventoryAccounts)).map(
+                  ([detailType, accounts]) => (
+                    <Select.OptGroup label={detailType} key={detailType}>
+                      {accounts.map((account) => (
+                        <Select.Option
+                          key={account.id}
+                          value={account.id}
+                          label={account.name}
+                        >
+                          {account.name}
+                        </Select.Option>
+                      ))}
+                    </Select.OptGroup>
+                  )
+                )}
+            </Select>
           </Form.Item>
         </Col>
       </Row>
@@ -679,21 +929,21 @@ const ProductGroupsNew = () => {
           type="primary"
           htmlType="submit"
           className="page-actions-btn"
-          onClick={() =>
-            navigate("/openingStock", {
-              state: { combinationPairs },
-            })
-          }
+          // onClick={() =>
+          //   navigate("/openingStock", {
+          //     state: { combinationPairs },
+          //   })
+          // }
         >
           Save and Next
         </Button>
         <Button
           className="page-actions-btn"
-          //   onClick={() =>
-          //     navigate(from, { state: location.state, replace: true })
-          //   }
+          onClick={() =>
+            navigate(from, { state: location.state, replace: true })
+          }
         >
-          Cancel
+          {<FormattedMessage id="button.cancel" defaultMessage="Cancel" />}
         </Button>
       </div>
     </Form>
@@ -702,7 +952,7 @@ const ProductGroupsNew = () => {
   return (
     <>
       <Modal
-        title="Variants"
+        title="Add Variants"
         open={createModalOpen}
         onCancel={() => setCreateModalOpen(false)}
         onOk={createFormRef.submit}
@@ -714,11 +964,11 @@ const ProductGroupsNew = () => {
         {createForm}
       </Modal>
       <Modal
-        title="Variants"
+        title="Edit Variants"
         open={editModalOpen}
         onCancel={() => setEditModalOpen(false)}
         onOk={editFormRef.submit}
-        okText={<FormattedMessage id="button.search" defaultMessage="Search" />}
+        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
         }
@@ -726,14 +976,13 @@ const ProductGroupsNew = () => {
         {editForm}
       </Modal>
       <div className="page-header page-header-with-button">
-        <p className="page-header-text">New Product</p>
+        <p className="page-header-text">New Product Group</p>
         <Button
           icon={<CloseOutlined />}
           type="text"
-          onClick={() => {
-            // setSelectedProductRecord(null);
-            // setSelectedProductRowIndex(0);
-          }}
+          onClick={() =>
+            navigate(from, { state: location.state, replace: true })
+          }
         />
       </div>
       <div className="page-content page-content-with-form-buttons product-new-page-content">
@@ -755,7 +1004,7 @@ const ProductGroupsNew = () => {
             {productVariations.map((variant, index) => (
               <div
                 className="product-variants"
-                key={variant.name}
+                key={variant.id}
                 onClick={() => handleEditClick(variant, index)}
               >
                 <div className="product-variant-header">
@@ -793,13 +1042,15 @@ const ProductGroupsNew = () => {
             </a>
           </Space>
         </div>
-        <Table
-          dataSource={combinationPairs}
-          columns={columns}
-          pagination={false}
-          rowKey={(record) => record.variant}
-          className="product-variant-table"
-        />
+        <Form form={createProductFormRef} onFinish={onFinish}>
+          <Table
+            dataSource={combinationPairs}
+            columns={columns}
+            pagination={false}
+            rowKey={(record) => record.id}
+            className="product-variant-table"
+          />
+        </Form>
       </div>
     </>
   );

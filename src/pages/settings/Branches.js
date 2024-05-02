@@ -1,31 +1,23 @@
 import React, { useState, useMemo } from "react";
 import { Button, Table, Dropdown, Tag, Modal, Form, Input, Select } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useReadQuery } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 
 import {
   BranchQueries,
-  StateQueries,
-  TownshipQueries,
   BranchMutations,
   TransactionNumberSeriesQueries,
 } from "../../graphql";
 
 const { GET_BRANCHES } = BranchQueries;
-const { GET_ALL_TOWNSHIPS } = TownshipQueries;
-const { GET_ALL_STATES } = StateQueries;
-const {
-  CREATE_BRANCH,
-  UPDATE_BRANCH,
-  DELETE_BRANCH,
-  TOGGLE_ACTIVE_BRANCH,
-} = BranchMutations;
+const { CREATE_BRANCH, UPDATE_BRANCH, DELETE_BRANCH, TOGGLE_ACTIVE_BRANCH } =
+  BranchMutations;
 const { GET_TRANSACTION_NUMBER_SERIES_ALL } = TransactionNumberSeriesQueries;
 
 const Branches = () => {
@@ -36,7 +28,7 @@ const Branches = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi, refetchAllBranches, allStatesQueryRef, allTownshipsQueryRef} = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
   const [selectedEditState, setSelectedEditState] = useState(null);
 
@@ -50,26 +42,8 @@ const Branches = () => {
     },
   });
 
-  const { data: townshipData, loading: townshipLoading } = useQuery(
-    GET_ALL_TOWNSHIPS,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
-
-  const { data: stateData, loading: stateLoading } = useQuery(GET_ALL_STATES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
+  const { data: stateData } = useReadQuery(allStatesQueryRef);
+  const { data: townshipData } = useReadQuery(allTownshipsQueryRef);
 
   const { data: tnsData, loading: tnsLoading } = useQuery(
     GET_TRANSACTION_NUMBER_SERIES_ALL,
@@ -87,13 +61,14 @@ const Branches = () => {
     CREATE_BRANCH,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="branch.created"
             defaultMessage="New Branch Created"
           />
         );
+        refetchAllBranches();
       },
       refetchQueries: [GET_BRANCHES],
     }
@@ -103,13 +78,14 @@ const Branches = () => {
     UPDATE_BRANCH,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="branch.updated"
             defaultMessage="Branch Updated"
           />
         );
+        refetchAllBranches();
       },
       refetchQueries: [GET_BRANCHES],
     }
@@ -119,13 +95,14 @@ const Branches = () => {
     DELETE_BRANCH,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="branch.deleted"
             defaultMessage="Branch Deleted"
           />
         );
+        refetchAllBranches();
       },
       refetchQueries: [GET_BRANCHES],
     }
@@ -135,13 +112,14 @@ const Branches = () => {
     TOGGLE_ACTIVE_BRANCH,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="branch.updated.status"
             defaultMessage="Branch Status Updated"
           />
         );
+        refetchAllBranches();
       },
       refetchQueries: [GET_BRANCHES],
     }
@@ -159,13 +137,13 @@ const Branches = () => {
       country: item.country,
       state: item.state,
       stateName: item.state.stateNameEn,
-      stateId: item.state.id || '',
+      stateId: item.state.id || "",
       township: item.township,
       townshipName: item.township.townshipNameEn,
-      townshipId: item.township.id || '',
+      townshipId: item.township.id || "",
       isActive: item.isActive,
       mobile: item.mobile,
-      transactionNumberSeriesId: item.transactionNumberSeries.id || '',
+      transactionNumberSeriesId: item.transactionNumberSeries.id || "",
     }));
   }, [data]);
 
@@ -176,9 +154,7 @@ const Branches = () => {
     createLoading ||
     updateLoading ||
     deleteLoading ||
-    townshipLoading ||
-    stateLoading ||
-    tnsLoading || 
+    tnsLoading ||
     toggleActiveLoading;
 
   const handleCreateModalOk = async () => {
@@ -246,9 +222,14 @@ const Branches = () => {
   const handleEditModalOk = async () => {
     try {
       const values = await editFormRef.validateFields();
+      const input = {
+        ...values,
+        stateId: values.stateId ? values.stateId : 0,
+        townshipId: values.townshipId ? values.townshipI : 0,
+      }
       // console.log("Field values:", values);
       await updateBranch({
-        variables: { id: editRecord.id, input: values },
+        variables: { id: editRecord.id, input },
       });
 
       setEditModalOpen(false);
@@ -369,9 +350,19 @@ const Branches = () => {
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="branch.name.required" defaultMessage="Enter the Branch Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="branch.name.required"
+                defaultMessage="Enter the Branch Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.country" defaultMessage="Country" />}
@@ -401,7 +392,7 @@ const Branches = () => {
               stateData?.listAllState.find((state) => state.id === value)
             );
             createFormRef.setFieldsValue({
-              "townshipId": null,
+              townshipId: null,
             });
           }}
         >
@@ -423,7 +414,7 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -464,7 +455,7 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input.TextArea rows={4}></Input.TextArea>
+        <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
       </Form.Item>
       {/* <Form.Item
         label="Email"
@@ -482,7 +473,7 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
@@ -491,15 +482,30 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
-        label={<FormattedMessage id="label.transactionNumberSeries" defaultMessage="Transaction Number Series" />}
+        label={
+          <FormattedMessage
+            id="label.transactionNumberSeries"
+            defaultMessage="Transaction Number Series"
+          />
+        }
         name="transactionNumberSeriesId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="branch.transactionNumberSeries.required" defaultMessage="Select the Transaction Number Series" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="branch.transactionNumberSeries.required"
+                defaultMessage="Select the Transaction Number Series"
+              />
+            ),
+          },
+        ]}
       >
         <Select allowClear showSearch optionFilterProp="label">
           {tnsData?.listTransactionNumberSeries.map((series) => (
@@ -529,9 +535,19 @@ const Branches = () => {
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="branch.name.required" defaultMessage="Enter the Branch Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="branch.name.required"
+                defaultMessage="Enter the Branch Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.country" defaultMessage="Country" />}
@@ -560,7 +576,7 @@ const Branches = () => {
               stateData?.listAllState.find((state) => state.id === value)
             );
             editFormRef.setFieldsValue({
-              "townshipId": null,
+              townshipId: null,
             });
           }}
         >
@@ -582,7 +598,7 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -641,7 +657,7 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
@@ -650,15 +666,30 @@ const Branches = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
-        label={<FormattedMessage id="label.transactionNumberSeries" defaultMessage="Transaction Number Series" />}
+        label={
+          <FormattedMessage
+            id="label.transactionNumberSeries"
+            defaultMessage="Transaction Number Series"
+          />
+        }
         name="transactionNumberSeriesId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="branch.transactionNumberSeries.required" defaultMessage="Select the Transaction Number Series" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="branch.transactionNumberSeries.required"
+                defaultMessage="Select the Transaction Number Series"
+              />
+            ),
+          },
+        ]}
       >
         <Select allowClear showSearch optionFilterProp="label">
           {tnsData?.listTransactionNumberSeries.map((series) => (
@@ -680,9 +711,7 @@ const Branches = () => {
       {contextHolder}
       <Modal
         width="40rem"
-        title={
-          <FormattedMessage id="branch.new" defaultMessage="New Branch" />
-        }
+        title={<FormattedMessage id="branch.new" defaultMessage="New Branch" />}
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -696,10 +725,7 @@ const Branches = () => {
       <Modal
         width="40rem"
         title={
-          <FormattedMessage
-            id="branch.edit"
-            defaultMessage="Edit Branch"
-          />
+          <FormattedMessage id="branch.edit" defaultMessage="Edit Branch" />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
@@ -725,6 +751,7 @@ const Branches = () => {
       </div>
       <div className="page-content">
         <Table
+          className="main-table"
           loading={loading}
           columns={columns}
           dataSource={parsedData?.map((item) => ({ ...item, key: item.id }))}

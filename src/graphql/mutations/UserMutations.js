@@ -11,6 +11,10 @@ const LOGIN = gql`
         allowedActions
       }
       businessName
+      baseCurrencyId
+      baseCurrencyName
+      fiscalYear
+      timezone
     }
   }
 `;

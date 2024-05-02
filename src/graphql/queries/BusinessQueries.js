@@ -31,6 +31,12 @@ const GET_BUSINESS = gql`
       baseCurrency {
         id
         name
+        symbol
+        decimalPlaces
+      }
+      primaryBranch {
+        id
+        name
       }
       isActive
     }

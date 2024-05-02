@@ -35,7 +35,7 @@
 .nav-tabs .nav-link {
   padding: 0;
   height: 100%;
-  width: 3.313rem;
+  min-width: 3.313rem;
   text-align: center;
   height: 2.5rem;
   display: flex;

@@ -1,37 +1,17 @@
-import React, { useState, useEffect } from "react";
-import {
-  LeftOutlined,
-  RightOutlined,
-  SyncOutlined,
-  CalendarOutlined,
-  DownOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
-import {
-  Button,
-  Row,
-  Space,
-  Modal,
-  Tooltip,
-  Spin,
-  Flex,
-  Select,
-  Empty,
-  DatePicker,
-  Dropdown,
-  Divider,
-  Form,
-} from "antd";
-import { useQuery, useLazyQuery } from "@apollo/client";
-import { FormattedMessage } from "react-intl";
+/* eslint-disable react/style-prop-object */
+import React, {useState} from "react";
+import { LeftOutlined, RightOutlined, SyncOutlined } from "@ant-design/icons";
+import { Button, Row, Space, Modal, Tooltip, Spin, Flex, Empty } from "antd";
+import { useQuery } from "@apollo/client";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
-import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
-import { QUERY_DATA_LIMIT } from "../config/Constants";
+import { convertTransactionType, paginateArray } from "../utils/HelperFunctions";
+import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import moment from "moment";
-import { usePeriodFilter } from "../hooks/usePeriodFilter";
-import { useNavigate } from "react-router-dom";
+import ReportHeader from "./ReportHeader";
 
 const PaginatedJournalReport = ({
+  business,
   api,
   gqlQuery,
   parseData,
@@ -47,9 +27,11 @@ const PaginatedJournalReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useHistoryState("currentPage", 1);
-  const [form] = Form.useForm();
-  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState("currentPage", 1);
+  const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
+  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [reportBasis, setReportBasis] = useState("Accrual");
+  
   const {
     data,
     loading: queryLoading,
@@ -61,23 +43,14 @@ const PaginatedJournalReport = ({
     notifyOnNetworkStatusChange: true,
     variables: {
       limit: QUERY_DATA_LIMIT,
-      fromDate: moment().startOf("month").toISOString(),
-      toDate: moment().endOf("month").toISOString(),
+      fromDate: fromDate,
+      toDate: toDate,
+      reportType: reportBasis,
     },
     onError(err) {
       openErrorNotification(api, err.message);
     },
   });
-
-  const {
-    selectedPeriod,
-    dropdownOpen,
-    showDateRange,
-    handlePeriodChange,
-    handleDateRangeApply,
-    setDropdownOpen,
-    items,
-  } = usePeriodFilter({ refetch, setCurrentPage, form, isPaginated: true });
 
   const handleRefetch = async () => {
     try {
@@ -99,8 +72,9 @@ const PaginatedJournalReport = ({
           variables: {
             limit: QUERY_DATA_LIMIT,
             after: parsePageInfo(data).endCursor,
-            // fromDate: moment().startOf("month").toISOString(),
-            // toDate: moment().endOf("month").toISOString(),
+            fromDate: fromDate,
+            toDate: toDate,
+            reportType: reportBasis,
           },
         });
         setCurrentPage(currentPage + 1);
@@ -128,101 +102,24 @@ const PaginatedJournalReport = ({
 
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
 
-  const menuStyle = {
-    boxShadow: "none",
-  };
-
   return (
     <div>
       <div>
-        <Row className="table-actions-header">
-          <Space size="large">
-            <div>
-              <Dropdown
-                trigger="click"
-                open={dropdownOpen}
-                onOpenChange={setDropdownOpen}
-                menu={{
-                  items: items.map((item) => ({
-                    ...item,
-                    onClick: ({ key }) => handlePeriodChange(key),
-                  })),
-                  selectable: true,
-                  selectedKeys: [selectedPeriod.key],
-                }}
-                dropdownRender={(menu) => (
-                  <div
-                    style={{
-                      minWidth: "11.686rem",
-                      maxWidth: "21rem",
-                      borderRadius: "8px",
-                      boxShadow:
-                        "0 6px 16px 0 rgba(0, 0, 0, 0.08),0 3px 6px -4px rgba(0, 0, 0, 0.12),0 9px 28px 8px rgba(0, 0, 0, 0.05)",
-                    }}
-                  >
-                    {React.cloneElement(menu, {
-                      style: menuStyle,
-                    })}
+        <ReportHeader
+          refetch={refetch}
+          isPaginated={true}
+          setCurrentPage={setCurrentPage}
+          setFromDate={setFromDate}
+          setToDate={setToDate}
+          setReportBasis={setReportBasis}
+        />
 
-                    {showDateRange && (
-                      <Form form={form}>
-                        <Divider
-                          style={{
-                            margin: 0,
-                          }}
-                        />
-                        <Space
-                          style={{
-                            padding: 8,
-                          }}
-                        >
-                          <Form.Item name="dateRange" style={{ margin: 0 }}>
-                            <DatePicker.RangePicker />
-                          </Form.Item>
-                          <Button type="primary" onClick={handleDateRangeApply}>
-                            Apply
-                          </Button>
-                        </Space>
-                      </Form>
-                    )}
-                  </div>
-                )}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    height: "2.2rem",
-                    alignItems: "center",
-                    border: "1px solid var(--border-color)",
-                    paddingInline: "1rem",
-                    cursor: "pointer",
-                    borderRadius: "0.3rem",
-                  }}
-                >
-                  <CalendarOutlined />
-                  {selectedPeriod.label}
-                  <DownOutlined />
-                </div>
-              </Dropdown>
-            </div>
-          </Space>
-          <div>
-            <Button
-              icon={<CloseOutlined />}
-              type="text"
-              onClick={() => {
-                navigate("/reports");
-              }}
-            />
-          </div>
-        </Row>
         <div className="rep-container">
           <div className="report-header">
-            <h4>Piti Baby</h4>
+            <h4>{business.name}</h4>
             <h3 style={{ marginTop: "-5px" }}>Journal Report</h3>
-            <span>Basic Accrual</span>
-            <h5>From 01 Mar 2024 To 31 Mar 2024</h5>
+            <span>Basis: {reportBasis}</span>
+            <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
           </div>
           {loading ? (
             <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -245,12 +142,10 @@ const PaginatedJournalReport = ({
                       <tr>
                         <th style={{ width: "400px", textAlign: "left" }}>
                           <span>
-                            {moment(data.transactionDateTime).format(
-                              "DD MMM YYYY"
-                            )}
+                            {moment(data.transactionDateTime).format(REPORT_DATE_FORMAT)}
                           </span>{" "}
-                          - <span>{data.referenceType} </span>
-                          <span>{data.id} </span>
+                          - <span>{convertTransactionType(data.referenceType)} </span>
+                          <span>{data.transactionNumber} </span>
                           <a href="#/">{data.supplier && data.supplier}</a>
                         </th>
                         <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
@@ -258,13 +153,13 @@ const PaginatedJournalReport = ({
                           className="text-align-right"
                           style={{ width: "210px" }}
                         >
-                          DEBIT
+                          <FormattedMessage id="report.debit" defaultMessage="Debit" />
                         </th>
                         <th
                           className="text-align-right"
                           style={{ width: "210px" }}
                         >
-                          CREDIT
+                          <FormattedMessage id="report.credit" defaultMessage="Credit" />
                         </th>
                       </tr>
                     </thead>
@@ -278,10 +173,10 @@ const PaginatedJournalReport = ({
                             <td>{transaction.account.name}</td>
                             <td></td>
                             <td className="text-align-right">
-                              {transaction.baseDebit}
+                              <FormattedNumber value={transaction.baseDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
                             </td>
                             <td className="text-align-right">
-                              {transaction.baseCredit}
+                              <FormattedNumber value={transaction.baseCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
                             </td>
                           </tr>
                         );
@@ -290,10 +185,14 @@ const PaginatedJournalReport = ({
                         <td></td>
                         <td></td>
                         <td className="text-align-right">
-                          <a href="#/">{totalDebit}</a>
+                          <a href="#/">
+                            <FormattedNumber value={totalDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                          </a>
                         </td>
                         <td className="text-align-right">
-                          <a href="#/">{totalCredit}</a>
+                          <a href="#/">
+                            <FormattedNumber value={totalCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                          </a>
                         </td>
                       </tr>
                     </tbody>
@@ -308,9 +207,7 @@ const PaginatedJournalReport = ({
                   <tr>
                     <th style={{ width: "400px", textAlign: "left" }}>
                       <span>
-                        {moment(data?.transactionDateTime).format(
-                          "DD MMM YYYY"
-                        )}
+                        {moment(data?.transactionDateTime).format(REPORT_DATE_FORMAT)}
                       </span>{" "}
                       - <span>{data?.referenceType} </span>
                       <span>{data?.id} </span>
@@ -318,10 +215,10 @@ const PaginatedJournalReport = ({
                     </th>
                     <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
                     <th className="text-align-right" style={{ width: "210px" }}>
-                      DEBIT
+                      <FormattedMessage id="report.debit" defaultMessage="Debit" />
                     </th>
                     <th className="text-align-right" style={{ width: "210px" }}>
-                      CREDIT
+                      <FormattedMessage id="report.credit" defaultMessage="Credit" />
                     </th>
                   </tr>
                 </thead>
@@ -412,6 +309,11 @@ const PaginatedJournalReport = ({
               />
             </Tooltip>
           </Space>
+        </Row>
+        <Row>
+          <div style={{ paddingLeft: "1.5rem" }}>
+            <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+          </div>
         </Row>
       </div>
     </div>

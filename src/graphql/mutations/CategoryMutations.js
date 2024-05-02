@@ -1,48 +1,50 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 const CREATE_CATEGORY = gql`
-    mutation CreateCategory($input: NewCategory!){
-        createCategory(input: $input) {
-            id
-            name
-            parentCategory {
-                id
-                name
-            }
-        }
+  mutation CreateProductCategory($input: NewProductCategory!) {
+    createProductCategory(input: $input) {
+      id
+      businessId
+      name
     }
-`
+  }
+`;
 
 const UPDATE_CATEGORY = gql`
-    mutation UpdateCategory($id: ID!, $input: NewCategory!){
-        updateCategory(id: $id, input: $input) {
-            id
-            name
-            parentCategory {
-                id
-                name
-            }
-        }
+  mutation UpdateProductCategory($input: NewProductCategory!, $id: ID!) {
+    updateProductCategory(id: $id, input: $input) {
+      id
+      businessId
+      name
     }
-`
+  }
+`;
 
 const DELETE_CATEGORY = gql`
-    mutation DeleteCategory($id: ID!){
-        deleteCategory(id: $id) {
-            id
-            name
-            parentCategory {
-                id
-                name
-            }
-        }
+  mutation DeleteProductCategory($id: ID!) {
+    deleteProductCategory(id: $id) {
+      id
+      businessId
+      name
     }
-`
+  }
+`;
+
+const TOGGLE_ACTIVE_CATEGORY = gql`
+  mutation ToggleActiveProductCategory($id: ID!, $isActive: Boolean!) {
+    toggleActiveProductCategory(id: $id, isActive: $isActive) {
+      id
+      businessId
+      name
+    }
+  }
+`;
 
 const CategoryMutations = {
-    CREATE_CATEGORY,
-    UPDATE_CATEGORY,
-    DELETE_CATEGORY
-}
+  CREATE_CATEGORY,
+  UPDATE_CATEGORY,
+  DELETE_CATEGORY,
+  TOGGLE_ACTIVE_CATEGORY,
+};
 
 export default CategoryMutations;

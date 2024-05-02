@@ -5,6 +5,9 @@ import DetailedGeneralLedger from "./DetailedGeneralLedger";
 import GeneralLedger from "./GeneralLedger";
 import TrialBalance from "./TrialBalance";
 import Reports from "./Reports";
+import BalanceSheet from "./BalanceSheet";
+import ProfitAndLoss from "./ProfitAndLoss";
+import ReportHeader from "../../components/ReportHeader";
 
 export {
   JournalReport,
@@ -14,4 +17,7 @@ export {
   GeneralLedger,
   TrialBalance,
   Reports,
+  BalanceSheet,
+  ProfitAndLoss,
+  ReportHeader,
 };

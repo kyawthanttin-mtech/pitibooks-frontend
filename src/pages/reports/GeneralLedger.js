@@ -1,36 +1,23 @@
-import React, { useMemo } from "react";
-import {
-  Spin,
-  Flex,
-  Empty,
-  Row,
-  Space,
-  Dropdown,
-  Form,
-  Divider,
-  DatePicker,
-  Button,
-} from "antd";
-import {
-  CalendarOutlined,
-  DownOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+/* eslint-disable react/style-prop-object */
+import React, { useMemo, useState } from "react";
+import { Spin, Flex, Empty } from "antd";
 import { ReportQueries } from "../../graphql";
 import { useQuery } from "@apollo/client";
 import { openErrorNotification } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import moment from "moment";
-import { usePeriodFilter } from "../../hooks/usePeriodFilter";
-import { useNavigate } from "react-router-dom";
+import ReportHeader from "../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+
 const { GET_GENERAL_LEDGER_REPORT } = ReportQueries;
 
 const GeneralLedger = () => {
-  const [notiApi] = useOutletContext();
-  const [form] = Form.useForm();
-  const navigate = useNavigate();
-
+  const {notiApi, business} = useOutletContext();
+  const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
+  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [reportBasis, setReportBasis] = useState("Accrual");
+  
   const {
     data,
     loading: queryLoading,
@@ -40,9 +27,9 @@ const GeneralLedger = () => {
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
-      fromDate: moment().startOf("month").toISOString(),
-      toDate: moment().endOf("month").toISOString(),
-      reportType: "bais",
+      fromDate: fromDate,
+      toDate: toDate,
+      reportType: reportBasis,
     },
     onError(err) {
       openErrorNotification(notiApi, err.message);
@@ -50,108 +37,23 @@ const GeneralLedger = () => {
   });
   const queryData = useMemo(() => data, [data]);
 
-  !queryLoading && console.log(queryData);
-
-  const {
-    selectedPeriod,
-    dropdownOpen,
-    showDateRange,
-    handlePeriodChange,
-    handleDateRangeApply,
-    setDropdownOpen,
-    items,
-  } = usePeriodFilter({ refetch, form, isPaginated: false });
+  // !queryLoading && console.log(queryData);
 
   return (
     <div className="report">
-      <Row className="table-actions-header">
-        <Space size="large">
-          <div>
-            <Dropdown
-              trigger="click"
-              open={dropdownOpen}
-              onOpenChange={setDropdownOpen}
-              menu={{
-                items: items?.map((item) => ({
-                  ...item,
-                  onClick: ({ key }) => handlePeriodChange(key),
-                })),
-                selectable: true,
-                selectedKeys: [selectedPeriod.key],
-              }}
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    minWidth: "11.686rem",
-                    maxWidth: "21rem",
-                    borderRadius: "8px",
-                    boxShadow:
-                      "0 6px 16px 0 rgba(0, 0, 0, 0.08),0 3px 6px -4px rgba(0, 0, 0, 0.12),0 9px 28px 8px rgba(0, 0, 0, 0.05)",
-                  }}
-                >
-                  {React.cloneElement(menu, {
-                    style: { boxShadow: "none" },
-                  })}
+      <ReportHeader 
+        refetch={refetch} isPaginated={false} 
+        setFromDate={setFromDate}
+        setToDate={setToDate}
+        setReportBasis={setReportBasis}
+      />
 
-                  {showDateRange && (
-                    <Form form={form}>
-                      <Divider
-                        style={{
-                          margin: 0,
-                        }}
-                      />
-                      <Space
-                        style={{
-                          padding: 8,
-                        }}
-                      >
-                        <Form.Item name="dateRange" style={{ margin: 0 }}>
-                          <DatePicker.RangePicker />
-                        </Form.Item>
-                        <Button type="primary" onClick={handleDateRangeApply}>
-                          Apply
-                        </Button>
-                      </Space>
-                    </Form>
-                  )}
-                </div>
-              )}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  height: "2.2rem",
-                  alignItems: "center",
-                  border: "1px solid var(--border-color)",
-                  paddingInline: "1rem",
-                  cursor: "pointer",
-                  borderRadius: "0.3rem",
-                }}
-              >
-                <CalendarOutlined />
-                {selectedPeriod.label}
-                <DownOutlined />
-              </div>
-            </Dropdown>
-          </div>
-        </Space>
-        <div>
-          <Button
-            icon={<CloseOutlined />}
-            type="text"
-            onClick={() => {
-              navigate("/reports");
-            }}
-          />
-        </div>
-      </Row>
       <div className="rep-container">
         <div className="report-header">
-          <h4>Piti Baby</h4>
-          <h3 style={{ marginTop: "-5px" }}> General Ledger</h3>
-          <span>Basic Accrual</span>
-          <h5>From 01 Mar 2024 To 31 Mar 2024</h5>
+          <h4>{business.name}</h4>
+          <h3 style={{ marginTop: "-5px" }}>General Ledger</h3>
+          <span>Basis: {reportBasis}</span>
+          <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
         </div>
         {queryLoading ? (
           <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -163,12 +65,12 @@ const GeneralLedger = () => {
               <thead>
                 <tr>
                   <th className="text-align-left">
-                    <span>Account</span>
+                    <span><FormattedMessage id="report.account" defaultMessage="Account" /></span>
                   </th>
-                  <th className="text-align-left">Account Code</th>
-                  <th className="text-align-right">Debit</th>
-                  <th className="text-align-right">Credit</th>
-                  <th className="text-align-right">Balance</th>
+                  <th className="text-align-left"><FormattedMessage id="report.accountCode" defaultMessage="Account Code" /></th>
+                  <th className="text-align-right"><FormattedMessage id="report.debit" defaultMessage="Debit" /></th>
+                  <th className="text-align-right"><FormattedMessage id="report.credit" defaultMessage="Credit" /></th>
+                  <th className="text-align-right"><FormattedMessage id="report.balance" defaultMessage="Balance" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -176,15 +78,21 @@ const GeneralLedger = () => {
                   queryData?.getGeneralLedgerReport?.map((data) => (
                     <tr key={data.accountId}>
                       <td>{data.accountName}</td>
-                      <td>{data.code}</td>
+                      <td>{data.accountCode}</td>
                       <td className="text-align-right">
-                        <a href="/">{data.debit}</a>
+                        <a href="/">
+                          <FormattedNumber value={data.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        </a>
                       </td>
                       <td className="text-align-right">
-                        <a href="/">{data.credit}</a>
+                        <a href="/">
+                          <FormattedNumber value={data.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        </a>
                       </td>
                       <td className="text-align-right">
-                        <a href="/">{data.balance}</a>
+                        <a href="/">
+                          <FormattedNumber value={data.balance} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        </a>
                       </td>
                     </tr>
                   ))
@@ -199,6 +107,9 @@ const GeneralLedger = () => {
             </table>
           </div>
         )}
+        <div style={{ paddingLeft: "1.5rem" }}>
+          <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ const GET_PAGINATED_JOURNALS = gql`
     $toDate: Time
     $branchId: Int
     $referenceNumber: String
-    $notes: String
   ) {
     paginateJournal(
       limit: $limit
@@ -19,7 +18,6 @@ const GET_PAGINATED_JOURNALS = gql`
       toDate: $toDate
       branchId: $branchId
       referenceNumber: $referenceNumber
-      notes: $notes
     ) {
       pageInfo {
         startCursor
@@ -45,8 +43,14 @@ const GET_PAGINATED_JOURNALS = gql`
             symbol
             decimalPlaces
           }
-          contactId
-          contactType
+          supplier {
+            id
+            name
+          }
+          customer {
+            id
+            name
+          }
           journalTotalAmount
           createdAt
           updatedAt

@@ -22,3 +22,13 @@ export const openSuccessNotification = (api, msg) => {
         duration: 5,
     });
 }
+
+export const openSuccessMessage = (api, msg) => {
+    const key = `open${Date.now()}`;
+    api.open({
+        type: 'success',
+        content: msg,
+        key,
+        duration: 5,
+    });
+}

@@ -11,8 +11,17 @@ import InventoryAdjustmentsTemplate from "./pdfs-and-templates/products/Inventor
 import PaginatedJournal from "./PaginatedJournal";
 import PaginatedJournalReport from "./PaginatedJournalReport";
 import PaginatedAccountTransactionReport from "./PaginatedAccountTransactionReport";
+import PeriodDropdown from "./PeriodDropdown";
+import PaginatedDetailedGeneralLedgerReport from "./PaginatedDetailedGeneralLedgerReport";
+import PaginatedSelectionTable from "./PaginatedSelectionTable";
+import PaginatedExpense from "./PaginatedExpense";
+import SupplierSearchModal from "./SupplierSearchModal";
+import AddPurchaseProductsModal from "./AddPurchaseProductsModal";
+import ErrorBoundary from "./ErrorBoundary";
+import CustomerSearchModal from "./CustomerSearchModal";
 
 export {
+  ErrorBoundary,
   UploadImage,
   PaginatedTable,
   EditableCell,
@@ -26,4 +35,11 @@ export {
   PaginatedJournal,
   PaginatedJournalReport,
   PaginatedAccountTransactionReport,
+  PeriodDropdown,
+  PaginatedDetailedGeneralLedgerReport,
+  PaginatedSelectionTable,
+  PaginatedExpense,
+  SupplierSearchModal,
+  AddPurchaseProductsModal,
+  CustomerSearchModal,
 };

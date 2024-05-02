@@ -1,19 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, Button, Image, Flex, Space } from "antd";
 import {
   InboxOutlined,
   PlusOutlined,
   CheckCircleFilled,
   DeleteOutlined,
-  CheckCircleTwoTone,
 } from "@ant-design/icons";
 import { openErrorNotification } from "../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 
 import "./UploadImage.css";
 
-const UploadImage = () => {
-  const [notiApi] = useOutletContext();
+const UploadImage = ({ onCustomFileListChange }) => {
+  const { notiApi } = useOutletContext();
   const [customFileList, setCustomFileList] = useState([
     {
       uid: "-1",
@@ -44,17 +43,19 @@ const UploadImage = () => {
       return;
     }
 
-    setCustomFileList((prevFileList) => [
-      ...prevFileList,
+    const updatedFileList = [
+      ...customFileList,
       {
         uid: file.uid,
         name: file.name,
         status: "done",
         url: URL.createObjectURL(file),
       },
-    ]);
+    ];
 
-    return false; // Prevent antd from handling the upload
+    setCustomFileList(updatedFileList);
+    onCustomFileListChange(updatedFileList);
+    return false;
   };
 
   const handleRemoveImage = (currentIndex) => {
@@ -64,9 +65,10 @@ const UploadImage = () => {
     newFileList.splice(currentIndex, 1);
 
     setCustomFileList(newFileList);
+    onCustomFileListChange(newFileList);
     setSelectedImageIndex(currentIndex === 0 ? currentIndex : currentIndex - 1);
   };
-
+  console.log("custom file list ", customFileList);
   const handleMarkAsPrimary = (currentIndex) => {
     const newFileList = [...customFileList];
 
@@ -76,6 +78,7 @@ const UploadImage = () => {
 
     setSelectedImageIndex(0);
     setCustomFileList(newFileList);
+    onCustomFileListChange(newFileList);
   };
 
   return (

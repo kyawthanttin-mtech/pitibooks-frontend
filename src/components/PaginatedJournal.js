@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React, { useState, useEffect } from "react";
 import {
   LeftOutlined,
@@ -23,7 +24,7 @@ import {
   Flex,
 } from "antd";
 import { useQuery, useLazyQuery } from "@apollo/client";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import { useNavigate, useLocation } from "react-router-dom";
 import { openErrorNotification } from "../utils/Notification";
 import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
@@ -40,7 +41,12 @@ const compactColumns = [
           <div className="column-list-item">
             <span>{record.date}</span>
             <span>
-              {record.currency.symbol} {record.totalAmount}
+              {record.currency.symbol}{" "}
+              <FormattedNumber
+                value={record.totalAmount}
+                style="decimal"
+                minimumFractionDigits={record.currency.decimalPlaces}
+              />
             </span>
           </div>
           <div className="column-list-item">
@@ -75,9 +81,9 @@ const PaginatedJournal = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentPage, setCurrentPage] = useHistoryState("currentPage", 1);
+  const [currentPage, setCurrentPage] = useHistoryState("journalCurrentPage", 1);
   const [searchCriteria, setSearchCriteria] = useHistoryState(
-    "searchCriteria",
+    "journalSearchCriteria",
     null
   );
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -140,7 +146,7 @@ const PaginatedJournal = ({
     refetch,
   } = useQuery(gqlQuery, {
     errorPolicy: "all",
-    fetchPolicy: "cache-first",
+    fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
       limit: QUERY_DATA_LIMIT,
@@ -184,14 +190,14 @@ const PaginatedJournal = ({
       const values = await searchFormRef.validateFields();
       const input = {
         journalNumber: values.journalNumber,
-        notes: values.notes,
+        // notes: values.notes,
         fromDate: values.dateRange && values.dateRange[0],
         toDate: values.dateRange && values.dateRange[1],
         branchId: values.branch,
         referenceNumber: values.referenceNumber,
       };
-      console.log("values ", values);
-      console.log("input", input);
+      // console.log("values ", values);
+      // console.log("input", input);
       await search({
         variables: {
           ...input,
@@ -204,7 +210,7 @@ const PaginatedJournal = ({
       openErrorNotification(api, err.message);
     }
   };
-  console.log("Search criteria", searchCriteria);
+  // console.log("Search criteria", searchCriteria);
 
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
 
@@ -214,7 +220,7 @@ const PaginatedJournal = ({
     currentPage
   );
 
-  console.log("All data", allData);
+  // console.log("All data", allData);
 
   return (
     <div className={`${selectedRecord && "page-with-column"}`}>
@@ -229,12 +235,14 @@ const PaginatedJournal = ({
                 icon={<PlusOutlined />}
                 type="primary"
                 // onClick={() => navigate("new")}
-                onClick={() => navigate("new", {
-                  state: {
-                    ...location.state,
-                    from: { pathname: location.pathname },
-                  },
-                })}
+                onClick={() =>
+                  navigate("new", {
+                    state: {
+                      ...location.state,
+                      from: { pathname: location.pathname },
+                    },
+                  })
+                }
               >
                 {!selectedRecord && "New Journal"}
               </Button>
@@ -282,21 +290,28 @@ const PaginatedJournal = ({
                     </b>
                   </li>
                 )}
-                {searchCriteria.notes && (
+                {/* {searchCriteria.notes && (
                   <li>
                     Notes contains <b>{searchCriteria.notes}</b>
                   </li>
-                )}
+                )} */}
                 {searchCriteria.branchId && (
                   <li>
-                    Branch is <b>{branchData?.find(x => x.id === searchCriteria.branchId).name}</b>
+                    Branch is{" "}
+                    <b>
+                      {
+                        branchData?.find(
+                          (x) => x.id === searchCriteria.branchId
+                        ).name
+                      }
+                    </b>
                   </li>
                 )}
               </ul>
             </div>
           )}
           <Table
-            className={selectedRecord && "header-less-table"}
+            className={`main-type ${selectedRecord && "header-less-table"}`}
             rowKey="id"
             loading={loading}
             columns={selectedRecord ? compactColumns : columns}
@@ -440,7 +455,10 @@ const PaginatedJournal = ({
             </div>
           </Row>
           <Row className="content-column-action-row">
-            <div className="actions" onClick={() => onEdit(selectedRecord, navigate, location)}>
+            <div
+              className="actions"
+              onClick={() => onEdit(selectedRecord, navigate, location)}
+            >
               <EditOutlined />
               <FormattedMessage id="button.edit" defaultMessage="Edit" />
             </div>
@@ -499,7 +517,9 @@ const PaginatedJournal = ({
                 menu={{
                   onClick: ({ key }) => {
                     if (key === "1") console.log("Clone");
-                    else if (key === "2") onDelete(selectedRecord.id);
+                    else if (key === "2") {
+                      if (onDelete(selectedRecord.id)) setSelectedRecord(null);
+                    }
                   },
                   items: [
                     {

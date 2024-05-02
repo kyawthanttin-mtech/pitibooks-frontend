@@ -8,14 +8,35 @@ import {
   HomePage,
   LoginPage,
   MainLayout,
+  // BranchEditPage,
+  // BranchNewPage,
+  // BranchPage,
+  // CategoryPage,
+  // ProductPage,
 } from "./pages";
 import {
   Bills,
+  Expenses,
+  ExpensesNew,
+  ExpensesEdit,
   PaymentsMade,
   PurchaseOrders,
-  PurchaseReceives,
-  VendorCredits,
-  Vendors,
+  PurchaseOrdersNew,
+  SupplierCredits,
+  Suppliers,
+  SuppliersNew,
+  SuppliersEdit,
+  BillsNew,
+  BillsEdit,
+  SupplierCreditsNew,
+  SupplierCreditsEdit,
+  PurchaseOrdersEdit,
+  PaymentsMadeNew,
+  ShipmentPreferences,
+  PaymentModes,
+  DeliveryMethods,
+  Reasons,
+  SalesPersons,
 } from "./pages/purchases";
 import {
   Products,
@@ -27,6 +48,10 @@ import {
   InventoryAdjustmentsNew,
   TransferOrderNew,
   ProductsNew,
+  ProductCategories,
+  ProductUnits,
+  ProductsEdit,
+  ProductGroupsEdit,
 } from "./pages/products";
 import {
   ManualJournals,
@@ -37,9 +62,11 @@ import {
 import {
   AccountTransactions,
   AccountTypeSummary,
+  BalanceSheet,
   DetailedGeneralLedger,
   GeneralLedger,
   JournalReport,
+  ProfitAndLoss,
   Reports,
   TrialBalance,
 } from "./pages/reports";
@@ -47,16 +74,18 @@ import {
   Profile,
   Warehouses,
   Branches,
-  BranchesNew,
-  BranchesEdit,
   Currencies,
   OpeningBalances,
   TransactionNumberSeries,
+  // Taxes,
   Users,
   Roles,
 } from "./pages/settings";
+import { Customers, CustomersEdit, CustomersNew } from "./pages/sales";
 
+import InvoicesPage from "./pages/InvoicesPage";
 import TaxRates from "./pages/settings/TaxRates";
+// import TaxSettings from "./pages/settings/TaxSettings";
 import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
 
 if (process.env.NODE_ENV !== "production") {
@@ -81,7 +110,31 @@ const router = createHashRouter([
         loader: protectedLoader,
         Component: HomePage,
       },
-      
+      // {
+      //   path: "branches",
+      //   Component: BranchPage,
+      // },
+      // {
+      //   path: "branches/edit",
+      //   Component: BranchEditPage,
+      // },
+      // {
+      //   path: "branches/new",
+      //   Component: BranchNewPage,
+      // },
+      // {
+      //   path: "categories",
+      //   Component: CategoryPage,
+      // },
+      // {
+      //   path: "products",
+      //   Component: ProductPage,
+      // },
+      {
+        path: "invoices",
+        Component: InvoicesPage,
+      },
+
       //Products
       {
         path: "Products",
@@ -90,6 +143,10 @@ const router = createHashRouter([
       {
         path: "products/new",
         Component: ProductsNew,
+      },
+      {
+        path: "products/edit",
+        Component: ProductsEdit,
       },
       {
         path: "inventoryAdjustments",
@@ -108,6 +165,10 @@ const router = createHashRouter([
         Component: ProductGroupsNew,
       },
       {
+        path: "productGroups/edit",
+        Component: ProductGroupsEdit,
+      },
+      {
         path: "openingStock",
         Component: OpeningStock,
       },
@@ -119,30 +180,95 @@ const router = createHashRouter([
         path: "transferOrders",
         Component: TransferOrder,
       },
+      {
+        path: "productCategories",
+        Component: ProductCategories,
+      },
+      {
+        path: "productUnits",
+        Component: ProductUnits,
+      },
+      // Sales
+      {
+        path: "customers",
+        Component: Customers,
+      },
+      {
+        path: "customers/new",
+        Component: CustomersNew,
+      },
+      {
+        path: "customers/edit",
+        Component: CustomersEdit,
+      },
       //Purchases
       {
-        path: "vendors",
-        Component: Vendors,
+        path: "suppliers",
+        Component: Suppliers,
+      },
+      {
+        path: "suppliers/new",
+        Component: SuppliersNew,
+      },
+      {
+        path: "suppliers/edit",
+        Component: SuppliersEdit,
+      },
+      {
+        path: "expenses",
+        Component: Expenses,
+      },
+      {
+        path: "expenses/new",
+        Component: ExpensesNew,
+      },
+      {
+        path: "expenses/edit",
+        Component: ExpensesEdit,
       },
       {
         path: "purchaseOrders",
         Component: PurchaseOrders,
       },
       {
-        path: "purchaseReceives",
-        Component: PurchaseReceives,
+        path: "purchaseOrders/new",
+        Component: PurchaseOrdersNew,
+      },
+      {
+        path: "purchaseOrders/edit",
+        Component: PurchaseOrdersEdit,
       },
       {
         path: "bills",
         Component: Bills,
       },
       {
+        path: "bills/new",
+        Component: BillsNew,
+      },
+      {
+        path: "bills/edit",
+        Component: BillsEdit,
+      },
+      {
         path: "paymentsMade",
         Component: PaymentsMade,
       },
       {
-        path: "vendorCredits",
-        Component: VendorCredits,
+        path: "paymentsMade/new",
+        Component: PaymentsMadeNew,
+      },
+      {
+        path: "supplierCredits",
+        Component: SupplierCredits,
+      },
+      {
+        path: "supplierCredits/new",
+        Component: SupplierCreditsNew,
+      },
+      {
+        path: "supplierCredits/edit",
+        Component: SupplierCreditsEdit,
       },
       //Accountant
       {
@@ -167,27 +293,35 @@ const router = createHashRouter([
         Component: Reports,
       },
       {
-        path: "journalReport",
+        path: "reports/balanceSheet",
+        Component: BalanceSheet,
+      },
+      {
+        path: "reports/profitAndLoss",
+        Component: ProfitAndLoss,
+      },
+      {
+        path: "reports/journalReport",
         Component: JournalReport,
       },
       {
-        path: "accountTransactions",
+        path: "reports/accountTransactions",
         Component: AccountTransactions,
       },
       {
-        path: "accountTypeSummary",
+        path: "reports/accountTypeSummary",
         Component: AccountTypeSummary,
       },
       {
-        path: "generalLedger",
+        path: "reports/generalLedger",
         Component: GeneralLedger,
       },
       {
-        path: "detailedGeneralLedger",
+        path: "reports/detailedGeneralLedger",
         Component: DetailedGeneralLedger,
       },
       {
-        path: "trialBalance",
+        path: "reports/trialBalance",
         Component: TrialBalance,
       },
       //Settings
@@ -204,14 +338,6 @@ const router = createHashRouter([
         Component: Branches,
       },
       {
-        path: "branch/new",
-        Component: BranchesNew,
-      },
-      {
-        path: "branch/edit",
-        Component: BranchesEdit,
-      },
-      {
         path: "currencies",
         Component: Currencies,
       },
@@ -223,6 +349,21 @@ const router = createHashRouter([
         path: "transactionNumberSeries",
         Component: TransactionNumberSeries,
       },
+      // {
+      //   path: "taxes",
+      //   index: "taxes/rates",
+      //   Component: Taxes,
+      //   children: [
+      //     {
+      //       path: "rates",
+      //       Component: TaxRates,
+      //     },
+      //     {
+      //       path: "settings",
+      //       Component: TaxSettings,
+      //     },
+      //   ],
+      // },
       {
         path: "taxes",
         Component: TaxRates,
@@ -234,6 +375,26 @@ const router = createHashRouter([
       {
         path: "roles",
         Component: Roles,
+      },
+      {
+        path: "shipmentPreferences",
+        Component: ShipmentPreferences,
+      },
+      {
+        path: "paymentModes",
+        Component: PaymentModes,
+      },
+      {
+        path: "deliveryMethods",
+        Component: DeliveryMethods,
+      },
+      {
+        path: "reasons",
+        Component: Reasons,
+      },
+      {
+        path: "salesPersons",
+        Component: SalesPersons,
       },
     ],
   },
@@ -258,10 +419,14 @@ function loginLoader() {
 
 function logoutLoader() {
   localStorage.removeItem("token");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("username");
   localStorage.removeItem("name");
   localStorage.removeItem("role");
+  localStorage.removeItem("module");
+  localStorage.removeItem("businessName");
+  localStorage.removeItem("baseCurrencyId");
+  localStorage.removeItem("baseCurrencyName");
+  localStorage.removeItem("fiscalYear");
+  localStorage.removeItem("timezone");
   return redirect("/");
 }
 

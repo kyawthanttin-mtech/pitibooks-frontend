@@ -1,33 +1,24 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
-const GET_CATEGORIES = gql`
-    query GetCategories($name: String) {
-        categories(name: $name) {
-            id
-            name
-            parentCategory {
-                id
-                name
-            }
-        }
+const GET_PRODUCT_CATEGORIES = gql`
+  query ListActiveProductCategory {
+    listProductCategory {
+      id
+      businessId
+      name
+      isActive
+      parentCategory {
+        id
+        businessId
+        name
+        isActive
+      }
     }
-`
-
-const GET_CATEGORY_NAMES = gql`
-    query GetCategories($name: String) {
-        categories(name: $name) {
-            id
-            name
-            parentCategory {
-                id
-                name
-            }
-        }
-    }
-`
+  }
+`;
 
 const CategoryQueries = {
-    GET_CATEGORIES, GET_CATEGORY_NAMES
-}
+  GET_PRODUCT_CATEGORIES,
+};
 
 export default CategoryQueries;

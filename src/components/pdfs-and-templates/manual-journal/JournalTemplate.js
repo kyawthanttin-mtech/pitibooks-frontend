@@ -1,4 +1,6 @@
+/* eslint-disable react/style-prop-object */
 import React from "react";
+import { FormattedNumber } from "react-intl";
 
 const JournalTemplate = ({ selectedRecord }) => {
   const data = selectedRecord.transactions;
@@ -82,7 +84,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                             <span>{selectedRecord.date}</span>
                           </td>
                         </tr>
-                        <tr>
+                        {/* <tr>
                           <td
                             className="text-align-right"
                             style={{
@@ -99,10 +101,14 @@ const JournalTemplate = ({ selectedRecord }) => {
                           >
                             <span>
                               {selectedRecord.currency.symbol}{" "}
-                              {selectedRecord.totalAmount}
+                              <FormattedNumber
+                                value={selectedRecord.totalAmount}
+                                style="decimal"
+                                minimumFractionDigits={selectedRecord.currency.decimalPlaces}
+                              />
                             </span>
                           </td>
-                        </tr>
+                        </tr> */}
                         <tr>
                           <td
                             className="text-align-right"
@@ -234,7 +240,13 @@ const JournalTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.debit !== 0 && item.debit}</span>
+                      <span>{item.debit !== 0 && 
+                        <FormattedNumber
+                          value={item.debit}
+                          style="decimal"
+                          minimumFractionDigits={selectedRecord.currency.decimalPlaces}
+                        />
+                      }</span>
                     </td>
                     <td
                       className="text-align-right"
@@ -244,7 +256,13 @@ const JournalTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.credit !== 0 && item.credit}</span>
+                      <span>{item.credit !== 0 && 
+                        <FormattedNumber
+                          value={item.credit}
+                          style="decimal"
+                          minimumFractionDigits={selectedRecord.currency.decimalPlaces}
+                        />
+                      }</span>
                     </td>
                   </tr>
                 ))}
@@ -269,7 +287,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                           verticalAlign: "middle",
                         }}
                       >
-                        <b>Total</b>
+                        <b>Total({selectedRecord.currency.symbol})</b>
                       </td>
                       <td
                         style={{
@@ -279,8 +297,11 @@ const JournalTemplate = ({ selectedRecord }) => {
                         }}
                       >
                         <b>
-                          {selectedRecord.currency.symbol}{" "}
-                          {selectedRecord.totalAmount}
+                          <FormattedNumber
+                            value={selectedRecord.totalAmount}
+                            style="decimal"
+                            minimumFractionDigits={selectedRecord.currency.decimalPlaces}
+                          />
                         </b>
                       </td>
                     </tr>

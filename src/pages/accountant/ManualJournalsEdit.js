@@ -1,32 +1,36 @@
+/* eslint-disable react/style-prop-object */
 import React, { useState, useMemo } from "react";
-import { Button, Form, Input, DatePicker, Select, Table } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  DatePicker,
+  Select,
+  Table,
+  InputNumber,
+} from "antd";
 import {
   CloseCircleOutlined,
   PlusCircleFilled,
   UploadOutlined,
+  CloseOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
-import { useQuery, useMutation, gql } from "@apollo/client";
+import { useReadQuery, useMutation, gql } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
-import moment from "moment";
-import { FormattedMessage } from "react-intl";
-import {
-  // JournalQueries,
-  JournalMutations,
-  AccountQueries,
-  CurrencyQueries,
-  BranchQueries,
-} from "../../graphql";
-// const { GET_JOURNALS } = JournalQueries;
+import dayjs from "dayjs";
+import { FormattedMessage, FormattedNumber } from "react-intl";
+import { JournalMutations } from "../../graphql";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { CustomerSearchModal, SupplierSearchModal } from "../../components";
+
 const { UPDATE_JOURNAL } = JournalMutations;
-const { GET_ALL_ACCOUNTS } = AccountQueries;
-const { GET_ALL_CURRENCIES } = CurrencyQueries;
-const { GET_ALL_BRANCHES } = BranchQueries;
 
 const ManualJournalsEdit = () => {
   const [form] = Form.useForm();
@@ -40,7 +44,15 @@ const ManualJournalsEdit = () => {
       { key: 2 },
     ]
   );
-  const [notiApi] = useOutletContext();
+
+  const {
+    notiApi,
+    msgApi,
+    business,
+    allAccountsQueryRef,
+    allBranchesQueryRef,
+    allCurrenciesQueryRef,
+  } = useOutletContext();
   const [difference, setDifference] = useState(0);
   // Calculate initial values for totalDebits and totalCredits
   let initialTotalDebits = 0;
@@ -54,49 +66,30 @@ const ManualJournalsEdit = () => {
   }
   const [totalDebits, setTotalDebits] = useState(initialTotalDebits);
   const [totalCredits, setTotalCredits] = useState(initialTotalCredits);
+  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState("");
 
-  // console.log("Record", record);
+  console.log("Record", record);
 
   // Queries
-  const { data: branchData, loading: branchLoading } = useQuery(GET_ALL_BRANCHES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-first",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: accountData, loading: accountLoading } = useQuery(
-    GET_ALL_ACCOUNTS,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-first",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
-
-  const { data: currencyData, loading: currencyLoading } = useQuery(
-    GET_ALL_CURRENCIES,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-first",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
+  const { data: accountData } = useReadQuery(allAccountsQueryRef);
+  const { data: branchData } = useReadQuery(allBranchesQueryRef);
+  const { data: currencyData } = useReadQuery(allCurrenciesQueryRef);
 
   // Mutations
   const [updateJournal, { loading: updateLoading }] = useMutation(
     UPDATE_JOURNAL,
     {
       onCompleted() {
-        openSuccessNotification(notiApi, <FormattedMessage id="journal.updated" defaultMessage="Journal Updated" />);
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="journal.updated"
+            defaultMessage="Journal Updated"
+          />
+        );
         // navigate("/manualJournals");
         navigate(from, { state: location.state, replace: true });
       },
@@ -107,8 +100,19 @@ const ManualJournalsEdit = () => {
     }
   );
 
-  const loading =
-    branchLoading || accountLoading || currencyLoading || updateLoading;
+  const loading = updateLoading;
+
+  const branches = useMemo(() => {
+    return branchData?.listAllBranch;
+  }, [branchData]);
+
+  const currencies = useMemo(() => {
+    return currencyData?.listAllCurrency;
+  }, [currencyData]);
+
+  const accounts = useMemo(() => {
+    return accountData?.listAllAccount;
+  }, [accountData]);
 
   // Parse record
 
@@ -120,7 +124,9 @@ const ManualJournalsEdit = () => {
             currency: record.currency.id,
             referenceNumber: record.referenceNumber,
             notes: record.notes,
-            date: moment(record.originalDate), //22 Mar 2024
+            supplierName: record.supplier?.name,
+            customerName: record.customer?.name,
+            date: dayjs(record.originalDate),
             // Map transactions to form fields
             ...record.transactions.reduce((acc, transaction, index) => {
               acc[`account${index + 1}`] = transaction.account.id;
@@ -135,6 +141,8 @@ const ManualJournalsEdit = () => {
         : {};
 
     // console.log("Parsed Record", parsedRecord);
+    setSelectedSupplier(record.supplier?.id ? record.supplier : "");
+    setSelectedCustomer(record.customer?.id ? record.customer : "");
     form.setFieldsValue(parsedRecord);
   }, [form, record]);
 
@@ -152,14 +160,18 @@ const ManualJournalsEdit = () => {
       journalNotes: values.notes,
       branchId: values.branch,
       currencyId: values.currency,
-      contactType: "C",
+      supplierId: selectedSupplier.id || 0,
+      customerId: selectedCustomer.id || 0,
+      exchangeRate: values.exchangeRate ? parseFloat(values.exchangeRate) : 0,
       transactions,
     };
-
     if (difference !== 0) {
       openErrorNotification(
         notiApi,
-        <FormattedMessage id="journal.debitCreditEqual" defaultMessage="Please ensure that the Debits and Credits are equal" />
+        <FormattedMessage
+          id="journal.debitCreditEqual"
+          defaultMessage="Please ensure that the Debits and Credits are equal"
+        />
       );
       return;
     }
@@ -179,11 +191,15 @@ const ManualJournalsEdit = () => {
                   fragment: gql`
                     fragment NewJournal on Journal {
                       id
+                      branch 
+                      journalNumber
                       referenceNumber
                       journalDate
                       journalNotes
-                      branchId
-                      currencyId
+                      currency
+                      supplier 
+                      customer 
+                      journalTotalAmount
                       transactions
                     }
                   `,
@@ -211,17 +227,19 @@ const ManualJournalsEdit = () => {
     setData(newData);
   };
 
-  const handleDebitPressEnter = (e, key) => {
+  const handleDebitBlur = (e, key) => {
     e.preventDefault();
-    const creditFieldName = `credit${key}`;
-    form.setFieldsValue({ [creditFieldName]: "" });
+    const debit = form.getFieldValue(`debit${key}`);
+    if (!debit || debit.trim().length === 0) return;
+    form.setFieldsValue({ [`credit${key}`]: "" });
     updateTotalAndDifference();
   };
 
-  const handleCreditPressEnter = (e, key) => {
+  const handleCreditBlur = (e, key) => {
     e.preventDefault();
-    const debitFieldName = `debit${key}`;
-    form.setFieldsValue({ [debitFieldName]: "" });
+    const credit = form.getFieldValue(`credit${key}`);
+    if (!credit || credit.trim().length === 0) return;
+    form.setFieldsValue({ [`debit${key}`]: "" });
     updateTotalAndDifference();
   };
 
@@ -249,9 +267,19 @@ const ManualJournalsEdit = () => {
       key: "account",
       width: "15%",
       render: (_, record) => (
-        <Form.Item 
+        <Form.Item
           name={`account${record.key}`}
-          rules={[{ required: true, message: <FormattedMessage id="label.account.required" defaultMessage="Select the Account" /> }]}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.account.required"
+                  defaultMessage="Select the Account"
+                />
+              ),
+            },
+          ]}
         >
           <Select
             allowClear
@@ -259,7 +287,7 @@ const ManualJournalsEdit = () => {
             optionFilterProp="label"
             placeholder="Select an account"
           >
-            {accountData?.listAllAccount.map((account) => (
+            {accounts?.map((account) => (
               <Select.Option
                 key={account.id}
                 value={account.id}
@@ -273,13 +301,15 @@ const ManualJournalsEdit = () => {
       ),
     },
     {
-      title: <FormattedMessage id="label.description" defaultMessage="Description" />,
+      title: (
+        <FormattedMessage id="label.description" defaultMessage="Description" />
+      ),
       dataIndex: "description",
       key: "description",
       width: "15%",
       render: (_, record) => (
         <Form.Item name={`description${record.key}`}>
-          <Input></Input>
+          <Input maxLength={255}></Input>
         </Form.Item>
       ),
     },
@@ -302,7 +332,7 @@ const ManualJournalsEdit = () => {
       width: "15%",
       render: (_, record) => (
         <Form.Item name={`debit${record.key}`}>
-          <Input onPressEnter={(e) => handleDebitPressEnter(e, record.key)} />
+          <Input onBlur={(e) => handleDebitBlur(e, record.key)} />
         </Form.Item>
       ),
     },
@@ -313,7 +343,7 @@ const ManualJournalsEdit = () => {
       width: "15%",
       render: (_, record) => (
         <Form.Item name={`credit${record.key}`}>
-          <Input onPressEnter={(e) => handleCreditPressEnter(e, record.key)} />
+          <Input onBlur={(e) => handleCreditBlur(e, record.key)} />
         </Form.Item>
       ),
     },
@@ -322,31 +352,64 @@ const ManualJournalsEdit = () => {
       dataIndex: "actions",
       key: "actions",
       width: "5%",
-      render: (_, record) => (
-        <CloseCircleOutlined
-          style={{ color: "red" }}
-          onClick={() => data.length > 2 && handleRemoveRow(record.key)}
-        />
-      ),
+      render: (_, record, index) =>
+        index > 1 ? (
+          <CloseCircleOutlined
+            style={{ color: "red" }}
+            onClick={() => data.length > 2 && handleRemoveRow(record.key)}
+          />
+        ) : (
+          <></>
+        ),
     },
   ];
   return (
     <>
+      <SupplierSearchModal
+        modalOpen={supplierSearchModalOpen}
+        setModalOpen={setSupplierSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedSupplier(record);
+          form.setFieldsValue({ supplierName: record.name });
+        }}
+      />
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedCustomer(record);
+          form.setFieldsValue({ customerName: record.name });
+        }}
+      />
       <div className="page-header">
-        <p className="page-header-text"><FormattedMessage id="journal.edit" defaultMessage="Edit Journal" /></p>
+        <p className="page-header-text">
+          <FormattedMessage id="journal.edit" defaultMessage="Edit Journal" />
+        </p>
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
         <Form form={form} onFinish={onFinish}>
           <Form.Item
-            label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
             name="branch"
             labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
-            rules={[{ required: true, message: <FormattedMessage id="label.branch.required" defaultMessage="Select the Branch" /> }]}
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.branch.required"
+                    defaultMessage="Select the Branch"
+                  />
+                ),
+              },
+            ]}
           >
             <Select allowClear showSearch optionFilterProp="label">
-              {branchData?.listAllBranch.map((branch) => (
+              {branches?.map((branch) => (
                 <Select.Option
                   key={branch.id}
                   value={branch.id}
@@ -361,56 +424,82 @@ const ManualJournalsEdit = () => {
             label={<FormattedMessage id="label.date" defaultMessage="Date" />}
             name="date"
             labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
-            rules={[{ required: true, message: <FormattedMessage id="label.date.required" defaultMessage="Select the Date" /> }]}
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.date.required"
+                    defaultMessage="Select the Date"
+                  />
+                ),
+              },
+            ]}
           >
             <DatePicker
+              format={REPORT_DATE_FORMAT}
               onChange={(date, dateString) => console.log(date, dateString)}
             ></DatePicker>
           </Form.Item>
-          {/* <Form.Item
-            label="Journal#"
-            name=""
-            labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
-          >
-            <Radio.Group value="auto" defaultValue="auto">
-              <Radio value="auto">Auto</Radio>
-              <Radio value="manual">Manual</Radio>
-            </Radio.Group>
-          </Form.Item> */}
+
           <Form.Item
-            label={<FormattedMessage id="label.referenceNumber" defaultMessage="Reference #" />}
+            label={
+              <FormattedMessage
+                id="label.referenceNumber"
+                defaultMessage="Reference #"
+              />
+            }
             name="referenceNumber"
             labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
           >
-            <Input></Input>
+            <Input maxLength={255}></Input>
           </Form.Item>
           <Form.Item
             label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
             name="notes"
             labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
-            rules={[{ required: true, message: <FormattedMessage id="label.notes.required" defaultMessage="Enter the Notes" /> }]}
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.notes.required"
+                    defaultMessage="Enter the Notes"
+                  />
+                ),
+              },
+            ]}
           >
-            <TextArea></TextArea>
+            <TextArea maxLength={1000}></TextArea>
           </Form.Item>
-
           <Form.Item
-            label={<FormattedMessage id="label.currency" defaultMessage="Currency" />}
+            label={
+              <FormattedMessage id="label.currency" defaultMessage="Currency" />
+            }
             name="currency"
             labelAlign="left"
-            labelCol={{ span: 3 }}
-            wrapperCol={{ span: 5 }}
-            rules={[{ required: true, message: <FormattedMessage id="label.currency.required" defaultMessage="Select the Currency" /> }]}
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.currency.required"
+                    defaultMessage="Select the Currency"
+                  />
+                ),
+              },
+            ]}
           >
             <Select allowClear showSearch optionFilterProp="label">
-              {currencyData?.listAllCurrency.map((currency) => (
+              {currencies?.map((currency) => (
                 <Select.Option
                   key={currency.id}
                   value={currency.id}
@@ -422,6 +511,117 @@ const ManualJournalsEdit = () => {
             </Select>
           </Form.Item>
 
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) =>
+              prevValues.currency !== currentValues.currency
+            }
+          >
+            {({ getFieldValue }) =>
+              getFieldValue("currency") &&
+              getFieldValue("currency") !== business.baseCurrency.id ? (
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.exchangeRate"
+                      defaultMessage="Exchange Rate"
+                    />
+                  }
+                  name="exchangeRate"
+                  labelAlign="left"
+                  labelCol={{ span: 5 }}
+                  wrapperCol={{ span: 8 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.exchangeRate.required"
+                          defaultMessage="Enter the Exchange Rate"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <InputNumber />
+                </Form.Item>
+              ) : null
+            }
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+            }
+            name="supplierName"
+            shouldUpdate
+            labelAlign="left"
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+          >
+            <Input
+              readOnly
+              onClick={setSupplierSearchModalOpen}
+              className="search-input"
+              allowClear
+              suffix={
+                <>
+                  {selectedSupplier && (
+                    <CloseOutlined
+                      style={{ height: 11, width: 11, cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedSupplier(null);
+                        form.resetFields(["supplierName"]);
+                      }}
+                    />
+                  )}
+
+                  <Button
+                    style={{ width: "2.5rem" }}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    className="search-btn"
+                    onClick={setSupplierSearchModalOpen}
+                  />
+                </>
+              }
+            />
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.customer" defaultMessage="Customer" />
+            }
+            name="customerName"
+            shouldUpdate
+            labelAlign="left"
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 8 }}
+          >
+            <Input
+              readOnly
+              onClick={setCustomerSearchModalOpen}
+              className="search-input"
+              suffix={
+                <>
+                  {selectedCustomer && (
+                    <CloseOutlined
+                      style={{ height: 11, width: 11, cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedCustomer(null);
+                        form.resetFields(["customerName"]);
+                      }}
+                    />
+                  )}
+                  <Button
+                    style={{ width: "2.5rem" }}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    className="search-btn"
+                    onClick={setCustomerSearchModalOpen}
+                  />
+                </>
+              }
+            />
+          </Form.Item>
           <Table
             loading={loading}
             rowKey={(record) => record.key}
@@ -429,7 +629,7 @@ const ManualJournalsEdit = () => {
             dataSource={data}
             className="new-manual-journal-table"
             pagination={false}
-            bordered
+            bordered={false}
           ></Table>
 
           <div className="new-manual-journal-table-footer">
@@ -438,47 +638,91 @@ const ManualJournalsEdit = () => {
               onClick={handleAddRow}
               className="add-row-button"
             >
-              <FormattedMessage id="button.addNewRow" defaultMessage="Add New Row" />
+              <FormattedMessage
+                id="button.addNewRow"
+                defaultMessage="Add New Row"
+              />
             </Button>
 
             <table cellSpacing="0" border="0" width="100%" id="balance-table">
               <tbody>
                 <tr>
                   <td style={{ verticalAlign: "middle" }}>
-                  <b><FormattedMessage id="label.total" defaultMessage="Total" /></b>
+                    <b>
+                      <FormattedMessage
+                        id="label.total"
+                        defaultMessage="Total"
+                      />
+                    </b>
                   </td>
-                  <td className="text-align-right">{totalDebits.toFixed(2)}</td>
                   <td className="text-align-right">
-                    {totalCredits.toFixed(2)}
+                    <FormattedNumber
+                      value={totalDebits}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
+                  </td>
+                  <td className="text-align-right">
+                    <FormattedNumber
+                      value={totalCredits}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
                   </td>
                 </tr>
                 <tr>
                   <td style={{ verticalAlign: "middle", color: "red" }}>
-                    <FormattedMessage id="label.difference" defaultMessage="Difference" />
+                    <FormattedMessage
+                      id="label.difference"
+                      defaultMessage="Difference"
+                    />
                   </td>
                   <td className="text-align-right" colSpan="2">
-                    {difference.toFixed(2)}
+                    <FormattedNumber
+                      value={difference}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div className="attachment-upload">
-          <p><FormattedMessage id="label.attachments" defaultMessage="Attachments" /></p>
+            <p>
+              <FormattedMessage
+                id="label.attachments"
+                defaultMessage="Attachments"
+              />
+            </p>
             <Button
               type="dashed"
               icon={<UploadOutlined />}
               className="attachment-upload-button"
             >
-              <FormattedMessage id="button.uploadFile" defaultMessage="Upload File" />
+              <FormattedMessage
+                id="button.uploadFile"
+                defaultMessage="Upload File"
+              />
             </Button>
-            <p><FormattedMessage id="label.uploadLimit" defaultMessage="You can upload a maximum of 5 files, 5MB each" /></p>
+            <p>
+              <FormattedMessage
+                id="label.uploadLimit"
+                defaultMessage="You can upload a maximum of 5 files, 5MB each"
+              />
+            </p>
           </div>
         </Form>
       </div>
       <div className="page-actions-bar">
         <Button
-          loading={updateLoading}
+          loading={loading}
           type="primary"
           htmlType="submit"
           className="page-actions-btn"
@@ -488,9 +732,12 @@ const ManualJournalsEdit = () => {
         </Button>
         {/* <Button className="page-actions-btn">Save as Draft</Button> */}
         <Button
+          loading={loading}
           className="page-actions-btn"
           // onClick={() => navigate("/manualJournals")}
-          onClick={() => navigate(from, { state: location.state, replace: true })}
+          onClick={() =>
+            navigate(from, { state: location.state, replace: true })
+          }
         >
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
         </Button>

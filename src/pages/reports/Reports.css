@@ -4,5 +4,239 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px dotted var(--border-color);
+  width: 15.5rem;
+}
+
+.no-border {
+  border: none;
+}
+
+/*Report Styles*/
+
+.report {
+  background-color: white;
+  height: 100%;
+  contain: content;
+  overflow: auto;
+  padding-bottom: 3rem;
+}
+
+.report-header {
+  padding-bottom: 0.5625rem;
+  margin: 2.5rem 0 1.25rem;
+  text-align: center;
+}
+.report-header h3 h4 h5 {
+  margin: 0.625rem;
+}
+
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media screen and (min-width: 36rem) {
+  .container {
+    max-width: 33.75rem;
+  }
+}
+@media screen and (min-width: 48rem) {
+  .container {
+    max-width: 45rem;
+  }
+}
+@media screen and (min-width: 61.25rem) {
+  .container {
+    max-width: 60rem;
+  }
+}
+
+@media screen and (min-width: 75rem) {
+  .container {
+    max-width: 71.25rem;
+  }
+}
+
+@media screen and (min-width: 104.375rem) {
+  .container {
+    max-width: 77.5rem;
+  }
+}
+
+.rep-table {
+  width: 100%;
+  margin-bottom: 0.625rem;
+  color: var(--text-color);
+  vertical-align: top;
+  border-color: black;
+}
+
+.rep-table thead > tr > th {
+  color: #757383;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  position: sticky;
+  top: 5rem;
+  z-index: 1;
+  background-color: #fff;
+  background-clip: padding-box;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+
+.rep-table thead > tr > th,
+.rep-table tbody > tr > td {
+  padding: 0.375rem;
+  word-wrap: break-word;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.rep-table thead:first-child tr:first-child th {
+  border-top: 1px solid var(--table-border);
+  border-bottom: 1px solid var(--table-border);
+}
+
+.jr-table td {
+  vertical-align: middle;
+  border-bottom: 1px solid var(--table-border);
+  border-right: 1px solid var(--table-border);
+}
+
+.rep-table td:last-child {
+  border-right: none;
+}
+
+.jr-table tr:last-child td {
+  background-color: #f7f5f3;
+}
+
+.reconciliation-summary-table {
+  max-width: 60%;
+  margin: auto;
+  margin-bottom: 1.25rem;
+}
+
+/*gl*/
+.financial-comparison {
+  min-width: 60%;
+  max-width: 100%;
+  width: auto;
+}
+.fill-container table {
+  border-left: none;
+  border-right: none;
+}
+
+.table-container .financial-comparison {
+  margin: 0 auto 30px;
+}
+
+/*asr*/
+.rep-container table thead,
+.rep-container tbody,
+.rep-container tfoot,
+.rep-container tr,
+.rep-container td,
+.rep-container th {
+  border-color: inherit;
+  border-style: solid;
+  border-width: 0;
+  border-bottom: 1px solid var(--table-border);
+}
+
+table .row-header td {
+  padding: 8px;
+  background-color: #f7f7f7;
+  height: 39px;
+  vertical-align: middle !important;
+}
+
+.rep-table tr:last-child td {
+  background-color: none;
+}
+
+.rep-table tr th:first-of-type,
+.rep-table tr td:first-of-type {
+  padding-left: 35px;
+}
+
+.rep-table tr th:last-of-type,
+.rep-table tr td:last-of-type {
+  padding-right: 35px;
+}
+
+.rep-container .table thead > tr > th,
+.rep-container .table tbody > tr > th,
+.rep-container .table tfoot > tr > th,
+.rep-container .table thead > tr > td,
+.rep-container .table tbody > tr > td,
+.rep-container .table tfoot > tr > td {
+  padding: 8px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/*at*/
+.fill-container .ant-table-wrapper .ant-table-cell,
+.fill-container .ant-table-wrapper .ant-table-thead > tr > th {
+  padding: 8px;
+}
+
+.fill-container .ant-table-wrapper .ant-table-thead > tr > th {
+  border-top: 1px solid var(--table-border);
+}
+
+.fill-container
+  .ant-table-wrapper
+  .ant-table-container
+  table
+  > thead
+  > tr:first-child
+  > *:first-child,
+.fill-container .ant-table-row > .ant-table-cell:first-child {
+  padding-left: 35px;
+}
+
+.fill-container .ant-table-wrapper .ant-table-thead > tr > th,
+.fill-container .ant-table-wrapper .ant-table-thead > tr > td {
+  height: auto;
+}
+
+.rep-table tr:hover {
+  background-color: var(--hover-bg);
+  cursor: pointer;
+}
+
+.preserve-wrap {
+  white-space: pre-wrap;
+}
+
+/*tb*/
+.tb-comparison-table .new-section {
+  border-left: 1px solid var(--border-color);
+}
+
+.empty-row:hover {
+  background: transparent !important;
+  cursor: default !important;
+}
+
+.table-no-border tbody > tr > td {
+  border-bottom: none;
+}
+
+.rep-container table {
+  line-height: 1.6;
+}
+
+.mute-hover:hover {
+  background-color: transparent !important;
+  cursor: text !important;
+}
+
+.report-datepicker .ant-picker-outlined {
+  height: 2.1rem;
 }

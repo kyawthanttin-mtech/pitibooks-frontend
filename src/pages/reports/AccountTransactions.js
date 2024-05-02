@@ -2,12 +2,12 @@ import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { PaginatedAccountTransactionReport } from "../../components";
 import { ReportQueries } from "../../graphql";
+import {convertTransactionType} from "../../utils/HelperFunctions";
 
 const { GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT } = ReportQueries;
 
 const AccountTransactions = () => {
-  const [notiApi] = useOutletContext();
-
+  const {notiApi, business} = useOutletContext();
   const parseData = (data) => {
     let reports = [];
     data?.paginateAccountTransactionReport?.edges.forEach(({ node }) => {
@@ -18,6 +18,10 @@ const AccountTransactions = () => {
           account: node.account.name,
           baseDebit: node.baseDebit,
           baseCredit: node.baseCredit,
+          transactionNumber: node.accountJournal.transactionNumber,
+          transactionDetails: node.accountJournal.transactionDetails,
+          referenceNumber: node.accountJournal.referenceNumber,
+          referenceType: convertTransactionType(node.accountJournal.referenceType),
         });
       }
     });
@@ -36,7 +40,7 @@ const AccountTransactions = () => {
         hasNextPage: data.paginateAccountTransactionReport.pageInfo.hasNextPage,
         endCursor: data.paginateAccountTransactionReport.pageInfo.endCursor,
       };
-      console.log("Page info", pageInfo);
+      // console.log("Page info", pageInfo);
     }
     return pageInfo;
   };
@@ -48,6 +52,7 @@ const AccountTransactions = () => {
     <div className="report">
       <PaginatedAccountTransactionReport
         // dataLoading={loading}
+        business={business}
         api={notiApi}
         gqlQuery={GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT}
         showSearch={false}

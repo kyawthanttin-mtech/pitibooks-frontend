@@ -13,6 +13,18 @@ const GET_TAXES = gql`
   }
 `;
 
+const GET_ALL_TAXES = gql`
+  query ListAllTax {
+    listAllTax {
+      id
+      name
+      rate
+      isCompoundTax
+      isActive
+    }
+  }
+`;
+
 const GET_TAX_GROUPS = gql`
   query GetTaxGroups($name: String) {
     listTaxGroup(name: $name) {
@@ -35,9 +47,22 @@ const GET_TAX_GROUPS = gql`
   }
 `;
 
+const GET_ALL_TAX_GROUPS = gql`
+  query ListAllTaxGroup {
+    listAllTaxGroup {
+      id
+      name
+      rate
+      isActive
+    }
+  }
+`;
+
 const TaxQueries = {
   GET_TAXES,
   GET_TAX_GROUPS,
+  GET_ALL_TAXES,
+  GET_ALL_TAX_GROUPS,
 };
 
 export default TaxQueries;

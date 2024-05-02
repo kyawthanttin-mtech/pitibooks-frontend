@@ -1,196 +1,135 @@
-import React from "react";
-import {
-  Spin,
-  Flex,
-  Empty,
-  Row,
-  Space,
-  Dropdown,
-  Form,
-  Divider,
-  DatePicker,
-  Button,
-} from "antd";
-import {
-  CalendarOutlined,
-  DownOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+/* eslint-disable react/style-prop-object */
+import React, { useMemo, useState } from "react";
+import { Spin, Flex } from "antd";
+import { useQuery } from "@apollo/client";
+import { openErrorNotification } from "../../utils/Notification";
+import { useOutletContext } from "react-router-dom";
+import { FormattedMessage, FormattedNumber } from "react-intl";
+import moment from "moment";
+import { ReportQueries } from "../../graphql";
+import ReportHeader from "../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+
+const { GET_TRIAL_BALANCE_REPORT } = ReportQueries;
 
 const TrialBalance = () => {
-  const navigate = useNavigate();
+  const {notiApi, business} = useOutletContext();
+  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [reportBasis, setReportBasis] = useState("Accrual");
+
+  const {
+    data,
+    loading: queryLoading,
+    refetch,
+  } = useQuery(GET_TRIAL_BALANCE_REPORT, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    variables: {
+      toDate: toDate,
+      reportType: reportBasis,
+    },
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+  });
+
+  const parsedData = useMemo(() => {
+    if (!data || !data.getTrialBalanceReport) return [];
+
+    const groupedData = data.getTrialBalanceReport.reduce((acc, item) => {
+      const { accountMainType } = item;
+      const existingGroup = acc.find(
+        (group) => group.mainType === accountMainType
+      );
+      if (existingGroup) {
+        existingGroup.accounts.push(item);
+      } else {
+        acc.push({ mainType: accountMainType, accounts: [item] });
+      }
+      return acc;
+    }, []);
+
+    return groupedData;
+  }, [data]);
+
+  // !queryLoading && console.log(parsedData);
 
   return (
     <div className="report">
-      <Row className="table-actions-header">
-        <Space size="large">
-          <div>
-            <Dropdown
-              trigger="click"
-              //   open={dropdownOpen}
-              //   onOpenChange={setDropdownOpen}
-              //   menu={{
-              //     items: items?.map((item) => ({
-              //       ...item,
-              //       onClick: ({ key }) => handlePeriodChange(key),
-              //     })),
-              //     selectable: true,
-              //     selectedKeys: [selectedPeriod.key],
-              //   }}
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    minWidth: "11.686rem",
-                    maxWidth: "21rem",
-                    borderRadius: "8px",
-                    boxShadow:
-                      "0 6px 16px 0 rgba(0, 0, 0, 0.08),0 3px 6px -4px rgba(0, 0, 0, 0.12),0 9px 28px 8px rgba(0, 0, 0, 0.05)",
-                  }}
-                >
-                  {React.cloneElement(menu, {
-                    style: { boxShadow: "none" },
-                  })}
+      <ReportHeader 
+        refetch={refetch} isPaginated={false} hasFromDate={false} 
+        setToDate={setToDate}
+        setReportBasis={setReportBasis}
+      />
 
-                  {/* {showDateRange && (
-                    <Form form={form}>
-                      <Divider
-                        style={{
-                          margin: 0,
-                        }}
-                      />
-                      <Space
-                        style={{
-                          padding: 8,
-                        }}
-                      >
-                        <Form.Item name="dateRange" style={{ margin: 0 }}>
-                          <DatePicker.RangePicker />
-                        </Form.Item>
-                        <Button type="primary" onClick={handleDateRangeApply}>
-                          Apply
-                        </Button>
-                      </Space>
-                    </Form>
-                  )} */}
-                </div>
-              )}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  height: "2.2rem",
-                  alignItems: "center",
-                  border: "1px solid var(--border-color)",
-                  paddingInline: "1rem",
-                  cursor: "pointer",
-                  borderRadius: "0.3rem",
-                }}
-              >
-                <CalendarOutlined />
-                {/* {selectedPeriod.label} */}
-                <DownOutlined />
-              </div>
-            </Dropdown>
-          </div>
-        </Space>
-        <div>
-          <Button
-            icon={<CloseOutlined />}
-            type="text"
-            onClick={() => {
-              navigate("/reports");
-            }}
-          />
-        </div>
-      </Row>
       <div className="rep-container">
         <div className="report-header">
-          <h4>Piti Baby</h4>
+          <h4>{business.name}</h4>
           <h3 style={{ marginTop: "-5px" }}>Trial Balance</h3>
-          <span>Basic Accrual</span>
-          <h5>From 01 Mar 2024 To 31 Mar 2024</h5>
+          <span>Basis: {reportBasis}</span>
+          <h5>As of {toDate.format(REPORT_DATE_FORMAT)}</h5>
         </div>
-        <div className="fill-container table-container">
-          <table className="financial-comparison rep-table tb-comparison-table">
-            <thead>
-              <tr>
-                <th className="text-align-left" style={{ width: "420px" }}>
-                  <span>Account</span>
-                </th>
-                <th
-                  className="text-align-left new-section"
-                  style={{ width: "176px" }}
-                >
-                  Account Code
-                </th>
-                <th
-                  className="text-align-right new-section"
-                  style={{ width: "176px" }}
-                >
-                  Net Debit
-                </th>
-                <th className="text-align-right" style={{ width: "176px" }}>
-                  Net Credit
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="row-header">
-                <td colSpan={4}>Test</td>
-              </tr>
-              <tr>
-                <td>Accounts Payable</td>
-                <td className="new-section">7474</td>
-
-                <td className="text-align-right new-section">
-                  <a href="/">0</a>
-                </td>
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-              </tr>
-              <tr>
-                <td>Accounts Payable</td>
-                <td>7474</td>
-
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr className="row-header">
-                <td colSpan={4}>Test</td>
-              </tr>
-              <tr>
-                <td>Accounts Payable</td>
-                <td className="new-section">7474</td>
-
-                <td className="text-align-right new-section">
-                  <a href="/">0</a>
-                </td>
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-              </tr>
-              <tr>
-                <td>Accounts Payable</td>
-                <td>7474</td>
-
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-                <td className="text-align-right">
-                  <a href="/">0</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        {queryLoading ? (
+          <Flex justify="center" align="center" style={{ height: "40vh" }}>
+            <Spin size="large" />
+          </Flex>
+        ) : (
+          <div className="fill-container table-container">
+            <table className="financial-comparison rep-table tb-comparison-table">
+              <thead>
+                <tr>
+                  <th className="text-align-left" style={{ width: "420px" }}>
+                    <span><FormattedMessage id="report.account" defaultMessage="Account" /></span>
+                  </th>
+                  <th
+                    className="text-align-left new-section"
+                    style={{ width: "176px" }}
+                  >
+                    <FormattedMessage id="report.accountCode" defaultMessage="Account Code" />
+                  </th>
+                  <th
+                    className="text-align-right new-section"
+                    style={{ width: "176px" }}
+                  >
+                    <FormattedMessage id="report.netDebit" defaultMessage="Net Debit" />
+                  </th>
+                  <th className="text-align-right" style={{ width: "176px" }}>
+                    <FormattedMessage id="report.netCredit" defaultMessage="Net Credit" />
+                  </th>
+                </tr>
+              </thead>
+              {parsedData.map((data) => (
+                <tbody key={data.mainType}>
+                  <tr className="row-header">
+                    <td colSpan={4}>
+                      <b>{data.mainType}</b>
+                    </td>
+                  </tr>
+                  {data.accounts.map((acc) => (
+                    <tr key={acc.accountName}>
+                      <td>{acc.accountName}</td>
+                      <td>{acc.accountCode}</td>
+                      {/* <td className="new-section">7474</td> */}
+                      <td className="text-align-right new-section">
+                        <a href="/">
+                          <FormattedNumber value={acc.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        </a>
+                      </td>
+                      <td className="text-align-right">
+                        <a href="/">
+                          <FormattedNumber value={acc.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
+            </table>
+          </div>
+        )}
+        <div style={{ paddingLeft: "1.5rem" }}>
+          <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
         </div>
       </div>
     </div>

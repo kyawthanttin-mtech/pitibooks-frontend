@@ -23,9 +23,12 @@ const LoginPage = () => {
       localStorage.setItem("role", data.login.role);
       localStorage.setItem("module", data.login.modules);
       localStorage.setItem("businessName", data.login.businessName);
+      localStorage.setItem("baseCurrencyId", data.login.baseCurrencyId);
+      localStorage.setItem("baseCurrencyName", data.login.baseCurrencyName);
+      localStorage.setItem("baseCurrencySymbol", data.login.baseCurrencySymbol);
+      localStorage.setItem("fiscalYear", data.login.fiscalYear);
+      localStorage.setItem("timezone", data.login.timezone);
       navigate(from, { replace: true });
-
-      console.log(data.login)
     },
     onError(err) {
       openErrorNotification(api, err.message);
@@ -70,7 +73,7 @@ const LoginPage = () => {
         <Form.Item
           label="Username"
           name="username"
-          initialValue="piti@gmail.com"
+          // initialValue="kyawthanttin"
           rules={[
             {
               required: true,
@@ -84,7 +87,7 @@ const LoginPage = () => {
         <Form.Item
           label="Password"
           name="password"
-          initialValue="default123"
+          // initialValue="123456"
           rules={[
             {
               required: true,

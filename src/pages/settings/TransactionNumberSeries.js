@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "./TransactionNumberSeries.css";
 
-import { Button, Modal, Form, Input, Table, Tag, Dropdown } from "antd";
+import { Button, Modal, Form, Input, Table, Dropdown } from "antd";
 import {
   PlusOutlined,
   DownCircleFilled,
@@ -11,7 +11,7 @@ import {
 import { useQuery, useMutation } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -48,7 +48,7 @@ const modalTableColumns = [
     render: (text, record) => {
       return (
         <Form.Item name={record.moduleName} style={{ margin: 0 }}>
-          <Input />
+          <Input maxLength={10} />
         </Form.Item>
       );
     },
@@ -100,7 +100,7 @@ const modalTableDataSource = [
 
 const TransactionNumberSeries = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi} = useOutletContext();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createFormRef] = Form.useForm();
   const [editRecord, setEditRecord] = useState(null);
@@ -127,8 +127,8 @@ const TransactionNumberSeries = () => {
   const [createTransactionNumberSeries, { loading: createLoading }] =
     useMutation(CREATE_TRANSACTION_NUMBER_SERIES, {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="transactionNumberSeries.created"
             defaultMessage="New Transaction Number Series Created"
@@ -141,8 +141,8 @@ const TransactionNumberSeries = () => {
   const [updateTransactionNumberSeries, { loading: updateLoading }] =
     useMutation(UPDATE_TRANSACTION_NUMBER_SERIES, {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="transactionNumberSeries.updated"
             defaultMessage="Transaction Number Series Updated"
@@ -155,8 +155,8 @@ const TransactionNumberSeries = () => {
   const [deleteTransactionNumberSeries, { loading: deleteLoading }] =
     useMutation(DELETE_TRANSACTION_NUMBER_SERIES, {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="transactionNumberSeries.deleted"
             defaultMessage="Transaction Number Series Deleted"
@@ -326,9 +326,19 @@ const TransactionNumberSeries = () => {
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="transactionNumberSeries.name.required" defaultMessage="Enter the Series Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="transactionNumberSeries.name.required"
+                defaultMessage="Enter the Series Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input />
+        <Input maxLength={100}/>
       </Form.Item>
       <Table
         columns={modalTableColumns}
@@ -349,9 +359,19 @@ const TransactionNumberSeries = () => {
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="transactionNumberSeries.name.required" defaultMessage="Enter the Series Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="transactionNumberSeries.name.required"
+                defaultMessage="Enter the Series Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input />
+        <Input maxLength={100}/>
       </Form.Item>
       <Table
         columns={modalTableColumns}

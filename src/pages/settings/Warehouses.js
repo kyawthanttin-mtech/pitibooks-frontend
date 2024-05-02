@@ -1,25 +1,19 @@
 import React, { useState, useMemo } from "react";
 import { Button, Table, Dropdown, Tag, Modal, Form, Input, Select } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useReadQuery } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 
 import {
-  BranchQueries,
-  StateQueries,
-  TownshipQueries,
   WarehouseMutations,
   WarehouseQueries,
 } from "../../graphql";
 
-const { GET_ALL_BRANCHES } = BranchQueries;
-const { GET_ALL_TOWNSHIPS } = TownshipQueries;
-const { GET_ALL_STATES } = StateQueries;
 const { GET_WAREHOUSES } = WarehouseQueries;
 const {
   CREATE_WAREHOUSE,
@@ -36,10 +30,10 @@ const Warehouses = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi, allBranchesQueryRef, allStatesQueryRef, allTownshipsQueryRef, refetchAllWarehouses} = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
   const [selectedEditState, setSelectedEditState] = useState(null);
-
+  
   // Queries and mutations
   const { data, loading: queryLoading } = useQuery(GET_WAREHOUSES, {
     errorPolicy: "all",
@@ -50,47 +44,22 @@ const Warehouses = () => {
     },
   });
 
-  const { data: branchData, loading: branchLoading } = useQuery(GET_ALL_BRANCHES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: townshipData, loading: townshipLoading } = useQuery(
-    GET_ALL_TOWNSHIPS,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
-
-  const { data: stateData, loading: stateLoading } = useQuery(GET_ALL_STATES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
+  const { data: branchData } = useReadQuery(allBranchesQueryRef);
+  const { data: stateData } = useReadQuery(allStatesQueryRef);
+  const { data: townshipData } = useReadQuery(allTownshipsQueryRef);
 
   const [createWarehouse, { loading: createLoading }] = useMutation(
     CREATE_WAREHOUSE,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="warehouse.created"
             defaultMessage="New Warehouse Created"
           />
         );
+        refetchAllWarehouses();
       },
       refetchQueries: [GET_WAREHOUSES],
     }
@@ -100,13 +69,14 @@ const Warehouses = () => {
     UPDATE_WAREHOUSE,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="warehouse.updated"
             defaultMessage="Warehouse Updated"
           />
         );
+        refetchAllWarehouses();
       },
       refetchQueries: [GET_WAREHOUSES],
     }
@@ -116,13 +86,14 @@ const Warehouses = () => {
     DELETE_WAREHOUSE,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="warehouse.deleted"
             defaultMessage="Warehouse Deleted"
           />
         );
+        refetchAllWarehouses();
       },
       refetchQueries: [GET_WAREHOUSES],
     }
@@ -132,13 +103,14 @@ const Warehouses = () => {
     TOGGLE_ACTIVE_WAREHOUSE,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="warehouse.updated.status"
             defaultMessage="Warehouse Status Updated"
           />
         );
+        refetchAllWarehouses();
       },
       refetchQueries: [GET_WAREHOUSES],
     }
@@ -158,10 +130,10 @@ const Warehouses = () => {
       country: item.country,
       state: item.state,
       stateName: item.state.stateNameEn,
-      stateId: item.state.id || '',
+      stateId: item.state.id || "",
       township: item.township,
       townshipName: item.township.townshipNameEn,
-      townshipId: item.township.id || '',
+      townshipId: item.township.id || "",
       isActive: item.isActive,
       mobile: item.mobile,
     }));
@@ -172,9 +144,6 @@ const Warehouses = () => {
     createLoading ||
     updateLoading ||
     deleteLoading ||
-    branchLoading ||
-    townshipLoading ||
-    stateLoading ||
     toggleActiveLoading;
 
   const handleCreateModalOk = async () => {
@@ -230,9 +199,9 @@ const Warehouses = () => {
       phone: record.phoneNumber,
       branchId: record.branchId,
       country: record.country,
-      stateId: record.stateId || '',
+      stateId: record.stateId || "",
       city: record.city,
-      townshipId: record.townshipId || '',
+      townshipId: record.townshipId || "",
       mobile: record.mobile,
     });
 
@@ -245,9 +214,14 @@ const Warehouses = () => {
   const handleEditModalOk = async () => {
     try {
       const values = await editFormRef.validateFields();
+      const input = {
+        ...values,
+        stateId: values.stateId ? values.stateId : 0,
+        townshipId: values.townshipId ? values.townshipI : 0,
+      }
       // console.log("Field values:", values);
       await updateWarehouse({
-        variables: { id: editRecord.id, input: values },
+        variables: { id: editRecord.id, input },
       });
 
       setEditModalOpen(false);
@@ -374,7 +348,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
@@ -419,7 +393,7 @@ const Warehouses = () => {
               stateData?.listAllState.find((state) => state.id === value)
             );
             createFormRef.setFieldsValue({
-              "townshipId": null,
+              townshipId: null,
             });
           }}
         >
@@ -441,7 +415,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -482,7 +456,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input.TextArea rows={4}></Input.TextArea>
+        <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
       </Form.Item>
       {/* <Form.Item
         label="Email"
@@ -500,7 +474,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
@@ -509,7 +483,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
     </Form>
   );
@@ -528,7 +502,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
@@ -572,7 +546,7 @@ const Warehouses = () => {
               stateData?.listAllState.find((state) => state.id === value)
             );
             editFormRef.setFieldsValue({
-              "townshipId": null,
+              townshipId: null,
             });
           }}
         >
@@ -594,7 +568,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -653,7 +627,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
@@ -662,7 +636,7 @@ const Warehouses = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={20}></Input>
       </Form.Item>
     </Form>
   );
@@ -717,6 +691,7 @@ const Warehouses = () => {
       </div>
       <div className="page-content">
         <Table
+          className="main-table"
           loading={loading}
           columns={columns}
           dataSource={parsedData?.map((item) => ({ ...item, key: item.id }))}

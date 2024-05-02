@@ -4,19 +4,39 @@ const CREATE_JOURNAL = gql`
   mutation CreateJournal($input: NewJournal!) {
     createJournal(input: $input) {
       id
-      businessId
+      branch {
+        id
+        name
+      }
       journalNumber
       referenceNumber
       journalDate
       journalNotes
-      contactId
-      contactType
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
+      supplier {
+        id
+        name
+      }
+      customer {
+        id
+        name
+      }
       journalTotalAmount
-      createdAt
-      updatedAt
+      # documents{
+
+      # }
       transactions {
         id
         journalId
+        account {
+          id
+          name
+        }
         description
         debit
         credit
@@ -29,19 +49,37 @@ const UPDATE_JOURNAL = gql`
   mutation UpdateJournal($id: ID!, $input: NewJournal!) {
     updateJournal(id: $id, input: $input) {
       id
-      businessId
+      branch {
+        id
+        name
+      }
       journalNumber
       referenceNumber
       journalDate
       journalNotes
-      contactId
-      contactType
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
+      supplier {
+        id
+        name
+      }
+      customer {
+        id
+        name
+      }
       journalTotalAmount
-      createdAt
-      updatedAt
+      documents
       transactions {
         id
         journalId
+        account {
+          id
+          name
+        }
         description
         debit
         credit
@@ -54,16 +92,41 @@ const DELETE_JOURNAL = gql`
   mutation DeleteJournal($id: ID!) {
     deleteJournal(id: $id) {
       id
-      businessId
+      branch {
+        id
+        name
+      }
       journalNumber
       referenceNumber
       journalDate
       journalNotes
-      contactId
-      contactType
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
+      supplier {
+        id
+        name
+      }
+      customer {
+        id
+        name
+      }
       journalTotalAmount
-      createdAt
-      updatedAt
+      documents
+      transactions {
+        id
+        journalId
+        account {
+          id
+          name
+        }
+        description
+        debit
+        credit
+      }
     }
   }
 `;

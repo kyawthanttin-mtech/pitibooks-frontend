@@ -8,6 +8,10 @@ import TransferOrderNew from "./TransferOrderNew";
 import AdjustStock from "./AdjustStock";
 import OpeningStock from "./OpeningStock";
 import InventoryAdjustmentsNew from "./InventoryAdjustmentsNew";
+import ProductCategories from "./ProductCategories";
+import ProductUnits from "./ProductUnits";
+import ProductsEdit from "./ProductsEdit";
+import ProductGroupsEdit from "./ProductGroupsEdit";
 
 export {
   Products,
@@ -20,4 +24,8 @@ export {
   AdjustStock,
   ProductGroupsNew,
   OpeningStock,
+  ProductCategories,
+  ProductUnits,
+  ProductsEdit,
+  ProductGroupsEdit,
 };

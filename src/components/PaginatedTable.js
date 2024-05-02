@@ -1,26 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   LeftOutlined,
   RightOutlined,
   SyncOutlined,
-  PlusOutlined,
   SearchOutlined,
-  ClearOutlined,
-  CloseOutlined,
-  MoreOutlined,
-  DeleteOutlined,
-  EditOutlined,
 } from "@ant-design/icons";
-import {
-  Button,
-  Row,
-  Space,
-  Table,
-  Modal,
-  Tooltip,
-  Empty,
-  Dropdown,
-} from "antd";
+import { Button, Row, Space, Table, Modal, Tooltip } from "antd";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import { FormattedMessage } from "react-intl";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -48,15 +33,12 @@ const PaginatedTable = ({
   gqlQuery,
   parseData,
   parsePageInfo,
-  showAddNew = false,
   showSearch = false,
   searchForm,
   searchFormRef,
   searchQqlQuery,
   parseSearchData,
-  onAddNew,
-  onEdit,
-  onDelete,
+  setHoveredRow,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,7 +70,7 @@ const PaginatedTable = ({
       try {
         await fetchMore({
           variables: {
-            first: QUERY_DATA_LIMIT,
+            limit: QUERY_DATA_LIMIT,
             after: parsePageInfo(data).endCursor,
           },
         });
@@ -139,10 +121,10 @@ const PaginatedTable = ({
     refetch,
   } = useQuery(gqlQuery, {
     errorPolicy: "all",
-    fetchPolicy: "cache-first",
+    fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
-      first: QUERY_DATA_LIMIT,
+      limit: QUERY_DATA_LIMIT,
     },
     onError(err) {
       openErrorNotification(api, err.message);
@@ -159,7 +141,7 @@ const PaginatedTable = ({
   }, [searchCriteria, searchFormRef, search]);
 
   const allData = parseData(data);
-  console.log(allData);
+
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
   const totalPages = Math.ceil(allData.length / QUERY_DATA_LIMIT);
   let hasPreviousPage = currentPage > 1 ? true : false;
@@ -178,10 +160,11 @@ const PaginatedTable = ({
   }
 
   const loading = queryLoading || searchLoading;
+  !loading && console.log(data);
 
   return (
-    <div className="wrapper">
-      <div className="paginated-table">
+    <div>
+      <div>
         {showSearch && (
           <Modal
             title={
@@ -214,6 +197,29 @@ const PaginatedTable = ({
             {searchForm}
           </Modal>
         )}
+
+        <Table
+          className="main-table"
+          rowKey={(record) => record.id}
+          loading={loading}
+          columns={columns}
+          dataSource={searchCriteria ? parseSearchData(searchData) : pageData}
+          pagination={false}
+          onRow={(record) => {
+            if (setHoveredRow) {
+              return {
+                key: record.id,
+                onMouseEnter: () => setHoveredRow(record.id),
+                onMouseLeave: () => setHoveredRow(null),
+              };
+            } else {
+              return {
+                key: record.id,
+              };
+            }
+          }}
+        />
+
         <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
           <Space>
             {showSearch && (
@@ -232,7 +238,7 @@ const PaginatedTable = ({
                 />
               </Tooltip>
             )}
-            {/* {searchCriteria && 
+            {/* {searchCriteria &&
                         <Tooltip title={<FormattedMessage id="button.clearSearch" defaultMessage="Clear Search Results" />}>
                             <Button
                                 icon={<ClearOutlined />}
@@ -241,7 +247,7 @@ const PaginatedTable = ({
                             />
                         </Tooltip>
                     } */}
-            {showAddNew && (
+            {/* {showAddNew && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -256,9 +262,9 @@ const PaginatedTable = ({
               >
                 <FormattedMessage id="button.new" defaultMessage="New" />
               </Button>
-            )}
+            )} */}
           </Space>
-          <Space>
+          <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
             <Tooltip
               title={
                 <FormattedMessage
@@ -303,141 +309,7 @@ const PaginatedTable = ({
             </Tooltip>
           </Space>
         </Row>
-        <Table
-          className={selectedRecord ? "column-width" : "full-width"}
-          rowKey="id"
-          loading={loading}
-          columns={selectedRecord ? compactColumns : columns}
-          dataSource={searchCriteria ? parseSearchData(searchData) : pageData}
-          pagination={false}
-          rowSelection={{ selectedRowKeys: [selectedRowIndex] }}
-          selectedRecord={selectedRecord}
-          onRow={(record) => {
-            return {
-              onClick: () => {
-                setSelectedRecord(record);
-                setSelectedRowIndex(record.id);
-              },
-            };
-          }}
-        />
       </div>
-
-      {selectedRecord && (
-        <div className="content-column">
-          <Row
-            className="content-column-header-row"
-            style={{
-              backgroundColor: "white",
-              justifyContent: "space-between",
-            }}
-          >
-            <div className="content-title-block">
-              <div style={{ display: "flex", flexDirection: "row" }}>
-                <div className="content-title-sub">
-                  {selectedRecord.detailType}
-                </div>
-                {/* {!selectedRecord.isActive && (
-              <Tag color="magenta">
-                <FormattedMessage
-                  id="status.inactive"
-                  defaultMessage="Inactive"
-                />
-              </Tag>
-            )} */}
-              </div>
-              <div className="content-title-main">{selectedRecord.name}</div>
-            </div>
-            <Button
-              icon={<CloseOutlined />}
-              type="text"
-              loading={loading}
-              onClick={() => {
-                setSelectedRecord(null);
-                setSelectedRowIndex(0);
-              }}
-            />
-          </Row>
-          <Row className="content-column-action-row">
-            <Dropdown.Button
-              trigger={["click"]}
-              type="text"
-              icon={<MoreOutlined />}
-              loading={loading}
-              onClick={() => {
-                onEdit(selectedRecord, navigate, location);
-              }}
-              menu={{
-                items: [
-                  // {
-                  //   label: selectedRecord?.isActive ? (
-                  //     <FormattedMessage
-                  //       id="button.markAsInactive"
-                  //       defaultMessage="Mark as Inactive"
-                  //     />
-                  //   ) : (
-                  //     <FormattedMessage
-                  //       id="button.markAsActive"
-                  //       defaultMessage="Mark as Active"
-                  //     />
-                  //   ),
-                  //   key: "1",
-                  //   icon: selectedRecord?.isActive ? (
-                  //     <MinusCircleOutlined />
-                  //   ) : (
-                  //     <PlusCircleOutlined />
-                  //   ),
-                  // },
-                  {
-                    label: (
-                      <FormattedMessage
-                        id="button.delete"
-                        defaultMessage="Delete"
-                      />
-                    ),
-                    key: "2",
-                    icon: <DeleteOutlined />,
-                  },
-                ],
-                onClick: async ({ key }) => {
-                  onDelete(selectedRecord);
-                },
-              }}
-            >
-              <EditOutlined />
-              <FormattedMessage id="button.edit" defaultMessage="Edit" />
-            </Dropdown.Button>
-          </Row>
-          <Row
-            className="content-column-brief-row"
-            style={{ backgroundColor: "white" }}
-          >
-            <div className="content-title-block">
-              {/* <Statistic
-              title={
-                "Category"
-              }
-              value={100000}
-              // valueStyle={{ color: Theme.colorPrimary }}
-              prefix="MMK"
-            /> */}
-              <h4>{selectedRecord.name}</h4>
-              <div className="content-description">
-                <span style={{ fontStyle: "italic" }}>
-                  <FormattedMessage
-                    id="account.description"
-                    defaultMessage="City"
-                  />
-                </span>
-                :{selectedRecord.city ? selectedRecord.city : " - "}
-              </div>
-            </div>
-          </Row>
-          <Row className="content-column-full-row">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </Row>
-        </div>
-      )}
     </div>
   );
 };

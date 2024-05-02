@@ -1,6 +1,16 @@
 import React, { useState, useMemo } from "react";
 
-import { Button, Table, Tag, Modal, Form, Input, Select, Dropdown, InputNumber } from "antd";
+import {
+  Button,
+  Table,
+  Tag,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Dropdown,
+  InputNumber,
+} from "antd";
 import {
   PlusOutlined,
   DownCircleFilled,
@@ -10,7 +20,7 @@ import {
 import { useQuery, useMutation } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -18,14 +28,19 @@ import { CurrencyQueries } from "../../graphql";
 import { CurrencyMutations } from "../../graphql";
 
 const { GET_CURRENCIES } = CurrencyQueries;
-const { CREATE_CURRENCY, UPDATE_CURRENCY, DELETE_CURRENCY, TOGGLE_ACTIVE_CURRENCY } = CurrencyMutations;
+const {
+  CREATE_CURRENCY,
+  UPDATE_CURRENCY,
+  DELETE_CURRENCY,
+  TOGGLE_ACTIVE_CURRENCY,
+} = CurrencyMutations;
 
 const Currencies = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModal, contextHolder] = Modal.useModal();
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi, refetchAllCurrencies} = useOutletContext();
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [editRecord, setEditRecord] = useState(null);
@@ -47,11 +62,14 @@ const Currencies = () => {
     CREATE_CURRENCY,
     {
       onCompleted() {
-        openSuccessNotification(notiApi, 
-        <FormattedMessage
-          id="currency.created"
-          defaultMessage="New Currency Created"
-        />);
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="currency.created"
+            defaultMessage="New Currency Created"
+          />
+        );
+        refetchAllCurrencies();
       },
       refetchQueries: [GET_CURRENCIES],
     }
@@ -61,11 +79,14 @@ const Currencies = () => {
     UPDATE_CURRENCY,
     {
       onCompleted() {
-        openSuccessNotification(notiApi, 
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="currency.updated"
             defaultMessage="Currency Updated"
-          />);
+          />
+        );
+        refetchAllCurrencies();
       },
       refetchQueries: [GET_CURRENCIES],
     }
@@ -75,11 +96,14 @@ const Currencies = () => {
     DELETE_CURRENCY,
     {
       onCompleted() {
-        openSuccessNotification(notiApi, 
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="currency.deleted"
             defaultMessage="Currency Deleted"
-          />);
+          />
+        );
+        refetchAllCurrencies();
       },
       refetchQueries: [GET_CURRENCIES],
     }
@@ -89,20 +113,25 @@ const Currencies = () => {
     TOGGLE_ACTIVE_CURRENCY,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="currency.updated.status"
             defaultMessage="Currency Status Updated"
           />
         );
+        refetchAllCurrencies();
       },
       refetchQueries: [GET_CURRENCIES],
     }
   );
 
   const loading =
-    queryLoading || createLoading || updateLoading || deleteLoading || toggleActiveLoading;
+    queryLoading ||
+    createLoading ||
+    updateLoading ||
+    deleteLoading ||
+    toggleActiveLoading;
 
   const handleCreateModalOk = async () => {
     try {
@@ -193,12 +222,7 @@ const Currencies = () => {
 
   const columns = [
     {
-      title: 
-        <FormattedMessage
-          id="label.name"
-          defaultMessage="Name"
-        />
-      ,
+      title: <FormattedMessage id="label.name" defaultMessage="Name" />,
       dataIndex: "name",
       key: "name",
       // render: (text, record) => (
@@ -221,22 +245,17 @@ const Currencies = () => {
       ),
     },
     {
-      title: 
-        <FormattedMessage
-          id="label.symbol"
-          defaultMessage="Symbol"
-        />
-      ,
+      title: <FormattedMessage id="label.symbol" defaultMessage="Symbol" />,
       dataIndex: "symbol",
       key: "symbol",
     },
     {
-      title: 
+      title: (
         <FormattedMessage
           id="label.exchangeRate"
           defaultMessage="Exchange Rate"
         />
-      ,
+      ),
       dataIndex: "exchangeRate",
       key: "exchangeRate",
     },
@@ -303,18 +322,25 @@ const Currencies = () => {
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
         label={
-          <FormattedMessage
-            id="currency.name"
-            defaultMessage="Currency Name"
-          />
+          <FormattedMessage id="currency.name" defaultMessage="Currency Name" />
         }
         labelAlign="left"
         name="name"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.name.required" defaultMessage="Enter the Currency Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.name.required"
+                defaultMessage="Enter the Currency Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -327,9 +353,19 @@ const Currencies = () => {
         name="symbol"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.symbol.required" defaultMessage="Enter the Currency Symbol" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.symbol.required"
+                defaultMessage="Enter the Currency Symbol"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={3}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -342,7 +378,17 @@ const Currencies = () => {
         name="decimalPlaces"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.decimalPlaces.required" defaultMessage="Select the Decimal Places" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.decimalPlaces.required"
+                defaultMessage="Select the Decimal Places"
+              />
+            ),
+          },
+        ]}
       >
         <Select>
           <Select.Option key="1" value="0">
@@ -367,7 +413,17 @@ const Currencies = () => {
         name="exchangeRate"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.exchangeRate.required" defaultMessage="Enter the Exchange Rate" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.exchangeRate.required"
+                defaultMessage="Enter the Exchange Rate"
+              />
+            ),
+          },
+        ]}
       >
         <InputNumber min={0.001} />
       </Form.Item>
@@ -378,18 +434,25 @@ const Currencies = () => {
     <Form form={editFormRef} onFinish={handleEditModalOk}>
       <Form.Item
         label={
-          <FormattedMessage
-            id="currency.name"
-            defaultMessage="Currency Name"
-          />
+          <FormattedMessage id="currency.name" defaultMessage="Currency Name" />
         }
         labelAlign="left"
         name="name"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.name.required" defaultMessage="Enter the Currency Name" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.name.required"
+                defaultMessage="Enter the Currency Name"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -402,9 +465,19 @@ const Currencies = () => {
         name="symbol"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.symbol.required" defaultMessage="Enter the Currency Symbol" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.symbol.required"
+                defaultMessage="Enter the Currency Symbol"
+              />
+            ),
+          },
+        ]}
       >
-        <Input></Input>
+        <Input maxLength={3}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -417,7 +490,17 @@ const Currencies = () => {
         name="decimalPlaces"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.decimalPlaces.required" defaultMessage="Select the Decimal Places" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.decimalPlaces.required"
+                defaultMessage="Select the Decimal Places"
+              />
+            ),
+          },
+        ]}
       >
         <Select>
           <Select.Option key="1" value="0">
@@ -442,7 +525,17 @@ const Currencies = () => {
         name="exchangeRate"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
-        rules={[{ required: true, message: <FormattedMessage id="currency.exchangeRate.required" defaultMessage="Enter the Exchange Rate" /> }]}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="currency.exchangeRate.required"
+                defaultMessage="Enter the Exchange Rate"
+              />
+            ),
+          },
+        ]}
       >
         <InputNumber min={0.001} />
       </Form.Item>
@@ -455,10 +548,7 @@ const Currencies = () => {
       <Modal
         width="40rem"
         title={
-          <FormattedMessage
-            id="currency.new"
-            defaultMessage="New Currency"
-          />
+          <FormattedMessage id="currency.new" defaultMessage="New Currency" />
         }
         open={createModalOpen}
         onCancel={handleCreateModalCancel}
@@ -474,10 +564,7 @@ const Currencies = () => {
       <Modal
         width="40rem"
         title={
-          <FormattedMessage
-            id="currency.edit"
-            defaultMessage="Edit Currency"
-          />
+          <FormattedMessage id="currency.edit" defaultMessage="Edit Currency" />
         }
         open={editModalOpen}
         onCancel={handleEditModalCancel}
@@ -492,10 +579,7 @@ const Currencies = () => {
       </Modal>
       <div className="page-header page-header-with-button">
         <p className="page-header-text">
-          <FormattedMessage
-            id="menu.currencies"
-            defaultMessage="Currencies"
-          />
+          <FormattedMessage id="menu.currencies" defaultMessage="Currencies" />
         </p>
         <Button
           icon={<PlusOutlined />}
@@ -507,6 +591,7 @@ const Currencies = () => {
       </div>
       <div className="page-content">
         <Table
+          className="main-table"
           loading={loading}
           dataSource={queryData?.map((item) => ({
             ...item,

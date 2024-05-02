@@ -1,60 +1,33 @@
+/* eslint-disable react/style-prop-object */
 import React, { useState } from "react";
 
-import { Row, Modal, Form, Col, Input, DatePicker, Space, Select } from "antd";
+import { Row, Modal, Form, Col, Input, DatePicker, Select } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import { useQuery, useMutation } from "@apollo/client";
+import { useMutation, useReadQuery } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import { PaginatedJournal } from "../../components";
-
-// import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 import "./ManualJournals.css";
 
-import {
-  JournalQueries,
-  JournalMutations,
-  AccountQueries,
-  BranchQueries,
-} from "../../graphql";
+import { JournalQueries, JournalMutations } from "../../graphql";
 const { GET_PAGINATED_JOURNALS } = JournalQueries;
 const { DELETE_JOURNAL } = JournalMutations;
-const { GET_ALL_ACCOUNTS } = AccountQueries;
-const { GET_ALL_BRANCHES } = BranchQueries;
 
 const ManualJournals = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  // const navigate = useNavigate();
-  // const location = useLocation();
-  const [notiApi] = useOutletContext();
+  const { notiApi, msgApi, allBranchesQueryRef } = useOutletContext();
   const [searchJournalFormRef] = Form.useForm();
 
   // Queries
-  const { data: branchData, loading: branchLoading } = useQuery(GET_ALL_BRANCHES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: accountData, loading: accountLoading } = useQuery(
-    GET_ALL_ACCOUNTS,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
+  const { data: branchData } = useReadQuery(allBranchesQueryRef);
 
   // Mutations
   const [deleteJournal, { loading: deleteLoading }] = useMutation(
@@ -62,7 +35,13 @@ const ManualJournals = () => {
 
     {
       onCompleted() {
-        openSuccessNotification(notiApi, <FormattedMessage id="journal.deleted" defaultMessage="Journal Deleted" />);
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="journal.deleted"
+            defaultMessage="Journal Deleted"
+          />
+        );
       },
       onError(err) {
         openErrorNotification(notiApi, err.message);
@@ -88,39 +67,39 @@ const ManualJournals = () => {
     }
   );
 
-  const loading = deleteLoading || branchLoading || accountLoading;
+  const loading = deleteLoading;
 
   const parseData = (data) => {
     let journals = [];
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    // const monthNames = [
+    //   "Jan",
+    //   "Feb",
+    //   "Mar",
+    //   "Apr",
+    //   "May",
+    //   "Jun",
+    //   "Jul",
+    //   "Aug",
+    //   "Sep",
+    //   "Oct",
+    //   "Nov",
+    //   "Dec",
+    // ];
 
     data?.paginateJournal?.edges.forEach(({ node }) => {
       if (node != null) {
-        const date = new Date(node.journalDate);
+        // const date = new Date(node.journalDate);
 
-        const day = date.getDate();
-        const month = monthNames[date.getMonth()];
-        const year = date.getFullYear();
+        // const day = date.getDate();
+        // const month = monthNames[date.getMonth()];
+        // const year = date.getFullYear();
 
-        const formattedDate = `${day} ${month} ${year}`;
+        // const formattedDate = `${day} ${month} ${year}`;
 
         journals.push({
           key: node.id,
           id: node.id,
-          date: formattedDate,
+          date: dayjs(node.journalDate).format(REPORT_DATE_FORMAT),
           originalDate: node.journalDate,
           branch: node.branch,
           currency: node.currency,
@@ -129,6 +108,8 @@ const ManualJournals = () => {
           referenceNumber: node.referenceNumber,
           totalAmount: node.journalTotalAmount,
           transactions: node.transactions,
+          supplier: node.supplier,
+          customer: node.customer,
         });
       }
     });
@@ -151,14 +132,12 @@ const ManualJournals = () => {
   };
 
   const handleEdit = (record, navigate, location) => {
-    // console.log("edit record", record);
-    // navigate("edit", {
-    //   state: {
-    //     record,
-    //   },
-    // });
     navigate("edit", {
-      state: { ...location.state, from: { pathname: location.pathname }, record },
+      state: {
+        ...location.state,
+        from: { pathname: location.pathname },
+        record,
+      },
     });
   };
 
@@ -179,10 +158,12 @@ const ManualJournals = () => {
             id: id,
           },
         });
+        return true;
       } catch (err) {
         openErrorNotification(notiApi, err.message);
       }
     }
+    return false;
   };
 
   const columns = [
@@ -197,32 +178,34 @@ const ManualJournals = () => {
       render: (_, record) => <>{record.branch.name}</>,
     },
     {
-      title: <FormattedMessage id="label.journalNumber" defaultMessage="Journal #" />,
+      title: (
+        <FormattedMessage id="label.journalNumber" defaultMessage="Journal #" />
+      ),
       dataIndex: "journalNumber",
       key: "journalNumber",
     },
     {
-      title: <FormattedMessage id="label.referenceNumber" defaultMessage="Reference #" />,
+      title: (
+        <FormattedMessage
+          id="label.referenceNumber"
+          defaultMessage="Reference #"
+        />
+      ),
       dataIndex: "referenceNumber",
       key: "referenceNumber",
     },
-    // {
-    //   title: "Statue",
-    //   dataIndex: "status",
-    //   key: "status",
-    // },
-    // {
-    //   title: <FormattedMessage id="label.notes" defaultMessage="Notes" />,
-    //   dataIndex: "notes",
-    //   key: "notes",
-    // },
     {
       title: <FormattedMessage id="label.amount" defaultMessage="Amount" />,
       dataIndex: "totalAmount",
       key: "totalAmount",
       render: (text, record) => (
         <>
-          {record.currency.symbol} {text}
+          {record.currency.symbol}{" "}
+          <FormattedNumber
+            value={text}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
         </>
       ),
     },
@@ -246,9 +229,14 @@ const ManualJournals = () => {
   const searchJournalForm = (
     <Form form={searchJournalFormRef}>
       <Row>
-        <Col lg={12}>
+        <Col span={12}>
           <Form.Item
-            label={<FormattedMessage id="label.journalNumber" defaultMessage="Journal #" />}
+            label={
+              <FormattedMessage
+                id="label.journalNumber"
+                defaultMessage="Journal #"
+              />
+            }
             name="journalNumber"
             labelAlign="left"
             labelCol={{ span: 6 }}
@@ -257,9 +245,14 @@ const ManualJournals = () => {
             <Input></Input>
           </Form.Item>
         </Col>
-        <Col lg={12}>
+        <Col span={12}>
           <Form.Item
-            label={<FormattedMessage id="label.referenceNumber" defaultMessage="Reference #" />}
+            label={
+              <FormattedMessage
+                id="label.referenceNumber"
+                defaultMessage="Reference #"
+              />
+            }
             name="referenceNumber"
             labelAlign="left"
             labelCol={{ span: 6 }}
@@ -270,9 +263,14 @@ const ManualJournals = () => {
         </Col>
       </Row>
       <Row>
-        <Col lg={12}>
+        <Col span={12}>
           <Form.Item
-            label={<FormattedMessage id="label.dateRange" defaultMessage="Date Range" />}
+            label={
+              <FormattedMessage
+                id="label.dateRange"
+                defaultMessage="Date Range"
+              />
+            }
             name="dateRange"
             labelAlign="left"
             labelCol={{ span: 6 }}
@@ -285,22 +283,36 @@ const ManualJournals = () => {
             />
           </Form.Item>
         </Col>
-        {/* <Col lg={12}>
+        <Col span={12}>
           <Form.Item
-            label="Status"
-            name="status"
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
+            name="branch"
             labelAlign="left"
             labelCol={{ span: 6 }}
             wrapperCol={{ span: 15 }}
           >
-            <Input></Input>
+            <Select allowClear showSearch optionFilterProp="label">
+              {branchData?.listAllBranch?.map((branch) => (
+                <Select.Option
+                  key={branch.id}
+                  value={branch.id}
+                  label={branch.stateNameEn}
+                >
+                  {branch.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
-        </Col> */}
+        </Col>
       </Row>
-      <Row>
-        <Col lg={12}>
+      {/* <Row>
+        <Col span={12}>
           <Form.Item
-            label={<FormattedMessage id="label.account" defaultMessage="Account" />}
+            label={
+              <FormattedMessage id="label.account" defaultMessage="Account" />
+            }
             name="accountId"
             labelAlign="left"
             labelCol={{ span: 6 }}
@@ -312,7 +324,7 @@ const ManualJournals = () => {
               optionFilterProp="label"
               placeholder="Select an account"
             >
-              {accountData?.listAllAccount.map((account) => (
+              {accountData?.listAllAccount?.map((account) => (
                 <Select.Option
                   key={account.id}
                   value={account.id}
@@ -324,7 +336,7 @@ const ManualJournals = () => {
             </Select>
           </Form.Item>
         </Col>
-        <Col lg={12}>
+        <Col span={12}>
           <Form.Item
             label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
             name="notes"
@@ -335,9 +347,9 @@ const ManualJournals = () => {
             <Input></Input>
           </Form.Item>
         </Col>
-      </Row>
-      <Row>
-        <Col lg={12}>
+      </Row> */}
+      {/* <Row>
+        <Col span={12}>
           <Space
             size={"small"}
             style={{
@@ -349,7 +361,12 @@ const ManualJournals = () => {
           >
             <Form.Item
               style={{ margin: 0 }}
-              label={<FormattedMessage id="label.totalRange" defaultMessage="Total Range" />}
+              label={
+                <FormattedMessage
+                  id="label.totalRange"
+                  defaultMessage="Total Range"
+                />
+              }
               name="totalStart"
               labelAlign="left"
               labelCol={{ span: 11 }}
@@ -370,16 +387,18 @@ const ManualJournals = () => {
             </Form.Item>
           </Space>
         </Col>
-        <Col lg={12}>
+        <Col span={12}>
           <Form.Item
-            label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
             name="branch"
             labelAlign="left"
             labelCol={{ span: 6 }}
             wrapperCol={{ span: 15 }}
           >
             <Select allowClear showSearch optionFilterProp="label">
-              {branchData?.listAllBranch.map((branch) => (
+              {branchData?.listAllBranch?.map((branch) => (
                 <Select.Option
                   key={branch.id}
                   value={branch.id}
@@ -391,7 +410,7 @@ const ManualJournals = () => {
             </Select>
           </Form.Item>
         </Col>
-      </Row>
+      </Row> */}
     </Form>
   );
 

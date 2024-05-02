@@ -3,7 +3,7 @@ body {
   height: 100%;
   overflow: auto;
   font-family: "Roboto";
-  color: #484848;
+  color: var(--text-color);
   font-size: 62.5%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -15,7 +15,7 @@ code {
 }
 
 :root {
-  --main-bg-color: #f5f6f9;
+  --main-bg-color: #f8f8f8;
   --bg-color: #e9edf2;
   --bg-color1: #fff;
   --bg-color2: #f7f5f3;
@@ -27,6 +27,7 @@ code {
   --yellow: #f59d00;
   --blue: #32a5f4;
   --red: #ee2f24;
+  --orange: #f76831;
   --gray: #3f596a;
   --box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1);
   --label-font-size: 0.8125rem;
@@ -35,6 +36,7 @@ code {
   --border-radius: 0.313rem;
   --tag-color: #e1e6e9;
   --title-text: 1.125rem;
+  --big-text: 1rem;
   --detail-text: 0.875rem;
   --small-text: 0.75rem;
 }

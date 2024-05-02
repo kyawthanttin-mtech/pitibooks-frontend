@@ -32,7 +32,7 @@ const GET_PAGINATED_JOURNAL_REPORTS = gql`
             name
           }
           transactionDateTime
-          description
+          transactionNumber
           customer {
             id
             name
@@ -68,8 +68,8 @@ const GET_ACCOUNT_TYPE_SUMMARY_REPORT = gql`
     $reportType: String!
   ) {
     getAccountTypeSummaryReport(
-      fromDate: $toDate
-      toDate: $fromDate
+      fromDate: $fromDate
+      toDate: $toDate
       reportType: $reportType
     ) {
       accountMainType
@@ -133,11 +133,9 @@ const GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT = gql`
               name
             }
             referenceType
-            accountTransactions {
-              account {
-                name
-              }
-            }
+            transactionNumber
+            transactionDetails
+            referenceNumber
           }
         }
       }
@@ -145,40 +143,42 @@ const GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT = gql`
   }
 `;
 
-const GET_DETAILED_GENERAL_LEDGER_REPORT = gql`
-  query GetDetailedGeneralLedgerReport(
-    $fromDate: Time!
-    $toDate: Time!
-    $reportType: String!
-    $branchId: Int
-  ) {
-    getDetailedGeneralLedgerReport(
-      fromDate: $fromDate
-      toDate: $toDate
-      reportType: $reportType
-      branchId: $branchId
-    ) {
-      accountId
-      accountName
-      openingBalance
-      openingBalanceDate
-      closingBalance
-      closingBalanceDate
-      transactions {
-        accountName
-        transactionDateTime
-        description
-        transactionDateTime
-        transactionNo
-        transactionType
-        customerName
-        supplierName
-        debit
-        credit
-      }
-    }
-  }
-`;
+// const GET_DETAILED_GENERAL_LEDGER_REPORT = gql`
+//   query GetDetailedGeneralLedgerReport(
+//     $fromDate: Time!
+//     $toDate: Time!
+//     $reportType: String!
+//     $branchId: Int
+//   ) {
+//     getDetailedGeneralLedgerReport(
+//       fromDate: $fromDate
+//       toDate: $toDate
+//       reportType: $reportType
+//       branchId: $branchId
+//     ) {
+//       accountId
+//       accountName
+//       openingBalance
+//       openingBalanceDate
+//       closingBalance
+//       closingBalanceDate
+//       transactions {
+//         accountName
+//         transactionDateTime
+//         description
+//         transactionDateTime
+//         transactionNumber
+//         transactionDetails
+//         referenceNumber
+//         transactionType
+//         customerName
+//         supplierName
+//         debit
+//         credit
+//       }
+//     }
+//   }
+// `;
 
 const GET_GENERAL_LEDGER_REPORT = gql`
   query GetGeneralLedgerReport(
@@ -195,6 +195,7 @@ const GET_GENERAL_LEDGER_REPORT = gql`
     ) {
       accountId
       accountName
+      accountCode
       accountMainType
       code
       debit
@@ -206,12 +207,153 @@ const GET_GENERAL_LEDGER_REPORT = gql`
   }
 `;
 
+const GET_TRIAL_BALANCE_REPORT = gql`
+  query GetTrialBalanceReport(
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    getTrialBalanceReport(
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      accountMainType
+      accountName
+      accountId
+      accountCode
+      debit
+      credit
+    }
+  }
+`;
+
+const GET_BALANCE_SHEET_REPORT = gql`
+  query GetBalanceSheetReport(
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    getBalanceSheetReport(
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      mainType
+      total
+      accounts {
+        groupType
+        total
+        accounts {
+          subType
+          total
+          accounts {
+            accountName
+            accountId
+            amount
+          }
+        }
+      }
+    }
+  }
+`;
+
+const GET_PROFIT_AND_LOSS_REPORT = gql`
+  query GetProfitAndLossReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    getProfitAndLossReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      grossProfit
+      operatingProfit
+      netProfit
+      plAccountGroups {
+        groupType
+        total
+        accounts {
+          mainType
+          detailType
+          accountName
+          accountId
+          amount
+        }
+      }
+    }
+  }
+`;
+
+const GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT = gql`
+  query PaginateDetailedGeneralLedgerReport(
+    $limit: Int = 10
+    $after: String
+    $fromDate: Time!
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    paginateDetailedGeneralLedgerReport(
+      limit: $limit
+      after: $after
+      fromDate: $fromDate
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      edges {
+        cursor
+        node {
+          accountId
+          accountName
+          currencyId
+          currencyName
+          currencySymbol
+          openingBalance
+          openingBalanceDate
+          closingBalance
+          closingBalanceDate
+          transactions {
+            accountId
+            accountName
+            branchId
+            transactionDateTime
+            description
+            debit
+            credit
+            transactionType
+            transactionNumber
+            transactionDetails
+            referenceNumber
+            customerName
+            supplierName
+          }
+        }
+      }
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+`;
+
 const ReportQueries = {
   GET_PAGINATED_JOURNAL_REPORTS,
   GET_ACCOUNT_TYPE_SUMMARY_REPORT,
   GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT,
-  GET_DETAILED_GENERAL_LEDGER_REPORT,
+  // GET_DETAILED_GENERAL_LEDGER_REPORT,
+  GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT,
   GET_GENERAL_LEDGER_REPORT,
+  GET_TRIAL_BALANCE_REPORT,
+  GET_BALANCE_SHEET_REPORT,
+  GET_PROFIT_AND_LOSS_REPORT,
 };
 
 export default ReportQueries;

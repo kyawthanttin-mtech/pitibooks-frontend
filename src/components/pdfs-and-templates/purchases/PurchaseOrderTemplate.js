@@ -1,10 +1,24 @@
+/* eslint-disable react/style-prop-object */
 import React from "react";
+import dayjs from "dayjs";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
+import { Divider, Space, Flex } from "antd";
+import { useOutletContext } from "react-router-dom";
+import { FormattedNumber } from "react-intl";
 
 const PurchaseOrderTemplate = ({ selectedRecord }) => {
+  const { business } = useOutletContext();
+  const details = selectedRecord?.details ? selectedRecord?.details : [];
+  let hasDetailDiscount = false;
+  details.forEach(d => {
+    if(d.detailDiscountAmount > 0) {
+      hasDetailDiscount = true;
+    } 
+  });
   return (
     <div className="details-page">
       <div className="details-container">
-        <div className="ribbon text-ellipsis">
+        {/* <div className="ribbon text-ellipsis">
           <div
             className={`ribbon-inner ${
               selectedRecord.status === "CLOSED"
@@ -14,7 +28,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
           >
             {selectedRecord.status}
           </div>
-        </div>
+        </div> */}
         <div className="template">
           <div className="template-header header-content"></div>
           <div className="template-body">
@@ -28,24 +42,24 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         marginBottom: "4px",
                       }}
                     >
-                      <b>Piti Baby</b>
+                      <b>{business.name}</b>
                     </span>
                     <br />
-                    <span>Myanmar</span>
+                    <span>{business.country}</span>
                     <br />
-                    <span>useremail@gmail.com</span>
+                    <span>{business.email}</span>
                     <br />
                     <br />
-                    <span>Vendor Address</span>
+                    <span>Supplier:</span>
                     <br />
                     <span style={{ color: "var(--primary-color)" }}>
-                      {selectedRecord.vendorName}
+                      {selectedRecord.supplier.name}
                     </span>
                   </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>PURCHASE ORDER</span>
                     <br />
-                    <span># {selectedRecord.purchaseOrder}</span>
+                    <span># {selectedRecord.orderNumber}</span>
                   </td>
                 </tr>
               </tbody>
@@ -61,11 +75,15 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                     }}
                   >
                     <div>
-                      <label>Deliver To</label>
+                      <label>Deliver To:</label>
                       <br />
                       <span>
-                        <span>Kyaw</span>
+                        <span>{selectedRecord.deliveryAddress}</span>
                       </span>
+                      {/* <br />
+                      <span>
+                        <span>{selectedRecord.supplier?.address}</span>
+                      </span> */}
                     </div>
                   </td>
                   <td
@@ -99,7 +117,11 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.date}</span>
+                            <span>
+                              {dayjs(selectedRecord.orderDate).format(
+                                REPORT_DATE_FORMAT
+                              )}
+                            </span>
                           </td>
                         </tr>
                       </tbody>
@@ -144,7 +166,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                       textAlign: "left",
                     }}
                   >
-                    Item & Description
+                    Product & Description
                   </td>
                   <td
                     className="text-align-right"
@@ -164,6 +186,17 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                   >
                     Rate
                   </td>
+                  {hasDetailDiscount &&
+                    <td
+                      className="text-align-right"
+                      style={{
+                        padding: "5px 10px 5px 5px",
+                        width: "12%",
+                      }}
+                    >
+                      Discount
+                    </td>
+                  }
                   <td
                     className="text-align-right"
                     style={{
@@ -181,67 +214,84 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                   border: "1px solid red",
                 }}
               >
-                <tr
-                  style={{
-                    pageBreakAfter: "auto",
-                    pageBreakInside: "avoid",
-                    display: "table-row",
-                    verticalAlign: "top",
-                  }}
-                >
-                  <td
-                    rowSpan="1"
-                    valign="top"
+                {details.map((detail, index) => (
+                  <tr
+                    key={index}
                     style={{
-                      wordBreak: "break-word",
-                      padding: "10px 0 10px 20px",
-                    }}
-                  >
-                    <span>1</span>
-                  </td>
-                  <td
-                    rowSpan="1"
-                    style={{
-                      padding: "10px 10px 5px 10px",
+                      pageBreakAfter: "auto",
+                      pageBreakInside: "avoid",
+                      display: "table-row",
                       verticalAlign: "top",
-                      wordWrap: "break-word",
                     }}
                   >
-                    <span>cake (Purple)</span>
-                  </td>
-                  <td
-                    rowSpan="1"
-                    className="text-align-right"
-                    style={{
-                      padding: "10px 10px 5px 10px",
-                      verticalAlign: "top",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    <span>1.00</span>
-                  </td>
-                  <td
-                    className="text-align-right"
-                    rowSpan="1"
-                    style={{
-                      padding: "10px 10px 5px 10px",
-                      verticalAlign: "top",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    <span>20,000.00</span>
-                  </td>
-                  <td
-                    className="text-align-right"
-                    rowSpan="1"
-                    style={{
-                      padding: "10px 10px 10px 5px",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    <span>20,000.00</span>
-                  </td>
-                </tr>
+                    <td
+                      rowSpan="1"
+                      valign="top"
+                      style={{
+                        wordBreak: "break-word",
+                        padding: "10px 0 10px 20px",
+                      }}
+                    >
+                      <span>{index + 1}</span>
+                    </td>
+                    <td
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span>{detail.name}</span>
+                    </td>
+                    <td
+                      rowSpan="1"
+                      className="text-align-right"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span>{detail.detailQty}</span>
+                    </td>
+                    <td
+                      className="text-align-right"
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span><FormattedNumber value={detail.detailUnitRate} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                    </td>
+                    {hasDetailDiscount &&
+                      <td
+                        rowSpan="1"
+                        className="text-align-right"
+                        style={{
+                          padding: "10px 10px 5px 10px",
+                          verticalAlign: "top",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        <span>{detail.detailDiscountType === 'P' ? detail.detailDiscount + "%" 
+                          : <FormattedNumber value={detail.detailDiscountAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} />}</span>
+                      </td>
+                    }
+                    <td
+                      className="text-align-right"
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 10px 5px",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span><FormattedNumber value={detail.detailTotalAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <div style={{ width: "100%", marginTop: "2px" }}>
@@ -272,28 +322,72 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                           padding: "10px 10px 10px 5px",
                         }}
                       >
-                        20,000.00
+                        <span><FormattedNumber value={selectedRecord.orderSubtotal} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
                       </td>
                     </tr>
-                    <tr className="text-align-right">
-                      <td
-                        style={{
-                          padding: "5px 10px 5px 0",
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        Discount (10.00%)
-                      </td>
-                      <td
-                        style={{
-                          width: "120px",
-                          verticalAlign: "middle",
-                          padding: "10px 10px 10px 5px",
-                        }}
-                      >
-                        1,500.00
-                      </td>
-                    </tr>
+                    {selectedRecord.orderDiscountAmount > 0 &&
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Discount {selectedRecord.orderDiscountType === 'P' && "("+selectedRecord.orderDiscount+"%)"}
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span>-<FormattedNumber value={selectedRecord.orderDiscountAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                        </td>
+                      </tr>
+                    }
+                    {selectedRecord.orderTotalTaxAmount > 0 &&
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Tax {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span><FormattedNumber value={selectedRecord.orderTotalTaxAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                        </td>
+                      </tr>
+                    }
+                    {selectedRecord.adjustmentAmount > 0 &&
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Adjustment
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span><FormattedNumber value={selectedRecord.adjustmentAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                        </td>
+                      </tr>
+                    }
                     <tr className="text-align-right">
                       <td
                         style={{
@@ -310,14 +404,31 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                           padding: "10px 10px 10px 5px",
                         }}
                       >
-                        <b>MMK22,000.00</b>
+                        <b>
+                          {selectedRecord.currency.symbol} <FormattedNumber value={selectedRecord.orderTotalAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} />
+                        </b>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
+            <Divider />
+            <Flex justify="end"></Flex>
+            <Space>
+              <span>Payment Terms :</span>
+              <span>
+                {selectedRecord.supplier?.supplierPaymentTerms
+                  .split(/(?=[A-Z])/)
+                  .join(" ") === "Custom"
+                  ? `${selectedRecord.supplier?.supplierPaymentTerms} (Due in ${selectedRecord.supplier?.supplierPaymentTermsCustomDays}day(s))`
+                  : selectedRecord.supplier?.supplierPaymentTerms
+                      .split(/(?=[A-Z])/)
+                      .join(" ")}
+              </span>
+            </Space>
           </div>
+
           <div style={{ clear: "both" }}></div>
           <div
             className="template-footer"

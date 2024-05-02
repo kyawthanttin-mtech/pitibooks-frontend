@@ -22,7 +22,7 @@ import {
 import { useQuery, useMutation } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -43,7 +43,7 @@ const {
 
 const TaxRates = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi, refetchAllTaxes, refetchAllTaxGroups} = useOutletContext();
   const [createTaxModalOpen, setCreateTaxModalOpen] = useState(false);
   const [editTaxModalOpen, setEditTaxModalOpen] = useState(false);
   const [createTaxGroupModalOpen, setCreateTaxGroupModalOpen] = useState(false);
@@ -135,10 +135,12 @@ const TaxRates = () => {
   const [createTax, { loading: createTaxLoading }] = useMutation(CREATE_TAX, {
     onCompleted() {
       // console.log("created");
-      openSuccessNotification(
-        notiApi,
+      openSuccessMessage(
+        msgApi,
         <FormattedMessage id="tax.created" defaultMessage="New Tax Created" />
       );
+      refetchAllTaxes();
+      refetchAllTaxGroups();
     },
     refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
   });
@@ -146,10 +148,12 @@ const TaxRates = () => {
   const [updateTax, { loading: updateTaxLoading }] = useMutation(UPDATE_TAX, {
     onCompleted() {
       // console.log("updated");
-      openSuccessNotification(
-        notiApi,
+      openSuccessMessage(
+        msgApi,
         <FormattedMessage id="tax.updated" defaultMessage="Tax Updated" />
       );
+      refetchAllTaxes();
+      refetchAllTaxGroups();
     },
     refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
   });
@@ -157,10 +161,12 @@ const TaxRates = () => {
   const [deleteTax, { loading: deleteTaxLoading }] = useMutation(DELETE_TAX, {
     onCompleted() {
       // console.log("deleted");
-      openSuccessNotification(
-        notiApi,
+      openSuccessMessage(
+        msgApi,
         <FormattedMessage id="tax.deleted" defaultMessage="Tax Deleted" />
       );
+      refetchAllTaxes();
+      refetchAllTaxGroups();
     },
     refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
   });
@@ -169,13 +175,15 @@ const TaxRates = () => {
     TOGGLE_ACTIVE_TAX,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="tax.updated.status"
             defaultMessage="Tax Status Updated"
           />
         );
+        refetchAllTaxes();
+        refetchAllTaxGroups();
       },
       refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
     }
@@ -186,13 +194,15 @@ const TaxRates = () => {
     {
       onCompleted() {
         // console.log("created");
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="taxGroup.created"
             defaultMessage="New Tax Group Created"
           />
         );
+        refetchAllTaxes();
+        refetchAllTaxGroups();
       },
       refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
     }
@@ -203,13 +213,15 @@ const TaxRates = () => {
     {
       onCompleted() {
         // console.log("updated");
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="taxGroup.updated"
             defaultMessage="Tax Group Updated"
           />
         );
+        refetchAllTaxes();
+        refetchAllTaxGroups();
       },
       refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
     }
@@ -220,13 +232,15 @@ const TaxRates = () => {
     {
       onCompleted() {
         // console.log("updated");
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="taxGroup.status.updated"
             defaultMessage="Tax Group Status Updated"
           />
         );
+        refetchAllTaxes();
+        refetchAllTaxGroups();
       },
       refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
     }
@@ -235,13 +249,15 @@ const TaxRates = () => {
   const [toggleActiveTaxGroup, { loading: toggleActiveGroupLoading }] =
     useMutation(TOGGLE_ACTIVE_TAX_GROUP, {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="taxGroup.updated.status"
             defaultMessage="Tax Group Status Updated"
           />
         );
+        refetchAllTaxes();
+        refetchAllTaxGroups();
       },
       refetchQueries: [GET_TAXES, GET_TAX_GROUPS],
     });
@@ -469,7 +485,7 @@ const TaxRates = () => {
           },
         ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="tax.rate" defaultMessage="Rate (%)" />}
@@ -529,7 +545,7 @@ const TaxRates = () => {
           },
         ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="tax.rate" defaultMessage="Rate (%)" />}
@@ -598,7 +614,7 @@ const TaxRates = () => {
           },
         ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
 
       <Table
@@ -677,7 +693,7 @@ const TaxRates = () => {
           },
         ]}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
 
       <Table
@@ -728,7 +744,7 @@ const TaxRates = () => {
 
   const mainTableColumns = [
     {
-      title: <FormattedMessage id="lable.name" defaultMessage="Name" />,
+      title: <FormattedMessage id="label.name" defaultMessage="Name" />,
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
@@ -743,12 +759,12 @@ const TaxRates = () => {
       ),
     },
     {
-      title: <FormattedMessage id="lable.type" defaultMessage="Type" />,
+      title: <FormattedMessage id="label.type" defaultMessage="Type" />,
       dataIndex: "type",
       key: "type",
     },
     {
-      title: <FormattedMessage id="lable.rate" defaultMessage="Rate" />,
+      title: <FormattedMessage id="label.rate" defaultMessage="Rate" />,
       dataIndex: "rate",
       key: "rate",
     },

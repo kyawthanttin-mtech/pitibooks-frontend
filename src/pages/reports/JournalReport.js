@@ -1,13 +1,12 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
 import { PaginatedJournalReport } from "../../components";
 import { ReportQueries } from "../../graphql";
 
 const { GET_PAGINATED_JOURNAL_REPORTS } = ReportQueries;
 
 const JournalReport = () => {
-  const [notiApi] = useOutletContext();
+  const {notiApi, business} = useOutletContext();
 
   const parseData = (data) => {
     let reports = [];
@@ -17,7 +16,7 @@ const JournalReport = () => {
           key: node?.id,
           id: node?.id,
           transactionDateTime: node?.transactionDateTime,
-          description: node?.description,
+          transactionNumber: node?.transactionNumber,
           branch: node?.branch.name,
           customer: node?.customer.name,
           supplier: node?.supplier.name,
@@ -46,7 +45,7 @@ const JournalReport = () => {
         hasNextPage: data.paginateJournalReport.pageInfo.hasNextPage,
         endCursor: data.paginateJournalReport.pageInfo.endCursor,
       };
-      console.log("Page info", pageInfo);
+      // console.log("Page info", pageInfo);
     }
     return pageInfo;
   };
@@ -64,6 +63,7 @@ const JournalReport = () => {
         </div> */}
         <PaginatedJournalReport
           // dataLoading={loading}
+          business={business}
           api={notiApi}
           gqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
           showSearch={false}

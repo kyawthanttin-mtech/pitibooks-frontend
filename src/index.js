@@ -1,13 +1,22 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache } from '@apollo/client';
-import { relayStylePagination } from '@apollo/client/utilities'
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import {
+  ApolloClient,
+  ApolloLink,
+  ApolloProvider,
+  concat,
+  HttpLink,
+  InMemoryCache,
+} from "@apollo/client";
+import { relayStylePagination } from "@apollo/client/utilities";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 import Wrapper from "./localeWrapper";
 
-const httpLink = new HttpLink({uri: 'http://139.59.236.210:3000/query'});
+const httpLink = new HttpLink({ uri: "http://139.59.236.210:3000/query" });
+// const httpLink = new HttpLink({ uri: "http://192.168.88.108:8081/query" });
+// const httpLink = new HttpLink({ uri: "http://localhost:8081/query" });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
   // add the authorization to the headers
@@ -17,11 +26,11 @@ const authMiddleware = new ApolloLink((operation, forward) => {
       token: localStorage.getItem("token")
         ? `${localStorage.getItem("token")}`
         : "",
-    }
+    },
   }));
 
   return forward(operation);
-})
+});
 
 const client = new ApolloClient({
   cache: new InMemoryCache({
@@ -30,6 +39,18 @@ const client = new ApolloClient({
         fields: {
           paginateJournal: relayStylePagination(),
           paginateJournalReport: relayStylePagination(),
+          paginateDetailedGeneralLedgerReport: relayStylePagination(),
+          paginateAccountTransactionReport: relayStylePagination(),
+          paginateProductCategory: relayStylePagination(),
+          paginateProductUnit: relayStylePagination(),
+          paginateProduct: relayStylePagination(),
+          paginateProductGroup: relayStylePagination(),
+          paginatePurchaseOrder: relayStylePagination(),
+          paginateSupplier: relayStylePagination(),
+          paginateBill: relayStylePagination(),
+          paginateSupplierCredit: relayStylePagination(),
+          paginateCustomer: relayStylePagination(),
+          paginateSalesPerson: relayStylePagination(),
         },
       },
     },
@@ -37,7 +58,7 @@ const client = new ApolloClient({
   link: concat(authMiddleware, httpLink),
 });
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ApolloProvider client={client}>

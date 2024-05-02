@@ -4,6 +4,7 @@ import "./ChartOfAccounts.css";
 
 import {
   Button,
+  Col,
   Space,
   Table,
   Row,
@@ -31,7 +32,7 @@ import {
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -208,7 +209,7 @@ const accountTypes = [
 ];
 
 const ChartOfAccounts = () => {
-  const [notiApi] = useOutletContext();
+  const {notiApi, msgApi, refetchAllAccounts} = useOutletContext();
   const [deleteModal, contextHolder] = Modal.useModal();
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
@@ -258,13 +259,14 @@ const ChartOfAccounts = () => {
     CREATE_ACCOUNT,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="account.created"
             defaultMessage="New Account Created"
           />
         );
+        refetchAllAccounts();
       },
       refetchQueries: [GET_ACCOUNTS],
     }
@@ -274,13 +276,14 @@ const ChartOfAccounts = () => {
     UPDATE_ACCOUNT,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="account.updated"
             defaultMessage="Account Updated"
           />
         );
+        refetchAllAccounts();
       },
       refetchQueries: [GET_ACCOUNTS],
     }
@@ -290,13 +293,14 @@ const ChartOfAccounts = () => {
     DELETE_ACCOUNT,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="account.deleted"
             defaultMessage="Account Deleted"
           />
         );
+        refetchAllAccounts();
       },
       refetchQueries: [GET_ACCOUNTS],
     }
@@ -306,13 +310,14 @@ const ChartOfAccounts = () => {
     TOGGLE_ACTIVE_ACCOUNT,
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="account.updated.status"
             defaultMessage="Account Status Updated"
           />
         );
+        refetchAllAccounts();
       },
       refetchQueries: [GET_ACCOUNTS],
     }
@@ -623,7 +628,7 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         shouldUpdate
@@ -664,7 +669,7 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label="Description"
@@ -673,7 +678,7 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input.TextArea rows="4"></Input.TextArea>
+        <Input.TextArea maxLength={1000} rows="4"></Input.TextArea>
       </Form.Item>
     </Form>
   );
@@ -710,7 +715,7 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         shouldUpdate
@@ -751,7 +756,7 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input></Input>
+        <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
         label="Description"
@@ -760,31 +765,37 @@ const ChartOfAccounts = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
       >
-        <Input.TextArea rows="4"></Input.TextArea>
+        <Input.TextArea maxLength={1000} rows="4"></Input.TextArea>
       </Form.Item>
     </Form>
   );
 
   const searchForm = (
     <Form form={searchFormRef} onFinish={handleSearchModalOk}>
-      <Form.Item
-        label="Account Name"
-        name="name"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-      >
-        <Input></Input>
-      </Form.Item>
-      <Form.Item
-        label="Account Code"
-        name="code"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-      >
-        <Input></Input>
-      </Form.Item>
+      <Row>
+        <Col span={12}>
+          <Form.Item
+            label="Account Name"
+            name="name"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+          >
+            <Input></Input>
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Account Code"
+            name="code"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+          >
+            <Input></Input>
+          </Form.Item>
+        </Col>
+      </Row>
     </Form>
   );
 
@@ -1071,7 +1082,7 @@ const ChartOfAccounts = () => {
               </div>
             )}
             <Table
-              className="main-table"
+              className={selectedRecord ? "column-table" : "main-table"}
               rowKey={(record) => record.id}
               dataSource={searchCriteria ? parseData(searchData) : queryData}
               pagination={false}

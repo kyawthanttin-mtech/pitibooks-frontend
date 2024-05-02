@@ -14,103 +14,62 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import "./Profile.css";
 import TextArea from "antd/es/input/TextArea";
-import { useQuery, useMutation } from "@apollo/client";
+import { useMutation, useReadQuery } from "@apollo/client";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import {
-  BusinessQueries,
   BusinessMutations,
-  StateQueries,
-  TownshipQueries,
-  CurrencyQueries,
 } from "../../graphql";
 
-const { GET_BUSINESS } = BusinessQueries;
 const { UPDATE_BUSINESS } = BusinessMutations;
-const { GET_ALL_TOWNSHIPS } = TownshipQueries;
-const { GET_ALL_STATES } = StateQueries;
-const { GET_ALL_CURRENCIES } = CurrencyQueries;
 
 const Profile = () => {
   const [formRef] = Form.useForm();
-  const [notiApi] = useOutletContext();
+  const {
+    notiApi, msgApi, business, refetchBusiness,
+    allCurrenciesQueryRef, allStatesQueryRef, allTownshipsQueryRef,
+  } = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
 
   // Queries and mutations
-  const { data, loading: queryLoading } = useQuery(GET_BUSINESS, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: townshipData, loading: townshipLoading } = useQuery(
-    GET_ALL_TOWNSHIPS,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
-
-  const { data: stateData, loading: stateLoading } = useQuery(GET_ALL_STATES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: currencyData, loading: currencyLoading } = useQuery(GET_ALL_CURRENCIES, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
+  const { data: stateData } = useReadQuery(allStatesQueryRef);
+  const { data: townshipData } = useReadQuery(allTownshipsQueryRef);
+  const { data: currencyData } = useReadQuery(allCurrenciesQueryRef);
 
   const [updateBusiness, { loading: updateLoading }] = useMutation(
     UPDATE_BUSINESS,
     {
-      onCompleted() {
-        openSuccessNotification(
-          notiApi,
+      async onCompleted() {
+        await refetchBusiness();
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="business.updated"
             defaultMessage="Business Updated"
           />
         );
       },
-      refetchQueries: [GET_BUSINESS],
     }
   );
 
-  const loading =
-    queryLoading ||
-    stateLoading ||
-    townshipLoading ||
-    currencyLoading ||
-    updateLoading;
+  const loading = updateLoading;
 
   const handleSave = async () => {
     try {
       const values = await formRef.validateFields();
+      const input = {
+        ...values,
+        stateId: values.stateId || 0,
+        townshipId: values.townshipId || 0,
+      }
       // console.log("Field values:", values);
       await updateBusiness({
-        variables: { input: values },
+        variables: { input },
       });
-
     } catch (err) {
       openErrorNotification(notiApi, err.message);
     }
@@ -118,13 +77,13 @@ const Profile = () => {
 
   useMemo(() => {
     // console.log(data);
-    const profile = data?.getBusiness;
+    const profile = business;
     if (profile) {
       formRef.setFieldsValue({
         "name": profile.name,
         "country": profile.country,
-        "stateId": profile.state.id,
-        "townshipId": profile.township.id,
+        "stateId": profile.state.id || "",
+        "townshipId": profile.township.id || "",
         "city": profile.city,
         "address": profile.address,
         "email": profile.email,
@@ -140,7 +99,7 @@ const Profile = () => {
         setSelectedState(profile.state);
       }
     }
-  }, [formRef, data]);
+  }, [formRef, business]);
 
   return (
     <>
@@ -188,7 +147,7 @@ const Profile = () => {
                 labelCol={{ span: 7 }}
                 rules={[{ required: true, message: <FormattedMessage id="profile.name.required" defaultMessage="Enter the Business Name" /> }]}
               >
-                <Input></Input>
+                <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
           </Row>
@@ -242,7 +201,7 @@ const Profile = () => {
               <Form.Item 
                 label={<FormattedMessage id="label.city" defaultMessage="City" />} 
                 name="city" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
@@ -280,14 +239,14 @@ const Profile = () => {
               <Form.Item 
                 label={<FormattedMessage id="label.address" defaultMessage="Address" />}
                 name="address" labelAlign="left" labelCol={{ span: 7 }}>
-                <TextArea rows="4"></TextArea>
+                <TextArea maxLength={1000} rows="4"></TextArea>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
               <Form.Item 
                 label={<FormattedMessage id="label.email" defaultMessage="Email" />}
                 name="email" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={255}></Input>
               </Form.Item>
             </Col>
           </Row>
@@ -297,14 +256,14 @@ const Profile = () => {
               <Form.Item 
                 label={<FormattedMessage id="label.phone" defaultMessage="Phone" />}
                 name="phone" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={20}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
               <Form.Item 
                 label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
                 name="mobile" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={20}></Input>
               </Form.Item>
             </Col>
           </Row>
@@ -380,14 +339,14 @@ const Profile = () => {
               <Form.Item 
                 label={<FormattedMessage id="profile.companyId" defaultMessage="Company ID" />}
                 name="companyId" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
               <Form.Item 
                 label={<FormattedMessage id="profile.taxId" defaultMessage="Tax ID" />}
                 name="taxId" labelAlign="left" labelCol={{ span: 7 }}>
-                <Input></Input>
+                <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
           </Row>

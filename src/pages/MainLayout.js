@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, Suspense } from "react";
 import {
   BellOutlined,
   HomeOutlined,
@@ -7,6 +7,7 @@ import {
   UserOutlined,
   SettingOutlined,
   TagOutlined,
+  DollarOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -22,14 +23,46 @@ import {
   Space,
   Switch,
 } from "antd";
-import { MenuItemWithPlus } from "../components";
+import { useQuery, useBackgroundQuery } from "@apollo/client";
+import { ErrorBoundary, MenuItemWithPlus } from "../components";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import Theme from "../config/Theme";
 import { Context } from "../localeWrapper";
+import ErrorPage from "./ErrorPage";
+import InitialLoadingPage from "./IntialLoadingPage";
 
 import { ReactComponent as AccountantOutlined } from "../assets/icons/menu-icons/AccountantOutlined.svg";
+import { ReactComponent as ShoppingOutlined } from "../assets/icons/menu-icons/ShoppingOutlined.svg";
 import { ReactComponent as ReportOutlined } from "../assets/icons/menu-icons/ReportOutlined.svg";
+
+import {
+  AccountQueries,
+  BranchQueries,
+  BusinessQueries,
+  CurrencyQueries,
+  StateQueries,
+  TaxQueries,
+  TownshipQueries,
+  WarehouseQueries,
+  ProductQueries,
+  ShipmentPreferenceQueries,
+  PaymentModeQueries,
+  ReasonQueries,
+} from "../graphql";
+
+const { GET_ALL_ACCOUNTS } = AccountQueries;
+const { GET_BUSINESS } = BusinessQueries;
+const { GET_ALL_BRANCHES } = BranchQueries;
+const { GET_ALL_CURRENCIES } = CurrencyQueries;
+const { GET_ALL_STATES } = StateQueries;
+const { GET_ALL_TAXES, GET_ALL_TAX_GROUPS } = TaxQueries;
+const { GET_ALL_TOWNSHIPS } = TownshipQueries;
+const { GET_ALL_WAREHOUSES } = WarehouseQueries;
+const { GET_ALL_PRODUCTS } = ProductQueries;
+const { GET_ALL_SHIPMENT_PREFERENCES } = ShipmentPreferenceQueries;
+const { GET_ALL_PAYMENT_MODES } = PaymentModeQueries;
+const { GET_ALL_REASONS } = ReasonQueries;
 
 const { Header, Content, Sider } = Layout;
 
@@ -53,6 +86,51 @@ const App = () => {
   const isActiveRoute = (routePath) => {
     return location.pathname === routePath;
   };
+
+  const {
+    data,
+    loading,
+    error,
+    refetch: refetchBusiness,
+  } = useQuery(GET_BUSINESS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+  });
+  const [allAccountsQueryRef, { refetch: refetchAllAccounts }] =
+    useBackgroundQuery(GET_ALL_ACCOUNTS);
+  const [allBranchesQueryRef, { refetch: refetchAllBranches }] =
+    useBackgroundQuery(GET_ALL_BRANCHES);
+  const [allCurrenciesQueryRef, { refetch: refetchAllCurrencies }] =
+    useBackgroundQuery(GET_ALL_CURRENCIES);
+  const [allStatesQueryRef] = useBackgroundQuery(GET_ALL_STATES);
+  const [allTaxesQueryRef, { refetch: refetchAllTaxes }] =
+    useBackgroundQuery(GET_ALL_TAXES);
+  const [allTaxGroupsQueryRef, { refetch: refetchAllTaxGroups }] =
+    useBackgroundQuery(GET_ALL_TAX_GROUPS);
+  const [allTownshipsQueryRef] = useBackgroundQuery(GET_ALL_TOWNSHIPS);
+  const [allWarehousesQueryRef, { refetch: refetchAllWarehouses }] =
+    useBackgroundQuery(GET_ALL_WAREHOUSES);
+  const [allProductsQueryRef, { refetch: refetchAllProducts }] =
+    useBackgroundQuery(GET_ALL_PRODUCTS);
+  const [
+    allShipmentPreferencesQueryRef,
+    { refetch: refetchAllShipmentPreferences },
+  ] = useBackgroundQuery(GET_ALL_SHIPMENT_PREFERENCES);
+  const [allPaymentModesQueryRef, { refetch: refetchAllPaymentModes }] =
+    useBackgroundQuery(GET_ALL_PAYMENT_MODES);
+  const [allReasonsQueryRef, { refetch: refetchAllReasons }] =
+    useBackgroundQuery(GET_ALL_REASONS);
+
+  if (loading) {
+    return <InitialLoadingPage />;
+  }
+
+  if (error) {
+    return <ErrorPage error={error} refetch={refetchBusiness} />;
+  }
+
+  const business = data.getBusiness;
 
   return (
     <ConfigProvider
@@ -83,8 +161,8 @@ const App = () => {
           <div className="app-logo-container">
             <div className="app-logo">
               <img
-                alt="Piti"
-                src={process.env.PUBLIC_URL + "/piti.jpeg"}
+                alt="Pitibooks"
+                src={process.env.PUBLIC_URL + "/pitibooks.png"}
               />
             </div>
           </div>
@@ -114,6 +192,255 @@ const App = () => {
                 label: (
                   <FormattedMessage id="menu.home" defaultMessage="Home" />
                 ),
+              },
+              // {
+              //   key: "branches",
+              //   style:
+              //     isActiveRoute("/branches") ||
+              //     isActiveRoute("/branches/new") ||
+              //     isActiveRoute("/branches/edit")
+              //       ? { backgroundColor: Theme.darkGreen }
+              //       : {},
+              //   label: (
+              //     <FormattedMessage
+              //       id="menu.branches"
+              //       defaultMessage="Branches"
+              //     />
+              //   ),
+              // },
+              // {
+              //   key: "categories",
+              //   style: isActiveRoute("/categories")
+              //     ? { backgroundColor: Theme.darkGreen }
+              //     : {},
+              //   label: (
+              //     <FormattedMessage
+              //       id="menu.categories"
+              //       defaultMessage="Categories"
+              //     />
+              //   ),
+              // },
+
+              // {
+              //   key: "invoices",
+              //   style: isActiveRoute("/invoices")
+              //     ? { backgroundColor: Theme.darkGreen }
+              //     : {},
+              //   label: (
+              //     <FormattedMessage
+              //       id="menu.invoices"
+              //       defaultMessage="Invoices"
+              //     />
+              //   ),
+              // },
+
+              //Products
+              {
+                key: "productsMenu",
+                label: (
+                  <FormattedMessage
+                    id="menu.products"
+                    defaultMessage="Products"
+                  />
+                ),
+                icon: <TagOutlined />,
+                children: [
+                  {
+                    key: "products",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.products"
+                            defaultMessage="Products"
+                          />
+                        }
+                        path="products/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "productGroups",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.productGroups"
+                            defaultMessage="Product Groups"
+                          />
+                        }
+                        path="/productGroups/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "inventoryAdjustments",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.inventoryAdjustments"
+                            defaultMessage="Inventory Adjustments"
+                          />
+                        }
+                        path="/inventoryAdjustments/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "transferOrders",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.transferOrders"
+                            defaultMessage="Transfer Orders"
+                          />
+                        }
+                        path="/transferOrders/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "productCategories",
+                    label: (
+                      <FormattedMessage
+                        id="menu.productCategories"
+                        defaultMessage="Product Categories"
+                      />
+                    ),
+                  },
+                  {
+                    key: "productUnits",
+                    label: (
+                      <FormattedMessage
+                        id="menu.productUnits"
+                        defaultMessage="Product Units"
+                      />
+                    ),
+                  },
+                ],
+              },
+              // Sales
+              {
+                key: "sales",
+                label: (
+                  <FormattedMessage id="menu.sales" defaultMessage="Sales" />
+                ),
+                icon: <DollarOutlined width={18} height={18} />,
+                children: [
+                  {
+                    key: "customers",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.customers"
+                            defaultMessage="Customers"
+                          />
+                        }
+                        path="/customers/new"
+                      />
+                    ),
+                  },
+                ],
+              },
+              //Purchases
+              {
+                key: "purchases",
+                label: (
+                  <FormattedMessage
+                    id="menu.purchases"
+                    defaultMessage="Purchases"
+                  />
+                ),
+                icon: <ShoppingOutlined width={18} height={18} />,
+                children: [
+                  {
+                    key: "suppliers",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.suppliers"
+                            defaultMessage="Suppliers"
+                          />
+                        }
+                        path="/suppliers/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "expenses",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.expenses"
+                            defaultMessage="Expenses"
+                          />
+                        }
+                        path="/expenses/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "purchaseOrders",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.purchaseOrders"
+                            defaultMessage="Purchase Orders"
+                          />
+                        }
+                        path="/purchaseOrders/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "bills",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.bills"
+                            defaultMessage="Bills"
+                          />
+                        }
+                        path="/bills/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "paymentsMade",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.paymentsMade"
+                            defaultMessage="Payments Made"
+                          />
+                        }
+                        path="/paymentsMade/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "supplierCredits",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.supplierCredits"
+                            defaultMessage="Supplier Credits"
+                          />
+                        }
+                        path="/supplierCredits/new"
+                      />
+                    ),
+                  },
+                ],
               },
               //Accountant
               {
@@ -184,20 +511,20 @@ const App = () => {
                     ),
                   },
                   {
-                    key: "branch",
-                    label: (
-                      <FormattedMessage
-                        id="menu.branch"
-                        defaultMessage="Branches"
-                      />
-                    ),
-                  },
-                  {
                     key: "warehouses",
                     label: (
                       <FormattedMessage
                         id="menu.warehouses"
                         defaultMessage="Warehouses"
+                      />
+                    ),
+                  },
+                  {
+                    key: "branch",
+                    label: (
+                      <FormattedMessage
+                        id="menu.branch"
+                        defaultMessage="Branches"
                       />
                     ),
                   },
@@ -210,15 +537,15 @@ const App = () => {
                       />
                     ),
                   },
-                  // {
-                  //   key: "openingBalances",
-                  //   label: (
-                  //     <FormattedMessage
-                  //       id="menu.openingBalances"
-                  //       defaultMessage="Opening Balances"
-                  //     />
-                  //   ),
-                  // },
+                  {
+                    key: "openingBalances",
+                    label: (
+                      <FormattedMessage
+                        id="menu.openingBalances"
+                        defaultMessage="Opening Balances"
+                      />
+                    ),
+                  },
                   {
                     key: "transactionNumberSeries",
                     label: (
@@ -237,24 +564,69 @@ const App = () => {
                       />
                     ),
                   },
-                  // {
-                  //   key: "users",
-                  //   label: (
-                  //     <FormattedMessage
-                  //       id="menu.users"
-                  //       defaultMessage="Users"
-                  //     />
-                  //   ),
-                  // },
-                  // {
-                  //   key: "roles",
-                  //   label: (
-                  //     <FormattedMessage
-                  //       id="menu.roles"
-                  //       defaultMessage="Roles"
-                  //     />
-                  //   ),
-                  // },
+                  {
+                    key: "users",
+                    label: (
+                      <FormattedMessage
+                        id="menu.users"
+                        defaultMessage="Users"
+                      />
+                    ),
+                  },
+                  {
+                    key: "roles",
+                    label: (
+                      <FormattedMessage
+                        id="menu.roles"
+                        defaultMessage="Roles"
+                      />
+                    ),
+                  },
+                  {
+                    key: "shipmentPreferences",
+                    label: (
+                      <FormattedMessage
+                        id="menu.shipmentPreferences"
+                        defaultMessage="Shipment Preferences"
+                      />
+                    ),
+                  },
+                  {
+                    key: "paymentModes",
+                    label: (
+                      <FormattedMessage
+                        id="menu.paymentModes"
+                        defaultMessage="Payment Modes"
+                      />
+                    ),
+                  },
+                  {
+                    key: "deliveryMethods",
+                    label: (
+                      <FormattedMessage
+                        id="menu.deliveryMethods"
+                        defaultMessage="Delivery Methods"
+                      />
+                    ),
+                  },
+                  {
+                    key: "reasons",
+                    label: (
+                      <FormattedMessage
+                        id="menu.reasons"
+                        defaultMessage="Reasons"
+                      />
+                    ),
+                  },
+                  {
+                    key: "salesPersons",
+                    label: (
+                      <FormattedMessage
+                        id="menu.salesPersons"
+                        defaultMessage="Sales Persons"
+                      />
+                    ),
+                  },
                 ],
               },
             ]}
@@ -359,7 +731,40 @@ const App = () => {
                 overflow: "auto",
               }}
             >
-              <Outlet context={[notiApi, msgApi]} />
+              <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                <Suspense fallback={<InitialLoadingPage />}>
+                  <Outlet
+                    context={{
+                      notiApi,
+                      msgApi,
+                      business,
+                      refetchBusiness,
+                      allAccountsQueryRef,
+                      refetchAllAccounts,
+                      allBranchesQueryRef,
+                      refetchAllBranches,
+                      allCurrenciesQueryRef,
+                      refetchAllCurrencies,
+                      allStatesQueryRef,
+                      allTownshipsQueryRef,
+                      allTaxesQueryRef,
+                      refetchAllTaxes,
+                      allTaxGroupsQueryRef,
+                      refetchAllTaxGroups,
+                      allWarehousesQueryRef,
+                      refetchAllWarehouses,
+                      allProductsQueryRef,
+                      refetchAllProducts,
+                      allShipmentPreferencesQueryRef,
+                      refetchAllShipmentPreferences,
+                      allPaymentModesQueryRef,
+                      refetchAllPaymentModes,
+                      allReasonsQueryRef,
+                      refetchAllReasons,
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </Content>
           {/* <Footer

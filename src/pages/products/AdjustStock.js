@@ -16,7 +16,7 @@ const AdjustStock = ({ selectedProductRecord, onClose }) => {
             labelAlign="left"
             name="date"
           >
-            <labe className="label">Date</labe>
+            <label className="label">Date</label>
             <Input></Input>
           </Form.Item>
         </Col>
