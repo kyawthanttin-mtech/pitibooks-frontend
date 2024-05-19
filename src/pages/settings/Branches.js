@@ -28,7 +28,13 @@ const Branches = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
-  const {notiApi, msgApi, refetchAllBranches, allStatesQueryRef, allTownshipsQueryRef} = useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    refetchAllBranches,
+    allStatesQueryRef,
+    allTownshipsQueryRef,
+  } = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
   const [selectedEditState, setSelectedEditState] = useState(null);
 
@@ -226,7 +232,7 @@ const Branches = () => {
         ...values,
         stateId: values.stateId ? values.stateId : 0,
         townshipId: values.townshipId ? values.townshipI : 0,
-      }
+      };
       // console.log("Field values:", values);
       await updateBranch({
         variables: { id: editRecord.id, input },
@@ -255,14 +261,16 @@ const Branches = () => {
 
   const columns = [
     {
-      title: <FormattedMessage id="branch.name" defaultMessage="Name" />,
+      title: <FormattedMessage id="label.name" defaultMessage="Name" />,
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
         <>
           {text}
           {!record.isActive ? (
-            <Tag className="active-status">inactive</Tag>
+            <Tag className="active-status">
+              <FormattedMessage id="label.inactive" defaultMessage="inactive" />
+            </Tag>
           ) : (
             <></>
           )}
@@ -275,9 +283,7 @@ const Branches = () => {
       key: "city",
     },
     {
-      title: (
-        <FormattedMessage id="branch.phNo" defaultMessage="Phone Number" />
-      ),
+      title: <FormattedMessage id="label.phone" defaultMessage="Phone" />,
       dataIndex: "phoneNumber",
       key: "phoneNumber",
     },
@@ -340,12 +346,7 @@ const Branches = () => {
   const createForm = (
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
-        label={
-          <FormattedMessage
-            id="branch.name.label"
-            defaultMessage="Branch Name"
-          />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -355,8 +356,8 @@ const Branches = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="branch.name.required"
-                defaultMessage="Enter the Branch Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -389,14 +390,14 @@ const Branches = () => {
           optionFilterProp="label"
           onChange={(value) => {
             setSelectedState(
-              stateData?.listAllState.find((state) => state.id === value)
+              stateData?.listAllState?.find((state) => state.id === value)
             );
             createFormRef.setFieldsValue({
               townshipId: null,
             });
           }}
         >
-          {stateData?.listAllState.map((state) => (
+          {stateData?.listAllState?.map((state) => (
             <Select.Option
               key={state.id}
               value={state.id}
@@ -432,7 +433,7 @@ const Branches = () => {
           optionFilterProp="label"
           disabled={!selectedState}
         >
-          {townshipData?.listAllTownship.map((township) => {
+          {townshipData?.listAllTownship?.map((township) => {
             if (township.stateCode === selectedState?.code) {
               return (
                 <Select.Option
@@ -500,7 +501,7 @@ const Branches = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="branch.transactionNumberSeries.required"
+                id="label.transactionNumberSeries.required"
                 defaultMessage="Select the Transaction Number Series"
               />
             ),
@@ -525,12 +526,7 @@ const Branches = () => {
   const editForm = (
     <Form form={editFormRef} onFinish={handleEditModalOk}>
       <Form.Item
-        label={
-          <FormattedMessage
-            id="branch.name.label"
-            defaultMessage="Branch Name"
-          />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -540,8 +536,8 @@ const Branches = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="branch.name.required"
-                defaultMessage="Enter the Branch Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -573,14 +569,14 @@ const Branches = () => {
           optionFilterProp="label"
           onChange={(value) => {
             setSelectedEditState(
-              stateData?.listAllState.find((state) => state.id === value)
+              stateData?.listAllState?.find((state) => state.id === value)
             );
             editFormRef.setFieldsValue({
               townshipId: null,
             });
           }}
         >
-          {stateData?.listAllState.map((state) => (
+          {stateData?.listAllState?.map((state) => (
             <Select.Option
               key={state.id}
               value={state.id}
@@ -684,7 +680,7 @@ const Branches = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="branch.transactionNumberSeries.required"
+                id="label.transactionNumberSeries.required"
                 defaultMessage="Select the Transaction Number Series"
               />
             ),

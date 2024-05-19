@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import "./PurchaseOrdersNew.css";
 import {
   Button,
   Form,
@@ -42,7 +41,7 @@ import {
   AddPurchaseProductsModal,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ReactComponent as TaxOutlined } from "../../assets/icons/TaxOutlined.svg";
 import { ReactComponent as PercentageOutlined } from "../../assets/icons/PercentageOutlined.svg";
 import { PurchaseOrderMutations, WarehouseQueries } from "../../graphql";
@@ -90,6 +89,7 @@ const taxPreferences = [
 ];
 
 const PurchaseOrdersNew = () => {
+  const intl = useIntl();
   const navigate = useNavigate();
   const location = useLocation();
   const [form] = Form.useForm();
@@ -98,15 +98,18 @@ const PurchaseOrdersNew = () => {
   const [data, setData] = useState(
     record?.details?.map((detail, index) => ({
       key: index + 1,
+      detailId: detail.id,
       name: detail.name,
       amount: detail.detailTotalAmount,
       taxAmount: detail.detailTaxAmount,
       discountAmount: detail.detailDiscountAmount,
-      taxRate: detail.detailTaxRate,
+      taxRate: detail.detailTax.rate,
       discount: detail.detailDiscount,
       discountType: detail.detailDiscountType,
       id: detail.productType + detail.productId,
       detailDiscountType: detail.detailDiscountType,
+      quantity: detail.detailQty,
+      rate: detail.detailUnitRate,
     }))
   );
 
@@ -122,13 +125,14 @@ const PurchaseOrdersNew = () => {
     allWarehousesQueryRef,
     allProductsQueryRef,
     allShipmentPreferencesQueryRef,
+    allProductVariantsQueryRef,
   } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(
     record.supplier?.id ? record.supplier : ""
   );
   const [selectedWarehouse, setSelectedWarehouse] = useState(
-    record?.warehouseId > 0 ? record?.warehouseId : null
+    record?.warehouse?.id > 0 ? record?.warehouse.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
     record?.orderDiscount > 0
@@ -148,31 +152,29 @@ const PurchaseOrdersNew = () => {
   );
   const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
     useState(false);
-  const [subTotal, setSubTotal] = useState(
-    record?.details.reduce(
-      (total, detail) => total + detail.detailTotalAmount,
-      0
-    )
+  const [subTotal, setSubTotal] = useState(record?.orderSubtotal);
+  const [totalTaxAmount, setTotalTaxAmount] = useState(
+    record?.orderTotalTaxAmount
   );
-  const [totalTaxAmount, setTotalTaxAmount] = useState(record?.orderTaxAmount);
-  const [totalDiscountAmount, setTotalDiscountAmount] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(
-    record?.details.reduce(
-      (total, detail) => total + detail.detailTotalAmount,
-      0
-    )
+  const [totalDiscountAmount, setTotalDiscountAmount] = useState(
+    record?.orderTotalDiscountAmount
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
+  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount - record?.adjustmentAmount);
   const client = useApolloClient();
   const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details.length
+    record?.details?.length
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
-    business.baseCurrency.id
+    record?.currency.id || business.baseCurrency.id
   );
   const [discount, setDiscount] = useState(0);
-  const [selectedDiscountType, setSelectedDiscountType] = useState("P");
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [selectedDiscountType, setSelectedDiscountType] = useState(
+    record?.orderDiscountType
+  );
+  const [discountAmount, setDiscountAmount] = useState(
+    record?.orderDiscountAmount || 0
+  );
   const [isTaxInclusive, setIsTaxInclusive] = useState(
     record?.isDetailTaxInclusive
   );
@@ -181,12 +183,12 @@ const PurchaseOrdersNew = () => {
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
 
-  const initialValues = {
-    currency: business.baseCurrency.id,
-    paymentTerms: "DueOnReceipt",
-    date: dayjs(),
-    branch: business.primaryBranch.id,
-  };
+  // const initialValues = {
+  //   currency: business.baseCurrency.id,
+  //   paymentTerms: "DueOnReceipt",
+  //   date: dayjs(),
+  //   branch: business.primaryBranch.id,
+  // };
 
   console.log("record", record);
 
@@ -201,9 +203,10 @@ const PurchaseOrdersNew = () => {
   const { data: shipmentPreferenceData } = useReadQuery(
     allShipmentPreferencesQueryRef
   );
+  const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
 
   // Mutations
-  const [updatePO, { loading: createLoading }] = useMutation(
+  const [updatePurchaseOrder, { loading: createLoading }] = useMutation(
     UPDATE_PURCHASE_ORDER,
     {
       onCompleted() {
@@ -225,46 +228,52 @@ const PurchaseOrdersNew = () => {
   const loading = createLoading;
 
   const branches = useMemo(() => {
-    return branchData?.listAllBranch?.filter(
-      (branch) => branch.isActive === true
-    );
+    return branchData?.listAllBranch;
   }, [branchData]);
 
   const accounts = useMemo(() => {
-    return accountData?.listAllAccount?.filter((acc) => acc.isActive === true);
+    return accountData?.listAllAccount;
   }, [accountData]);
 
   const currencies = useMemo(() => {
-    return currencyData?.listAllCurrency?.filter((c) => c.isActive === true);
+    return currencyData?.listAllCurrency;
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
+    return warehouseData?.listAllWarehouse;
   }, [warehouseData]);
 
   const products = useMemo(() => {
-    return productData?.listAllProduct?.filter((p) => p.isActive === true);
+    return productData?.listAllProduct;
   }, [productData]);
 
+  const productVariants = useMemo(() => {
+    return productVariantData?.listAllProductVariant;
+  }, [productVariantData]);
+
   const shipmentPreferences = useMemo(() => {
-    return shipmentPreferenceData?.listAllShipmentPreference?.filter(
-      (s) => s.isActive === true
-    );
+    return shipmentPreferenceData?.listAllShipmentPreference;
   }, [shipmentPreferenceData]);
 
   const taxes = useMemo(() => {
-    return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
+    return taxData?.listAllTax;
   }, [taxData]);
 
   const taxGroups = useMemo(() => {
-    return taxGroupData?.listAllTaxGroup?.filter(
-      (tax) => tax.isActive === true
-    );
+    return taxGroupData?.listAllTaxGroup;
   }, [taxGroupData]);
 
-  const allProducts = products
-    ? products.map((product) => ({ ...product, id: "S" + product.id }))
-    : [];
+  const allProducts = useMemo(() => {
+    const productsWithS = products
+      ? products.map((product) => ({ ...product, id: "S" + product.id }))
+      : [];
+
+    const productsWithV = productVariants
+      ? productVariants.map((variant) => ({ ...variant, id: "V" + variant.id }))
+      : [];
+
+    return [...productsWithS, ...productsWithV];
+  }, [products, productVariants]);
 
   const allTax = [
     {
@@ -290,11 +299,53 @@ const PurchaseOrdersNew = () => {
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
 
+  useMemo(() => {
+    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
+    const parsedRecord = record
+      ? {
+          supplierName: record?.supplierName,
+          branch: record?.branch?.id,
+          referenceNumber: record?.referenceNumber,
+          date: dayjs(record?.orderDate),
+          deliveryDate: dayjs(record?.expectedDeliveryDate),
+          deliveryWarehouse:
+            record?.deliveryWarehouseId === 0
+              ? null
+              : record?.deliveryWarehouseId,
+          deliveryAddress: record?.deliveryAddress,
+          shipmentPreference:
+            record?.shipmentPreferenceId === 0
+              ? null
+              : record?.shipmentPreferenceId,
+          paymentTerms: record?.orderPaymentTerms,
+          customDays: record?.orderPaymentTermsCustomDays,
+          currency: record?.currency?.id,
+          exchangeRate: record?.currency?.exchangeRate,
+          warehouse: record?.warehouse.id,
+          customerNotes: record?.notes,
+          discount: record?.orderDiscount,
+          adjustment: record?.adjustmentAmount || null,
+          // Map transactions to form fields
+          ...record?.details?.reduce((acc, d, index) => {
+            acc[`account${index + 1}`] = d.detailAccount.id || null;
+            acc[`quantity${index + 1}`] = d.detailQty;
+            acc[`rate${index + 1}`] = d.detailUnitRate;
+            acc[`detailDiscount${index + 1}`] = d.detailDiscount;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
+            acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
+            return acc;
+          }, {}),
+        }
+      : {};
+
+    form.setFieldsValue(parsedRecord);
+  }, [form, record]);
+
   const onFinish = (values) => {
-    console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
-      if (!item.name || item.amount === 0) {
+      if ((!(item.name || values[`product${item.key}`]) || item.amount === 0) && !item.isDeletedItem) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -304,13 +355,13 @@ const PurchaseOrdersNew = () => {
       const detailTaxType = tax && tax.title === "Tax Group" ? "G" : "I";
       const detailTaxId = taxId ? parseInt(taxId?.replace(/[IG]/, ""), 10) : 0;
       const productId = item.id;
-      console.log("itemid", item.id);
       const detailProductType = productId ? Array.from(productId)[0] : "S";
       let detailProductId = productId
         ? parseInt(productId?.replace(/[SGCV]/, ""), 10)
         : 0;
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
+        detailId: item.detailId || 0,
         productId: detailProductId,
         productType: detailProductType,
         // batchNumber
@@ -322,6 +373,7 @@ const PurchaseOrdersNew = () => {
         detailTaxType,
         detailDiscount: item.discount || 0,
         detailDiscountType: item.discountType ? item.discountType : "P",
+        isDeletedItem: item.isDeletedItem || false,
       };
     });
 
@@ -349,34 +401,66 @@ const PurchaseOrdersNew = () => {
       orderDiscountType: selectedDiscountType,
       adjustmentAmount: adjustment,
       isDetailTaxInclusive: isTaxInclusive,
-      orderTaxId: 2,
+      orderTaxId: 0,
       orderTaxType: "I",
       currentStatus: saveStatus,
       // documents:
       warehouseId: values.warehouse,
       details,
     };
-    console.log("Input", record.id);
-    updatePO({
+    console.log("Input", input);
+    updatePurchaseOrder({
       variables: { id: record.id, input },
-      update(cache, { data: { updatePO } }) {
+      update(cache, { data: { updatePurchaseOrder } }) {
         cache.modify({
           fields: {
             paginatePurchaseOrder(pagination = []) {
               const index = pagination.edges.findIndex(
-                (x) => x.node.__ref === "PurchaseOrder:" + updatePO.id
+                (x) =>
+                  x.node.__ref === "PurchaseOrder:" + updatePurchaseOrder.id
               );
               if (index >= 0) {
-                const newJournal = cache.writeFragment({
-                  data: updatePO,
+                const newPurchaseOrder = cache.writeFragment({
+                  data: updatePurchaseOrder,
                   fragment: gql`
                     fragment NewPurchaseOrder on PurchaseOrder {
                       id
+                      supplier
+                      branch
+                      orderNumber
+                      referenceNumber
+                      orderDate
+                      expectedDeliveryDate
+                      orderPaymentTerms
+                      orderPaymentTermsCustomDays
+                      deliveryWarehouseId
+                      deliveryCustomerId
+                      deliveryAddress
+                      shipmentAddress
+                      notes
+                      termsAndConditions
+                      currency
+                      exchangeRate
+                      orderDiscount
+                      orderDiscountType
+                      orderDiscountAmount
+                      adjustmentAmount
+                      isDetailTaxInclusive
+                      orderTax
+                      orderTaxAmount
+                      currentStatus
+                      documents
+                      details
+                      warehouse
+                      orderSubtotal
+                      orderTotalDiscountAmount
+                      orderTotalTaxAmount
+                      orderTotalAmount
                     }
                   `,
                 });
                 let paginationCopy = JSON.parse(JSON.stringify(pagination));
-                paginationCopy.edges[index].node = newJournal;
+                paginationCopy.edges[index].node = newPurchaseOrder;
                 return paginationCopy;
               } else {
                 return pagination;
@@ -406,12 +490,37 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleRemoveRow = (keyToRemove) => {
-    const newData = data.filter((item) => item.key !== keyToRemove);
+    const newData = data
+      .map((item) => {
+        if (item.key === keyToRemove) {
+          if (item.detailId) {
+            return {
+              ...item,
+              isDeletedItem: true,
+              amount: 0,
+              discount: 0,
+              discountAmount: 0,
+              quantity: 0,
+              rate: 0,
+              taxAmount: 0,
+              taxRate: 0,
+              id: null,
+              discountType: "P",
+              detailTax: null,
+            };
+          } else {
+            return null;
+          }
+        }
+        return item;
+      })
+      .filter((item) => item !== null);
+
+    console.log("items", newData);
     recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     setData(newData);
     form.setFieldsValue({
       [`product${keyToRemove}`]: "",
-      [`account${keyToRemove}`]: "",
       [`quantity${keyToRemove}`]: "",
       [`rate${keyToRemove}`]: "",
       [`detailTax${keyToRemove}`]: "",
@@ -572,7 +681,7 @@ const PurchaseOrdersNew = () => {
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
-        newData.account = selectedItem.purchaseAccount?.id;
+        newData.account = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -586,7 +695,7 @@ const PurchaseOrdersNew = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.purchaseAccount?.id,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
       [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
       [`quantity${rowKey}`]: 1,
@@ -692,48 +801,6 @@ const PurchaseOrdersNew = () => {
     setTotalTaxAmount(totalTaxAmount);
     calculateTotalAmount(subTotal, totalTaxAmount, isAtTransactionLevel);
   };
-
-  useMemo(() => {
-    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
-    const parsedRecord = record
-      ? {
-          supplierName: record?.supplierName,
-          branch: record?.branch?.id,
-          referenceNumber: record?.referenceNumber,
-          date: dayjs(record?.orderDate),
-          deliveryDate: dayjs(record?.expectedDeliveryDate),
-          deliveryWarehouse:
-            record?.deliveryWarehouseId === 0
-              ? null
-              : record?.deliveryWarehouseId,
-          deliveryAddress: record?.deliveryAddress,
-          shipmentPreference:
-            record?.shipmentPreferenceId === 0
-              ? null
-              : record?.shipmentPreferenceId,
-          paymentTerms: record?.orderPaymentTerms,
-          customDays: record?.orderPaymentTermsCustomDays,
-          currency: record?.currency?.id,
-          exchangeRate: record?.currency?.exchangeRate,
-          warehouse: record?.warehouseId,
-          customerNotes: record?.notes,
-          discount: record?.orderDiscount,
-          adjustment: record?.adjustmentAmount || null,
-          // Map transactions to form fields
-          ...record?.details.reduce((acc, d, index) => {
-            acc[`account${index + 1}`] = d.detailAccountId;
-            acc[`quantity${index + 1}`] = d.detailQty;
-            acc[`rate${index + 1}`] = d.detailUnitRate;
-            acc[`detailDiscount${index + 1}`] = d.detailDiscount;
-            acc[`detailTax${index + 1}`] = d.detailTax.id;
-
-            return acc;
-          }, {}),
-        }
-      : {};
-
-    form.setFieldsValue(parsedRecord);
-  }, [form, record]);
 
   const handleDiscountChange = (value) => {
     const newDiscount = parseFloat(value) || 0;
@@ -868,14 +935,14 @@ const PurchaseOrdersNew = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div>
+            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
               <Flex justify="space-between">
                 {text}
-                <CloseCircleOutlined
+                {/* <CloseCircleOutlined
                   onClick={() =>
                     handleRemoveSelectedItem(record.id, record.key)
                   }
-                />
+                /> */}
               </Flex>
               <div>SKU: {record.sku}</div>
             </div>
@@ -883,7 +950,17 @@ const PurchaseOrdersNew = () => {
           <Form.Item
             hidden={text}
             name={`product${record.key}`}
-            className="margin-less-input"
+            rules={[
+              {
+                required: text ? false : true,
+                message: (
+                  <FormattedMessage
+                    id="label.product.required"
+                    defaultMessage="Select the Product"
+                  />
+                ),
+              },
+            ]}
           >
             <AutoComplete
               className="custom-select"
@@ -934,7 +1011,20 @@ const PurchaseOrdersNew = () => {
       key: "account",
       width: "10%",
       render: (_, record) => (
-        <Form.Item name={`account${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`account${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.account.required"
+                  defaultMessage="Select the Account"
+                />
+              ),
+            },
+          ]}
+        >
           <Select
             allowClear
             showSearch
@@ -965,7 +1055,36 @@ const PurchaseOrdersNew = () => {
       key: "quantity",
       width: "10%",
       render: (text, record) => (
-        <Form.Item name={`quantity${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`quantity${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.quantity.required"
+                  defaultMessage="Enter the Quantity"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input
             maxLength={15}
             value={text ? text : "1.00"}
@@ -981,7 +1100,36 @@ const PurchaseOrdersNew = () => {
       key: "rate",
       width: "10%",
       render: (text, record) => (
-        <Form.Item name={`rate${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`rate${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.rate.required"
+                  defaultMessage="Enter the Rate"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input
             maxLength={15}
             value={text ? text : "1.00"}
@@ -1000,7 +1148,24 @@ const PurchaseOrdersNew = () => {
       render: (text, record) => (
         <Form.Item
           name={`detailDiscount${record.key}`}
-          className="margin-less-input"
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
         >
           <Input
             maxLength={15}
@@ -1032,10 +1197,7 @@ const PurchaseOrdersNew = () => {
       key: "detailTax",
       width: "10%",
       render: (_, record) => (
-        <Form.Item
-          name={`detailTax${record.key}`}
-          className="margin-less-input"
-        >
+        <Form.Item name={`detailTax${record.key}`}>
           <Select
             onChange={(value) => handleDetailTaxChange(value, record.key)}
             showSearch
@@ -1061,29 +1223,33 @@ const PurchaseOrdersNew = () => {
       dataIndex: "amount",
       key: "amount",
       width: "10%",
-      // render: (text, record) => (
-      //   <Form.Item name={`account${record.key}`}>
-      //     <Input
-      //       value={text ? text.toFixed(2) : "1.00"}
-      //       className="text-align-right"
-      //     />
-      //   </Form.Item>
-      // ),
+      render: (text) => (
+        <div
+          style={{
+            marginBottom: "24px",
+            textAlign: "right",
+            paddingRight: "1rem",
+          }}
+        >
+          {text}
+        </div>
+      ),
     },
     {
       title: "",
       dataIndex: "actions",
       key: "actions",
-      width: "3%",
+      width: "5%",
       render: (_, record) => (
-        <CloseCircleOutlined
-          style={{ color: "red" }}
-          onClick={() => handleRemoveRow(record.key)}
-        />
+        <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
+          <CloseCircleOutlined
+            style={{ color: "red" }}
+            onClick={() => handleRemoveRow(record.key)}
+          />
+        </Flex>
       ),
     },
   ];
-
   return (
     <>
       <SupplierSearchModal
@@ -1092,7 +1258,7 @@ const PurchaseOrdersNew = () => {
         onRowSelect={handleModalRowSelect}
       />
       <AddPurchaseProductsModal
-        products={products}
+        products={allProducts}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -1103,8 +1269,8 @@ const PurchaseOrdersNew = () => {
       <div className="page-header">
         <p className="page-header-text">
           <FormattedMessage
-            id="purchaseOrder.new"
-            defaultMessage="New Purchase Order"
+            id="purchaseOrder.edit"
+            defaultMessage="Edit Purchase Order"
           />
         </p>
         <Button
@@ -1116,7 +1282,7 @@ const PurchaseOrdersNew = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish} initialValues={initialValues}>
+        <Form form={form} onFinish={onFinish}>
           <Row>
             <Col span={12}>
               <Form.Item
@@ -1487,9 +1653,25 @@ const PurchaseOrdersNew = () => {
                             />
                           ),
                         },
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (isNaN(value) || value.length > 20) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
                       ]}
                     >
-                      <InputNumber />
+                      <Input />
                     </Form.Item>
                   ) : null
                 }
@@ -1626,10 +1808,11 @@ const PurchaseOrdersNew = () => {
             <>
               <Table
                 columns={columns}
-                dataSource={data}
+                dataSource={data.filter((item) => !item.isDeletedItem)}
                 pagination={false}
                 className="item-details-table"
               />
+
               <br />
               <Button
                 icon={<PlusCircleFilled className="plus-circle-icon" />}
@@ -1708,7 +1891,28 @@ const PurchaseOrdersNew = () => {
                         />
                       </td>
                       <td style={{ width: "20%" }} offset={10}>
-                        <Form.Item name="discount" style={{ margin: 0 }}>
+                        <Form.Item
+                          name="discount"
+                          style={{ margin: 0 }}
+                          rules={[
+                            () => ({
+                              validator(_, value) {
+                                if (!value) {
+                                  return Promise.resolve();
+                                } else if (isNaN(value) || value.length > 20) {
+                                  return Promise.reject(
+                                    intl.formatMessage({
+                                      id: "validation.invalidInput",
+                                      defaultMessage: "Invalid Input",
+                                    })
+                                  );
+                                } else {
+                                  return Promise.resolve();
+                                }
+                              },
+                            }),
+                          ]}
+                        >
                           <Input
                             onBlur={(e) => handleDiscountChange(e.target.value)}
                             addonAfter={
@@ -1765,7 +1969,28 @@ const PurchaseOrdersNew = () => {
                   <tr>
                     <td>Adjustment</td>
                     <td style={{ width: "20%" }} offset={10}>
-                      <Form.Item name="adjustment" style={{ margin: 0 }}>
+                      <Form.Item
+                        name="adjustment"
+                        style={{ margin: 0 }}
+                        rules={[
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (isNaN(value) || value.length > 20) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
                         <Input
                           onBlur={(e) =>
                             setAdjustment(parseFloat(e.target.value) || 0)
@@ -1834,6 +2059,7 @@ const PurchaseOrdersNew = () => {
               className="page-actions-btn"
               loading={loading}
               onClick={() => setSaveStatus("Draft")}
+              disabled={record?.currentStatus !== "Draft"}
             >
               {
                 <FormattedMessage
@@ -1848,6 +2074,7 @@ const PurchaseOrdersNew = () => {
               className="page-actions-btn"
               loading={loading}
               onClick={() => setSaveStatus("Confirmed")}
+              disabled={record?.currentStatus === "Closed"}
             >
               {
                 <FormattedMessage

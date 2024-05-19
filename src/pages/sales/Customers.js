@@ -23,7 +23,10 @@ import {
   MobileOutlined,
   MailOutlined,
 } from "@ant-design/icons";
-import { PaginatedSelectionTable } from "../../components";
+import {
+  PaginatedSelectionTable,
+  SearchCriteriaDisplay,
+} from "../../components";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CustomerQueries, CustomerMutations } from "../../graphql";
@@ -31,7 +34,7 @@ import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { ReactComponent as UserThumbnail } from "../../assets/icons/UserThumbnail.svg";
 import { useMutation } from "@apollo/client";
@@ -42,7 +45,7 @@ const { DELETE_CUSTOMER } = CustomerMutations;
 
 const Customers = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi } = useOutletContext();
+  const { notiApi, msgApi } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -50,8 +53,12 @@ const Customers = () => {
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
   const location = useLocation();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
-    "searchCriteria",
+    "customerSearchCriteria",
     null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "customerCurrentPage",
+    1
   );
 
   // Mutations
@@ -60,13 +67,14 @@ const Customers = () => {
 
     {
       onCompleted() {
-        openSuccessNotification(
-          notiApi,
+        openSuccessMessage(
+          msgApi,
           <FormattedMessage
             id="customer.deleted"
             defaultMessage="Customer Deleted"
           />
         );
+        setSelectedRecord(null);
       },
       onError(err) {
         openErrorNotification(notiApi, err.message);
@@ -75,13 +83,14 @@ const Customers = () => {
         const existingCustomers = cache.readQuery({
           query: GET_PAGINATE_CUSTOMER,
         });
-        const updatedCustomers = existingCustomers.paginateProduct.edges.filter(
-          ({ node }) => node.id !== data.deleteCustomer.id
-        );
+        const updatedCustomers =
+          existingCustomers.paginateCustomer.edges.filter(
+            ({ node }) => node.id !== data.deleteCustomer.id
+          );
         cache.writeQuery({
           query: GET_PAGINATE_CUSTOMER,
           data: {
-            paginateProduct: {
+            paginateCustomer: {
               ...existingCustomers.paginateCustomer,
               edges: updatedCustomers,
             },
@@ -158,6 +167,12 @@ const Customers = () => {
   };
 
   const handleToggleActive = () => {};
+
+  const handleModalClear = () => {
+    setSearchCriteria(null);
+    searchFormRef.resetFields();
+    setSearchModalOpen(false);
+  };
 
   const searchForm = (
     <Form form={searchFormRef}>
@@ -306,12 +321,45 @@ const Customers = () => {
           </Space>
         </div>
         <div className={`page-content ${selectedRecord && "column-width2"}`}>
+          {searchCriteria && (
+            <SearchCriteriaDisplay
+              searchCriteria={searchCriteria}
+              handleModalClear={handleModalClear}
+            >
+              {searchCriteria.name && (
+                <li>
+                  Customer Name includes <b>{searchCriteria.name}</b>
+                </li>
+              )}
+              {searchCriteria.email && (
+                <li>
+                  Email contains <b>{searchCriteria.email}</b>
+                </li>
+              )}
+              {searchCriteria.phone && (
+                <li>
+                  Phone contains <b>{searchCriteria.phone}</b>
+                </li>
+              )}
+              {searchCriteria.mobile && (
+                <li>
+                  Mobile contains <b>{searchCriteria.mobile}</b>
+                </li>
+              )}
+            </SearchCriteriaDisplay>
+          )}
           <PaginatedSelectionTable
             loading={loading}
             api={notiApi}
             columns={columns}
             gqlQuery={GET_PAGINATE_CUSTOMER}
             searchForm={searchForm}
+            searchTitle={
+              <FormattedMessage
+                id="customer.search"
+                defaultMessage="Search Customers"
+              />
+            }
             searchFormRef={searchFormRef}
             searchQqlQuery={GET_PAGINATE_CUSTOMER}
             parseData={parseData}
@@ -326,6 +374,8 @@ const Customers = () => {
             compactColumns={compactColumns}
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
           />
         </div>
       </div>

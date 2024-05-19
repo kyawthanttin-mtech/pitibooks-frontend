@@ -6,21 +6,23 @@ const CREATE_BRANCH = gql`
       id
       name
       phone
+      mobile
       address
       state {
+        id
+        code
         stateNameEn
       }
       township {
+        id
+        stateCode
         townshipNameEn
       }
       country
       city
       transactionNumberSeries {
         id
-        businessId
         name
-        createdAt
-        updatedAt
       }
     }
   }
@@ -31,19 +33,25 @@ const UPDATE_BRANCH = gql`
     updateBranch(id: $id, input: $input) {
       id
       name
-      transactionNumberSeries {
-        id
-        name
-      }
+      phone
+      mobile
+      address
       state {
+        id
+        code
         stateNameEn
       }
       township {
+        id
+        stateCode
         townshipNameEn
       }
       country
       city
-      address
+      transactionNumberSeries {
+        id
+        name
+      }
     }
   }
 `;
@@ -53,12 +61,25 @@ const DELETE_BRANCH = gql`
     deleteBranch(id: $id) {
       id
       name
+      phone
+      mobile
+      address
+      state {
+        id
+        code
+        stateNameEn
+      }
+      township {
+        id
+        stateCode
+        townshipNameEn
+      }
+      country
+      city
       transactionNumberSeries {
         id
         name
       }
-      country
-      city
     }
   }
 `;
@@ -67,16 +88,27 @@ const TOGGLE_ACTIVE_BRANCH = gql`
   mutation ToggleActiveBranch($id: ID!, $isActive: Boolean!) {
     toggleActiveBranch(id: $id, isActive: $isActive) {
       id
-      businessId
       name
       phone
       mobile
       address
+      state {
+        id
+        code
+        stateNameEn
+      }
+      township {
+        id
+        stateCode
+        townshipNameEn
+      }
       country
       city
+      transactionNumberSeries {
+        id
+        name
+      }
       isActive
-      createdAt
-      updatedAt
     }
   }
 `;

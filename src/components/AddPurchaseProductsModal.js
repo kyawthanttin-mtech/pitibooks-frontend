@@ -19,7 +19,7 @@ const AddPurchaseProductsModal = ({
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useMemo(() => {
-    const filtered = products?.filter((item) => 
+    const filtered = products?.filter((item) =>
       item.name?.toLowerCase().includes(searchQuery?.toLowerCase())
     );
     setFilteredProducts(filtered);
@@ -161,7 +161,6 @@ const AddPurchaseProductsModal = ({
     setSelectedItemsBulk([]);
   };
 
-  
   return (
     <Modal
       title="Add Products in Bulk"
@@ -169,7 +168,10 @@ const AddPurchaseProductsModal = ({
       onCancel={onCancel}
       width="66rem"
       okText={
-        <FormattedMessage id="button.addProducts" defaultMessage="Add Products" />
+        <FormattedMessage
+          id="button.addProducts"
+          defaultMessage="Add Products"
+        />
       }
       cancelText={
         <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -180,7 +182,7 @@ const AddPurchaseProductsModal = ({
         <div className="items-menu-section">
           <div>
             <Input.Search
-              placeholder="Type to search or scan the barcode of the item"
+              placeholder="Type to search or scan the barcode of the product"
               allowClear
               enterButton
               onSearch={(value) => setSearchQuery(value)}
@@ -191,7 +193,7 @@ const AddPurchaseProductsModal = ({
             {(searchQuery ? filteredProducts : products)?.map((item) => (
               <li
                 className={`${
-                  data.some((dataItem) => dataItem.id === item.id) &&
+                  data?.some((dataItem) => dataItem.id === item.id) &&
                   "added-item"
                 }`}
                 key={item.id}

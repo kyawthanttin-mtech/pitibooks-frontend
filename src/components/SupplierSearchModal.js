@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Button,
   Input,
@@ -17,7 +17,7 @@ import {
   LeftOutlined,
   RightOutlined,
   SyncOutlined,
-  SearchOutlined,
+  // SearchOutlined,
 } from "@ant-design/icons";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import { FormattedMessage } from "react-intl";
@@ -171,6 +171,7 @@ const SupplierSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
       }
       await search({
         variables: {
+          isActive: true,
           ...searchInput,
         },
       });
@@ -180,9 +181,9 @@ const SupplierSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
     }
   };
 
-  const handleSearchClear = () => {
-    setSearchCriteria(null);
-  };
+  // const handleSearchClear = () => {
+  //   setSearchCriteria(null);
+  // };
 
   const handleRowSelect = (record) => {
     onRowSelect(record);
@@ -216,6 +217,7 @@ const SupplierSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
+      isActive: true,
       limit: MODAL_QUERY_DATA_LIMIT,
     },
     onError(err) {

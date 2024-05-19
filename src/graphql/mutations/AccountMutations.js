@@ -4,9 +4,11 @@ const CREATE_ACCOUNT = gql`
   mutation CreateAccount($input: NewAccount!) {
     createAccount(input: $input) {
       id
-      name
       detailType
       mainType
+      name
+      code
+      description
     }
   }
 `;
@@ -15,9 +17,11 @@ const UPDATE_ACCOUNT = gql`
   mutation UpdateAccount($id: ID!, $input: NewAccount!) {
     updateAccount(id: $id, input: $input) {
       id
-      name
       detailType
       mainType
+      name
+      code
+      description
     }
   }
 `;
@@ -26,9 +30,11 @@ const DELETE_ACCOUNT = gql`
   mutation DeleteAccount($id: ID!) {
     deleteAccount(id: $id) {
       id
-      name
       detailType
       mainType
+      name
+      code
+      description
     }
   }
 `;
@@ -40,6 +46,8 @@ const TOGGLE_ACTIVE_ACCOUNT = gql`
       detailType
       mainType
       name
+      code
+      description
       isActive
     }
   }

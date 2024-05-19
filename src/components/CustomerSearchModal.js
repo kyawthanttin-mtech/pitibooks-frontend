@@ -166,6 +166,7 @@ const CustomerSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
       }
       await search({
         variables: {
+          isActive: true,
           ...searchInput,
         },
       });
@@ -175,9 +176,9 @@ const CustomerSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
     }
   };
 
-  const handleSearchClear = () => {
-    setSearchCriteria(null);
-  };
+  // const handleSearchClear = () => {
+  //   setSearchCriteria(null);
+  // };
 
   const handleRowSelect = (record) => {
     onRowSelect(record);

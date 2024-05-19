@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 
 import "./ProductGroupsNew.css";
-import UploadImage from "../../components/UploadImage";
+import { SupplierSearchModal, UploadImage } from "../../components";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import {
   openErrorNotification,
@@ -10,6 +10,7 @@ import {
 } from "../../utils/Notification";
 import {
   Button,
+  Checkbox,
   Row,
   Space,
   Table,
@@ -29,19 +30,23 @@ import {
   PlusOutlined,
   DeleteOutlined,
   PlusCircleFilled,
+  SearchOutlined,
 } from "@ant-design/icons";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ProductGroupMutations } from "../../graphql";
-import { useMutation, useQuery } from "@apollo/client";
-import { CategoryQueries, UnitQueries } from "../../graphql";
-import { useReadQuery } from "@apollo/client";
+import { useMutation, useReadQuery } from "@apollo/client";
+import {
+  SYSTEM_ACCOUNT_CODE_COGS,
+  SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET,
+  SYSTEM_ACCOUNT_CODE_SALES,
+} from "../../config/Constants";
+
 const { CREATE_PRODUCT_GROUP } = ProductGroupMutations;
-const { GET_PRODUCT_UNITS } = UnitQueries;
-const { GET_PRODUCT_CATEGORIES } = CategoryQueries;
 
 const defaultPrice = "0.00";
 
 const ProductGroupsNew = () => {
+  const intl = useIntl();
   const [productGroupName, setProductGroupName] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -62,50 +67,35 @@ const ProductGroupsNew = () => {
     allTaxGroupsQueryRef,
     allTaxesQueryRef,
     allAccountsQueryRef,
+    allProductCategoriesQueryRef,
+    allProductUnitsQueryRef,
   } = useOutletContext();
   // const [imageList, setImageList] = useState([]);
   const renderCount = useRef(0);
+  const [isInventoryTracked, setIsInventoryTracked] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
 
   useEffect(() => {
     renderCount.current += 1;
     console.log(`Render count: ${renderCount.current}`);
   });
 
-  const initialValues = {
-    // productNature: "G",
-  };
-
   // Queries
+  const { data: unitData } = useReadQuery(allProductUnitsQueryRef);
+  const { data: categoryData } = useReadQuery(allProductCategoriesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: taxData } = useReadQuery(allTaxesQueryRef);
   const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
-
-  const { data: unitData, loading: unitLoading } = useQuery(GET_PRODUCT_UNITS, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: categoryData, loading: categoryLoading } = useQuery(
-    GET_PRODUCT_CATEGORIES,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
 
   //Mutations
   const [createProductGroup, { loading: createLoading }] = useMutation(
     CREATE_PRODUCT_GROUP,
     {
-      onCompleted() {
+      onCompleted(data) {
+        const createdProductGroup = data.createProductGroup;
+        console.log("data", createdProductGroup);
+
         openSuccessMessage(
           msgApi,
           <FormattedMessage
@@ -113,10 +103,20 @@ const ProductGroupsNew = () => {
             defaultMessage="New Product Group Created"
           />
         );
-        if (from === "/") {
-          navigate("/productGroups");
+        if (isInventoryTracked) {
+          navigate("/openingStock", {
+            state: {
+              ...location.state,
+              from: { pathname: location.pathname },
+              record: createdProductGroup,
+            },
+          });
         } else {
-          navigate(from, { state: location.state, replace: true });
+          if (from === "/") {
+            navigate("/productGroups");
+          } else {
+            navigate(from, { state: location.state, replace: true });
+          }
         }
       },
       onError(err) {
@@ -125,22 +125,24 @@ const ProductGroupsNew = () => {
     }
   );
 
-  const loading = createLoading || unitLoading || categoryLoading;
+  const loading = createLoading;
 
   const taxes = useMemo(() => {
-    return taxData?.listTax?.filter((tax) => tax.isActive === true);
+    return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
   }, [taxData]);
 
   const taxGroups = useMemo(() => {
-    return taxGroupData?.listTaxGroup?.filter((tax) => tax.isActive === true);
+    return taxGroupData?.listAllTaxGroup?.filter(
+      (tax) => tax.isActive === true
+    );
   }, [taxGroupData]);
 
   const units = useMemo(() => {
-    return unitData?.listProductUnit?.filter((tax) => tax.isActive === true);
+    return unitData?.listAllProductUnit?.filter((tax) => tax.isActive === true);
   }, [unitData]);
 
   const categories = useMemo(() => {
-    return categoryData?.listProductCategory?.filter(
+    return categoryData?.listAllProductCategory?.filter(
       (tax) => tax.isActive === true
     );
   }, [categoryData]);
@@ -150,18 +152,27 @@ const ProductGroupsNew = () => {
       (acc) => acc.mainType === "Income" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultSalesAccountId = salesAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_SALES
+  )?.id;
 
   const purchaseAccounts = useMemo(() => {
     return accountData?.listAllAccount?.filter(
       (acc) => acc.mainType === "Expense" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultPurchaseAccountId = purchaseAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_COGS
+  )?.id;
 
   const inventoryAccounts = useMemo(() => {
     return accountData?.listAllAccount?.filter(
       (acc) => acc.detailType === "Stock" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultInventoryAccountId = inventoryAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET
+  )?.id;
 
   const allTax = [
     {
@@ -333,6 +344,11 @@ const ProductGroupsNew = () => {
     }
   }, [combinationPairsUpdated, generateCombinations]);
 
+  const handleModalRowSelect = (record) => {
+    setSelectedSupplier(record);
+    createProductFormRef.setFieldsValue({ supplierName: record.name });
+  };
+
   const onFinish = (values) => {
     console.log("values", values);
 
@@ -360,30 +376,43 @@ const ProductGroupsNew = () => {
     const variants = combinationPairs.map((item) => ({
       name: item.productName,
       sku: values[`sku${item.key}`],
-      salesPrice: values[`salesPrice${item.key}`],
-      purchasePrice: values[`purchasePrice${item.key}`],
+      salesPrice: parseFloat(values[`salesPrice${item.key}`]) || 0,
+      purchasePrice: parseFloat(values[`purchasePrice${item.key}`]) || 0,
       barcode: values[`barcode${item.key}`],
       salesAccountId: values.salesAccount,
       purchaseAccountId: values.purchaseAccount,
-      inventoryAccountId: values.inventoryAccount,
+      inventoryAccountId: isInventoryTracked ? values.inventoryAccount : 0,
       isSalesTaxInclusive: false,
+      // isBatchTracking: false,
       productGroupId: 0,
       salesTaxId,
       salesTaxType,
       purchaseTaxId,
       purchaseTaxType,
+      unitId: values.unit,
     }));
     const options = productVariations.map((item) => ({
       optionName: item.name,
       optionUnits: item.values.map((item) => item.value).join("|"),
     }));
+
+    if (variants.length <= 0) {
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.enterAtLeastOneVariant",
+          defaultMessage: "Enter At Least One Variant",
+        })
+      );
+      return;
+    }
+
     const input = {
       // productNature: values.productNature,
       name: values.productGroupName,
       description: values.description,
-      unitId: values.unit,
       categoryId: values.category,
-      supplierId: 2,
+      supplierId: selectedSupplier?.id || 0,
       variants,
       options,
     };
@@ -391,11 +420,21 @@ const ProductGroupsNew = () => {
     createProductGroup({
       variables: { input },
     });
+    // if (isInventoryTracked) {
+    //   navigate("/openingStock", {
+    //     state: { combinationPairs },
+    //   });
+    // }
   };
 
   const columns = [
     {
-      title: "Product Name",
+      title: (
+        <FormattedMessage
+          id="label.productName"
+          defaultMessage="Product Name"
+        />
+      ),
       dataIndex: "productName",
       key: "productName",
       width: "30%",
@@ -408,7 +447,7 @@ const ProductGroupsNew = () => {
       ),
     },
     {
-      title: "SKU",
+      title: <FormattedMessage id="label.sku" defaultMessage="SKU" />,
       dataIndex: "sku",
       key: "sku",
       render: (_, record) => (
@@ -418,21 +457,86 @@ const ProductGroupsNew = () => {
       ),
     },
     {
-      title: "Cost Price (MMK)",
-      dataIndex: "costPrice",
-      key: "costPrice",
+      title: (
+        <FormattedMessage id="label.salesPrice" defaultMessage="SalesPrice" />
+      ),
+      dataIndex: "salesPrice",
+      key: "salesPrice",
       render: (_, record) => (
-        <Form.Item name={`purchasePrice${record.key}`}>
+        <Form.Item
+          name={`salesPrice${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.salesPrice.required"
+                  defaultMessage="Enter the Sales Price"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input />
         </Form.Item>
       ),
     },
     {
-      title: "Selling Price (MMK)",
-      dataIndex: "sellingPrice",
-      key: "sellingPrice",
+      title: (
+        <FormattedMessage
+          id="label.purchasePrice"
+          defaultMessage="Purchase Price"
+        />
+      ),
+      dataIndex: "purchasePrice",
+      key: "purchasePrice",
       render: (_, record) => (
-        <Form.Item name={`salesPrice${record.key}`}>
+        <Form.Item
+          name={`purchasePrice${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.purchasePrice.required"
+                  defaultMessage="Enter the Purchase Price"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input />
         </Form.Item>
       ),
@@ -514,7 +618,10 @@ const ProductGroupsNew = () => {
                 }}
                 icon={<PlusOutlined />}
               >
-                Add Option Value
+                <FormattedMessage
+                  id="action.addOptionValue"
+                  defaultMessage="Add Option Value"
+                />
               </Button>
             </Form.Item>
           </>
@@ -592,7 +699,10 @@ const ProductGroupsNew = () => {
                 }}
                 icon={<PlusOutlined />}
               >
-                Add Option Value
+                <FormattedMessage
+                  id="action.addOptionValue"
+                  defaultMessage="Add Option Value"
+                />
               </Button>
             </Form.Item>
           </>
@@ -600,6 +710,13 @@ const ProductGroupsNew = () => {
       </Form.List>
     </Form>
   );
+
+  const initialValues = {
+    // productNature: 'G',
+    salesAccount: defaultSalesAccountId,
+    purchaseAccount: defaultPurchaseAccountId,
+    inventoryAccount: defaultInventoryAccountId,
+  };
 
   const productNewForm = (
     <Form
@@ -609,182 +726,97 @@ const ProductGroupsNew = () => {
       onFinish={onFinish}
     >
       <Row>
-        <Col lg={14}>
-          <Row>
-            <Col lg={19}>
-              {/* <Form.Item
-                label={
-                  <FormattedMessage id="label.type" defaultMessage="Type" />
+        <Col span={12}>
+          <Form.Item
+            name="productGroupName"
+            label={
+              <FormattedMessage
+                id="label.productGroupName"
+                defaultMessage="Product Group Name"
+              />
+            }
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
+            labelAlign="left"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.productGroupName.required"
+                    defaultMessage="Enter the Product Group Name"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Input
+              maxLength={100}
+              onBlur={(e) => {
+                const trimmedValue = e.target.value.trim();
+                if (
+                  trimmedValue !== "" &&
+                  trimmedValue !== productGroupName &&
+                  productVariations.length > 0
+                ) {
+                  setProductGroupName(trimmedValue);
+                  setCombinationPairsUpdated(true);
+                } else if (productVariations.length < 1) {
+                  setProductGroupName(trimmedValue);
                 }
-                labelCol={{ span: 5 }}
-                labelAlign="left"
-                name="productNature"
-              >
-                <Radio.Group>
-                  <Radio value="G"> Goods </Radio>
-                  <Radio value="S"> Service </Radio>
-                </Radio.Group>
-              </Form.Item> */}
-              <Form.Item
-                name="productGroupName"
-                label="Product Group Name"
-                labelCol={{ span: 5 }}
-                labelAlign="left"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.productName.required"
-                        defaultMessage="Product name must be defined"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Input
-                  maxLength={100}
-                  onBlur={(e) => {
-                    const trimmedValue = e.target.value.trim();
-                    if (
-                      trimmedValue !== "" &&
-                      trimmedValue !== productGroupName &&
-                      productVariations.length > 0
-                    ) {
-                      setProductGroupName(trimmedValue);
-                      setCombinationPairsUpdated(true);
-                    } else if (productVariations.length < 1) {
-                      setProductGroupName(trimmedValue);
-                    }
-                  }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="description"
-                label="Description"
-                labelCol={{ span: 5 }}
-                labelAlign="left"
-              >
-                <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
-              </Form.Item>
-            </Col>
-          </Row>
-          <br />
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label={
+              <FormattedMessage
+                id="label.description"
+                defaultMessage="Description"
+              />
+            }
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
+            labelAlign="left"
+          >
+            <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
+          </Form.Item>
           <br />
         </Col>
-        <Col lg={5}>
+        <Col span={12}>
           <UploadImage />
         </Col>
       </Row>
+      <p style={{ fontSize: "var(--title-text)", marginTop: 0 }}>
+        <FormattedMessage
+          id="title.productDetails"
+          defaultMessage="Product Details"
+        />
+      </p>
       <Row>
-        <Col lg={7}>
-          <Form.Item
-            label={<FormattedMessage id="label.unit" defaultMessage="Unit" />}
-            labelCol={{ span: 8 }}
-            labelAlign="left"
-            name="unit"
-          >
-            <Select
-              placeholder="Select or type to add"
-              showSearch
-              allowClear
-              loading={loading}
-              optionFilterProp="label"
-            >
-              {units?.map((unit) => (
-                <Select.Option key={unit.id} value={unit.id} label={unit.name}>
-                  {unit.abbreviation}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row>
-        <Col lg={7}>
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.salesTax"
-                defaultMessage="Sales Tax"
-              />
-            }
-            labelCol={{ span: 8 }}
-            labelAlign="left"
-            name="salesTax"
-          >
-            <Select
-              placeholder="Select or type to add"
-              showSearch
-              allowClear
-              loading={loading}
-              optionFilterProp="label"
-            >
-              {allTax?.map((taxGroup) => (
-                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
-                  {taxGroup.taxes.map((tax) => (
-                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
-                      {tax.name}
-                    </Select.Option>
-                  ))}
-                </Select.OptGroup>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.purchaseTax"
-                defaultMessage="Purchase Tax"
-              />
-            }
-            labelCol={{ span: 8 }}
-            labelAlign="left"
-            name="purchaseTax"
-          >
-            <Select
-              placeholder="Select or type to add"
-              showSearch
-              allowClear
-              loading={loading}
-              optionFilterProp="label"
-            >
-              {allTax?.map((taxGroup) => (
-                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
-                  {taxGroup.taxes.map((tax) => (
-                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
-                      {tax.name}
-                    </Select.Option>
-                  ))}
-                </Select.OptGroup>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
-            }
-            labelCol={{ span: 8 }}
-            labelAlign="left"
-            name="supplier"
-          >
-            <Select
-              placeholder="Select a Supplier"
-              showSearch
-              allowClear
-              loading={loading}
-            ></Select>
-          </Form.Item>
+        <Col span={12}>
           <Form.Item
             label={
               <FormattedMessage id="label.category" defaultMessage="category" />
             }
             labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
             labelAlign="left"
             name="category"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.category.required"
+                    defaultMessage="Select the Category"
+                  />
+                ),
+              },
+            ]}
           >
             <Select
-              placeholder="Select Category"
+              // placeholder="Select Category"
               showSearch
               allowClear
               loading={loading}
@@ -797,8 +829,77 @@ const ProductGroupsNew = () => {
               ))}
             </Select>
           </Form.Item>
+          <Form.Item
+            label={<FormattedMessage id="label.unit" defaultMessage="Unit" />}
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
+            labelAlign="left"
+            name="unit"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.unit.required"
+                    defaultMessage="Select the Unit"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Select
+              // placeholder="Select or type to add"
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {units?.map((unit) => (
+                <Select.Option key={unit.id} value={unit.id} label={unit.name}>
+                  {unit.abbreviation}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+            }
+            name="supplierName"
+            shouldUpdate
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
+          >
+            <Input
+              readOnly
+              onClick={setSearchModalOpen}
+              className="search-input"
+              suffix={
+                <>
+                  {selectedSupplier && (
+                    <CloseOutlined
+                      style={{ height: 11, width: 11, cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedSupplier(null);
+                        createProductFormRef.resetFields(["supplierName"]);
+                      }}
+                    />
+                  )}
+
+                  <Button
+                    style={{ width: "2.5rem" }}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    className="search-btn"
+                    onClick={setSearchModalOpen}
+                  />
+                </>
+              }
+            />
+          </Form.Item>
         </Col>
-        <Col lg={7} offset={1}>
+        <Col span={12}>
           <Form.Item
             label={
               <FormattedMessage
@@ -807,8 +908,20 @@ const ProductGroupsNew = () => {
               />
             }
             labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
             labelAlign="left"
             name="salesAccount"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.salesAccount.required"
+                    defaultMessage="Select the Sales Account"
+                  />
+                ),
+              },
+            ]}
           >
             <Select
               allowClear
@@ -843,13 +956,55 @@ const ProductGroupsNew = () => {
           <Form.Item
             label={
               <FormattedMessage
+                id="label.salesTax"
+                defaultMessage="Sales Tax"
+              />
+            }
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
+            labelAlign="left"
+            name="salesTax"
+          >
+            <Select
+              // placeholder="Select or type to add"
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {allTax?.map((taxGroup) => (
+                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+                  {taxGroup.taxes.map((tax) => (
+                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                      {tax.name}
+                    </Select.Option>
+                  ))}
+                </Select.OptGroup>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage
                 id="label.purchaseAccount"
                 defaultMessage="Purchase Account"
               />
             }
             labelAlign="left"
             labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
             name="purchaseAccount"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.purchaseAccount.required"
+                    defaultMessage="Select the Purchase Account"
+                  />
+                ),
+              },
+            ]}
           >
             <Select
               loading={loading}
@@ -884,58 +1039,125 @@ const ProductGroupsNew = () => {
           <Form.Item
             label={
               <FormattedMessage
-                id="label.inventoryAccount"
-                defaultMessage="Inventory Account"
+                id="label.purchaseTax"
+                defaultMessage="Purchase Tax"
               />
             }
             labelCol={{ span: 8 }}
+            wrapperCol={{ span: 12 }}
             labelAlign="left"
-            name="inventoryAccount"
+            name="purchaseTax"
           >
             <Select
-              allowClear
+              // placeholder="Select or type to add"
               showSearch
-              optionFilterProp="label"
+              allowClear
               loading={loading}
-              placeholder={
-                <FormattedMessage
-                  id="label.account.placeholder"
-                  defaultMessage="Select an account"
-                />
-              }
+              optionFilterProp="label"
             >
-              {groupByDetailType(inventoryAccounts) &&
-                Object.entries(groupByDetailType(inventoryAccounts)).map(
-                  ([detailType, accounts]) => (
-                    <Select.OptGroup label={detailType} key={detailType}>
-                      {accounts.map((account) => (
-                        <Select.Option
-                          key={account.id}
-                          value={account.id}
-                          label={account.name}
-                        >
-                          {account.name}
-                        </Select.Option>
-                      ))}
-                    </Select.OptGroup>
-                  )
-                )}
+              {allTax?.map((taxGroup) => (
+                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+                  {taxGroup.taxes.map((tax) => (
+                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                      {tax.name}
+                    </Select.Option>
+                  ))}
+                </Select.OptGroup>
+              ))}
             </Select>
           </Form.Item>
         </Col>
       </Row>
+      <Row>
+        <Checkbox onChange={(e) => setIsInventoryTracked(e.target.checked)}>
+          <FormattedMessage
+            id="label.trackInventory"
+            defaultMessage="Track Inventory"
+          />
+        </Checkbox>
+      </Row>
+      {isInventoryTracked && (
+        <>
+          <br />
+          <Row>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.inventoryAccount"
+                    defaultMessage="Inventory Account"
+                  />
+                }
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+                labelAlign="left"
+                name="inventoryAccount"
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.inventoryAccount.required"
+                        defaultMessage="Select the Inventory Account"
+                      />
+                    ),
+                  },
+                ]}
+              >
+                <Select
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  loading={loading}
+                  placeholder={
+                    <FormattedMessage
+                      id="label.account.placeholder"
+                      defaultMessage="Select an account"
+                    />
+                  }
+                >
+                  {groupByDetailType(inventoryAccounts) &&
+                    Object.entries(groupByDetailType(inventoryAccounts)).map(
+                      ([detailType, accounts]) => (
+                        <Select.OptGroup label={detailType} key={detailType}>
+                          {accounts.map((account) => (
+                            <Select.Option
+                              key={account.id}
+                              value={account.id}
+                              label={account.name}
+                            >
+                              {account.name}
+                            </Select.Option>
+                          ))}
+                        </Select.OptGroup>
+                      )
+                    )}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        </>
+      )}
       <div className="page-actions-bar page-actions-bar-margin">
         <Button
           type="primary"
           htmlType="submit"
           className="page-actions-btn"
+          loading={createLoading}
           // onClick={() =>
           //   navigate("/openingStock", {
           //     state: { combinationPairs },
           //   })
           // }
         >
-          Save and Next
+          {isInventoryTracked ? (
+            <FormattedMessage
+              id="button.saveAndNext"
+              defaultMessage="Save And Next"
+            />
+          ) : (
+            <FormattedMessage id="button.save" defaultMessage="Save" />
+          )}
         </Button>
         <Button
           className="page-actions-btn"
@@ -951,8 +1173,18 @@ const ProductGroupsNew = () => {
 
   return (
     <>
+      <SupplierSearchModal
+        modalOpen={searchModalOpen}
+        setModalOpen={setSearchModalOpen}
+        onRowSelect={handleModalRowSelect}
+      />
       <Modal
-        title="Add Variants"
+        title={
+          <FormattedMessage
+            id="action.addVariants"
+            defaultMessage="Add Variants"
+          />
+        }
         open={createModalOpen}
         onCancel={() => setCreateModalOpen(false)}
         onOk={createFormRef.submit}
@@ -964,7 +1196,12 @@ const ProductGroupsNew = () => {
         {createForm}
       </Modal>
       <Modal
-        title="Edit Variants"
+        title={
+          <FormattedMessage
+            id="action.editVariants"
+            defaultMessage="Edit Variants"
+          />
+        }
         open={editModalOpen}
         onCancel={() => setEditModalOpen(false)}
         onOk={editFormRef.submit}
@@ -988,18 +1225,38 @@ const ProductGroupsNew = () => {
       <div className="page-content page-content-with-form-buttons product-new-page-content">
         <Row className="product-new-top-band">
           <Space size="large">
-            <Space>
-              <CheckCircleFilled />
-              <span>General</span>
-            </Space>
+            <Flex
+              style={{
+                borderBottom: "2px solid var(--primary-color)",
+                height: "4rem",
+              }}
+              align="center"
+              justify="center"
+            >
+              <Space>
+                <CheckCircleFilled style={{ opacity: "60%" }} />
+                <span>
+                  <FormattedMessage
+                    id="title.productDetails"
+                    defaultMessage="Product Details"
+                  />
+                </span>
+              </Space>
+            </Flex>
             <RightOutlined />
-            <span>Opening Stock</span>
+            <span>
+              <FormattedMessage
+                id="title.openingStocks"
+                defaultMessage="Opening Stocks"
+              />
+            </span>
           </Space>
         </Row>
         {productNewForm}
-        <br />
         <div className="product-variants-container">
-          <p>Variants</p>
+          <p>
+            <FormattedMessage id="title.variants" defaultMessage="Variants" />
+          </p>
           <Flex gap="1rem">
             {productVariations.map((variant, index) => (
               <div
@@ -1038,7 +1295,10 @@ const ProductGroupsNew = () => {
               }}
               className="add-variant"
             >
-              Add Variants
+              <FormattedMessage
+                id="action.addVariants"
+                defaultMessage="Add Variants"
+              />
             </a>
           </Space>
         </div>

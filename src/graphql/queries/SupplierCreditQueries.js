@@ -1,8 +1,30 @@
 import { gql } from "@apollo/client";
 
 const GET_PAGINATE_SUPPLIER_CREDIT = gql`
-  query PaginateSupplierCredit {
-    paginateSupplierCredit {
+  query PaginateSupplierCredit(
+    $limit: Int
+    $after: String
+    $supplierCreditNumber: String
+    $referenceNumber: String
+    $branchId: Int
+    $warehouseId: Int
+    $supplierId: Int
+    $currentStatus: SupplierCreditStatus
+    $startSupplierCreditDate: Time
+    $endSupplierCreditDate: Time
+  ) {
+    paginateSupplierCredit(
+      limit: $limit
+      after: $after
+      supplierCreditNumber: $supplierCreditNumber
+      referenceNumber: $referenceNumber
+      branchId: $branchId
+      warehouseId: $warehouseId
+      supplierId: $supplierId
+      currentStatus: $currentStatus
+      startSupplierCreditDate: $startSupplierCreditDate
+      endSupplierCreditDate: $endSupplierCreditDate
+    ) {
       edges {
         cursor
         node {
@@ -15,33 +37,69 @@ const GET_PAGINATE_SUPPLIER_CREDIT = gql`
             id
             name
           }
-          notes
-          warehouse {
-            id
-            name
-          }
-          supplierCreditDiscount
-          isTaxInclusive
-          adjustmentAmount
-          details {
-            id
-            productId
-          }
-
-          supplierCreditTotalAmount
           supplierCreditNumber
           referenceNumber
           supplierCreditDate
           supplierCreditSubject
           notes
-          currentStatus
           currency {
             id
-            symbol
             name
-            exchangeRate
+            symbol
             decimalPlaces
           }
+          warehouse {
+            id
+            name
+          }
+          supplierCreditDiscount
+          supplierCreditDiscountType
+          supplierCreditDiscountAmount
+          adjustmentAmount
+          isTaxInclusive
+          supplierCreditTax {
+            id
+            name
+            rate
+            type
+          }
+          supplierCreditTaxAmount
+          currentStatus
+          documents {
+            id
+            documentUrl
+            referenceType
+            referenceID
+          }
+          details {
+            id
+            productId
+            productType
+            batchNumber
+            name
+            description
+            detailAccount {
+              id
+              name
+            }
+            detailQty
+            detailUnitRate
+            detailTax {
+              id
+              name
+              rate
+              type
+            }
+            detailDiscount
+            detailDiscountType
+            detailDiscountAmount
+            detailTaxAmount
+            detailTotalAmount
+          }
+          supplierCreditSubtotal
+          supplierCreditTotalDiscountAmount
+          supplierCreditTotalTaxAmount
+          supplierCreditTotalAmount
         }
       }
       pageInfo {

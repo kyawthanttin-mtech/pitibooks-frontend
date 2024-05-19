@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { UploadImage } from "../../components";
+import { SearchCriteriaDisplay, UploadImage } from "../../components";
 import "./ProductGroups.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ import {
   Modal,
   Form,
   Dropdown,
+  Input,
 } from "antd";
 import {
   SearchOutlined,
@@ -32,6 +33,7 @@ import {
   openErrorNotification,
   openSuccessNotification,
 } from "../../utils/Notification";
+import { useHistoryState } from "../../utils/HelperFunctions";
 import AdjustStock from "./AdjustStock";
 import { PaginatedSelectionTable } from "../../components";
 import { ProductGroupQueries, ProductGroupMutations } from "../../graphql";
@@ -167,6 +169,14 @@ const ProductGroups = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { notiApi, msgApi } = useOutletContext();
+  const [searchCriteria, setSearchCriteria] = useHistoryState(
+    "productGroupSearchCriteria",
+    null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "productGroupCurrentPage",
+    1
+  );
 
   //Mutations
   const [deleteProductGroup, { loading: deleteLoading }] = useMutation(
@@ -196,7 +206,7 @@ const ProductGroups = () => {
         cache.writeQuery({
           query: GET_PAGINATED_PRODUCT_GROUPS,
           data: {
-            paginateProduct: {
+            paginateProductGroup: {
               ...existingProductGroups.paginateProductGroup,
               edges: updatedProductGroups,
             },
@@ -276,6 +286,12 @@ const ProductGroups = () => {
 
   const handleToggleActive = () => {};
 
+  const handleModalClear = () => {
+    setSearchCriteria(null);
+    searchFormRef.resetFields();
+    setSearchModalOpen(false);
+  };
+
   const columns = [
     { title: "Name", key: "name", dataIndex: "name" },
     {
@@ -315,6 +331,132 @@ const ProductGroups = () => {
       key: "search",
     },
   ];
+
+  const searchForm = (
+    <Form form={searchFormRef}>
+      <Row>
+        <Col span={12}>
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.productName"
+                defaultMessage="Product Name"
+              />
+            }
+            name="name"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input></Input>
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label={<FormattedMessage id="label.sku" defaultMessage="SKU" />}
+            name="sku"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input></Input>
+          </Form.Item>
+        </Col>
+      </Row>
+      {/* <Row>
+        <Col span={12}>
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.description"
+                defaultMessage="Description"
+              />
+            }
+            name="description"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.productRate" defaultMessage="Rate" />
+            }
+            name="rate"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
+      </Row> */}
+      {/* <Row>
+        <Col span={12}>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.status" defaultMessage="Status" />
+            }
+            name="status"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select allowClear showSearch optionFilterProp="label"></Select>
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
+            name="tax"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input></Input>
+          </Form.Item>
+        </Col>
+      </Row> */}
+      {/* <Row>
+        <Col span={12}>
+          <Form.Item
+            style={{ margin: 0 }}
+            label={
+              <FormattedMessage
+                id="label.salesAccount"
+                defaultMessage="Sales Account"
+              />
+            }
+            name="salesAccount"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.purchaseAccount"
+                defaultMessage="Purchase Account"
+              />
+            }
+            name="purchaseAccount"
+            labelAlign="left"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select allowClear showSearch optionFilterProp="label"></Select>
+          </Form.Item>
+        </Col>
+      </Row> */}
+    </Form>
+  );
 
   const filterOptions = [
     {
@@ -378,13 +520,36 @@ const ProductGroups = () => {
           </div>
 
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
+            {searchCriteria && (
+              <SearchCriteriaDisplay
+                searchCriteria={searchCriteria}
+                handleModalClear={handleModalClear}
+              >
+                {searchCriteria.name && (
+                  <li>
+                    Product Group Name includes <b>{searchCriteria.name}</b>
+                  </li>
+                )}
+                {searchCriteria.sku && (
+                  <li>
+                    Product Group SKU contains <b>{searchCriteria.sku}</b>
+                  </li>
+                )}
+              </SearchCriteriaDisplay>
+            )}
             <PaginatedSelectionTable
               loading={loading}
               api={notiApi}
               columns={columns}
               gqlQuery={GET_PAGINATED_PRODUCT_GROUPS}
               showSearch={false}
-              // searchForm={searchForm}
+              searchForm={searchForm}
+              searchTitle={
+                <FormattedMessage
+                  id="productGroup.search"
+                  defaultMessage="Search Product Groups"
+                />
+              }
               searchFormRef={searchFormRef}
               searchQqlQuery={GET_PAGINATED_PRODUCT_GROUPS}
               parseData={parseData}
@@ -397,6 +562,10 @@ const ProductGroups = () => {
               setSelectedRowIndex={setSelectedRowIndex}
               selectedRowIndex={selectedRowIndex}
               compactColumns={compactColumns}
+              searchCriteria={searchCriteria}
+              setSearchCriteria={setSearchCriteria}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
             />
           </div>
         </div>
@@ -490,7 +659,7 @@ const ProductGroups = () => {
                           Unit
                         </td>
                         <td style={{ paddingTop: "2.5rem" }}>
-                          {selectedRecord.productUnit.abbreviation}
+                          {selectedRecord.productUnit?.abbreviation}
                         </td>
                       </tr>
                       {selectedRecord.options?.map((option) => (

@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import "./PurchaseOrders.css";
-
 import {
   Space,
   Button,
@@ -26,10 +24,8 @@ import {
   PrinterOutlined,
   CaretRightFilled,
 } from "@ant-design/icons";
-import {
-  PaginatedSelectionTable,
-  PurchaseOrderTemplate,
-} from "../../components";
+import { useHistoryState } from "../../utils/HelperFunctions";
+import { PaginatedSelectionTable, PaymentMadeTemplate } from "../../components";
 import { FormattedMessage } from "react-intl";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import { PurchaseOrderQueries } from "../../graphql";
@@ -68,49 +64,21 @@ const compactColumns = [
   },
 ];
 
-const billTableColumns = [
-  {
-    title: "#Bill",
-    dataIndex: "bill",
-    key: "bill",
-  },
-  {
-    title: "Date",
-    dataIndex: "date",
-    key: "date",
-  },
-  {
-    title: "Status",
-    dataIndex: "status",
-    key: "status",
-  },
-  {
-    title: "Due Date",
-    dataIndex: "dueDate",
-    key: "dueDate",
-  },
-  {
-    title: "Amount",
-    dataIndex: "amount",
-    key: "amount",
-  },
-  {
-    title: "Balance Due",
-    dataIndex: "balanceDue",
-    key: "balanceDue",
-  },
-];
-
 const PaymentsMade = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState("bill");
-  const [isContentExpanded, setContentExpanded] = useState(false);
-  const [caretRotation, setCaretRotation] = useState(0);
   const [POSearchModalOpen, setPOSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { notiApi } = useOutletContext();
+  const [searchCriteria, setSearchCriteria] = useHistoryState(
+    "supplierPaymentSearchCriteria",
+    null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "supplierPaymentCurrentPage",
+    1
+  );
 
   const parseData = (data) => {
     let purchaseOrders = [];
@@ -144,11 +112,6 @@ const PaymentsMade = () => {
     return pageInfo;
   };
 
-  const toggleContent = () => {
-    setContentExpanded(!isContentExpanded);
-    setCaretRotation(caretRotation === 0 ? 90 : 0);
-  };
-
   const columns = [
     {
       title: <FormattedMessage id="label.date" defaultMessage="Date" />,
@@ -164,13 +127,10 @@ const PaymentsMade = () => {
     },
     {
       title: (
-        <FormattedMessage
-          id="label.purchaseOrderNumber"
-          defaultMessage="Purchase Order #"
-        />
+        <FormattedMessage id="label.paymentNumber" defaultMessage="Payment #" />
       ),
-      dataIndex: "orderNumber",
-      key: "orderNumber",
+      dataIndex: "paymentNumber",
+      key: "paymentNumber",
     },
     {
       title: (
@@ -193,9 +153,9 @@ const PaymentsMade = () => {
       key: "supplierName",
     },
     {
-      title: <FormattedMessage id="label.status" defaultMessage="Status" />,
-      dataIndex: "status",
-      key: "status",
+      title: <FormattedMessage id="label.mode" defaultMessage="Mode" />,
+      dataIndex: "mode",
+      key: "mode",
     },
     {
       title: <FormattedMessage id="label.amount" defaultMessage="Amount" />,
@@ -205,12 +165,12 @@ const PaymentsMade = () => {
     {
       title: (
         <FormattedMessage
-          id="label.expectedDeliverDate"
-          defaultMessage="Expected Delivery Date"
+          id="label.unusedAmount"
+          defaultMessage="Unused Amount"
         />
       ),
-      dataIndex: "expectedDeliveryDate",
-      key: "expectedDeliveryDate",
+      dataIndex: "unusedAmount",
+      key: "unusedAmount",
     },
     {
       title: (
@@ -320,7 +280,12 @@ const PaymentsMade = () => {
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
           <div className="page-header page-header-with-button">
-            <div className="page-header-text">Purchase Orders</div>
+            <div className="page-header-text">
+              <FormattedMessage
+                id="label.paymentsMade"
+                defaultMessage="Payments Made"
+              />
+            </div>
             <Space>
               <Button
                 type="primary"
@@ -362,6 +327,10 @@ const PaymentsMade = () => {
               setSelectedRowIndex={setSelectedRowIndex}
               selectedRowIndex={selectedRowIndex}
               setCreateModalOpen={setPOSearchModalOpen}
+              searchCriteria={searchCriteria}
+              setSearchCriteria={setSearchCriteria}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
             />
           </div>
         </div>
@@ -419,79 +388,7 @@ const PaymentsMade = () => {
               </div>
             </Row>
             <div className="content-column-full-row">
-              <div className="bill-receives-container">
-                <div
-                  className={`nav-bar ${!isContentExpanded && "collapsed"}`}
-                  onClick={toggleContent}
-                >
-                  <ul className="nav-tabs">
-                    <li
-                      className={`nav-link ${
-                        activeTab === "bill" && isContentExpanded && "active"
-                      }`}
-                      onClick={(event) => {
-                        setActiveTab("bill");
-                        isContentExpanded && event.stopPropagation();
-                      }}
-                    >
-                      <span>Bill</span>
-                      <span className="bill">1</span>
-                    </li>
-                    <Divider type="vertical" className="tab-divider" />
-                    <li
-                      className={`nav-link ${
-                        activeTab === "receives" &&
-                        isContentExpanded &&
-                        "active"
-                      }`}
-                      onClick={(event) => {
-                        setActiveTab("receives");
-                        isContentExpanded && event.stopPropagation();
-                      }}
-                    >
-                      <span>Receives</span>
-                    </li>
-                  </ul>
-                  <CaretRightFilled
-                    style={{
-                      transform: `rotate(${caretRotation}deg)`,
-                      transition: "0.4s",
-                    }}
-                  />
-                </div>
-
-                <div
-                  className={`content-wrapper ${isContentExpanded && "show"}`}
-                >
-                  {activeTab === "bill" && (
-                    <div className="bill-tab">
-                      <Table
-                        className="bill-table"
-                        columns={billTableColumns}
-                        dataSource={[selectedRecord]}
-                        pagination={false}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "receives" && (
-                    <div className="receive-tab">
-                      <Space>
-                        <span>No items have been received yet!</span>
-                        <span>
-                          <a>New Purchase Receive</a>
-                        </span>
-                      </Space>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="toggle-pdf-view">
-                <div>
-                  <span>Bill Status: </span>
-                  <span style={{ color: "var(--primary-color)" }}>BILLED</span>
-                </div>
-              </div>
-              <PurchaseOrderTemplate selectedRecord={selectedRecord} />
+              <PaymentMadeTemplate selectedRecord={selectedRecord} />
             </div>
           </div>
         )}

@@ -24,7 +24,10 @@ import {
   PhoneOutlined,
   MailOutlined,
 } from "@ant-design/icons";
-import { PaginatedSelectionTable } from "../../components";
+import {
+  PaginatedSelectionTable,
+  SearchCriteriaDisplay,
+} from "../../components";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SupplierQueries, SupplierMutations } from "../../graphql";
@@ -51,8 +54,12 @@ const Suppliers = () => {
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
   const location = useLocation();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
-    "searchCriteria",
+    "supplierSearchCriteria",
     null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "supplierCurrentPage",
+    1
   );
 
   // Mutations
@@ -67,28 +74,30 @@ const Suppliers = () => {
             defaultMessage="Supplier Status Updated"
           />
         );
+        setSelectedRecord(null);
       },
+
       onError(err) {
         openErrorNotification(notiApi, err.message);
       },
-      update(cache, { data }) {
-        const existingSuppliers = cache.readQuery({
-          query: GET_PAGINATE_SUPPLIER,
-        });
-        const updatedSuppliers =
-          existingSuppliers.paginateSupplier.edges.filter(
-            ({ node }) => node.id !== data.toggleActiveSupplier.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SUPPLIER,
-          data: {
-            paginateSupplier: {
-              ...existingSuppliers.paginateSupplier,
-              edges: updatedSuppliers,
-            },
-          },
-        });
-      },
+      // update(cache, { data }) {
+      //   const existingSuppliers = cache.readQuery({
+      //     query: GET_PAGINATE_SUPPLIER,
+      //   });
+      //   const updatedSuppliers =
+      //     existingSuppliers.paginateSupplier.edges.filter(
+      //       ({ node }) => node.id !== data.toggleActiveSupplier.id
+      //     );
+      //   cache.writeQuery({
+      //     query: GET_PAGINATE_SUPPLIER,
+      //     data: {
+      //       paginateSupplier: {
+      //         ...existingSuppliers.paginateSupplier,
+      //         edges: updatedSuppliers,
+      //       },
+      //     },
+      //   });
+      // },
     }
   );
 
@@ -104,6 +113,7 @@ const Suppliers = () => {
             defaultMessage="Supplier Deleted"
           />
         );
+        setSelectedRecord(null);
       },
       onError(err) {
         openErrorNotification(notiApi, err.message);
@@ -119,7 +129,7 @@ const Suppliers = () => {
         cache.writeQuery({
           query: GET_PAGINATE_SUPPLIER,
           data: {
-            paginateProduct: {
+            paginateSupplier: {
               ...existingSuppliers.paginateSupplier,
               edges: updatedSuppliers,
             },
@@ -203,6 +213,12 @@ const Suppliers = () => {
     } catch (err) {
       openErrorNotification(notiApi, err.message);
     }
+  };
+
+  const handleModalClear = () => {
+    setSearchCriteria(null);
+    searchFormRef.resetFields();
+    setSearchModalOpen(false);
   };
 
   const searchForm = (
@@ -373,12 +389,45 @@ const Suppliers = () => {
           </Space>
         </div>
         <div className={`page-content ${selectedRecord && "column-width2"}`}>
+          {searchCriteria && (
+            <SearchCriteriaDisplay
+              searchCriteria={searchCriteria}
+              handleModalClear={handleModalClear}
+            >
+              {searchCriteria.name && (
+                <li>
+                  Supplier Name includes <b>{searchCriteria.name}</b>
+                </li>
+              )}
+              {searchCriteria.email && (
+                <li>
+                  Email contains <b>{searchCriteria.email}</b>
+                </li>
+              )}
+              {searchCriteria.phone && (
+                <li>
+                  Phone contains <b>{searchCriteria.phone}</b>
+                </li>
+              )}
+              {searchCriteria.mobile && (
+                <li>
+                  Mobile contains <b>{searchCriteria.mobile}</b>
+                </li>
+              )}
+            </SearchCriteriaDisplay>
+          )}
           <PaginatedSelectionTable
             loading={loading}
             api={notiApi}
             columns={columns}
             gqlQuery={GET_PAGINATE_SUPPLIER}
             searchForm={searchForm}
+            searchTitle={
+              <FormattedMessage
+                id="supplier.search"
+                defaultMessage="Search Suppliers"
+              />
+            }
             searchFormRef={searchFormRef}
             searchQqlQuery={GET_PAGINATE_SUPPLIER}
             parseData={parseData}
@@ -393,6 +442,8 @@ const Suppliers = () => {
             compactColumns={compactColumns}
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
           />
         </div>
       </div>

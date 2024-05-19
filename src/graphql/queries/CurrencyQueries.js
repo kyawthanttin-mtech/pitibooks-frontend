@@ -4,8 +4,8 @@ const GET_ALL_CURRENCIES = gql`
   query GetAllCurrencies {
     listAllCurrency {
       id
-      name
       symbol
+      name
       decimalPlaces
       exchangeRate
       isActive
@@ -17,14 +17,11 @@ const GET_CURRENCIES = gql`
   query GetCurrencies {
     listCurrency {
       id
-      businessId
       symbol
       name
       decimalPlaces
       exchangeRate
       isActive
-      createdAt
-      updatedAt
     }
   }
 `;

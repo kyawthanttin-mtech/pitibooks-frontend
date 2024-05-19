@@ -33,7 +33,7 @@ const ProductCategories = () => {
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   // const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi } = useOutletContext();
+  const { notiApi, msgApi, refetchAllProductCategories } = useOutletContext();
   // const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -68,6 +68,7 @@ const ProductCategories = () => {
             defaultMessage="New Category Created"
           />
         );
+        refetchAllProductCategories();
       },
       refetchQueries: [GET_PRODUCT_CATEGORIES],
     }
@@ -85,6 +86,7 @@ const ProductCategories = () => {
             defaultMessage="Category Updated"
           />
         );
+        refetchAllProductCategories();
       },
       refetchQueries: [GET_PRODUCT_CATEGORIES],
     }
@@ -102,6 +104,7 @@ const ProductCategories = () => {
             defaultMessage="Category Deleted"
           />
         );
+        refetchAllProductCategories();
       },
       refetchQueries: [GET_PRODUCT_CATEGORIES],
     }
@@ -118,6 +121,7 @@ const ProductCategories = () => {
             defaultMessage="Category Status Updated"
           />
         );
+        refetchAllProductCategories();
       },
       refetchQueries: [GET_PRODUCT_CATEGORIES],
     }
@@ -342,8 +346,8 @@ const ProductCategories = () => {
     {
       title: (
         <FormattedMessage
-          id="productCategory.name"
-          defaultMessage="Category Name"
+          id="label.name"
+          defaultMessage="Name"
         />
       ),
       dataIndex: "name",
@@ -356,7 +360,7 @@ const ProductCategories = () => {
               <span style={{ paddingLeft: 15 }}>
                 {record.name}{" "}
                 {!record.isActive ? (
-                  <Tag className="active-status">inactive</Tag>
+                  <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
                 ) : (
                   <></>
                 )}
@@ -368,7 +372,7 @@ const ProductCategories = () => {
             <>
               {record.name}{" "}
               {!record.isActive ? (
-                <Tag className="active-status">inactive</Tag>
+                <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
               ) : (
                 <></>
               )}
@@ -380,7 +384,7 @@ const ProductCategories = () => {
     {
       title: (
         <FormattedMessage
-          id="productCategory.parentCategory"
+          id="label.parentCategory"
           defaultMessage="Parent Category"
         />
       ),
@@ -463,7 +467,7 @@ const ProductCategories = () => {
     >
       <Form.Item
         label={
-          <FormattedMessage id="productCategory.name" defaultMessage="Name" />
+          <FormattedMessage id="label.name" defaultMessage="Name" />
         }
         name="name"
         rules={[
@@ -471,8 +475,8 @@ const ProductCategories = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="productCategory.name.required"
-                defaultMessage="Enter the Category Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -488,7 +492,7 @@ const ProductCategories = () => {
       >
         <Checkbox>
           <FormattedMessage
-            id="productCategory.subCategoryChecked"
+            id="action.makeSubCategory"
             defaultMessage="Make this a sub-category"
           />
         </Checkbox>
@@ -498,7 +502,7 @@ const ProductCategories = () => {
           name="parentCategory"
           label={
             <FormattedMessage
-              id="productCategory.parentCategory"
+              id="label.parentCategory"
               defaultMessage="Parent Category"
             />
           }
@@ -507,7 +511,7 @@ const ProductCategories = () => {
               required: true,
               message: (
                 <FormattedMessage
-                  id="productCategory.parentCategory.required"
+                  id="label.parentCategory.required"
                   defaultMessage="Select the Parent Category"
                 />
               ),
@@ -539,7 +543,7 @@ const ProductCategories = () => {
     >
       <Form.Item
         label={
-          <FormattedMessage id="productCategory.name" defaultMessage="Name" />
+          <FormattedMessage id="label.name" defaultMessage="Name" />
         }
         name="name"
         rules={[
@@ -547,8 +551,8 @@ const ProductCategories = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="productCategory.name.required"
-                defaultMessage="Enter the Category Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -564,7 +568,7 @@ const ProductCategories = () => {
       >
         <Checkbox>
           <FormattedMessage
-            id="productCategory.subCategoryChecked"
+            id="action.makeSubCategory"
             defaultMessage="Make this a sub-category"
           />
         </Checkbox>
@@ -574,7 +578,7 @@ const ProductCategories = () => {
           name="parentCategory"
           label={
             <FormattedMessage
-              id="productCategory.parentCategory"
+              id="label.parentCategory"
               defaultMessage="Parent Category"
             />
           }
@@ -583,7 +587,7 @@ const ProductCategories = () => {
               required: true,
               message: (
                 <FormattedMessage
-                  id="productCategory.parentCategory.required"
+                  id="label.parentCategory.required"
                   defaultMessage="Select the Parent Category"
                 />
               ),
@@ -602,7 +606,7 @@ const ProductCategories = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title="Create Category"
+        title={<FormattedMessage id="productCategory.create" defaultMessage="Create Category" />}
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -616,7 +620,7 @@ const ProductCategories = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title="Edit Category"
+        title={<FormattedMessage id="productCategory.edit" defaultMessage="Edit Category" />}
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -640,7 +644,7 @@ const ProductCategories = () => {
           onClick={setCreateModalOpen}
         >
           <FormattedMessage
-            id="product.newCategory"
+            id="productCategory.new"
             defaultMessage="New Category"
           />
         </Button>

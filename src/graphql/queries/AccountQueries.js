@@ -7,14 +7,22 @@ const GET_ALL_ACCOUNTS = gql`
       detailType
       mainType
       name
+      code
       isActive
+      systemDefaultCode
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
     }
   }
 `;
 
-const GET_ACCOUNTS = gql`
-  query ListAccount($name: String, $code: String) {
-    listAccount(name: $name, code: $code) {
+const GET_ACCOUNT = gql`
+  query GetAccount($id: ID!) {
+    getAccount(id: $id) {
       id
       businessId
       detailType
@@ -24,7 +32,87 @@ const GET_ACCOUNTS = gql`
       description
       isActive
       isSystemDefault
-      SystemDefaultCode
+      createdAt
+      updatedAt
+      recentTransactions {
+        id
+        businessId
+        description
+        transactionDateTime
+        baseDebit
+        baseCredit
+        baseClosingBalance
+        foreignDebit
+        foreignCredit
+        foreignClosingBalance
+        exchangeRate
+      }
+      parentAccount {
+        id
+        businessId
+        detailType
+        mainType
+        name
+        code
+        description
+        isActive
+        isSystemDefault
+        createdAt
+        updatedAt
+      }
+      branches
+      currencyId
+      accountNumber
+      accountClosingBalance {
+        businessId
+        accountId
+        transactionDate
+        debit
+        credit
+        balance
+        runningBalance
+      }
+    }
+  }
+`;
+
+const GET_ACCOUNTS = gql`
+  query ListAccount($name: String, $code: String) {
+    listAccount(name: $name, code: $code) {
+      id
+      detailType
+      mainType
+      name
+      code
+      description
+      isActive
+      isSystemDefault
+      systemDefaultCode
+      accountNumber
+      currencyId
+      branches
+      accountClosingBalance {
+        runningBalance
+      }
+      recentTransactions {
+        id
+        transactionDateTime
+        baseDebit
+        baseCredit
+        foreignCurrency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
+        foreignDebit
+        foreignCredit
+        accountJournal {
+          id
+          transactionDetails
+          referenceType
+        }
+      }
       parentAccount {
         id
         name
@@ -120,6 +208,7 @@ const GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT = gql`
 const AccountQueries = {
   GET_ALL_ACCOUNTS,
   GET_ACCOUNTS,
+  GET_ACCOUNT,
   GET_ACCOUNT_TYPE_SUMMARY_REPORT,
   GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT,
 };

@@ -247,14 +247,14 @@ const Warehouses = () => {
 
   const columns = [
     {
-      title: <FormattedMessage id="warehouse.name" defaultMessage="Name" />,
+      title: <FormattedMessage id="label.name" defaultMessage="Name" />,
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
         <>
           {text}
           {!record.isActive ? (
-            <Tag className="active-status">inactive</Tag>
+            <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
           ) : (
             <></>
           )}
@@ -268,13 +268,13 @@ const Warehouses = () => {
     // },
     {
       title: (
-        <FormattedMessage id="warehouse.phNo" defaultMessage="Phone Number" />
+        <FormattedMessage id="label.phone" defaultMessage="Phone" />
       ),
       dataIndex: "phoneNumber",
       key: "phoneNumber",
     },
     {
-      title: <FormattedMessage id="warehouse.branch" defaultMessage="Branch" />,
+      title: <FormattedMessage id="label.branch" defaultMessage="Branch" />,
       dataIndex: "branch",
       key: "branch",
     },
@@ -339,8 +339,8 @@ const Warehouses = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="warehouse.name.label"
-            defaultMessage="Warehouse Name"
+            id="label.name"
+            defaultMessage="Name"
           />
         }
         name="name"
@@ -493,8 +493,8 @@ const Warehouses = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="warehouse.name.label"
-            defaultMessage="Warehouse Name"
+            id="label.name"
+            defaultMessage="Name"
           />
         }
         name="name"

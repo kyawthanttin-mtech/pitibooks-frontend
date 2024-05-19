@@ -3,12 +3,16 @@ import { FormattedMessage } from 'react-intl';
 
 export const openErrorNotification = (api, msg) => {
     const key = `open${Date.now()}`;
+    let message = msg;
+    if (message.toLowerCase().includes("status code 401")) {
+        message = "Token expired. Please logout and login again.";
+    }
     api.open({
         message: <FormattedMessage id='notification.error' defaultMessage='Error' />,
-        description: msg,
+        description: message,
         key,
         icon: <ExclamationCircleOutlined />,
-        duration: 0,
+        duration: 15,
     });
 }
 

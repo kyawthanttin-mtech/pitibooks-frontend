@@ -29,7 +29,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { openErrorNotification } from "../utils/Notification";
 import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT } from "../config/Constants";
-import JournalTemplate from "./pdfs-and-templates/manual-journal/JournalTemplate";
+import JournalTemplate from "./pdfs-and-templates/accountant/JournalTemplate";
 import moment from "moment";
 const compactColumns = [
   {
@@ -81,7 +81,10 @@ const PaginatedJournal = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentPage, setCurrentPage] = useHistoryState("journalCurrentPage", 1);
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "journalCurrentPage",
+    1
+  );
   const [searchCriteria, setSearchCriteria] = useHistoryState(
     "journalSearchCriteria",
     null

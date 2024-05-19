@@ -4,21 +4,21 @@ import { Button, Dropdown, Form, Modal, Input, Space, Table, Tag } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
 import { useMutation } from "@apollo/client";
 import { useOutletContext } from "react-router-dom";
-import { PaymentModeMutations } from "../../graphql";
+import { ReasonMutations } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
 import { useReadQuery } from "@apollo/client";
-const { CREATE_PAYMENT_MODE, UPDATE_PAYMENT_MODE, DELETE_PAYMENT_MODE } =
-  PaymentModeMutations;
+const { CREATE_REASON, UPDATE_REASON, DELETE_REASON, TOGGLE_ACTIVE_REASON } =
+  ReasonMutations;
 
-const PaymentModes = () => {
+const Reasons = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi, allPaymentModesQueryRef, refetchAllPaymentModes } =
+  const { notiApi, msgApi, allReasonsQueryRef, refetchAllReasons } =
     useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -27,81 +27,82 @@ const PaymentModes = () => {
   const [editRecord, setEditRecord] = useState(null);
 
   //Queries
-  const { data } = useReadQuery(allPaymentModesQueryRef);
+  const { data } = useReadQuery(allReasonsQueryRef);
 
-  const [createPaymentMode, { loading: createLoading }] = useMutation(
-    CREATE_PAYMENT_MODE,
+  const [createReason, { loading: createLoading }] = useMutation(
+    CREATE_REASON,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="paymentMode.created"
-            defaultMessage="New Payment Mode Created"
+            id="reason.created"
+            defaultMessage="New Reason Created"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllReasons();
       },
     }
   );
 
-  const [updatePaymentMode, { loading: updateLoading }] = useMutation(
-    UPDATE_PAYMENT_MODE,
+  const [updateReason, { loading: updateLoading }] = useMutation(
+    UPDATE_REASON,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="paymentMode.updated"
-            defaultMessage="Payment Mode Updated"
+            id="reason.updated"
+            defaultMessage="Reason Updated"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllReasons();
       },
     }
   );
 
-  const [deletePaymentMode, { loading: deleteLoading }] = useMutation(
-    DELETE_PAYMENT_MODE,
+  const [deleteReason, { loading: deleteLoading }] = useMutation(
+    DELETE_REASON,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="paymentMode.deleted"
-            defaultMessage="Payment Mode Deleted"
+            id="reason.deleted"
+            defaultMessage="Reason Deleted"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllReasons();
       },
     }
   );
 
-  // const [toggleActiveUnit, { loading: toggleActiveLoading }] = useMutation(
-  //   TOGGLE_ACTIVE_PRODUCT_UNIT,
-  //   {
-  //     onCompleted() {
-  //       openSuccessMessage(
-  //         msgApi,
-  //         <FormattedMessage
-  //           id="shipmentPreference.updated.status"
-  //           defaultMessage="Shipment Preference Updated"
-  //         />
-  //       );
-  //       refetchAllShipmentPreferences();
-  //     },
-  //   }
-  // );
+  const [toggleActiveUnit, { loading: toggleActiveLoading }] = useMutation(
+    TOGGLE_ACTIVE_REASON,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="reason.updated.status"
+            defaultMessage="Reason Status Updated"
+          />
+        );
+        refetchAllReasons();
+      },
+    }
+  );
 
-  const loading = createLoading || updateLoading || deleteLoading;
+  const loading =
+    createLoading || updateLoading || deleteLoading || toggleActiveLoading;
 
-  const queryData = useMemo(() => data?.listAllPaymentMode, [data]);
+  const queryData = useMemo(() => data?.listAllReason, [data]);
 
   const handleCreateModalOk = async () => {
     try {
       const values = await createFormRef.validateFields();
       console.log("Field values:", values);
-      await createPaymentMode({
+      await createReason({
         variables: {
           input: {
             name: values.name,
@@ -133,7 +134,7 @@ const PaymentModes = () => {
     });
     if (confirmed) {
       try {
-        await deletePaymentMode({
+        await deleteReason({
           variables: {
             id: record.id,
           },
@@ -160,7 +161,7 @@ const PaymentModes = () => {
     try {
       const values = await editFormRef.validateFields();
       // console.log("Field values:", values);
-      await updatePaymentMode({
+      await updateReason({
         variables: { id: editRecord.id, input: values },
       });
 
@@ -175,15 +176,15 @@ const PaymentModes = () => {
     setEditModalOpen(false);
   };
 
-  // const handleToggleActive = async (record) => {
-  //   try {
-  //     await toggleActiveUnit({
-  //       variables: { id: record.id, isActive: !record.isActive },
-  //     });
-  //   } catch (err) {
-  //     openErrorNotification(notiApi, err.message);
-  //   }
-  // };
+  const handleToggleActive = async (record) => {
+    try {
+      await toggleActiveUnit({
+        variables: { id: record.id, isActive: !record.isActive },
+      });
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
 
   const createForm = (
     <Form
@@ -203,15 +204,15 @@ const PaymentModes = () => {
       }}
     >
       <Form.Item
-        label={<FormattedMessage id="paymentMode.name" defaultMessage="Name" />}
+        label={<FormattedMessage id="reason.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="paymentMode.name.required"
-                defaultMessage="Enter the Shipment Preference Name"
+                id="reason.name.required"
+                defaultMessage="Enter the Reason Name"
               />
             ),
           },
@@ -240,15 +241,15 @@ const PaymentModes = () => {
       }}
     >
       <Form.Item
-        label={<FormattedMessage id="paymentMode.name" defaultMessage="Name" />}
+        label={<FormattedMessage id="reason.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="paymentMode.name.required"
-                defaultMessage="Enter the Payment Mode Name"
+                id="reason.name.required"
+                defaultMessage="Enter the Reason Name"
               />
             ),
           },
@@ -262,7 +263,7 @@ const PaymentModes = () => {
 
   const columns = [
     {
-      title: <FormattedMessage id="paymentMode.name" defaultMessage="Name" />,
+      title: <FormattedMessage id="reason.name" defaultMessage="Name" />,
       key: "name",
       dataIndex: "name",
       render: (text, record) => (
@@ -288,7 +289,7 @@ const PaymentModes = () => {
             menu={{
               onClick: ({ key }) => {
                 if (key === "1") handleEdit(record);
-                // else if (key === "2") handleToggleActive(record);
+                else if (key === "2") handleToggleActive(record);
                 else if (key === "3") handleDelete(record);
               },
               items: [
@@ -298,20 +299,20 @@ const PaymentModes = () => {
                   ),
                   key: "1",
                 },
-                // {
-                //   label: !record.isActive ? (
-                //     <FormattedMessage
-                //       id="button.markActive"
-                //       defaultMessage="Mark As Active"
-                //     />
-                //   ) : (
-                //     <FormattedMessage
-                //       id="button.markInactive"
-                //       defaultMessage="Mark As Inactive"
-                //     />
-                //   ),
-                //   key: "2",
-                // },
+                {
+                  label: !record.isActive ? (
+                    <FormattedMessage
+                      id="button.markActive"
+                      defaultMessage="Mark As Active"
+                    />
+                  ) : (
+                    <FormattedMessage
+                      id="button.markInactive"
+                      defaultMessage="Mark As Inactive"
+                    />
+                  ),
+                  key: "2",
+                },
                 {
                   label: (
                     <FormattedMessage
@@ -338,12 +339,7 @@ const PaymentModes = () => {
       <Modal
         //   loading={loading}
         width="40rem"
-        title={
-          <FormattedMessage
-            id="paymentMode.new"
-            defaultMessage="New Payment Mode"
-          />
-        }
+        title={<FormattedMessage id="reason.new" defaultMessage="New Reason" />}
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -357,10 +353,7 @@ const PaymentModes = () => {
       <Modal
         width="40rem"
         title={
-          <FormattedMessage
-            id="paymentMode.edit"
-            defaultMessage="Edit Payment Mode"
-          />
+          <FormattedMessage id="reason.edit" defaultMessage="Edit Reason" />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
@@ -374,18 +367,12 @@ const PaymentModes = () => {
       </Modal>
       <div className="page-header">
         <p className="page-header-text">
-          <FormattedMessage
-            id="label.paymentModes"
-            defaultMessage="Payment Modes"
-          />
+          <FormattedMessage id="label.reasons" defaultMessage="Reasons" />
         </p>
         <Button type="primary" onClick={setCreateModalOpen}>
           <Space>
             <PlusOutlined />
-            <FormattedMessage
-              id="paymentMode.new"
-              defaultMessage="New Payment Mode"
-            />
+            <FormattedMessage id="reason.new" defaultMessage="New Reason" />
           </Space>
         </Button>
       </div>
@@ -410,4 +397,4 @@ const PaymentModes = () => {
   );
 };
 
-export default PaymentModes;
+export default Reasons;

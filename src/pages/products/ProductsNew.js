@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useMemo } from "react";
-import { UploadImage } from "../../components";
+import { SupplierSearchModal, UploadImage } from "../../components";
 import {
   Button,
   Row,
@@ -13,29 +13,26 @@ import {
   // Radio,
   Select,
 } from "antd";
-import { FormattedMessage } from "react-intl";
-import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
-import { useMutation, useQuery } from "@apollo/client";
+import { FormattedMessage, useIntl } from "react-intl";
+import { CloseOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { useMutation, useReadQuery } from "@apollo/client";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { CategoryQueries, UnitQueries } from "../../graphql";
 import { ProductMutations } from "../../graphql";
-import { useReadQuery } from "@apollo/client";
+import {
+  SYSTEM_ACCOUNT_CODE_COGS,
+  SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET,
+  SYSTEM_ACCOUNT_CODE_SALES,
+} from "../../config/Constants";
 const { CREATE_PRODUCT } = ProductMutations;
-const { GET_PRODUCT_UNITS } = UnitQueries;
-const { GET_PRODUCT_CATEGORIES } = CategoryQueries;
-
-const warehouseOptions = ["Piti Baby", "YGN Warehouse", "MDY Warehouse"];
-
-const initialValues = {
-  // productNature: 'G',
-};
 
 const ProductsNew = () => {
-  const [data, setData] = useState([{ key: 1 }]);
+  const intl = useIntl();
+  const [data, setData] = useState([]);
+  const [currentTableKey, setCurrentTableKey] = useState(0);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,35 +45,22 @@ const ProductsNew = () => {
     allTaxGroupsQueryRef,
     allTaxesQueryRef,
     allAccountsQueryRef,
+    allProductUnitsQueryRef,
+    allProductCategoriesQueryRef,
+    allWarehousesQueryRef,
   } = useOutletContext();
   const [imageList, setImageList] = useState([]);
   const [isInventoryTracked, setIsInventoryTracked] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
 
   // Queries
+  const { data: unitData } = useReadQuery(allProductUnitsQueryRef);
+  const { data: categoryData } = useReadQuery(allProductCategoriesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: taxData } = useReadQuery(allTaxesQueryRef);
   const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
-
-  const { data: unitData, loading: unitLoading } = useQuery(GET_PRODUCT_UNITS, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: categoryData, loading: categoryLoading } = useQuery(
-    GET_PRODUCT_CATEGORIES,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
+  const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
 
   // Mutations
   const [createProduct, { loading: createLoading }] = useMutation(
@@ -103,23 +87,27 @@ const ProductsNew = () => {
     }
   );
 
-  const loading = createLoading || unitLoading || categoryLoading;
+  const loading = createLoading;
 
   const taxes = useMemo(() => {
     return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
   }, [taxData]);
 
   const taxGroups = useMemo(() => {
-    return taxGroupData?.listAllTaxGroup?.filter((tax) => tax.isActive === true);
+    return taxGroupData?.listAllTaxGroup?.filter(
+      (tax) => tax.isActive === true
+    );
   }, [taxGroupData]);
 
   const units = useMemo(() => {
-    return unitData?.listProductUnit?.filter((tax) => tax.isActive === true);
+    return unitData?.listAllProductUnit?.filter(
+      (unit) => unit.isActive === true
+    );
   }, [unitData]);
 
   const categories = useMemo(() => {
-    return categoryData?.listProductCategory?.filter(
-      (tax) => tax.isActive === true
+    return categoryData?.listAllProductCategory?.filter(
+      (c) => c.isActive === true
     );
   }, [categoryData]);
 
@@ -128,18 +116,27 @@ const ProductsNew = () => {
       (acc) => acc.mainType === "Income" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultSalesAccountId = salesAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_SALES
+  )?.id;
 
   const purchaseAccounts = useMemo(() => {
     return accountData?.listAllAccount?.filter(
       (acc) => acc.mainType === "Expense" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultPurchaseAccountId = purchaseAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_COGS
+  )?.id;
 
   const inventoryAccounts = useMemo(() => {
     return accountData?.listAllAccount?.filter(
       (acc) => acc.detailType === "Stock" && acc.isActive === true
     );
   }, [accountData]);
+  const defaultInventoryAccountId = inventoryAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET
+  )?.id;
 
   const allTax = [
     {
@@ -161,6 +158,10 @@ const ProductsNew = () => {
     },
   ];
 
+  const warehouses = useMemo(() => {
+    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
+  }, [warehouseData]);
+
   const groupByDetailType = (accounts) => {
     return accounts?.reduce((groupedAccounts, account) => {
       if (!groupedAccounts[account.detailType]) {
@@ -171,8 +172,13 @@ const ProductsNew = () => {
     }, {});
   };
 
+  const handleModalRowSelect = (record) => {
+    setSelectedSupplier(record);
+    form.setFieldsValue({ supplierName: record.name });
+  };
+
   const onFinish = (values) => {
-    console.log("values", values);
+    // console.log("values", values);
     // const transactions = data.map((item) => ({
     //   accountId: values[`account${item.key}`],
     //   debit: parseFloat(values[`debit${item.key}`]) || 0,
@@ -208,6 +214,30 @@ const ProductsNew = () => {
 
     console.log("image urls", imageUrls);
 
+    let openingStocks = [];
+    let warehouseIds = [];
+    if (isInventoryTracked) {
+      for (var i = 0; i < data.length; i++) {
+        if (warehouseIds.includes(values[`warehouse${data[i].key}`])) {
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "validation.duplicateWarehouse",
+              defaultMessage: "Duplicate Warehouse",
+            })
+          );
+          return;
+        }
+        warehouseIds.push(values[`warehouse${data[i].key}`]);
+        openingStocks[i] = {
+          warehouseId: values[`warehouse${data[i].key}`],
+          // batchNumber: values[`batchNumber${data[i].key}`],
+          qty: parseFloat(values[`openingStock${data[i].key}`]),
+          unitValue: parseFloat(values[`openingStockValue${data[i].key}`]),
+        };
+      }
+    }
+
     const input = {
       name: values.name,
       sku: values.sku,
@@ -219,32 +249,31 @@ const ProductsNew = () => {
       purchaseTaxId,
       purchaseTaxType,
       // productNature: values.productNature,
-      supplier: values.supplier || 0,
+      supplierId: selectedSupplier?.id || 0,
       categoryId: values.category,
       salesAccountId: values.salesAccount,
       purchaseAccountId: values.purchaseAccount,
       inventoryAccountId: isInventoryTracked ? values.inventoryAccount : 0,
       isSalesTaxInclusive: false,
-      salesPrice: values.salesPrice ? parseFloat(values.salesPrice) : 0,
-      purchasePrice: values.purchasePrice
-        ? parseFloat(values.purchasePrice)
-        : 0,
+      salesPrice: parseFloat(values.salesPrice),
+      purchasePrice: parseFloat(values.purchasePrice),
       // images: imageUrls,
       isBatchTracking: false,
+      openingStocks,
     };
-    console.log("input", input);
+    // console.log("input", input);
     createProduct({
       variables: { input },
     });
   };
 
   const handleAddRow = () => {
-    const newRowKey = data.length + 1;
+    const newRowKey = currentTableKey + 1;
+    setCurrentTableKey(newRowKey);
     setData([...data, { key: newRowKey }]);
   };
 
   const handleRemoveRow = (keyToRemove) => {
-    console.log(keyToRemove);
     const newData = data.filter((dataItem) => dataItem.key !== keyToRemove);
     setData(newData);
   };
@@ -257,38 +286,172 @@ const ProductsNew = () => {
 
   const columns = [
     {
-      title: "Warehouse Name",
+      title: (
+        <FormattedMessage
+          id="label.warehouseName"
+          defaultMessage="Warehouse Name"
+        />
+      ),
       dataIndex: "warehouseName",
       key: "warehouseName",
       width: "20%",
       render: (_, record) => (
-        <Form.Item name={`warehouse${record.key}`}>
+        <Form.Item
+          name={`warehouse${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.warehouse.required"
+                  defaultMessage="Select the Warehouse"
+                />
+              ),
+            },
+          ]}
+        >
           <Select showSearch className="custom-select">
-            {warehouseOptions.map((option) => (
-              <Select.Option value={option} key={option}></Select.Option>
+            {warehouses?.map((w) => (
+              <Select.Option key={w.id} value={w.id} label={w.name}>
+                {w.name}
+              </Select.Option>
             ))}
           </Select>
         </Form.Item>
       ),
     },
     {
-      title: "Opening Stock",
+      title: (
+        <Col>
+          <Row>
+            <FormattedMessage
+              id="label.openingStock"
+              defaultMessage="Opening Stock"
+            />
+          </Row>
+          <Row>
+            <Button
+              type="link"
+              onClick={() => {
+                const values = form.getFieldsValue();
+                for (var i = 1; i < data.length; i++) {
+                  form.setFieldValue(
+                    `openingStock${data[i].key}`,
+                    values[`openingStock${data[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
+      ),
       dataIndex: "openingStock",
       key: "openingStock",
       width: "20%",
       render: (_, record) => (
-        <Form.Item name={`openingStock${record.key}`}>
+        <Form.Item
+          name={`openingStock${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.openingStock.required"
+                  defaultMessage="Enter the Opening Stock"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input />
         </Form.Item>
       ),
     },
     {
-      title: "Opening Stock Value",
+      title: (
+        <Col>
+          <Row>
+            <FormattedMessage
+              id="label.openingStockValue"
+              defaultMessage="Opening Stock Value (Per Unit)"
+            />
+          </Row>
+          <Row>
+            <Button
+              type="link"
+              onClick={() => {
+                const values = form.getFieldsValue();
+                for (var i = 1; i < data.length; i++) {
+                  form.setFieldValue(
+                    `openingStockValue${data[i].key}`,
+                    values[`openingStockValue${data[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
+      ),
       dataIndex: "openingStockValue",
       key: "openingStockValue",
       width: "20%",
       render: (_, record) => (
-        <Form.Item name={`openingStockValue${record.key}`}>
+        <Form.Item
+          name={`openingStockValue${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.openingStockValue.required"
+                  defaultMessage="Enter the Opening Stock Value"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input addonBefore={business.baseCurrency.symbol} />
         </Form.Item>
       ),
@@ -299,13 +462,20 @@ const ProductsNew = () => {
       key: "removeRow",
       width: "10%",
       render: (_, record) =>
-        data.length > 1 && record.key !== 1 ? (
+        data.length > 0 ? (
           <CloseOutlined onClick={() => handleRemoveRow(record.key)} />
         ) : (
           <></>
         ),
     },
   ];
+
+  const initialValues = {
+    // productNature: 'G',
+    salesAccount: defaultSalesAccountId,
+    purchaseAccount: defaultPurchaseAccountId,
+    inventoryAccount: defaultInventoryAccountId,
+  };
 
   const productNewForm = (
     <Form
@@ -347,7 +517,7 @@ const ProductsNew = () => {
                 message: (
                   <FormattedMessage
                     id="label.productName.required"
-                    defaultMessage="Product name must be defined"
+                    defaultMessage="Enter the Product Name"
                   />
                 ),
               },
@@ -370,9 +540,6 @@ const ProductsNew = () => {
           >
             <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
           </Form.Item>
-          {/* </Col> */}
-          {/* </Row> */}
-          <br />
           <br />
         </Col>
         <Col span={12}>
@@ -380,7 +547,10 @@ const ProductsNew = () => {
         </Col>
       </Row>
       <p style={{ fontSize: "var(--title-text)", marginTop: 0 }}>
-        Product Details
+        <FormattedMessage
+          id="title.productDetails"
+          defaultMessage="Product Details"
+        />
       </p>
       <Row>
         <Col span={12}>
@@ -454,17 +624,38 @@ const ProductsNew = () => {
             label={
               <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
             }
+            name="supplierName"
+            shouldUpdate
+            labelAlign="left"
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 12 }}
-            labelAlign="left"
-            name="supplier"
           >
-            <Select
-              // placeholder="Select a Supplier"
-              showSearch
-              allowClear
-              loading={loading}
-            ></Select>
+            <Input
+              readOnly
+              onClick={setSearchModalOpen}
+              className="search-input"
+              suffix={
+                <>
+                  {selectedSupplier && (
+                    <CloseOutlined
+                      style={{ height: 11, width: 11, cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedSupplier(null);
+                        form.resetFields(["supplierName"]);
+                      }}
+                    />
+                  )}
+
+                  <Button
+                    style={{ width: "2.5rem" }}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    className="search-btn"
+                    onClick={setSearchModalOpen}
+                  />
+                </>
+              }
+            />
           </Form.Item>
           <Form.Item
             name="sku"
@@ -562,6 +753,22 @@ const ProductsNew = () => {
                   />
                 ),
               },
+              () => ({
+                validator(_, value) {
+                  if (!value) {
+                    return Promise.resolve();
+                  } else if (isNaN(value) || value.length > 20) {
+                    return Promise.reject(
+                      intl.formatMessage({
+                        id: "validation.invalidInput",
+                        defaultMessage: "Invalid Input",
+                      })
+                    );
+                  } else {
+                    return Promise.resolve();
+                  }
+                },
+              }),
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -670,6 +877,22 @@ const ProductsNew = () => {
                   />
                 ),
               },
+              () => ({
+                validator(_, value) {
+                  if (!value) {
+                    return Promise.resolve();
+                  } else if (isNaN(value) || value.length > 20) {
+                    return Promise.reject(
+                      intl.formatMessage({
+                        id: "validation.invalidInput",
+                        defaultMessage: "Invalid Input",
+                      })
+                    );
+                  } else {
+                    return Promise.resolve();
+                  }
+                },
+              }),
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -706,15 +929,19 @@ const ProductsNew = () => {
           </Form.Item>
         </Col>
       </Row>
-      
+
       {/* <p style={{ fontSize: " var(--title-text)", marginTop: 0 }}>Inventory</p> */}
       <Row>
         <Checkbox onChange={(e) => setIsInventoryTracked(e.target.checked)}>
-          <FormattedMessage id="label.trackInventory" defaultMessage="Track Inventory" />
+          <FormattedMessage
+            id="label.trackInventory"
+            defaultMessage="Track Inventory"
+          />
         </Checkbox>
       </Row>
-      {isInventoryTracked &&
+      {isInventoryTracked && (
         <>
+          <br />
           <Row>
             <Col span={12}>
               <Form.Item
@@ -780,10 +1007,15 @@ const ProductsNew = () => {
           />
           <Space style={{ marginBottom: "0.7rem", paddingLeft: "1.5rem" }}>
             <PlusOutlined className="add-icon" />
-            <a onClick={handleAddRow}>Add Warehouse</a>
+            <a onClick={handleAddRow}>
+              <FormattedMessage
+                id="action.addOpeningStock"
+                defaultMessage="Add Opening Stock"
+              />
+            </a>
           </Space>
         </>
-      }
+      )}
       <div className="page-actions-bar page-actions-bar-margin">
         <Button
           type="primary"
@@ -807,6 +1039,11 @@ const ProductsNew = () => {
 
   return (
     <>
+      <SupplierSearchModal
+        modalOpen={searchModalOpen}
+        setModalOpen={setSearchModalOpen}
+        onRowSelect={handleModalRowSelect}
+      />
       <div className="page-header">
         <p className="page-header-text">
           {<FormattedMessage id="product.new" defaultMessage="New Product" />}

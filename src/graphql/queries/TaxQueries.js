@@ -4,7 +4,6 @@ const GET_TAXES = gql`
   query GetTaxes($name: String) {
     listTax(name: $name) {
       id
-      businessId
       name
       rate
       isCompoundTax
@@ -29,19 +28,15 @@ const GET_TAX_GROUPS = gql`
   query GetTaxGroups($name: String) {
     listTaxGroup(name: $name) {
       id
-      businessId
       name
       rate
       isActive
       taxes {
         id
-        businessId
         name
         rate
         isCompoundTax
         isActive
-        createdAt
-        updatedAt
       }
     }
   }

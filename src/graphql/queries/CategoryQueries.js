@@ -1,15 +1,23 @@
 import { gql } from "@apollo/client";
 
+const GET_ALL_PRODUCT_CATEGORIES = gql`
+  query ListAllProductCategory {
+    listAllProductCategory {
+      id
+      name
+      isActive
+    }
+  }
+`;
+
 const GET_PRODUCT_CATEGORIES = gql`
-  query ListActiveProductCategory {
+  query ListProductCategory {
     listProductCategory {
       id
-      businessId
       name
       isActive
       parentCategory {
         id
-        businessId
         name
         isActive
       }
@@ -18,6 +26,7 @@ const GET_PRODUCT_CATEGORIES = gql`
 `;
 
 const CategoryQueries = {
+  GET_ALL_PRODUCT_CATEGORIES,
   GET_PRODUCT_CATEGORIES,
 };
 

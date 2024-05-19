@@ -16,15 +16,17 @@ const CREATE_EXPENSE = gql`
         id
         name
       }
-      referenceNumber
       expenseDate
-      notes
       currency {
         id
         name
         symbol
         decimalPlaces
       }
+      exchangeRate
+      amount
+      taxAmount
+      totalAmount
       supplier {
         id
         name
@@ -33,16 +35,20 @@ const CREATE_EXPENSE = gql`
         id
         name
       }
-      amount
-      taxAmount
-      totalAmount
-      isTaxInclusive
-      exchangeRate
+      referenceNumber
+      notes
       expenseTax {
         id
         name
         rate
         type
+      }
+      isTaxInclusive
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }
@@ -64,15 +70,17 @@ const UPDATE_EXPENSE = gql`
         id
         name
       }
-      referenceNumber
       expenseDate
-      notes
       currency {
         id
         name
         symbol
         decimalPlaces
       }
+      exchangeRate
+      amount
+      taxAmount
+      totalAmount
       supplier {
         id
         name
@@ -81,16 +89,20 @@ const UPDATE_EXPENSE = gql`
         id
         name
       }
-      amount
-      taxAmount
-      totalAmount
-      isTaxInclusive
-      exchangeRate
+      referenceNumber
+      notes
       expenseTax {
         id
         name
         rate
         type
+      }
+      isTaxInclusive
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }
@@ -112,15 +124,17 @@ const DELETE_EXPENSE = gql`
         id
         name
       }
-      referenceNumber
       expenseDate
-      notes
       currency {
         id
         name
         symbol
         decimalPlaces
       }
+      exchangeRate
+      amount
+      taxAmount
+      totalAmount
       supplier {
         id
         name
@@ -129,16 +143,20 @@ const DELETE_EXPENSE = gql`
         id
         name
       }
-      amount
-      taxAmount
-      totalAmount
-      isTaxInclusive
-      exchangeRate
+      referenceNumber
+      notes
       expenseTax {
         id
         name
         rate
         type
+      }
+      isTaxInclusive
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }

@@ -15,11 +15,6 @@ import SupplierCreditsNew from "./SupplierCreditsNew";
 import SupplierCreditsEdit from "./SupplierCreditsEdit";
 import PurchaseOrdersEdit from "./PurchaseOrdersEdit";
 import PaymentsMadeNew from "./PaymentsMadeNew";
-import ShipmentPreferences from "./ShipmentPreferences";
-import PaymentModes from "./PaymentModes";
-import DeliveryMethods from "./DeliveryMethods";
-import Reasons from "./Reasons";
-import SalesPersons from "./SalesPersons";
 
 export {
   Bills,
@@ -39,9 +34,4 @@ export {
   SupplierCreditsEdit,
   PurchaseOrdersEdit,
   PaymentsMadeNew,
-  ShipmentPreferences,
-  PaymentModes,
-  DeliveryMethods,
-  Reasons,
-  SalesPersons,
 };

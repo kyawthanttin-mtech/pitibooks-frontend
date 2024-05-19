@@ -6,7 +6,6 @@ const CREATE_PRODUCT_GROUP = gql`
       id
       businessId
       name
-      productNature
       description
       isActive
       createdAt
@@ -34,31 +33,27 @@ const CREATE_PRODUCT_GROUP = gql`
       # }
     }
   }
-
 `;
 
 const UPDATE_PRODUCT_GROUP = gql`
- mutation UpdatePG($id: ID!,$input: NewProductGroup!) {
-    updateProductGroup(id: $id,input: $input) {
-        id
-        businessId
-        name
-        productNature
-        description
-        # isActive
-        createdAt
-        updatedAt
-
+  mutation UpdatePG($id: ID!, $input: NewProductGroup!) {
+    updateProductGroup(id: $id, input: $input) {
+      id
+      businessId
+      name
+      description
+      # isActive
+      createdAt
+      updatedAt
     }
-}
-`
+  }
+`;
 const DELETE_PRODUCT_GROUP = gql`
   mutation DeleteProductGroup($id: ID!) {
     deleteProductGroup(id: $id) {
       id
       businessId
       name
-      productNature
       description
       isActive
       createdAt

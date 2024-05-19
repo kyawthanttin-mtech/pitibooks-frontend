@@ -21,7 +21,10 @@ import {
   MoreOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { PaginatedSelectionTable } from "../../components";
+import {
+  PaginatedSelectionTable,
+  SearchCriteriaDisplay,
+} from "../../components";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ProductQueries, ProductMutations } from "../../graphql";
@@ -50,8 +53,12 @@ const Products = () => {
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
   const location = useLocation();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
-    "searchCriteria",
+    "productSearchCriteria",
     null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "productCurrentPage",
+    1
   );
 
   // Mutations
@@ -304,7 +311,12 @@ const Products = () => {
       key: "salesPrice",
       render: (text, record) => (
         <>
-          {business.baseCurrency.symbol} <FormattedNumber value={text} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+          {business.baseCurrency.symbol}{" "}
+          <FormattedNumber
+            value={text}
+            style="decimal"
+            minimumFractionDigits={business.baseCurrency.decimalPlaces}
+          />
         </>
       ),
     },
@@ -420,35 +432,21 @@ const Products = () => {
 
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
             {searchCriteria && (
-              <div
-                style={{
-                  padding: "1rem 1.5rem ",
-                  background: "#eef8f1",
-                  fontSize: 13,
-                }}
+              <SearchCriteriaDisplay
+                searchCriteria={searchCriteria}
+                handleModalClear={handleModalClear}
               >
-                <Flex justify="space-between">
-                  <span>
-                    <i>Search Criteria</i>
-                  </span>
-                  <CloseOutlined
-                    style={{ cursor: "pointer" }}
-                    onClick={handleModalClear}
-                  />
-                </Flex>
-                <ul style={{ paddingLeft: "1.5rem" }}>
-                  {searchCriteria.name && (
-                    <li>
-                      Product Name includes <b>{searchCriteria.name}</b>
-                    </li>
-                  )}
-                  {searchCriteria.sku && (
-                    <li>
-                      Product SKU contains <b>{searchCriteria.sku}</b>
-                    </li>
-                  )}
-                </ul>
-              </div>
+                {searchCriteria.name && (
+                  <li>
+                    Product Name includes <b>{searchCriteria.name}</b>
+                  </li>
+                )}
+                {searchCriteria.sku && (
+                  <li>
+                    Product SKU contains <b>{searchCriteria.sku}</b>
+                  </li>
+                )}
+              </SearchCriteriaDisplay>
             )}
             <PaginatedSelectionTable
               loading={loading}
@@ -470,6 +468,8 @@ const Products = () => {
               compactColumns={compactColumns}
               searchCriteria={searchCriteria}
               setSearchCriteria={setSearchCriteria}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
             />
           </div>
         </div>
@@ -573,7 +573,9 @@ const Products = () => {
                           <tr>
                             <td className="overview-data">Category</td>
                             <td className="overview-data">
-                              {selectedRecord?.category?.name ? selectedRecord?.category?.name : "-"}
+                              {selectedRecord?.category?.name
+                                ? selectedRecord?.category?.name
+                                : "-"}
                             </td>
                           </tr>
                           <tr>
@@ -585,7 +587,9 @@ const Products = () => {
                           <tr>
                             <td className="overview-data">Supplier</td>
                             <td className="overview-data">
-                              {selectedRecord?.supplier?.name ? selectedRecord?.supplier?.name : "-"}
+                              {selectedRecord?.supplier?.name
+                                ? selectedRecord?.supplier?.name
+                                : "-"}
                             </td>
                           </tr>
                           <tr>
@@ -615,7 +619,14 @@ const Products = () => {
                               Cost Price
                             </td>
                             <td className="overview-data">
-                              {business.baseCurrency.symbol} <FormattedNumber value={selectedRecord?.purchasePrice} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                              {business.baseCurrency.symbol}{" "}
+                              <FormattedNumber
+                                value={selectedRecord?.purchasePrice}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
                             </td>
                           </tr>
                           <tr>
@@ -627,7 +638,9 @@ const Products = () => {
                           <tr>
                             <td className="overview-data">Purchase Tax</td>
                             <td className="overview-data">
-                              {selectedRecord?.purchaseTax.name ? selectedRecord?.purchaseTax.name : "-"}
+                              {selectedRecord?.purchaseTax.name
+                                ? selectedRecord?.purchaseTax.name
+                                : "-"}
                             </td>
                           </tr>
                         </tbody>
@@ -641,7 +654,14 @@ const Products = () => {
                               Selling Price
                             </td>
                             <td className="overview-data">
-                              {business.baseCurrency.symbol} <FormattedNumber value={selectedRecord?.salesPrice} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                              {business.baseCurrency.symbol}{" "}
+                              <FormattedNumber
+                                value={selectedRecord?.salesPrice}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
                             </td>
                           </tr>
                           <tr>
@@ -653,7 +673,9 @@ const Products = () => {
                           <tr>
                             <td className="overview-data">Sales Tax</td>
                             <td className="overview-data">
-                              {selectedRecord?.salesTax.name ? selectedRecord?.salesTax.name : "-"}
+                              {selectedRecord?.salesTax.name
+                                ? selectedRecord?.salesTax.name
+                                : "-"}
                             </td>
                           </tr>
                         </tbody>

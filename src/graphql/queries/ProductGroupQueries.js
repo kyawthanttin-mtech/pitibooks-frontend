@@ -9,11 +9,16 @@ const GET_PAGINATED_PRODUCT_GROUPS = gql`
           id
           businessId
           name
-          productNature
           description
           isActive
+          isBatchTracking
           createdAt
           updatedAt
+          category {
+            id
+            name
+            isActive
+          }
           variants {
             ID
             businessId
@@ -27,16 +32,50 @@ const GET_PAGINATED_PRODUCT_GROUPS = gql`
             isActive
             createdAt
             updatedAt
-          }
-          modifiers {
-            id
-            businessId
-            name
-            isActive
-            createdAt
-            updatedAt
+            inventoryAccount {
+              id
+              name
+              code
+              detailType
+              mainType
+              isActive
+              systemDefaultCode
+            }
+            purchaseTax {
+              id
+              name
+              rate
+              type
+              isActive
+            }
+            purchaseAccount {
+              id
+              name
+              code
+              detailType
+              mainType
+              isActive
+              systemDefaultCode
+            }
+            salesAccount {
+              id
+              name
+              code
+              detailType
+              mainType
+              isActive
+              systemDefaultCode
+            }
+            salesTax {
+              id
+              name
+              rate
+              type
+              isActive
+            }
           }
           options {
+            productGroupId
             optionName
             optionUnits
           }
@@ -47,33 +86,14 @@ const GET_PAGINATED_PRODUCT_GROUPS = gql`
             email
             phone
             mobile
-            supplierTax {
-              id
-              type
-            }
             supplierPaymentTerms
             supplierPaymentTermsCustomDays
             notes
+            exchangeRate
+            openingBalanceBranchId
+            openingBalance
             prepaidCreditAmount
             unusedCreditAmount
-            isActive
-            createdAt
-            updatedAt
-          }
-          productUnit {
-            id
-            businessId
-            name
-            abbreviation
-            precision
-            isActive
-            createdAt
-            updatedAt
-          }
-          category {
-            id
-            businessId
-            name
             isActive
             createdAt
             updatedAt
@@ -102,7 +122,6 @@ const GET_PRODUCT = gql`
       id
       businessId
       name
-      productNature
       description
       sku
       barcode
@@ -133,7 +152,6 @@ const GET_PRODUCT = gql`
           id
           businessId
           name
-          productNature
           description
           sku
           barcode

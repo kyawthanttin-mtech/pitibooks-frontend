@@ -4,16 +4,7 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
-import {
-  HomePage,
-  LoginPage,
-  MainLayout,
-  // BranchEditPage,
-  // BranchNewPage,
-  // BranchPage,
-  // CategoryPage,
-  // ProductPage,
-} from "./pages";
+import { HomePage, LoginPage, MainLayout } from "./pages";
 import {
   Bills,
   Expenses,
@@ -32,11 +23,6 @@ import {
   SupplierCreditsEdit,
   PurchaseOrdersEdit,
   PaymentsMadeNew,
-  ShipmentPreferences,
-  PaymentModes,
-  DeliveryMethods,
-  Reasons,
-  SalesPersons,
 } from "./pages/purchases";
 import {
   Products,
@@ -80,13 +66,33 @@ import {
   // Taxes,
   Users,
   Roles,
+  ShipmentPreferences,
+  PaymentModes,
+  DeliveryMethods,
+  Reasons,
+  SalesPersons,
 } from "./pages/settings";
-import { Customers, CustomersEdit, CustomersNew } from "./pages/sales";
+import {
+  CreditNotes,
+  CreditNotesEdit,
+  CreditNotesNew,
+  Customers,
+  CustomersEdit,
+  CustomersNew,
+  Invoices,
+  InvoicesEdit,
+  InvoicesNew,
+  PaymentsReceived,
+  SalesOrders,
+  SalesOrdersEdit,
+  SalesOrdersNew,
+} from "./pages/sales";
 
 import InvoicesPage from "./pages/InvoicesPage";
 import TaxRates from "./pages/settings/TaxRates";
 // import TaxSettings from "./pages/settings/TaxSettings";
 import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
+import Banking from "./pages/banking/Banking";
 
 if (process.env.NODE_ENV !== "production") {
   // Adds messages only in a dev environment
@@ -111,29 +117,9 @@ const router = createHashRouter([
         Component: HomePage,
       },
       // {
-      //   path: "branches",
-      //   Component: BranchPage,
+      //   path: "invoices",
+      //   Component: InvoicesPage,
       // },
-      // {
-      //   path: "branches/edit",
-      //   Component: BranchEditPage,
-      // },
-      // {
-      //   path: "branches/new",
-      //   Component: BranchNewPage,
-      // },
-      // {
-      //   path: "categories",
-      //   Component: CategoryPage,
-      // },
-      // {
-      //   path: "products",
-      //   Component: ProductPage,
-      // },
-      {
-        path: "invoices",
-        Component: InvoicesPage,
-      },
 
       //Products
       {
@@ -188,6 +174,10 @@ const router = createHashRouter([
         path: "productUnits",
         Component: ProductUnits,
       },
+      {
+        path: "banking",
+        Component: Banking,
+      },
       // Sales
       {
         path: "customers",
@@ -200,6 +190,46 @@ const router = createHashRouter([
       {
         path: "customers/edit",
         Component: CustomersEdit,
+      },
+      {
+        path: "salesOrders",
+        Component: SalesOrders,
+      },
+      {
+        path: "salesOrders/new",
+        Component: SalesOrdersNew,
+      },
+      {
+        path: "salesOrders/edit",
+        Component: SalesOrdersEdit,
+      },
+      {
+        path: "paymentsReceived",
+        Component: PaymentsReceived,
+      },
+      {
+        path: "invoices",
+        Component: Invoices,
+      },
+      {
+        path: "invoices/new",
+        Component: InvoicesNew,
+      },
+      {
+        path: "invoices/edit",
+        Component: InvoicesEdit,
+      },
+      {
+        path: "creditNotes",
+        Component: CreditNotes,
+      },
+      {
+        path: "creditNotes/new",
+        Component: CreditNotesNew,
+      },
+      {
+        path: "creditNotes/edit",
+        Component: CreditNotesEdit,
       },
       //Purchases
       {

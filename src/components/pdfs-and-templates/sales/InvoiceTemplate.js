@@ -1,8 +1,21 @@
 import React, { useEffect } from "react";
 import "../Template.css";
 import { data } from "./InvoiceData";
+import { useOutletContext } from "react-router-dom";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
+import dayjs from "dayjs";
+import { FormattedNumber } from "react-intl";
 
 const InvoiceTemplate = ({ selectedRecord }) => {
+  const { business } = useOutletContext();
+  const details = selectedRecord?.details ? selectedRecord?.details : [];
+  let hasDetailDiscount = false;
+  details.forEach((d) => {
+    if (d.detailDiscountAmount > 0) {
+      hasDetailDiscount = true;
+    }
+  });
+
   useEffect(() => {
     const container = document.getElementById("test");
     if (container) {
@@ -18,11 +31,8 @@ const InvoiceTemplate = ({ selectedRecord }) => {
     .toFixed(2);
   return (
     <div className="details-page">
-      <span id="test" style={{ fontSize: 10 }}>
-        9
-      </span>
       <div className="details-container">
-        <div className="ribbon text-ellipsis">
+        {/* <div className="ribbon text-ellipsis">
           <div
             className={`ribbon-inner ${
               selectedRecord.status === "Paid"
@@ -32,7 +42,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
           >
             {selectedRecord.status}
           </div>
-        </div>
+        </div> */}
         <div className="template">
           <div className="template-header header-content"></div>
           <div className="template-body">
@@ -40,25 +50,30 @@ const InvoiceTemplate = ({ selectedRecord }) => {
               <tbody>
                 <tr>
                   <td>
-                    <span>
-                      <b>{selectedRecord.customerName}</b>
+                    <span
+                      style={{
+                        fontSize: "var(--detail-text)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <b>{business.name}</b>
                     </span>
                     <br />
-                    <span>Myanmar</span>
+                    <span>{business.country}</span>
                     <br />
-                    <span>useremail@gmail.com</span>
+                    <span>{business.email}</span>
                   </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>INVOICE</span>
                     <br />
-                    <span># {selectedRecord.invoice}</span>
+                    <span># {selectedRecord.invoiceNumber}</span>
                     <div style={{ clear: "both", marginTop: "20px" }}>
                       <span style={{ fontSize: "0.8rem" }}>
                         <b>Balance Due</b>
                       </span>
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
-                        <b>MMK{selectedRecord.balanceDue}</b>
+                        <b>MMK Placeholder</b>
                       </span>
                     </div>
                   </td>
@@ -113,7 +128,11 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                             <span>Invoice Date :</span>
                           </td>
                           <td style={{ textAlign: "right" }}>
-                            <span>{selectedRecord.invoiceDate}</span>
+                            <span>
+                              {dayjs(selectedRecord.invoiceDate).format(
+                                REPORT_DATE_FORMAT
+                              )}
+                            </span>
                           </td>
                         </tr>
                         <tr>
@@ -123,10 +142,14 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Terms :</span>
+                            <span>Payment Terms :</span>
                           </td>
                           <td className="text-align-right">
-                            <span>Due On Receipt</span>
+                            <span>
+                              {selectedRecord.invoicePaymentTerms
+                                .split(/(?=[A-Z])/)
+                                .join(" ")}
+                            </span>
                           </td>
                         </tr>
                         <tr>
@@ -139,7 +162,11 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                             <span>Due Date :</span>
                           </td>
                           <td className="text-align-right">
-                            <span>{selectedRecord.dueDate}</span>
+                            <span>
+                              {dayjs(selectedRecord.invoiceDueDate).format(
+                                REPORT_DATE_FORMAT
+                              )}
+                            </span>
                           </td>
                         </tr>
                         <tr>
@@ -149,7 +176,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>P.O# :</span>
+                            <span>SO # :</span>
                           </td>
                           <td className="text-align-right">
                             <span>{selectedRecord.orderNumber}</span>
@@ -233,7 +260,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                   border: "1px solid black",
                 }}
               >
-                {data.map((item, index) => (
+                {details.map((detail, index) => (
                   <tr
                     key={index}
                     style={{
@@ -263,7 +290,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                       }}
                     >
                       <div>
-                        <span>{item.itemName}</span>
+                        <span>{detail.name}</span>
                         <br />
                         <span></span>
                       </div>
@@ -277,7 +304,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.qty}</span>
+                      <span>{detail.detailQty}</span>
                     </td>
                     <td
                       className="text-align-right"
@@ -288,8 +315,41 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.rate}</span>
+                      <span>
+                        <FormattedNumber
+                          value={detail.detailUnitRate}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />
+                      </span>
                     </td>
+                    {hasDetailDiscount && (
+                      <td
+                        rowSpan="1"
+                        className="text-align-right"
+                        style={{
+                          padding: "10px 10px 5px 10px",
+                          verticalAlign: "top",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        <span>
+                          {detail.detailDiscountType === "P" ? (
+                            detail.detailDiscount + "%"
+                          ) : (
+                            <FormattedNumber
+                              value={detail.detailDiscountAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          )}
+                        </span>
+                      </td>
+                    )}
                     <td
                       className="text-align-right"
                       rowSpan="1"
@@ -298,7 +358,15 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.amount}</span>
+                      <span>
+                        <FormattedNumber
+                          value={detail.detailTotalAmount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />
+                      </span>
                     </td>
                   </tr>
                 ))}

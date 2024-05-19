@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React, { useState, useMemo, useEffect } from "react";
 
 import "./ChartOfAccounts.css";
@@ -17,6 +18,7 @@ import {
   Radio,
   Tag,
   Flex,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
@@ -28,18 +30,30 @@ import {
   PaperClipOutlined,
   DownOutlined,
   LockOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
-import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
+import {
+  useQuery,
+  useMutation,
+  useLazyQuery,
+  useReadQuery,
+} from "@apollo/client";
+import dayjs from "dayjs";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
-import { useHistoryState } from "../../utils/HelperFunctions";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
+import {
+  useHistoryState,
+  convertTransactionType,
+} from "../../utils/HelperFunctions";
 import { ReactComponent as TreeIndicatorOutlined } from "../../assets/icons/TreeIndicatorOutlined.svg";
 import { ReactComponent as PivotColumnOutlined } from "../../assets/icons/PivotColumnOutlined.svg";
 import { AccountQueries, AccountMutations } from "../../graphql";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+
 const { GET_ACCOUNTS } = AccountQueries;
 const {
   CREATE_ACCOUNT,
@@ -55,7 +69,7 @@ const compactColumns = [
     dataIndex: "actions1",
     key: "actions1",
     render: (_, record) =>
-      record.isSystemDefault ? (
+      record?.isSystemDefault ? (
         <LockOutlined style={{ color: "gray" }} />
       ) : (
         <></>
@@ -94,65 +108,6 @@ const compactColumns = [
         );
       }
     },
-  },
-];
-
-const transactionTableColumns = [
-  {
-    title: "Date",
-    dataIndex: "date",
-    key: "date",
-  },
-  {
-    title: "Transaction Details",
-    dataIndex: "transactionDetails",
-    key: "transactionDetails",
-  },
-  {
-    title: "Type",
-    dataIndex: "type",
-    key: "type",
-  },
-  {
-    title: "Debit",
-    dataIndex: "debit",
-    key: "debit",
-  },
-  {
-    title: "Credit",
-    dataIndex: "credit",
-    key: "credit",
-  },
-];
-
-const transactionTableDataSource = [
-  {
-    key: 1,
-    date: "27 Jan 2024",
-    transactionDetails: "-",
-    type: "Other Income",
-    debit: "MMK300,000.00",
-  },
-  {
-    key: 2,
-    date: "27 Jan 2024",
-    transactionDetails: "-",
-    type: "Interest Income",
-    debit: "MMK3,000.00",
-  },
-  {
-    key: 3,
-    date: "13 Jan 2024",
-    transactionDetails: "Royal Taw Win Company",
-    type: "Payments Made",
-    credit: "MMK1,900.00",
-  },
-  {
-    key: 4,
-    date: "13 Jan 2024",
-    transactionDetails: "Ma Nan",
-    type: "Invoice Payment",
-    debit: "MMK63,000.00",
   },
 ];
 
@@ -209,7 +164,14 @@ const accountTypes = [
 ];
 
 const ChartOfAccounts = () => {
-  const {notiApi, msgApi, refetchAllAccounts} = useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    business,
+    refetchAllAccounts,
+    allCurrenciesQueryRef,
+    allBranchesQueryRef,
+  } = useOutletContext();
   const [deleteModal, contextHolder] = Modal.useModal();
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
@@ -229,9 +191,130 @@ const ChartOfAccounts = () => {
   const subAccountCheckedNew = Form.useWatch("subAccount", createFormRef);
   const subAccountCheckedEdit = Form.useWatch("subAccount", editFormRef);
   const [searchCriteria, setSearchCriteria] = useHistoryState(
-    "searchCriteria",
+    "accountSearchCriteria",
     null
   );
+  const [closingBalance, setClosingBalance] = useState(0);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [displayedCurrency, setDisplayedCurrency] = useState("bcy");
+  const intl = useIntl();
+
+  //Queries
+  const { data: currencyData } = useReadQuery(allCurrenciesQueryRef);
+  const { data: branchData } = useReadQuery(allBranchesQueryRef);
+
+  const branches = useMemo(() => {
+    return branchData?.listAllBranch?.filter((b) => b.isActive === true);
+  }, [branchData]);
+
+  const currencies = useMemo(() => {
+    return currencyData?.listAllCurrency?.filter((c) => c.isActive === true);
+  }, [currencyData]);
+
+  const transactionTableColumns = [
+    {
+      title: "Date",
+      dataIndex: "transactionDate",
+      key: "transactionDate",
+    },
+    {
+      title: "Transaction Details",
+      dataIndex: "transactionDetails",
+      key: "transactionDetails",
+      render: (text) => {
+        if (text) {
+          return (
+            <Tooltip title={text}>
+              <FileTextOutlined />
+            </Tooltip>
+          );
+        } else {
+          return <></>;
+        }
+      },
+    },
+    {
+      title: "Type",
+      dataIndex: "transactionType",
+      key: "transactionType",
+    },
+    {
+      title: "Debit",
+      dataIndex: "baseDebit",
+      key: "baseDebit",
+      render: (_, record) => {
+        if (record.baseDebit > 0) {
+          if (
+            displayedCurrency === "fcy" &&
+            record.foreignCurrency?.id &&
+            business.baseCurrency.id !== record.foreignCurrency?.id
+          ) {
+            return (
+              <>
+                {record.foreignCurrency.symbol}{" "}
+                <FormattedNumber
+                  value={record.foreignDebit}
+                  style="decimal"
+                  minimumFractionDigits={record.foreignCurrency.decimalPlaces}
+                />
+              </>
+            );
+          } else {
+            return (
+              <>
+                {business.baseCurrency.symbol}{" "}
+                <FormattedNumber
+                  value={record.baseDebit}
+                  style="decimal"
+                  minimumFractionDigits={business.baseCurrency.decimalPlaces}
+                />
+              </>
+            );
+          }
+        } else {
+          return <></>;
+        }
+      },
+    },
+    {
+      title: "Credit",
+      dataIndex: "baseCredit",
+      key: "baseCredit",
+      render: (_, record) => {
+        if (record.baseCredit > 0) {
+          if (
+            displayedCurrency === "fcy" &&
+            record.foreignCurrency?.id &&
+            business.baseCurrency.id !== record.foreignCurrency?.id
+          ) {
+            return (
+              <>
+                {record.foreignCurrency.symbol}{" "}
+                <FormattedNumber
+                  value={record.foreignCredit}
+                  style="decimal"
+                  minimumFractionDigits={record.foreignCurrency.decimalPlaces}
+                />
+              </>
+            );
+          } else {
+            return (
+              <>
+                {business.baseCurrency.symbol}{" "}
+                <FormattedNumber
+                  value={record.baseCredit}
+                  style="decimal"
+                  minimumFractionDigits={business.baseCurrency.decimalPlaces}
+                />
+              </>
+            );
+          }
+        } else {
+          return <></>;
+        }
+      },
+    },
+  ];
 
   // Queries
   const { data, loading: queryLoading } = useQuery(GET_ACCOUNTS, {
@@ -323,20 +406,42 @@ const ChartOfAccounts = () => {
     }
   );
 
+  const handleSelectRecord = (record) => {
+    setSelectedRecord(record);
+    setSelectedRowIndex(record.id);
+    setClosingBalance(record.accountClosingBalance?.runningBalance || 0);
+    if (record.recentTransactions) {
+      let index = 0;
+      const updatedData = record.recentTransactions.map((t) => {
+        return {
+          ...t,
+          key: index++,
+          transactionDate: dayjs(t.transactionDateTime).format(
+            REPORT_DATE_FORMAT
+          ),
+          transactionDetails: t.accountJournal?.transactionDetails || "",
+          transactionType: convertTransactionType(
+            t.accountJournal.referenceType
+          ),
+        };
+      });
+      setRecentTransactions(updatedData);
+    } else {
+      setRecentTransactions([]);
+    }
+  };
+
   const parseData = (data) => {
     let accounts = [];
     data?.listAccount?.map((acc) => {
       accounts.push({
+        ...acc,
         id: acc?.id,
         accountName: acc?.name,
         accountCode: acc?.code,
         accountType: acc?.detailType.split(/(?=[A-Z])/).join(" "),
-        mainType: acc?.mainType,
         parentAccountName: acc?.parentAccount.name,
-        description: acc?.description,
-        isSystemDefault: acc?.isSystemDefault,
-        parentAccount: acc?.parentAccount,
-        isActive: acc?.isActive,
+        foreignCurrency: acc?.recentTransactions?.foreignCurrency,
       });
       return null;
     });
@@ -405,6 +510,8 @@ const ChartOfAccounts = () => {
     searchLoading;
 
   const handleAccountTypeChange = (value) => {
+    console.log(value);
+
     setParentAccountOptions([]);
     createFormRef.setFieldValue("parentAccount");
     editFormRef.setFieldValue("parentAccount");
@@ -416,7 +523,6 @@ const ChartOfAccounts = () => {
     const detailTypeName = selectedType?.name;
     setDetailType(detailTypeName);
   };
-
   useEffect(() => {
     if (detailType) {
       const filteredData = queryData?.filter(
@@ -435,17 +541,35 @@ const ChartOfAccounts = () => {
         (group) => group.id === mainTypeId
       );
       const mainType = selectedMainType.mainType;
-
-      const input = {
-        detailType: detailType.split(" ").join(""),
-        mainType: mainType,
-        code: values.code,
-        name: values.name,
-        parentAccountId:
-          values.parentAccount && subAccountCheckedNew
-            ? values.parentAccount
-            : 0,
-      };
+      let input = {}
+      
+      if (detailType === "Bank") {
+        if (!values.branch || values.branch.length === 0) {
+          openErrorNotification(notiApi, intl.formatMessage({id:"validation.requiredAtLeastOneBranch", defaultMessage:"At least one Branch is required"}));
+          return;
+        }
+        input = {
+          detailType: detailType.split(" ").join(""),
+          mainType: mainType,
+          code: values.code,
+          name: values.name,
+          parentAccountId: 0,
+          accountNumber: values.accountNumber,
+          branches: values.branch?.join(" | "),
+          currencyId: values.currency,
+        };
+      } else {
+        input = {
+          detailType: detailType.split(" ").join(""),
+          mainType: mainType,
+          code: values.code,
+          name: values.name,
+          parentAccountId:
+            values.parentAccount && subAccountCheckedNew
+              ? values.parentAccount
+              : 0,
+        };
+      }
 
       // console.log("Field values:", input);
       await createAccount({ variables: { input: input } });
@@ -480,13 +604,16 @@ const ChartOfAccounts = () => {
     setDetailType(detailTypeName);
 
     handleAccountTypeChange(selectedType.id);
-
+    console.log("fdfj", record.branches.split(" | "));
     editFormRef.setFieldsValue({
       id: record.id,
       name: record.accountName,
       type: selectedType?.id,
       code: record.accountCode,
       description: record.description,
+      accountNumber: record.accountNumber,
+      branch: record.branches ? record.branches?.split(" | ") : null,
+      currency: record.currencyId || business.baseCurrency.id,
     });
     if (record.parentAccount.id && record.parentAccount.id > 0) {
       editFormRef.setFieldsValue({
@@ -523,6 +650,7 @@ const ChartOfAccounts = () => {
             id: record.id,
           },
         });
+        setSelectedRecord(null);
       } catch (err) {
         openErrorNotification(notiApi, err.message);
       }
@@ -538,16 +666,35 @@ const ChartOfAccounts = () => {
       );
       const mainType = selectedMainType.mainType;
 
-      const input = {
-        detailType: detailType.split(" ").join(""),
-        mainType: mainType,
-        code: values.code,
-        name: values.name,
-        parentAccountId:
-          values.parentAccount && subAccountCheckedEdit
-            ? values.parentAccount
-            : 0,
-      };
+      let input = {}
+      
+      if (detailType === "Bank") {
+        if (!values.branch || values.branch.length === 0) {
+          openErrorNotification(notiApi, intl.formatMessage({id:"validation.requiredAtLeastOneBranch", defaultMessage:"At least one Branch is required"}));
+          return;
+        }
+        input = {
+          detailType: detailType.split(" ").join(""),
+          mainType: mainType,
+          code: values.code,
+          name: values.name,
+          parentAccountId: 0,
+          accountNumber: values.accountNumber,
+          branches: values.branch?.join(" | "),
+          currencyId: values.currency,
+        };
+      } else {
+        input = {
+          detailType: detailType.split(" ").join(""),
+          mainType: mainType,
+          code: values.code,
+          name: values.name,
+          parentAccountId:
+            values.parentAccount && subAccountCheckedNew
+              ? values.parentAccount
+              : 0,
+        };
+      }
       // console.log("field values", editRecord);
       await updateAccount({
         variables: { id: editRecord.id, input: input },
@@ -599,21 +746,38 @@ const ChartOfAccounts = () => {
   const createForm = (
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
-        label="Account Type"
+        label={
+          <FormattedMessage
+            id="label.accountType"
+            defaultMessage="Account Type"
+          />
+        }
         name="type"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.accountType.required"
+                defaultMessage="Select the Account Type"
+              />
+            ),
+          },
+        ]}
       >
         <Select
           showSearch
           onChange={(value) => handleAccountTypeChange(value)}
           allowClear
+          optionFilterProp="label"
         >
           {accountTypes.map((group) => (
             <Select.OptGroup key={group.id} label={group.mainType}>
               {group.detailTypes.map((options) => (
-                <Select.Option key={options.id} value={options.id}>
+                <Select.Option key={options.id} value={options.id} label={options.name}>
                   {options.name}
                 </Select.Option>
               ))}
@@ -622,31 +786,148 @@ const ChartOfAccounts = () => {
         </Select>
       </Form.Item>
       <Form.Item
-        label="Account Name"
+        label={
+          <FormattedMessage
+            id="label.accountName"
+            defaultMessage="Account Name"
+          />
+        }
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.accountName.required"
+                defaultMessage="Enter the Account Name"
+              />
+            ),
+          },
+        ]}
       >
         <Input maxLength={100}></Input>
       </Form.Item>
-      <Form.Item
+      {detailType === "Bank" && (
+        <>
+          <Form.Item
+            name="accountNumber"
+            label={
+              <FormattedMessage
+                id="label.accountNumber"
+                defaultMessage="Account Number"
+              />
+            }
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+            labelAlign="left"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.accountNumber.required"
+                    defaultMessage="Enter the Account Number"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Input maxLength={100} />
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.currency" defaultMessage="Currency" />
+            }
+            name="currency"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.currency.required"
+                    defaultMessage="Select the Currency"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Select allowClear showSearch optionFilterProp="label">
+              {currencies?.map((currency) => (
+                <Select.Option
+                  key={currency.id}
+                  value={currency.id}
+                  label={currency.name + "" + currency.symbol}
+                >
+                  {currency.name} ({currency.symbol})
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
+            name="branch"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+          >
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              mode="multiple"
+              maxTagCount="responsive"
+            >
+              {branches?.map((branch) => (
+                <Select.Option
+                  key={branch.id}
+                  value={branch.name}
+                  label={branch.name}
+                >
+                  {branch.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </>
+      )}
+
+      {detailType !== "Bank" && <Form.Item
         shouldUpdate
         name="subAccount"
         valuePropName="checked"
         wrapperCol={{ span: 13, offset: 8 }}
       >
-        <Checkbox>Make this a sub-account</Checkbox>
+        <Checkbox>
+          <FormattedMessage
+            id="action.markSubAccount"
+            defaultMessage="Mark this a sub-account"
+          />
+        </Checkbox>
       </Form.Item>
-      {subAccountCheckedNew && (
+      }
+      {detailType !== "Bank" && subAccountCheckedNew && (
         <Form.Item
-          label="Parent Account"
+          label={
+            <FormattedMessage
+              id="label.parentAccount"
+              defaultMessage="Parent Account"
+            />
+          }
           name="parentAccount"
           labelAlign="left"
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 13 }}
         >
-          <Select allowClear placeholder="Select an account">
+          <Select allowClear>
             {detailType && parentAccountOptions.length > 0 && (
               <Select.OptGroup
                 label={detailType?.split(/(?=[A-Z])/).join(" ")}
@@ -663,7 +944,12 @@ const ChartOfAccounts = () => {
         </Form.Item>
       )}
       <Form.Item
-        label="Account Code"
+        label={
+          <FormattedMessage
+            id="label.accountCode"
+            defaultMessage="Account Code"
+          />
+        }
         name="code"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -672,7 +958,12 @@ const ChartOfAccounts = () => {
         <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
-        label="Description"
+        label={
+          <FormattedMessage
+            id="label.description"
+            defaultMessage="Description"
+          />
+        }
         description="description"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -686,21 +977,39 @@ const ChartOfAccounts = () => {
   const editForm = (
     <Form form={editFormRef} onFinish={handleEditModalOk}>
       <Form.Item
-        label="Account Type"
+        label={
+          <FormattedMessage
+            id="label.accountType"
+            defaultMessage="Account Type"
+          />
+        }
         name="type"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.accountType.required"
+                defaultMessage="Select the Account Type"
+              />
+            ),
+          },
+        ]}
       >
         <Select
           showSearch
           onChange={(value) => handleAccountTypeChange(value)}
           allowClear
+          disabled={detailType === "Bank" || selectedRecord?.isSystemDefault ? true : false}
+          optionFilterProp="label"
         >
           {accountTypes.map((group) => (
             <Select.OptGroup key={group.id} label={group.mainType}>
               {group.detailTypes.map((options) => (
-                <Select.Option key={options.id} value={options.id}>
+                <Select.Option key={options.id} value={options.id} label={options.name}>
                   {options.name}
                 </Select.Option>
               ))}
@@ -709,31 +1018,147 @@ const ChartOfAccounts = () => {
         </Select>
       </Form.Item>
       <Form.Item
-        label="Account Name"
+        label={
+          <FormattedMessage
+            id="label.accountName"
+            defaultMessage="Account Name"
+          />
+        }
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 13 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.accountName.required"
+                defaultMessage="Enter the Account Name"
+              />
+            ),
+          },
+        ]}
       >
         <Input maxLength={100}></Input>
       </Form.Item>
-      <Form.Item
+      {detailType === "Bank" && (
+        <>
+          <Form.Item
+            name="accountNumber"
+            label={
+              <FormattedMessage
+                id="label.accountNumber"
+                defaultMessage="Account Number"
+              />
+            }
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+            labelAlign="left"
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.accountNumber.required"
+                    defaultMessage="Enter the Account Number"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Input maxLength={100} />
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.currency" defaultMessage="Currency" />
+            }
+            name="currency"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.currency.required"
+                    defaultMessage="Select the Currency"
+                  />
+                ),
+              },
+            ]}
+          >
+            <Select allowClear showSearch optionFilterProp="label">
+              {currencies?.map((currency) => (
+                <Select.Option
+                  key={currency.id}
+                  value={currency.id}
+                  label={currency.name + "" + currency.symbol}
+                >
+                  {currency.name} ({currency.symbol})
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
+            name="branch"
+            labelAlign="left"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 13 }}
+          >
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              mode="multiple"
+              maxTagCount="responsive"
+            >
+              {branches?.map((branch) => (
+                <Select.Option
+                  key={branch.id}
+                  value={branch.name}
+                  label={branch.name}
+                >
+                  {branch.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </>
+      )}
+      {detailType !== "Bank" && <Form.Item
         shouldUpdate
         name="subAccount"
         valuePropName="checked"
         wrapperCol={{ span: 13, offset: 8 }}
       >
-        <Checkbox>Make this a sub-account</Checkbox>
+        <Checkbox disabled={selectedRecord?.isSystemDefault ? true : false}>
+          <FormattedMessage
+            id="action.markSubAccount"
+            defaultMessage="Mark this a sub-account"
+          />
+        </Checkbox>
       </Form.Item>
-      {subAccountCheckedEdit && (
+      }
+      {detailType !== "Bank" && subAccountCheckedEdit && (
         <Form.Item
-          label="Parent Account"
+          label={
+            <FormattedMessage
+              id="label.parentAccount"
+              defaultMessage="Parent Account"
+            />
+          }
           name="parentAccount"
           labelAlign="left"
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 13 }}
         >
-          <Select allowClear placeholder="Select an account">
+          <Select allowClear>
             {detailType && parentAccountOptions.length > 0 && (
               <Select.OptGroup
                 label={detailType?.split(/(?=[A-Z])/).join(" ")}
@@ -750,7 +1175,12 @@ const ChartOfAccounts = () => {
         </Form.Item>
       )}
       <Form.Item
-        label="Account Code"
+        label={
+          <FormattedMessage
+            id="label.accountCode"
+            defaultMessage="Account Code"
+          />
+        }
         name="code"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -759,7 +1189,12 @@ const ChartOfAccounts = () => {
         <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
-        label="Description"
+        label={
+          <FormattedMessage
+            id="label.description"
+            defaultMessage="Description"
+          />
+        }
         description="description"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -775,7 +1210,12 @@ const ChartOfAccounts = () => {
       <Row>
         <Col span={12}>
           <Form.Item
-            label="Account Name"
+            label={
+              <FormattedMessage
+                id="label.accountName"
+                defaultMessage="Account Name"
+              />
+            }
             name="name"
             labelAlign="left"
             labelCol={{ span: 8 }}
@@ -786,7 +1226,12 @@ const ChartOfAccounts = () => {
         </Col>
         <Col span={12}>
           <Form.Item
-            label="Account Code"
+            label={
+              <FormattedMessage
+                id="label.accountCode"
+                defaultMessage="Account Code"
+              />
+            }
             name="code"
             labelAlign="left"
             labelCol={{ span: 8 }}
@@ -813,7 +1258,12 @@ const ChartOfAccounts = () => {
         ),
     },
     {
-      title: "Account Name",
+      title: (
+        <FormattedMessage
+          id="label.accountName"
+          defaultMessage="Account Name"
+        />
+      ),
       dataIndex: "accountName",
       key: "accountName",
       render: (_, record) => {
@@ -824,7 +1274,12 @@ const ChartOfAccounts = () => {
               <span style={{ paddingLeft: 15 }}>
                 {record.accountName}{" "}
                 {!record.isActive ? (
-                  <Tag className="active-status">inactive</Tag>
+                  <Tag className="active-status">
+                    <FormattedMessage
+                      id="label.inactive"
+                      defaultMessage="inactive"
+                    />
+                  </Tag>
                 ) : (
                   <></>
                 )}
@@ -836,7 +1291,12 @@ const ChartOfAccounts = () => {
             <>
               {record.accountName}{" "}
               {!record.isActive ? (
-                <Tag className="active-status">inactive</Tag>
+                <Tag className="active-status">
+                  <FormattedMessage
+                    id="label.inactive"
+                    defaultMessage="inactive"
+                  />
+                </Tag>
               ) : (
                 <></>
               )}
@@ -846,17 +1306,32 @@ const ChartOfAccounts = () => {
       },
     },
     {
-      title: "Account Code",
+      title: (
+        <FormattedMessage
+          id="label.accountCode"
+          defaultMessage="Account Code"
+        />
+      ),
       dataIndex: "accountCode",
       key: "accountCode",
     },
     {
-      title: "Account Type",
+      title: (
+        <FormattedMessage
+          id="label.accountType"
+          defaultMessage="Account Type"
+        />
+      ),
       dataIndex: "accountType",
       key: "accountType",
     },
     {
-      title: "Parent Account Name",
+      title: (
+        <FormattedMessage
+          id="label.parentAccount"
+          defaultMessage="Parent Account"
+        />
+      ),
       dataIndex: "parentAccountName",
       key: "parentAccountName",
     },
@@ -967,7 +1442,12 @@ const ChartOfAccounts = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title="Create Account"
+        title={
+          <FormattedMessage
+            id="account.create"
+            defaultMessage="Create Account"
+          />
+        }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -981,7 +1461,9 @@ const ChartOfAccounts = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title="Edit Account"
+        title={
+          <FormattedMessage id="account.edit" defaultMessage="Edit Account" />
+        }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -1043,9 +1525,13 @@ const ChartOfAccounts = () => {
                   type="primary"
                   onClick={() => setCreateModalOpen(true)}
                 >
-                  {!selectedRecord && "New Account"}
+                  {!selectedRecord && (
+                    <FormattedMessage
+                      id="account.new"
+                      defaultMessage="New Account"
+                    />
+                  )}
                 </Button>
-                <Button icon={<MoreOutlined />}></Button>
               </Space>
             </div>
           </div>
@@ -1091,10 +1577,7 @@ const ChartOfAccounts = () => {
               rowSelection={{ selectedRowKeys: [selectedRowIndex] }}
               onRow={(record) => {
                 return {
-                  onClick: () => {
-                    setSelectedRecord(record);
-                    setSelectedRowIndex(record.id);
-                  },
+                  onClick: () => handleSelectRecord(record),
                 };
               }}
             />
@@ -1104,13 +1587,18 @@ const ChartOfAccounts = () => {
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
-                <span>Other Current Asset</span>
-                <span>Sales to Customers (Cash)</span>
+                <span>{selectedRecord.accountType}</span>
+                <span>{selectedRecord.accountName}</span>
               </div>
               <div className="content-column-header-row-actions">
                 <div>
                   <PaperClipOutlined />
-                  <span>Attachment</span>
+                  <span>
+                    <FormattedMessage
+                      id="button.attachment"
+                      defaultMessage="Attachment"
+                    />
+                  </span>
                 </div>
                 <div>
                   <Button
@@ -1125,46 +1613,118 @@ const ChartOfAccounts = () => {
               </div>
             </Row>
             <Row className="content-column-action-row">
-              <div className="actions">
+              <div
+                className="actions"
+                onClick={() => handleEdit(selectedRecord)}
+              >
                 <EditOutlined style={{ marginRight: "0.5rem" }} />
-                Edit
+                <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
               <div>
-                <MoreOutlined />
+                <Dropdown
+                  loading={loading}
+                  trigger="click"
+                  // key={record.key}
+                  menu={{
+                    onClick: ({ key }) => {
+                      if (key === "1") {
+                        handleToggleActive(selectedRecord);
+                      } else if (key === "2") {
+                        handleDelete(selectedRecord);
+                      }
+                    },
+                    items: [
+                      {
+                        label: selectedRecord.isActive ? (
+                          <FormattedMessage
+                            id="button.markInactive"
+                            defaultMessage="Mark As Inactive"
+                          />
+                        ) : (
+                          <FormattedMessage
+                            id="button.markActive"
+                            defaultMessage="Mark As Active"
+                          />
+                        ),
+                        key: "1",
+                      },
+                      {
+                        label: (
+                          <FormattedMessage
+                            id="button.delete"
+                            defaultMessage="Delete"
+                          />
+                        ),
+                        key: "2",
+                      },
+                    ],
+                  }}
+                >
+                  <MoreOutlined />
+                </Dropdown>
               </div>
             </Row>
             <Row className="content-column-balance-detail">
-              <span>CLOSING BALANCE</span>
-              <span className="closing-balance-text">MMK364,100.00</span>
+              <span>
+                <FormattedMessage
+                  id="title.closingBalance"
+                  defaultMessage="CLOSING BALANCE"
+                />
+              </span>
+              <span className="closing-balance-text">
+                {business.baseCurrency.symbol}{" "}
+                <FormattedNumber
+                  value={closingBalance}
+                  style="decimal"
+                  minimumFractionDigits={business.baseCurrency.decimalPlaces}
+                />
+              </span>
               <span className="closing-balance-description">
-                Description: -
+                {selectedRecord?.description}
               </span>
             </Row>
             <div className="content-column-full-row">
               <div className="recent-transaction-container">
-                <p>Recent Transaction</p>
+                <p>
+                  <FormattedMessage
+                    id="title.recentTransactions"
+                    defaultMessage="Recent Transactions"
+                  />
+                </p>
                 <div className="toggle-buttons">
-                  <Radio.Group value="bcy" buttonStyle="solid">
-                    <Radio.Button value="fcy" defaultChecked>
-                      FCY
+                  <Radio.Group
+                    value={displayedCurrency}
+                    buttonStyle="solid"
+                    onChange={(e) => setDisplayedCurrency(e.target.value)}
+                  >
+                    <Radio.Button value="fcy">
+                      <FormattedMessage id="action.fcy" defaultMessage="FCY" />
                     </Radio.Button>
-                    <Radio.Button value="bcy">BCY</Radio.Button>
+                    <Radio.Button value="bcy">
+                      <FormattedMessage id="action.bcy" defaultMessage="BCY" />
+                    </Radio.Button>
                   </Radio.Group>
                 </div>
               </div>
               <Table
                 className="transaction-table"
                 columns={transactionTableColumns}
-                dataSource={transactionTableDataSource}
+                dataSource={recentTransactions}
                 pagination={false}
               ></Table>
               <br />
               <br />
-              <a href="/">Show more detail</a>
+              <a href="/">
+                <FormattedMessage
+                  id="action.showMoreDetail"
+                  defaultMessage="Show More Detail"
+                />
+              </a>
             </div>
           </div>
         )}
       </div>
+      +
     </>
   );
 };

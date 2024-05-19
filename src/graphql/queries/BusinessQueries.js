@@ -4,7 +4,17 @@ const GET_BUSINESS = gql`
   query GetBusiness {
     getBusiness {
       id
+      logoUrl
       name
+      contactName
+      email
+      phone
+      mobile
+      website
+      about
+      address
+      country
+      city
       state {
         id
         code
@@ -16,24 +26,19 @@ const GET_BUSINESS = gql`
         stateCode
         townshipNameEn
       }
-      phone
-      mobile
-      email
-      isTaxExclusive
-      isTaxInclusive
-      fiscalYear
-      address
-      country
-      city
-      reportBasis
-      companyId
-      taxId
       baseCurrency {
         id
         name
         symbol
         decimalPlaces
       }
+      fiscalYear
+      reportBasis
+      timezone
+      companyId
+      taxId
+      isTaxInclusive
+      isTaxExclusive
       primaryBranch {
         id
         name

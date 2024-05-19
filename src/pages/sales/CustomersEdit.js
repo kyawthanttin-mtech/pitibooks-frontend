@@ -18,11 +18,11 @@ import {
   CloseCircleOutlined,
   PlusCircleFilled,
 } from "@ant-design/icons";
-import { useMutation, useQuery, gql } from "@apollo/client";
+import { useMutation, gql } from "@apollo/client";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { CustomerMutations } from "../../graphql";
 import { useReadQuery } from "@apollo/client";
@@ -85,7 +85,7 @@ const CustomersEdit = () => {
     UPDATE_CUSTOMER,
     {
       onCompleted() {
-        openSuccessNotification(
+        openSuccessMessage(
           msgApi,
           <FormattedMessage
             id="customer.updated"
@@ -114,6 +114,8 @@ const CustomersEdit = () => {
             phone: record?.phone,
             mobile: record?.mobile,
             currency: record?.currency?.id,
+            openingBalance: record?.openingBalance,
+            openingBalanceBranch: record?.openingBalanceBranchId && record?.openingBalanceBranchId > 0 ? record?.openingBalanceBranchId : null,
             tax:
               record?.supplierTax?.id === "I0" ? null : record?.supplierTax?.id,
             notes: record?.notes,
@@ -152,6 +154,10 @@ const CustomersEdit = () => {
 
     form.setFieldsValue(parsedRecord);
   }, [form, record]);
+
+  const branches = useMemo(() => {
+    return branchData?.listAllBranch;
+  }, [branchData]);
 
   const currencies = useMemo(() => {
     return currencyData?.listAllCurrency;
@@ -247,6 +253,8 @@ const CustomersEdit = () => {
       customerTaxId: taxId,
       customerTaxType: taxType,
 
+      openingBalance: values.openingBalance || 0,
+      openingBalanceBranchId: values.openingBalanceBranch || 0,
       customerPaymentTerms: values.paymentTerms,
       customerPaymentTermsCustomDays: values.customDays ? values.customDays : 0,
       contactPersons: contactPersons ? contactPersons : [],
@@ -519,7 +527,7 @@ const CustomersEdit = () => {
               >
                 {({ getFieldValue }) =>
                   getFieldValue("currency") &&
-                  getFieldValue("currency") !== business.baseCurrencyId ? (
+                  getFieldValue("currency") !== business.baseCurrency.id ? (
                     <Form.Item
                       label={
                         <FormattedMessage
@@ -590,6 +598,43 @@ const CustomersEdit = () => {
                   ))}
                 </Select>
               </Form.Item>
+              <Row>
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.openingBalance"
+                        defaultMessage="Opening Balance"
+                      />
+                    }
+                    name="openingBalanceBranch"
+                    labelAlign="left"
+                    labelCol={{ span: 10 }}
+                    wrapperCol={{ span: 12 }}
+                  >
+                    <Select allowClear showSearch optionFilterProp="label">
+                      {branches?.map((branch) => (
+                        <Select.Option
+                          key={branch.id}
+                          value={branch.id}
+                          label={branch.name}
+                        >
+                          {branch.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col>
+                  <Form.Item
+                    name="openingBalance"
+                    labelAlign="left"
+                    // labelCol={{ span: 4 }}
+                  >
+                    <InputNumber />
+                  </Form.Item>
+                </Col>
+              </Row>
               <Form.Item
                 label={
                   <FormattedMessage

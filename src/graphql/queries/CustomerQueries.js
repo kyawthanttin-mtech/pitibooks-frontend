@@ -6,22 +6,29 @@ const GET_PAGINATE_CUSTOMER = gql`
     $email: String
     $phone: String
     $mobile: String
+    $isActive: Boolean
   ) {
     paginateCustomer(
       name: $name
       email: $email
       phone: $phone
       mobile: $mobile
+      isActive: $isActive
     ) {
       edges {
         cursor
         node {
           id
-          businessId
           name
           email
           phone
           mobile
+          currency {
+            id
+            name
+            symbol
+            decimalPlaces
+          }
           customerTax {
             id
             name
@@ -29,42 +36,27 @@ const GET_PAGINATE_CUSTOMER = gql`
             type
             isActive
           }
+          openingBalanceBranchId
+          openingBalance
+          exchangeRate
           customerPaymentTerms
           customerPaymentTermsCustomDays
           notes
           prepaidCreditAmount
           unusedCreditAmount
-          isActive
-          createdAt
-          updatedAt
-          currency {
+          creditLimit
+          billingAddress {
             id
-            symbol
-            name
-            decimalPlaces
-            isActive
-          }
-          contactPersons {
-            id
-            name
+            attention
+            address
+            country
+            city
             email
             phone
             mobile
-            designation
-            department
             referenceType
             referenceID
           }
-
-          documents {
-            id
-            documentUrl
-            referenceType
-            referenceID
-          }
-          exchangeRate
-          openingBalanceBranchId
-          openingBalance
           shippingAddress {
             id
             attention
@@ -79,18 +71,24 @@ const GET_PAGINATE_CUSTOMER = gql`
             referenceType
             referenceID
           }
-          billingAddress {
+          contactPersons {
             id
-            attention
-            address
-            country
-            city
+            name
             email
             phone
             mobile
+            designation
+            department
             referenceType
             referenceID
           }
+          documents {
+            id
+            documentUrl
+            referenceType
+            referenceID
+          }
+          isActive
         }
       }
       pageInfo {

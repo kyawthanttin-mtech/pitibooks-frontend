@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import "./PurchaseOrdersNew.css";
 import {
   Button,
   Form,
@@ -330,10 +329,7 @@ const PaymentsMadeNew = () => {
 
       <div className="page-header">
         <p className="page-header-text">
-          <FormattedMessage
-            id="paymentMade.new"
-            defaultMessage="New Payment Made"
-          />
+          <FormattedMessage id="paymentMade.new" defaultMessage="Record Made" />
         </p>
         <Button
           icon={<CloseOutlined />}
@@ -587,11 +583,8 @@ const PaymentsMadeNew = () => {
                   justifyContent: "normal",
                 }}
               >
-                <Form.Item
-                  style={{ margin: 0, width: "100%" }}
-                  name="customerNotes"
-                >
-                  <label>Customer Notes</label>
+                <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
+                  <label>Notes</label>
                   <TextArea rows={4}></TextArea>
                 </Form.Item>
               </div>
@@ -734,7 +727,7 @@ const PaymentsMadeNew = () => {
               type="primary"
               htmlType="submit"
               className="page-actions-btn"
-              //   loading={loading}
+              loading={loading}
             >
               Save
             </Button>

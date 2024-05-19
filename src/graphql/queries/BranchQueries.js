@@ -15,7 +15,9 @@ const GET_BRANCHES = gql`
     listBranch(name: $name) {
       id
       name
-      businessId
+      phone
+      mobile
+      address
       state {
         id
         stateNameEn
@@ -23,15 +25,13 @@ const GET_BRANCHES = gql`
       }
       township {
         id
+        stateCode
         townshipNameEn
         code
       }
-      address
       country
       city
       isActive
-      phone
-      mobile
       transactionNumberSeries {
         id
         name
@@ -44,7 +44,9 @@ const GET_BRANCH = gql`
     getBranch(id: $id) {
       id
       name
-      businessId
+      phone
+      mobile
+      address
       state {
         id
         stateNameEn
@@ -52,15 +54,13 @@ const GET_BRANCH = gql`
       }
       township {
         id
+        stateCode
         townshipNameEn
         code
       }
-      address
       country
       city
       isActive
-      phone
-      mobile
       transactionNumberSeries {
         id
         name

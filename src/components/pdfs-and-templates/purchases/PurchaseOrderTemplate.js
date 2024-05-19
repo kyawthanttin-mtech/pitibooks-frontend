@@ -10,10 +10,12 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
   const { business } = useOutletContext();
   const details = selectedRecord?.details ? selectedRecord?.details : [];
   let hasDetailDiscount = false;
-  details.forEach(d => {
-    if(d.detailDiscountAmount > 0) {
+  details?.forEach((d) => {
+    if (d?.detailDiscountAmount !== "null") {
+      return;
+    } else if (d?.detailDiscountAmount > 0) {
       hasDetailDiscount = true;
-    } 
+    }
   });
   return (
     <div className="details-page">
@@ -186,7 +188,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                   >
                     Rate
                   </td>
-                  {hasDetailDiscount &&
+                  {hasDetailDiscount && (
                     <td
                       className="text-align-right"
                       style={{
@@ -196,7 +198,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                     >
                       Discount
                     </td>
-                  }
+                  )}
                   <td
                     className="text-align-right"
                     style={{
@@ -242,7 +244,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{detail.name}</span>
+                      <span>{detail?.name}</span>
                     </td>
                     <td
                       rowSpan="1"
@@ -253,7 +255,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{detail.detailQty}</span>
+                      <span>{detail?.detailQty}</span>
                     </td>
                     <td
                       className="text-align-right"
@@ -264,9 +266,17 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span><FormattedNumber value={detail.detailUnitRate} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                      <span>
+                        <FormattedNumber
+                          value={detail?.detailUnitRate}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />
+                      </span>
                     </td>
-                    {hasDetailDiscount &&
+                    {hasDetailDiscount && (
                       <td
                         rowSpan="1"
                         className="text-align-right"
@@ -276,10 +286,21 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                           wordWrap: "break-word",
                         }}
                       >
-                        <span>{detail.detailDiscountType === 'P' ? detail.detailDiscount + "%" 
-                          : <FormattedNumber value={detail.detailDiscountAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} />}</span>
+                        <span>
+                          {detail?.detailDiscountType === "P" ? (
+                            detail?.detailDiscount + "%"
+                          ) : (
+                            <FormattedNumber
+                              value={detail?.detailDiscountAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          )}
+                        </span>
                       </td>
-                    }
+                    )}
                     <td
                       className="text-align-right"
                       rowSpan="1"
@@ -288,7 +309,15 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span><FormattedNumber value={detail.detailTotalAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                      <span>
+                        <FormattedNumber
+                          value={detail?.detailTotalAmount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -322,10 +351,18 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                           padding: "10px 10px 10px 5px",
                         }}
                       >
-                        <span><FormattedNumber value={selectedRecord.orderSubtotal} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                        <span>
+                          <FormattedNumber
+                            value={selectedRecord.orderSubtotal}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </span>
                       </td>
                     </tr>
-                    {selectedRecord.orderDiscountAmount > 0 &&
+                    {selectedRecord.orderDiscountAmount > 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -333,7 +370,9 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Discount {selectedRecord.orderDiscountType === 'P' && "("+selectedRecord.orderDiscount+"%)"}
+                          Discount{" "}
+                          {selectedRecord.orderDiscountType === "P" &&
+                            "(" + selectedRecord.orderDiscount + "%)"}
                         </td>
                         <td
                           style={{
@@ -342,11 +381,20 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             padding: "10px 10px 10px 5px",
                           }}
                         >
-                          <span>-<FormattedNumber value={selectedRecord.orderDiscountAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                          <span>
+                            -
+                            <FormattedNumber
+                              value={selectedRecord.orderDiscountAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
                         </td>
                       </tr>
-                    }
-                    {selectedRecord.orderTotalTaxAmount > 0 &&
+                    )}
+                    {selectedRecord.orderTotalTaxAmount > 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -354,7 +402,8 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Tax {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                          Tax{" "}
+                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
                         </td>
                         <td
                           style={{
@@ -363,11 +412,19 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             padding: "10px 10px 10px 5px",
                           }}
                         >
-                          <span><FormattedNumber value={selectedRecord.orderTotalTaxAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                          <span>
+                            <FormattedNumber
+                              value={selectedRecord.orderTotalTaxAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
                         </td>
                       </tr>
-                    }
-                    {selectedRecord.adjustmentAmount > 0 &&
+                    )}
+                    {selectedRecord.adjustmentAmount > 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -384,10 +441,18 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             padding: "10px 10px 10px 5px",
                           }}
                         >
-                          <span><FormattedNumber value={selectedRecord.adjustmentAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /></span>
+                          <span>
+                            <FormattedNumber
+                              value={selectedRecord.adjustmentAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
                         </td>
                       </tr>
-                    }
+                    )}
                     <tr className="text-align-right">
                       <td
                         style={{
@@ -405,7 +470,14 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         }}
                       >
                         <b>
-                          {selectedRecord.currency.symbol} <FormattedNumber value={selectedRecord.orderTotalAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} />
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedRecord.orderTotalAmount}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
                         </b>
                       </td>
                     </tr>
@@ -418,11 +490,11 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
             <Space>
               <span>Payment Terms :</span>
               <span>
-                {selectedRecord.supplier?.supplierPaymentTerms
+                {selectedRecord.orderPaymentTerms
                   .split(/(?=[A-Z])/)
                   .join(" ") === "Custom"
-                  ? `${selectedRecord.supplier?.supplierPaymentTerms} (Due in ${selectedRecord.supplier?.supplierPaymentTermsCustomDays}day(s))`
-                  : selectedRecord.supplier?.supplierPaymentTerms
+                  ? `${selectedRecord.orderPaymentTerms} (Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s))`
+                  : selectedRecord.orderPaymentTerms
                       .split(/(?=[A-Z])/)
                       .join(" ")}
               </span>

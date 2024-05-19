@@ -28,7 +28,6 @@ const GET_PAGINATED_JOURNALS = gql`
         cursor
         node {
           id
-          businessId
           branch {
             id
             name
@@ -43,6 +42,7 @@ const GET_PAGINATED_JOURNALS = gql`
             symbol
             decimalPlaces
           }
+          exchangeRate
           supplier {
             id
             name
@@ -52,8 +52,6 @@ const GET_PAGINATED_JOURNALS = gql`
             name
           }
           journalTotalAmount
-          createdAt
-          updatedAt
           transactions {
             id
             journalId
@@ -64,6 +62,12 @@ const GET_PAGINATED_JOURNALS = gql`
             description
             debit
             credit
+          }
+          documents {
+            id
+            documentUrl
+            referenceType
+            referenceID
           }
         }
       }

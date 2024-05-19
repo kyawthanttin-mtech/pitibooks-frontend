@@ -19,7 +19,7 @@ const GET_PAGINATE_PRODUCT = gql`
           salesPrice
           isSalesTaxInclusive
           purchasePrice
-          isActive
+          # isActive
           isBatchTracking
           productUnit {
             id
@@ -35,7 +35,7 @@ const GET_PAGINATE_PRODUCT = gql`
             mainType
             name
             code
-            isActive
+            # isActive
           }
           purchaseAccount {
             id
@@ -43,7 +43,7 @@ const GET_PAGINATE_PRODUCT = gql`
             mainType
             name
             code
-            isActive
+            # isActive
           }
           salesAccount {
             id
@@ -51,21 +51,21 @@ const GET_PAGINATE_PRODUCT = gql`
             mainType
             name
             code
-            isActive
+            # isActive
           }
           salesTax {
             id
             name
             rate
             type
-            isActive
+            # isActive
           }
           purchaseTax {
             id
             name
             rate
             type
-            isActive
+            # isActive
           }
           supplier {
             id
@@ -229,6 +229,67 @@ const GET_ALL_PRODUCTS = gql`
         code
         isActive
       }
+      inventoryAccount {
+        id
+        detailType
+        mainType
+        name
+        code
+        isActive
+      }
+      purchaseTax {
+        id
+        name
+        rate
+        type
+        isActive
+      }
+      salesTax {
+        id
+        name
+        rate
+        type
+        isActive
+      }
+    }
+  }
+`;
+
+const GET_ALL_PRODUCT_VARIANTS = gql`
+  query ListAllProductVariant {
+    listAllProductVariant {
+      id
+      name
+      sku
+      barcode
+      salesPrice
+      purchasePrice
+      productGroupId
+      isActive
+      salesAccount {
+        id
+        detailType
+        mainType
+        name
+        code
+        isActive
+      }
+      purchaseAccount {
+        id
+        detailType
+        mainType
+        name
+        code
+        isActive
+      }
+      inventoryAccount {
+        id
+        detailType
+        mainType
+        name
+        code
+        isActive
+      }
       purchaseTax {
         id
         name
@@ -251,6 +312,7 @@ const ProductQueries = {
   GET_PRODUCT,
   GET_PAGINATE_PRODUCT,
   GET_ALL_PRODUCTS,
+  GET_ALL_PRODUCT_VARIANTS,
 };
 
 export default ProductQueries;

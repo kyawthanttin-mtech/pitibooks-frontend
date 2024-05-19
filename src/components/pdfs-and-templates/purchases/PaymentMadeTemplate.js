@@ -1,41 +1,80 @@
 /* eslint-disable react/style-prop-object */
 import React from "react";
+import dayjs from "dayjs";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
+import { Divider, Space, Flex } from "antd";
+import { useOutletContext } from "react-router-dom";
 import { FormattedNumber } from "react-intl";
 
-const JournalTemplate = ({ selectedRecord }) => {
-  const data = selectedRecord.transactions;
-
+const PaymentMadeTemplate = ({ selectedRecord }) => {
+  const { business } = useOutletContext();
+  const details = selectedRecord?.details ? selectedRecord?.details : [];
+  let hasDetailDiscount = false;
+  details.forEach((d) => {
+    if (d.detailDiscountAmount > 0) {
+      hasDetailDiscount = true;
+    }
+  });
   return (
     <div className="details-page">
       <div className="details-container">
-        <div className="ribbon text-ellipsis">
-          {/* <div
+        {/* <div className="ribbon text-ellipsis">
+          <div
             className={`ribbon-inner ${
-              selectedRecord.status === "Adjusted"
+              selectedRecord.status === "CLOSED"
                 ? "ribbon-success"
                 : "ribbon-overdue"
             }`}
           >
             {selectedRecord.status}
-          </div> */}
-        </div>
+          </div>
+        </div> */}
         <div className="template">
           <div className="template-header header-content"></div>
           <div className="template-body">
             <table className="title-section" id="title-table">
-              <tbody>
+              <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
-                  <td></td>
-                  <td className="text-align-right">
-                    <span style={{ fontSize: "2.2rem" }}>Journal</span>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: "var(--detail-text)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <b>{business.name}</b>
+                    </span>
                     <br />
-                    <span># {selectedRecord.journalNumber}</span>
+                    <span>{business.country}</span>
+                    <br />
+                    <span>{business.email}</span>
+                    {/* <br />
+                    <br />
+                    <span>Supplier:</span>
+                    <br />
+                    <span style={{ color: "var(--primary-color)" }}>
+                      {selectedRecord.supplier.name}
+                    </span> */}
+                  </td>
+                  <td className="text-align-right">
+                    <span style={{ fontSize: "2.2rem" }}>PAYMENTS MADE</span>
+                    <br />
+                    <span># {selectedRecord.orderNumber}</span>
+                    <div style={{ clear: "both", marginTop: "20px" }}>
+                      <span style={{ fontSize: "1rem" }}>
+                        <b>Amount Paid</b>
+                      </span>
+                      <br />
+                      <span style={{ fontSize: "1.1rem" }}>
+                        <b>MMK Placeholder</b>
+                      </span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
             <table className="invoice-details" id="invoice-table">
-              <tbody>
+              <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td
                     style={{
@@ -45,9 +84,17 @@ const JournalTemplate = ({ selectedRecord }) => {
                     }}
                   >
                     <div>
-                      <label>Notes</label>
+                      <label>Paid To:</label>
                       <br />
-                      <span>{selectedRecord.notes}</span>
+                      <span>
+                        <span style={{ color: "var(--primary-color)" }}>
+                          {selectedRecord.deliveryAddress}
+                        </span>
+                      </span>
+                      {/* <br />
+                      <span>
+                        <span>{selectedRecord.supplier?.address}</span>
+                      </span> */}
                     </div>
                   </td>
                   <td
@@ -73,25 +120,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Date :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.date}</span>
-                          </td>
-                        </tr>
-                        {/* <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Amount :</span>
+                            <span>Payment Date :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -100,15 +129,12 @@ const JournalTemplate = ({ selectedRecord }) => {
                             }}
                           >
                             <span>
-                              {selectedRecord.currency.symbol}{" "}
-                              <FormattedNumber
-                                value={selectedRecord.totalAmount}
-                                style="decimal"
-                                minimumFractionDigits={selectedRecord.currency.decimalPlaces}
-                              />
+                              {dayjs(selectedRecord.orderDate).format(
+                                REPORT_DATE_FORMAT
+                              )}
                             </span>
                           </td>
-                        </tr> */}
+                        </tr>
                         <tr>
                           <td
                             className="text-align-right"
@@ -127,12 +153,50 @@ const JournalTemplate = ({ selectedRecord }) => {
                             <span>{selectedRecord.referenceNumber}</span>
                           </td>
                         </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Payment Mode :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>{selectedRecord.referenceNumber}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Paid Through :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>{selectedRecord.referenceNumber}</span>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <Divider />
+            <p style={{ fontSize: "1.1rem" }}>Payment For</p>
             <table
               id="main-table"
               className="main-table"
@@ -148,55 +212,64 @@ const JournalTemplate = ({ selectedRecord }) => {
               <thead style={{ verticalAlign: "middle" }}>
                 <tr
                   style={{
-                    height: "2.5rem",
+                    height: "32px",
                     background: "#3C3D3A",
                     color: "white",
                   }}
                 >
                   <td
                     style={{
-                      padding: "5px 10px 5px 20px",
+                      padding: "5px 0 5px 10px",
+                      textAlign: "left",
+                      height: "2.5rem",
+                    }}
+                  >
+                    Bill Number
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px 10px 5px 5px",
                       textAlign: "left",
                     }}
                   >
-                    Account
-                  </td>
-                  {/* <td
-                    className="text-align-right"
-                    style={{
-                      padding: "5px 10px 5px 5px",
-                      width: "17%",
-                    }}
-                  >
-                    Contact
-                  </td> */}
-                  <td
-                    className="text-align-right"
-                    style={{
-                      padding: "5px 10px 5px 5px",
-                      width: "17%",
-                    }}
-                  >
-                    Debits
+                    Bill Date
                   </td>
                   <td
                     className="text-align-right"
                     style={{
                       padding: "5px 10px 5px 5px",
-                      width: "17%",
                     }}
                   >
-                    Credits
+                    Bill Amount
                   </td>
+                  <td
+                    className="text-align-right"
+                    style={{
+                      padding: "5px 10px 5px 5px",
+                    }}
+                  >
+                    Payment Amount
+                  </td>
+                  {hasDetailDiscount && (
+                    <td
+                      className="text-align-right"
+                      style={{
+                        padding: "5px 10px 5px 5px",
+                        width: "12%",
+                      }}
+                    >
+                      Discount
+                    </td>
+                  )}
                 </tr>
               </thead>
               <tbody
                 style={{
                   verticalAlign: "middle",
-                  border: "1px solid black",
+                  border: "1px solid red",
                 }}
               >
-                {data?.map((item, index) => (
+                {details.map((detail, index) => (
                   <tr
                     key={index}
                     style={{
@@ -214,13 +287,19 @@ const JournalTemplate = ({ selectedRecord }) => {
                         padding: "10px 0 10px 20px",
                       }}
                     >
-                      <div>
-                        <span>{item.account.name}</span>
-                        <br />
-                        <span></span>
-                      </div>
+                      <span>{index + 1}</span>
                     </td>
-                    {/* <td
+                    <td
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span>{detail.name}</span>
+                    </td>
+                    <td
                       rowSpan="1"
                       className="text-align-right"
                       style={{
@@ -229,8 +308,8 @@ const JournalTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.contact}</span>
-                    </td> */}
+                      <span>{detail.detailQty}</span>
+                    </td>
                     <td
                       className="text-align-right"
                       rowSpan="1"
@@ -240,77 +319,48 @@ const JournalTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{item.debit !== 0 && 
+                      <span>
                         <FormattedNumber
-                          value={item.debit}
+                          value={detail.detailUnitRate}
                           style="decimal"
-                          minimumFractionDigits={selectedRecord.currency.decimalPlaces}
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
                         />
-                      }</span>
+                      </span>
                     </td>
-                    <td
-                      className="text-align-right"
-                      rowSpan="1"
-                      style={{
-                        padding: "10px 10px 10px 5px",
-                        wordWrap: "break-word",
-                      }}
-                    >
-                      <span>{item.credit !== 0 && 
-                        <FormattedNumber
-                          value={item.credit}
-                          style="decimal"
-                          minimumFractionDigits={selectedRecord.currency.decimalPlaces}
-                        />
-                      }</span>
-                    </td>
+                    {hasDetailDiscount && (
+                      <td
+                        rowSpan="1"
+                        className="text-align-right"
+                        style={{
+                          padding: "10px 10px 5px 10px",
+                          verticalAlign: "top",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        <span>
+                          {detail.detailDiscountType === "P" ? (
+                            detail.detailDiscount + "%"
+                          ) : (
+                            <FormattedNumber
+                              value={detail.detailDiscountAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          )}
+                        </span>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div style={{ width: "100%", marginTop: "2px" }}>
-              <div>
-                <div></div>
-              </div>
-              <div style={{ width: "50%", float: "right" }}>
-                <table
-                  cellSpacing="0"
-                  border="0"
-                  width="100%"
-                  id="balance-table"
-                >
-                  <tbody>
-                    <tr className="text-align-right">
-                      <td
-                        style={{
-                          padding: "5px 10px 5px 0",
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        <b>Total({selectedRecord.currency.symbol})</b>
-                      </td>
-                      <td
-                        style={{
-                          width: "120px",
-                          verticalAlign: "middle",
-                          padding: "10px 10px 10px 5px",
-                        }}
-                      >
-                        <b>
-                          <FormattedNumber
-                            value={selectedRecord.totalAmount}
-                            style="decimal"
-                            minimumFractionDigits={selectedRecord.currency.decimalPlaces}
-                          />
-                        </b>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div style={{ clear: "both" }}></div>
           </div>
+
+          <div style={{ clear: "both" }}></div>
           <div
             className="template-footer"
             style={{
@@ -327,4 +377,4 @@ const JournalTemplate = ({ selectedRecord }) => {
   );
 };
 
-export default JournalTemplate;
+export default PaymentMadeTemplate;

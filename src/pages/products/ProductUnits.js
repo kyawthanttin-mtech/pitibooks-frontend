@@ -23,9 +23,9 @@ const ProductUnits = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
-  const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi } = useOutletContext();
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  // const [searchFormRef] = Form.useForm();
+  const { notiApi, msgApi, refetchAllProductUnits } = useOutletContext();
+  // const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModal, contextHolder] = Modal.useModal();
@@ -52,6 +52,7 @@ const ProductUnits = () => {
             defaultMessage="New Product Unit Created"
           />
         );
+        refetchAllProductUnits();
       },
       refetchQueries: [GET_PRODUCT_UNITS],
     }
@@ -68,6 +69,7 @@ const ProductUnits = () => {
             defaultMessage="Product Unit Updated"
           />
         );
+        refetchAllProductUnits();
       },
       refetchQueries: [GET_PRODUCT_UNITS],
     }
@@ -84,6 +86,7 @@ const ProductUnits = () => {
             defaultMessage="Product Unit Deleted"
           />
         );
+        refetchAllProductUnits();
       },
       refetchQueries: [GET_PRODUCT_UNITS],
     }
@@ -100,6 +103,7 @@ const ProductUnits = () => {
             defaultMessage="Product Unit Status Updated"
           />
         );
+        refetchAllProductUnits();
       },
       refetchQueries: [GET_PRODUCT_UNITS],
     }
@@ -321,12 +325,11 @@ const ProductUnits = () => {
       >
         <Select
           options={[
-            { value: "1", label: 1 },
-            { value: "0.0", label: "0.0" },
-            { value: "0.00", label: "0.00" },
-            { value: "0.000", label: "0.000" },
-            { value: "0.0000", label: "0.0000" },
-            { value: "0.00000", label: "0.00000" },
+            { value: "0", label: "0" },
+            { value: "1", label: "0.0" },
+            { value: "2", label: "0.00" },
+            { value: "3", label: "0.000" },
+            { value: "4", label: "0.0000" },
           ]}
         />
       </Form.Item>
@@ -414,12 +417,11 @@ const ProductUnits = () => {
       >
         <Select
           options={[
-            { value: "1", label: 1 },
-            { value: "0.0", label: "0.0" },
-            { value: "0.00", label: "0.00" },
-            { value: "0.000", label: "0.000" },
-            { value: "0.0000", label: "0.0000" },
-            { value: "0.00000", label: "0.00000" },
+            { value: "0", label: "0" },
+            { value: "1", label: "0.0" },
+            { value: "2", label: "0.00" },
+            { value: "3", label: "0.000" },
+            { value: "4", label: "0.0000" },
           ]}
         />
       </Form.Item>

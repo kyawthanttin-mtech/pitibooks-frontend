@@ -1,38 +1,29 @@
 import React, { useMemo, useState } from "react";
 import { FormattedMessage } from "react-intl";
-import { Button, Dropdown, Form, Modal, Input, Table, Tag } from "antd";
+import { Button, Dropdown, Form, Modal, Input, Space, Table, Tag } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { useOutletContext } from "react-router-dom";
-import {
-  ShipmentPreferenceMutations,
-  ShipmentPreferenceQueries,
-} from "../../graphql";
+import { PaymentModeMutations } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
-  openSuccessNotification,
 } from "../../utils/Notification";
 import { useReadQuery } from "@apollo/client";
-const { GET_ALL_SHIPMENT_PREFERENCES } = ShipmentPreferenceQueries;
 const {
-  CREATE_SHIPMENT_PREFERENCE,
-  UPDATE_SHIPMENT_PREFERENCE,
-  DELETE_SHIPMENT_PREFERENCE,
-  SHIPMENT_PREFERENCE,
-} = ShipmentPreferenceMutations;
+  CREATE_PAYMENT_MODE,
+  UPDATE_PAYMENT_MODE,
+  DELETE_PAYMENT_MODE,
+  TOGGLE_ACTIVE_PAYMENT_MODE,
+} = PaymentModeMutations;
 
-const ShipmentPreferences = () => {
+const PaymentModes = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   const [searchFormRef] = Form.useForm();
-  const {
-    notiApi,
-    msgApi,
-    allShipmentPreferencesQueryRef,
-    refetchAllShipmentPreferences,
-  } = useOutletContext();
+  const { notiApi, msgApi, allPaymentModesQueryRef, refetchAllPaymentModes } =
+    useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -40,81 +31,80 @@ const ShipmentPreferences = () => {
   const [editRecord, setEditRecord] = useState(null);
 
   //Queries
-  const { data } = useReadQuery(allShipmentPreferencesQueryRef);
+  const { data } = useReadQuery(allPaymentModesQueryRef);
 
-  const [createShipmentPreference, { loading: createLoading }] = useMutation(
-    CREATE_SHIPMENT_PREFERENCE,
+  const [createPaymentMode, { loading: createLoading }] = useMutation(
+    CREATE_PAYMENT_MODE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="shipmentPreference.created"
-            defaultMessage="New Shipment Preference Created"
+            id="paymentMode.created"
+            defaultMessage="New Payment Mode Created"
           />
         );
-        refetchAllShipmentPreferences();
+        refetchAllPaymentModes();
       },
     }
   );
 
-  const [updateShipmentPreference, { loading: updateLoading }] = useMutation(
-    UPDATE_SHIPMENT_PREFERENCE,
+  const [updatePaymentMode, { loading: updateLoading }] = useMutation(
+    UPDATE_PAYMENT_MODE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="shipmentPreference.updated"
-            defaultMessage="Shipment Preference Updated"
+            id="paymentMode.updated"
+            defaultMessage="Payment Mode Updated"
           />
         );
-        refetchAllShipmentPreferences();
+        refetchAllPaymentModes();
       },
     }
   );
 
-  const [deleteShipmentPreference, { loading: deleteLoading }] = useMutation(
-    DELETE_SHIPMENT_PREFERENCE,
+  const [deletePaymentMode, { loading: deleteLoading }] = useMutation(
+    DELETE_PAYMENT_MODE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="shipmentPreference.deleted"
-            defaultMessage="Shipment Preference Deleted"
+            id="paymentMode.deleted"
+            defaultMessage="Payment Mode Deleted"
           />
         );
-        refetchAllShipmentPreferences();
+        refetchAllPaymentModes();
       },
     }
   );
 
-  // const [toggleActiveUnit, { loading: toggleActiveLoading }] = useMutation(
-  //   TOGGLE_ACTIVE_PRODUCT_UNIT,
-  //   {
-  //     onCompleted() {
-  //       openSuccessMessage(
-  //         msgApi,
-  //         <FormattedMessage
-  //           id="shipmentPreference.updated.status"
-  //           defaultMessage="Shipment Preference Updated"
-  //         />
-  //       );
-  //       refetchAllShipmentPreferences();
-  //     },
-  //   }
-  // );
+  const [toggleActivePaymentMode, { loading: toggleActiveLoading }] =
+    useMutation(TOGGLE_ACTIVE_PAYMENT_MODE, {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="paymentMode.updated.status"
+            defaultMessage="Payment Mode Status Updated"
+          />
+        );
+        refetchAllPaymentModes();
+      },
+    });
 
-  const loading = createLoading || updateLoading || deleteLoading;
+  const loading =
+    createLoading || updateLoading || deleteLoading || toggleActiveLoading;
 
-  const queryData = useMemo(() => data?.listAllShipmentPreference, [data]);
+  const queryData = useMemo(() => data?.listAllPaymentMode, [data]);
 
   const handleCreateModalOk = async () => {
     try {
       const values = await createFormRef.validateFields();
       console.log("Field values:", values);
-      await createShipmentPreference({
+      await createPaymentMode({
         variables: {
           input: {
             name: values.name,
@@ -146,7 +136,7 @@ const ShipmentPreferences = () => {
     });
     if (confirmed) {
       try {
-        await deleteShipmentPreference({
+        await deletePaymentMode({
           variables: {
             id: record.id,
           },
@@ -173,7 +163,7 @@ const ShipmentPreferences = () => {
     try {
       const values = await editFormRef.validateFields();
       // console.log("Field values:", values);
-      await updateShipmentPreference({
+      await updatePaymentMode({
         variables: { id: editRecord.id, input: values },
       });
 
@@ -188,15 +178,15 @@ const ShipmentPreferences = () => {
     setEditModalOpen(false);
   };
 
-  // const handleToggleActive = async (record) => {
-  //   try {
-  //     await toggleActiveUnit({
-  //       variables: { id: record.id, isActive: !record.isActive },
-  //     });
-  //   } catch (err) {
-  //     openErrorNotification(notiApi, err.message);
-  //   }
-  // };
+  const handleToggleActive = async (record) => {
+    try {
+      await toggleActivePaymentMode({
+        variables: { id: record.id, isActive: !record.isActive },
+      });
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
 
   const createForm = (
     <Form
@@ -216,19 +206,14 @@ const ShipmentPreferences = () => {
       }}
     >
       <Form.Item
-        label={
-          <FormattedMessage
-            id="shipmentPreference.name"
-            defaultMessage="Name"
-          />
-        }
+        label={<FormattedMessage id="paymentMode.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="shipmentPreference.name.required"
+                id="paymentMode.name.required"
                 defaultMessage="Enter the Shipment Preference Name"
               />
             ),
@@ -258,20 +243,15 @@ const ShipmentPreferences = () => {
       }}
     >
       <Form.Item
-        label={
-          <FormattedMessage
-            id="shipmentPreference.name"
-            defaultMessage="Name"
-          />
-        }
+        label={<FormattedMessage id="paymentMode.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="shipmentPreference.name.required"
-                defaultMessage="Enter the Shipment Preference Name"
+                id="paymentMode.name.required"
+                defaultMessage="Enter the Payment Mode Name"
               />
             ),
           },
@@ -285,9 +265,7 @@ const ShipmentPreferences = () => {
 
   const columns = [
     {
-      title: (
-        <FormattedMessage id="shipmentPreference.name" defaultMessage="Name" />
-      ),
+      title: <FormattedMessage id="paymentMode.name" defaultMessage="Name" />,
       key: "name",
       dataIndex: "name",
       render: (text, record) => (
@@ -313,7 +291,7 @@ const ShipmentPreferences = () => {
             menu={{
               onClick: ({ key }) => {
                 if (key === "1") handleEdit(record);
-                // else if (key === "2") handleToggleActive(record);
+                else if (key === "2") handleToggleActive(record);
                 else if (key === "3") handleDelete(record);
               },
               items: [
@@ -323,20 +301,20 @@ const ShipmentPreferences = () => {
                   ),
                   key: "1",
                 },
-                // {
-                //   label: !record.isActive ? (
-                //     <FormattedMessage
-                //       id="button.markActive"
-                //       defaultMessage="Mark As Active"
-                //     />
-                //   ) : (
-                //     <FormattedMessage
-                //       id="button.markInactive"
-                //       defaultMessage="Mark As Inactive"
-                //     />
-                //   ),
-                //   key: "2",
-                // },
+                {
+                  label: !record.isActive ? (
+                    <FormattedMessage
+                      id="button.markActive"
+                      defaultMessage="Mark As Active"
+                    />
+                  ) : (
+                    <FormattedMessage
+                      id="button.markInactive"
+                      defaultMessage="Mark As Inactive"
+                    />
+                  ),
+                  key: "2",
+                },
                 {
                   label: (
                     <FormattedMessage
@@ -365,8 +343,8 @@ const ShipmentPreferences = () => {
         width="40rem"
         title={
           <FormattedMessage
-            id="shipmentPreference.new"
-            defaultMessage="New Shipment Preference"
+            id="paymentMode.new"
+            defaultMessage="New Payment Mode"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -380,12 +358,11 @@ const ShipmentPreferences = () => {
         {createForm}
       </Modal>
       <Modal
-        //   loading={loading}
         width="40rem"
         title={
           <FormattedMessage
-            id="shipmentPreference.edit"
-            defaultMessage="Edit Shipment Preference"
+            id="paymentMode.edit"
+            defaultMessage="Edit Payment Mode"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -401,19 +378,18 @@ const ShipmentPreferences = () => {
       <div className="page-header">
         <p className="page-header-text">
           <FormattedMessage
-            id="label.Shipment Preferences"
-            defaultMessage="Shipment Preferences"
+            id="label.paymentModes"
+            defaultMessage="Payment Modes"
           />
         </p>
-        <Button
-          icon={<PlusOutlined />}
-          type="primary"
-          onClick={setCreateModalOpen}
-        >
-          <FormattedMessage
-            id="shipmentPreference.new"
-            defaultMessage="New Shipment Preference"
-          />
+        <Button type="primary" onClick={setCreateModalOpen}>
+          <Space>
+            <PlusOutlined />
+            <FormattedMessage
+              id="paymentMode.new"
+              defaultMessage="New Payment Mode"
+            />
+          </Space>
         </Button>
       </div>
       <div className="page-content">
@@ -437,4 +413,4 @@ const ShipmentPreferences = () => {
   );
 };
 
-export default ShipmentPreferences;
+export default PaymentModes;

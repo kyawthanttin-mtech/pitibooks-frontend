@@ -4,7 +4,6 @@ const CREATE_TRANSACTION_NUMBER_SERIES = gql`
   mutation CreateTransactionNumberSeries($input: NewTransactionNumberSeries!) {
     createTransactionNumberSeries(input: $input) {
       id
-      businessId
       name
       modules {
         moduleName
@@ -21,7 +20,6 @@ const UPDATE_TRANSACTION_NUMBER_SERIES = gql`
   ) {
     updateTransactionNumberSeries(id: $id, input: $input) {
       id
-      businessId
       name
       modules {
         moduleName
@@ -35,7 +33,6 @@ const DELETE_TRANSACTION_NUMBER_SERIES = gql`
   mutation DeleteTransactionNumberSeries($id: ID!) {
     deleteTransactionNumberSeries(id: $id) {
       id
-      businessId
       name
       modules {
         moduleName

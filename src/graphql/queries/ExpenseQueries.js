@@ -30,7 +30,6 @@ const GET_PAGINATED_EXPENSES = gql`
         cursor
         node {
           id
-          businessId
           expenseAccount {
             id
             name
@@ -43,15 +42,17 @@ const GET_PAGINATED_EXPENSES = gql`
             id
             name
           }
-          referenceNumber
           expenseDate
-          notes
           currency {
             id
             name
             symbol
             decimalPlaces
           }
+          exchangeRate
+          amount
+          taxAmount
+          totalAmount
           supplier {
             id
             name
@@ -60,19 +61,21 @@ const GET_PAGINATED_EXPENSES = gql`
             id
             name
           }
-          amount
-          taxAmount
-          totalAmount
-          isTaxInclusive
-          exchangeRate
+          referenceNumber
+          notes
           expenseTax {
             id
             name
             rate
             type
           }
-          createdAt
-          updatedAt
+          isTaxInclusive
+          documents {
+            id
+            documentUrl
+            referenceType
+            referenceID
+          }
         }
       }
     }

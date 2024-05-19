@@ -7,12 +7,9 @@ const GET_PAGINATE_SALES_PERSON = gql`
         cursor
         node {
           id
-          businessId
           name
           email
           isActive
-          createdAt
-          updatedAt
         }
       }
       pageInfo {
@@ -24,21 +21,8 @@ const GET_PAGINATE_SALES_PERSON = gql`
   }
 `;
 
-const GET_SUPPLIER = gql`
-  query GetSupplier($id: ID!) {
-    getSupplier(id: $id) {
-      id
-      name
-      email
-      phone
-      mobile
-    }
-  }
-`;
-
 const SalesPersonQueries = {
   GET_PAGINATE_SALES_PERSON,
-  GET_SUPPLIER,
 };
 
 export default SalesPersonQueries;

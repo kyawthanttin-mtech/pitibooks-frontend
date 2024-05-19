@@ -4,7 +4,6 @@ const CREATE_CURRENCY = gql`
   mutation CreateCurrency($input: NewCurrency!) {
     createCurrency(input: $input) {
       id
-      businessId
       symbol
       name
       decimalPlaces
@@ -17,7 +16,6 @@ const UPDATE_CURRENCY = gql`
   mutation UpdateCurrency($id: ID!, $input: NewCurrency!) {
     updateCurrency(id: $id, input: $input) {
       id
-      businessId
       symbol
       name
       decimalPlaces
@@ -30,7 +28,6 @@ const DELETE_CURRENCY = gql`
   mutation DeleteCurrency($id: ID!) {
     deleteCurrency(id: $id) {
       id
-      businessId
       symbol
       name
       decimalPlaces
@@ -43,7 +40,6 @@ const TOGGLE_ACTIVE_CURRENCY = gql`
   mutation ToggleActiveCurrency($id: ID!, $isActive: Boolean!) {
     toggleActiveCurrency(id: $id, isActive: $isActive) {
       id
-      businessId
       symbol
       name
       decimalPlaces

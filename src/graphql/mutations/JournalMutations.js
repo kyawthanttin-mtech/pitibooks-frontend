@@ -18,6 +18,7 @@ const CREATE_JOURNAL = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       supplier {
         id
         name
@@ -27,9 +28,6 @@ const CREATE_JOURNAL = gql`
         name
       }
       journalTotalAmount
-      # documents{
-
-      # }
       transactions {
         id
         journalId
@@ -40,6 +38,12 @@ const CREATE_JOURNAL = gql`
         description
         debit
         credit
+      }
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }
@@ -63,6 +67,7 @@ const UPDATE_JOURNAL = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       supplier {
         id
         name
@@ -72,7 +77,6 @@ const UPDATE_JOURNAL = gql`
         name
       }
       journalTotalAmount
-      documents
       transactions {
         id
         journalId
@@ -83,6 +87,12 @@ const UPDATE_JOURNAL = gql`
         description
         debit
         credit
+      }
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }
@@ -106,6 +116,7 @@ const DELETE_JOURNAL = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       supplier {
         id
         name
@@ -115,7 +126,6 @@ const DELETE_JOURNAL = gql`
         name
       }
       journalTotalAmount
-      documents
       transactions {
         id
         journalId
@@ -126,6 +136,12 @@ const DELETE_JOURNAL = gql`
         description
         debit
         credit
+      }
+      documents {
+        id
+        documentUrl
+        referenceType
+        referenceID
       }
     }
   }

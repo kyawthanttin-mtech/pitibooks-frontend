@@ -8,6 +8,7 @@ import {
   SettingOutlined,
   TagOutlined,
   DollarOutlined,
+  BankOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -40,6 +41,7 @@ import {
   AccountQueries,
   BranchQueries,
   BusinessQueries,
+  CategoryQueries,
   CurrencyQueries,
   StateQueries,
   TaxQueries,
@@ -49,20 +51,25 @@ import {
   ShipmentPreferenceQueries,
   PaymentModeQueries,
   ReasonQueries,
+  UnitQueries,
+  DeliveryMethodQueries,
 } from "../graphql";
 
 const { GET_ALL_ACCOUNTS } = AccountQueries;
 const { GET_BUSINESS } = BusinessQueries;
 const { GET_ALL_BRANCHES } = BranchQueries;
+const { GET_ALL_PRODUCT_CATEGORIES } = CategoryQueries;
 const { GET_ALL_CURRENCIES } = CurrencyQueries;
 const { GET_ALL_STATES } = StateQueries;
 const { GET_ALL_TAXES, GET_ALL_TAX_GROUPS } = TaxQueries;
 const { GET_ALL_TOWNSHIPS } = TownshipQueries;
 const { GET_ALL_WAREHOUSES } = WarehouseQueries;
-const { GET_ALL_PRODUCTS } = ProductQueries;
+const { GET_ALL_PRODUCTS, GET_ALL_PRODUCT_VARIANTS } = ProductQueries;
 const { GET_ALL_SHIPMENT_PREFERENCES } = ShipmentPreferenceQueries;
 const { GET_ALL_PAYMENT_MODES } = PaymentModeQueries;
 const { GET_ALL_REASONS } = ReasonQueries;
+const { GET_ALL_PRODUCT_UNITS } = UnitQueries;
+const { GET_ALL_DELIVERY_METHODS } = DeliveryMethodQueries;
 
 const { Header, Content, Sider } = Layout;
 
@@ -121,12 +128,30 @@ const App = () => {
     useBackgroundQuery(GET_ALL_PAYMENT_MODES);
   const [allReasonsQueryRef, { refetch: refetchAllReasons }] =
     useBackgroundQuery(GET_ALL_REASONS);
+  const [
+    allProductCategoriesQueryRef,
+    { refetch: refetchAllProductCategories },
+  ] = useBackgroundQuery(GET_ALL_PRODUCT_CATEGORIES);
+  const [allProductUnitsQueryRef, { refetch: refetchAllProductUnits }] =
+    useBackgroundQuery(GET_ALL_PRODUCT_UNITS);
+  const [allDeliveryMethodsQueryRef, { refetch: refetchAllDeliveryMethods }] =
+    useBackgroundQuery(GET_ALL_DELIVERY_METHODS);
+  const [allProductVariantsQueryRef, { refetch: refetchAllProductVariants }] =
+    useBackgroundQuery(GET_ALL_PRODUCT_VARIANTS);
 
   if (loading) {
     return <InitialLoadingPage />;
   }
 
   if (error) {
+    if (
+      error.message.toLowerCase().includes("status code 401") ||
+      error.message.toLowerCase().includes("unauthorized") ||
+      error.message.toLowerCase().includes("access denied")
+    ) {
+      navigate("/logout", { replace: true });
+      return;
+    }
     return <ErrorPage error={error} refetch={refetchBusiness} />;
   }
 
@@ -162,6 +187,7 @@ const App = () => {
             <div className="app-logo">
               <img
                 alt="Pitibooks"
+                // src={process.env.PUBLIC_URL + "/mkitchen-logo.svg"}
                 src={process.env.PUBLIC_URL + "/pitibooks.png"}
               />
             </div>
@@ -171,6 +197,7 @@ const App = () => {
             style={{
               backgroundColor: Theme.colorPrimary,
             }}
+            className="main-menu"
             color={Theme.bgColorPrimary}
             mode="inline"
             defaultSelectedKeys={"Home"}
@@ -193,46 +220,6 @@ const App = () => {
                   <FormattedMessage id="menu.home" defaultMessage="Home" />
                 ),
               },
-              // {
-              //   key: "branches",
-              //   style:
-              //     isActiveRoute("/branches") ||
-              //     isActiveRoute("/branches/new") ||
-              //     isActiveRoute("/branches/edit")
-              //       ? { backgroundColor: Theme.darkGreen }
-              //       : {},
-              //   label: (
-              //     <FormattedMessage
-              //       id="menu.branches"
-              //       defaultMessage="Branches"
-              //     />
-              //   ),
-              // },
-              // {
-              //   key: "categories",
-              //   style: isActiveRoute("/categories")
-              //     ? { backgroundColor: Theme.darkGreen }
-              //     : {},
-              //   label: (
-              //     <FormattedMessage
-              //       id="menu.categories"
-              //       defaultMessage="Categories"
-              //     />
-              //   ),
-              // },
-
-              // {
-              //   key: "invoices",
-              //   style: isActiveRoute("/invoices")
-              //     ? { backgroundColor: Theme.darkGreen }
-              //     : {},
-              //   label: (
-              //     <FormattedMessage
-              //       id="menu.invoices"
-              //       defaultMessage="Invoices"
-              //     />
-              //   ),
-              // },
 
               //Products
               {
@@ -321,6 +308,17 @@ const App = () => {
                   },
                 ],
               },
+              //Banking
+              {
+                key: "banking",
+                label: (
+                  <FormattedMessage
+                    id="menu.banking"
+                    defaultMessage="Banking"
+                  />
+                ),
+                icon: <BankOutlined width={20} height={20} />,
+              },
               // Sales
               {
                 key: "sales",
@@ -340,6 +338,62 @@ const App = () => {
                           />
                         }
                         path="/customers/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "salesOrders",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.salesOrders"
+                            defaultMessage="Sales Orders"
+                          />
+                        }
+                        path="/salesOrders/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "paymentsReceived",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.paymentsReceived"
+                            defaultMessage="Payments Received"
+                          />
+                        }
+                        path="/paymentsReceived/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "invoices",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.invoices"
+                            defaultMessage="Invoices"
+                          />
+                        }
+                        path="/invoices/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "creditNotes",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.creditNotes"
+                            defaultMessage="Credit Notes"
+                          />
+                        }
+                        path="/creditNotes/new"
                       />
                     ),
                   },
@@ -473,7 +527,7 @@ const App = () => {
                     label: (
                       <FormattedMessage
                         id="menu.chartOfAccounts"
-                        defaultMessage="Chart of Accountants"
+                        defaultMessage="Chart of Accounts"
                       />
                     ),
                   },
@@ -761,6 +815,14 @@ const App = () => {
                       refetchAllPaymentModes,
                       allReasonsQueryRef,
                       refetchAllReasons,
+                      allProductCategoriesQueryRef,
+                      refetchAllProductCategories,
+                      allProductUnitsQueryRef,
+                      refetchAllProductUnits,
+                      allDeliveryMethodsQueryRef,
+                      refetchAllDeliveryMethods,
+                      allProductVariantsQueryRef,
+                      refetchAllProductVariants,
                     }}
                   />
                 </Suspense>

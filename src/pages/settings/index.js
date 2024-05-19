@@ -7,7 +7,11 @@ import TransactionNumberSeries from "./TransactionNumberSeries";
 import Taxes from "./Taxes";
 import Users from "./Users";
 import Roles from "./Roles";
-
+import DeliveryMethods from "./DeliveryMethods";
+import PaymentModes from "./PaymentModes";
+import Reasons from "./Reasons";
+import ShipmentPreferences from "./ShipmentPreferences";
+import SalesPersons from "./SalesPersons";
 export {
   Profile,
   Warehouses,
@@ -18,4 +22,9 @@ export {
   Taxes,
   Users,
   Roles,
+  DeliveryMethods,
+  PaymentModes,
+  Reasons,
+  ShipmentPreferences,
+  SalesPersons,
 };

@@ -40,7 +40,12 @@ const compactColumns = [
           <div className="column-list-item">
             <span>{record.expenseAccount.name}</span>
             <span>
-              {record.currency.symbol} <FormattedNumber value={record.totalAmount} style="decimal" minimumFractionDigits={record.currency.decimalPlaces} />
+              {record.currency.symbol}{" "}
+              <FormattedNumber
+                value={record.totalAmount}
+                style="decimal"
+                minimumFractionDigits={record.currency.decimalPlaces}
+              />
             </span>
           </div>
           <div className="column-list-item">
@@ -195,7 +200,7 @@ const PaginatedExpense = ({
         referenceNumber: values.referenceNumber,
       };
       // console.log("values ", values);
-      // console.log("input", input);
+      console.log("input", input);
       await search({
         variables: {
           ...input,
@@ -587,7 +592,14 @@ const PaginatedExpense = ({
                           color: "var(--dark-green)",
                         }}
                       >
-                        {selectedRecord.currency.symbol} <FormattedNumber value={selectedRecord.totalAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} />
+                        {selectedRecord.currency.symbol}{" "}
+                        <FormattedNumber
+                          value={selectedRecord.totalAmount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />
                       </span>
                       <span style={{ fontSize: "var(--small-text)" }}>
                         {" "}
@@ -694,7 +706,15 @@ const PaginatedExpense = ({
                     </tr>
                     <tr>
                       <td>
-                        {selectedRecord.currency.symbol} <FormattedNumber value={selectedRecord.taxAmount} style="decimal" minimumFractionDigits={selectedRecord.currency.decimalPlaces} /> (
+                        {selectedRecord.currency.symbol}{" "}
+                        <FormattedNumber
+                          value={selectedRecord.taxAmount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            selectedRecord.currency.decimalPlaces
+                          }
+                        />{" "}
+                        (
                         {selectedRecord.isTaxInclusive
                           ? "Inclusive"
                           : "Exclusive"}
@@ -714,7 +734,9 @@ const PaginatedExpense = ({
                     </tr>
                     <tr>
                       <td>
-                        {selectedRecord.supplier?.name ? selectedRecord.supplier?.name : "-"}
+                        {selectedRecord.supplier?.name
+                          ? selectedRecord.supplier?.name
+                          : "-"}
                       </td>
                     </tr>
                     <tr>
@@ -730,7 +752,9 @@ const PaginatedExpense = ({
                     </tr>
                     <tr>
                       <td>
-                        {selectedRecord.customer?.name ? selectedRecord.customer?.name : "-"}
+                        {selectedRecord.customer?.name
+                          ? selectedRecord.customer?.name
+                          : "-"}
                       </td>
                     </tr>
                   </>

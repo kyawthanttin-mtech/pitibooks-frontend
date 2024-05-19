@@ -1,14 +1,10 @@
 import React from "react";
-import {
-  LeftOutlined,
-  RightOutlined,
-  SyncOutlined,
-} from "@ant-design/icons";
+import { LeftOutlined, RightOutlined, SyncOutlined } from "@ant-design/icons";
 import { Button, Row, Space, Table, Modal, Tooltip } from "antd";
 import { useQuery, useLazyQuery } from "@apollo/client";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
-import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
+import { paginateArray } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT } from "../config/Constants";
 
 const PaginatedSelectionTable = ({
@@ -30,9 +26,11 @@ const PaginatedSelectionTable = ({
   setSearchCriteria,
   searchModalOpen,
   setSearchModalOpen,
+  searchTitle = "Search",
+  setCurrentPage,
+  currentPage,
 }) => {
-
-  const [currentPage, setCurrentPage] = useHistoryState("currentPage", 1);
+  const intl = useIntl();
 
   const handleRefetch = async () => {
     try {
@@ -67,9 +65,28 @@ const PaginatedSelectionTable = ({
 
   const handleModalSearch = async () => {
     try {
+      const searchValues = searchFormRef.getFieldsValue();
+      console.log("search values", searchValues);
+
+      const hasValues = Object.values(searchValues).some(
+        (value) => value !== undefined && value !== "" && value !== null
+      );
+
+      if (!hasValues) {
+        openErrorNotification(
+          api,
+          intl.formatMessage({
+            id: "validation.atLeastOneSearchCriteria",
+            defaultMessage: "Please fill in at least one search criteria",
+          })
+        );
+        return;
+      }
+
       await search({
-        variables: searchFormRef.getFieldsValue(),
+        variables: searchValues,
       });
+      setCurrentPage(1);
       setSearchCriteria(searchFormRef.getFieldsValue());
       setSearchModalOpen(false);
     } catch (err) {
@@ -106,39 +123,39 @@ const PaginatedSelectionTable = ({
       openErrorNotification(api, err.message);
     },
   });
-  // let notYet = false;
   //   useEffect(() => {
-  //     if (searchCriteria && notYet) {
+  //     if (searchCriteria ) {
   //       searchFormRef.setFieldsValue(searchCriteria);
   //       search({
   //         variables: searchCriteria,
   //       });
   //     }
-  //   }, [searchCriteria, searchFormRef, search,  notYet]);
-
+  //   }, [searchCriteria, searchFormRef, search]);
   const allData = parseData(data);
   const searchResults = parseData(searchData);
-  const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
-  const searchPageData = paginateArray(
-    searchResults,
-    QUERY_DATA_LIMIT,
-    currentPage
-  );
-  const totalPages = Math.ceil(allData.length / QUERY_DATA_LIMIT);
+  const totalPages = searchCriteria
+    ? Math.ceil(searchResults.length / QUERY_DATA_LIMIT)
+    : Math.ceil(allData.length / QUERY_DATA_LIMIT);
   let hasPreviousPage = currentPage > 1 ? true : false;
   let hasNextPage = false;
   let refetchEnabled = true;
   if (currentPage === totalPages) {
     const pageInfo = parsePageInfo(data);
-    hasNextPage = pageInfo.hasNextPage;
+    const searchPageInfo = parsePageInfo(searchData);
+    hasNextPage = searchCriteria
+      ? searchPageInfo.hasNextPage
+      : pageInfo.hasNextPage;
   } else if (currentPage < totalPages) {
     hasNextPage = true;
   }
-  if (searchCriteria) {
-    hasNextPage = false;
-    hasPreviousPage = false;
-    refetchEnabled = false;
-  }
+
+  const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
+
+  const searchPageData = paginateArray(
+    searchResults,
+    QUERY_DATA_LIMIT,
+    currentPage
+  );
 
   const loading = queryLoading || searchLoading;
 
@@ -146,12 +163,7 @@ const PaginatedSelectionTable = ({
     <>
       <Modal
         width="65.5rem"
-        title={
-          <FormattedMessage
-            id="modal.search"
-            defaultMessage="Search"
-          />
-        }
+        title={searchTitle}
         okText={<FormattedMessage id="button.search" defaultMessage="Search" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />

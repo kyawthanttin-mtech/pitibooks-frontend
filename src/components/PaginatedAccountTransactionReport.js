@@ -1,6 +1,11 @@
 /* eslint-disable react/style-prop-object */
-import React, {useState} from "react";
-import { LeftOutlined, RightOutlined, SyncOutlined, FileTextOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import {
+  LeftOutlined,
+  RightOutlined,
+  SyncOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
 import { Button, Row, Space, Modal, Tooltip, Spin, Flex, Empty } from "antd";
 import { useQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
@@ -21,7 +26,10 @@ const PaginatedAccountTransactionReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useState("currentPage", 1);
+  const [currentPage, setCurrentPage] = useState(
+    "accountTransactionCurrentPage",
+    1
+  );
   const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
@@ -116,7 +124,10 @@ const PaginatedAccountTransactionReport = ({
           <h4>{business.name}</h4>
           <h3 style={{ marginTop: "-5px" }}>Account Transactions</h3>
           <span>Basis: {reportBasis}</span>
-          <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
+          <h5>
+            From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+            {toDate.format(REPORT_DATE_FORMAT)}
+          </h5>
         </div>
         {loading ? (
           <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -131,28 +142,52 @@ const PaginatedAccountTransactionReport = ({
                     <FormattedMessage id="report.date" defaultMessage="Date" />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.account" defaultMessage="Account" />
+                    <FormattedMessage
+                      id="report.account"
+                      defaultMessage="Account"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionDetails" defaultMessage="Transaction Details" />
+                    <FormattedMessage
+                      id="report.transactionDetails"
+                      defaultMessage="Transaction Details"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionType" defaultMessage="Transaction Type" />
+                    <FormattedMessage
+                      id="report.transactionType"
+                      defaultMessage="Transaction Type"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionNumber" defaultMessage="Transaction #" />
+                    <FormattedMessage
+                      id="report.transactionNumber"
+                      defaultMessage="Transaction #"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.referenceNumber" defaultMessage="Reference #" />
+                    <FormattedMessage
+                      id="report.referenceNumber"
+                      defaultMessage="Reference #"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.debit" defaultMessage="Debit" />
+                    <FormattedMessage
+                      id="report.debit"
+                      defaultMessage="Debit"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.credit" defaultMessage="Credit" />
+                    <FormattedMessage
+                      id="report.credit"
+                      defaultMessage="Credit"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.amount" defaultMessage="Amount" />
+                    <FormattedMessage
+                      id="report.amount"
+                      defaultMessage="Amount"
+                    />
                   </th>
                 </tr>
               </thead>
@@ -169,31 +204,60 @@ const PaginatedAccountTransactionReport = ({
                           <span className="preserve-wrap"></span>
                         </td> */}
                         <td>
-                          <Tooltip title={data.transactionDetails}>
-                            <FileTextOutlined />
-                          </Tooltip>
+                          {data.transactionDetails && (
+                            <Tooltip title={data.transactionDetails}>
+                              <FileTextOutlined />
+                            </Tooltip>
+                          )}
                         </td>
                         <td>{data.referenceType}</td>
                         <td>{data.transactionNumber}</td>
                         <td>{data.referenceNumber}</td>
                         <td className="text-align-right">
                           <a href="/">
-                            {data.baseDebit !== 0 && 
-                            <FormattedNumber value={data.baseDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />}
+                            {data.baseDebit !== 0 && (
+                              <FormattedNumber
+                                value={data.baseDebit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
                           </a>
                         </td>
                         <td className="text-align-right">
                           <a href="/">
-                            {data.baseCredit !== 0 && 
-                            <FormattedNumber value={data.baseCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
-                            }
+                            {data.baseCredit !== 0 && (
+                              <FormattedNumber
+                                value={data.baseCredit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
                           </a>
                         </td>
                         <td className="text-align-right">
                           <a href="/">
-                            {data.baseDebit === 0
-                              ? <FormattedNumber value={data.baseCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
-                              : <FormattedNumber value={data.baseDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />}
+                            {data.baseDebit === 0 ? (
+                              <FormattedNumber
+                                value={data.baseCredit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            ) : (
+                              <FormattedNumber
+                                value={data.baseDebit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
                             {data.baseDebit === 0 ? " Cr" : " Dr"}
                           </a>
                         </td>
@@ -281,7 +345,11 @@ const PaginatedAccountTransactionReport = ({
       </Row>
       <Row>
         <div style={{ paddingLeft: "1.5rem" }}>
-          <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+          <FormattedMessage
+            values={{ currency: business.baseCurrency.symbol }}
+            id="label.displayedBaseCurrency"
+            defaultMessage="**Amount is displayed in {currency}"
+          />
         </div>
       </Row>
     </div>

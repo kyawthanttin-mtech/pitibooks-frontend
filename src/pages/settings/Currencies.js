@@ -322,7 +322,7 @@ const Currencies = () => {
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
         label={
-          <FormattedMessage id="currency.name" defaultMessage="Currency Name" />
+          <FormattedMessage id="label.name" defaultMessage="Name" />
         }
         labelAlign="left"
         name="name"
@@ -333,8 +333,8 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.name.required"
-                defaultMessage="Enter the Currency Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -345,8 +345,8 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.symbol"
-            defaultMessage="Currency Symbol"
+            id="label.symbol"
+            defaultMessage="Symbol"
           />
         }
         labelAlign="left"
@@ -358,8 +358,8 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.symbol.required"
-                defaultMessage="Enter the Currency Symbol"
+                id="label.symbol.required"
+                defaultMessage="Enter the Symbol"
               />
             ),
           },
@@ -370,7 +370,7 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.decimalPlaces"
+            id="label.decimalPlaces"
             defaultMessage="Decimal Places"
           />
         }
@@ -383,7 +383,7 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.decimalPlaces.required"
+                id="label.decimalPlaces.required"
                 defaultMessage="Select the Decimal Places"
               />
             ),
@@ -405,7 +405,7 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.exchangeRate"
+            id="label.exchangeRate"
             defaultMessage="Exchange Rate"
           />
         }
@@ -418,7 +418,7 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.exchangeRate.required"
+                id="label.exchangeRate.required"
                 defaultMessage="Enter the Exchange Rate"
               />
             ),
@@ -434,7 +434,7 @@ const Currencies = () => {
     <Form form={editFormRef} onFinish={handleEditModalOk}>
       <Form.Item
         label={
-          <FormattedMessage id="currency.name" defaultMessage="Currency Name" />
+          <FormattedMessage id="label.name" defaultMessage="Name" />
         }
         labelAlign="left"
         name="name"
@@ -445,8 +445,8 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.name.required"
-                defaultMessage="Enter the Currency Name"
+                id="label.name.required"
+                defaultMessage="Enter the Name"
               />
             ),
           },
@@ -457,8 +457,8 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.symbol"
-            defaultMessage="Currency Symbol"
+            id="label.symbol"
+            defaultMessage="Symbol"
           />
         }
         labelAlign="left"
@@ -470,8 +470,8 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.symbol.required"
-                defaultMessage="Enter the Currency Symbol"
+                id="label.symbol.required"
+                defaultMessage="Enter the Symbol"
               />
             ),
           },
@@ -482,7 +482,7 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.decimalPlaces"
+            id="label.decimalPlaces"
             defaultMessage="Decimal Places"
           />
         }
@@ -495,7 +495,7 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.decimalPlaces.required"
+                id="label.decimalPlaces.required"
                 defaultMessage="Select the Decimal Places"
               />
             ),
@@ -517,7 +517,7 @@ const Currencies = () => {
       <Form.Item
         label={
           <FormattedMessage
-            id="currency.exchangeRate"
+            id="label.exchangeRate"
             defaultMessage="Exchange Rate"
           />
         }
@@ -530,7 +530,7 @@ const Currencies = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="currency.exchangeRate.required"
+                id="label.exchangeRate.required"
                 defaultMessage="Enter the Exchange Rate"
               />
             ),

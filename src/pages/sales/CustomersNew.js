@@ -18,11 +18,11 @@ import {
   CloseCircleOutlined,
   PlusCircleFilled,
 } from "@ant-design/icons";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   openErrorNotification,
-  openSuccessNotification,
+  openSuccessMessage,
 } from "../../utils/Notification";
 import { CustomerMutations } from "../../graphql";
 import { useReadQuery } from "@apollo/client";
@@ -75,7 +75,7 @@ const CustomersNew = () => {
     CREATE_CUSTOMER,
     {
       onCompleted() {
-        openSuccessNotification(
+        openSuccessMessage(
           msgApi,
           <FormattedMessage
             id="customer.created"

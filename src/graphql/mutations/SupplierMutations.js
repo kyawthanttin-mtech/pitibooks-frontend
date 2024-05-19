@@ -4,11 +4,16 @@ const CREATE_SUPPLIER = gql`
   mutation CreateSupplier($input: NewSupplier!) {
     createSupplier(input: $input) {
       id
-      businessId
       name
       email
       phone
       mobile
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
       supplierTax {
         id
         name
@@ -16,23 +21,14 @@ const CREATE_SUPPLIER = gql`
         type
         isActive
       }
+      openingBalanceBranchId
+      openingBalance
+      exchangeRate
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
       prepaidCreditAmount
       unusedCreditAmount
-      exchangeRate
-      openingBalanceBranchId
-      openingBalance
-      isActive
-      currency {
-        id
-        businessId
-        symbol
-        name
-        decimalPlaces
-        isActive
-      }
       billingAddress {
         id
         attention
@@ -84,11 +80,16 @@ const UPDATE_SUPPLIER = gql`
   mutation UpdateSupplier($id: ID!, $input: NewSupplier!) {
     updateSupplier(id: $id, input: $input) {
       id
-      businessId
       name
       email
       phone
       mobile
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
       supplierTax {
         id
         name
@@ -96,23 +97,14 @@ const UPDATE_SUPPLIER = gql`
         type
         isActive
       }
+      openingBalanceBranchId
+      openingBalance
+      exchangeRate
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
       prepaidCreditAmount
       unusedCreditAmount
-      exchangeRate
-      openingBalanceBranchId
-      openingBalance
-      isActive
-      currency {
-        id
-        businessId
-        symbol
-        name
-        decimalPlaces
-        isActive
-      }
       billingAddress {
         id
         attention
@@ -163,11 +155,16 @@ const DELETE_SUPPLIER = gql`
   mutation DeleteSupplier($id: ID!) {
     deleteSupplier(id: $id) {
       id
-      businessId
       name
       email
       phone
       mobile
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
       supplierTax {
         id
         name
@@ -175,23 +172,14 @@ const DELETE_SUPPLIER = gql`
         type
         isActive
       }
+      openingBalanceBranchId
+      openingBalance
+      exchangeRate
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
       prepaidCreditAmount
       unusedCreditAmount
-      exchangeRate
-      openingBalanceBranchId
-      openingBalance
-      isActive
-      currency {
-        id
-        businessId
-        symbol
-        name
-        decimalPlaces
-        isActive
-      }
       billingAddress {
         id
         attention
@@ -243,11 +231,16 @@ const TOGGLE_ACTIVE_SUPPLIER = gql`
   mutation ToggleActiveSupplier($id: ID!, $isActive: Boolean!) {
     toggleActiveSupplier(id: $id, isActive: $isActive) {
       id
-      businessId
       name
       email
       phone
       mobile
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
       supplierTax {
         id
         name
@@ -255,23 +248,14 @@ const TOGGLE_ACTIVE_SUPPLIER = gql`
         type
         isActive
       }
+      openingBalanceBranchId
+      openingBalance
+      exchangeRate
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
       prepaidCreditAmount
       unusedCreditAmount
-      exchangeRate
-      openingBalanceBranchId
-      openingBalance
-      isActive
-      currency {
-        id
-        businessId
-        symbol
-        name
-        decimalPlaces
-        isActive
-      }
       billingAddress {
         id
         attention
@@ -315,6 +299,7 @@ const TOGGLE_ACTIVE_SUPPLIER = gql`
         referenceType
         referenceID
       }
+      isActive
     }
   }
 `;

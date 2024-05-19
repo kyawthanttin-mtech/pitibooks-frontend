@@ -141,11 +141,11 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="profile.name" defaultMessage="Business Name" />}
+                label={<FormattedMessage id="label.businessName" defaultMessage="Business Name" />}
                 name="name"
                 labelAlign="left"
                 labelCol={{ span: 7 }}
-                rules={[{ required: true, message: <FormattedMessage id="profile.name.required" defaultMessage="Enter the Business Name" /> }]}
+                rules={[{ required: true, message: <FormattedMessage id="label.name.required" defaultMessage="Enter the Name" /> }]}
               >
                 <Input maxLength={100}></Input>
               </Form.Item>
@@ -271,13 +271,13 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="profile.baseCurrency" defaultMessage="Base Currency" />}
+                label={<FormattedMessage id="label.baseCurrency" defaultMessage="Base Currency" />}
                 name="baseCurrencyId" labelAlign="left"
                 labelCol={{ span: 7 }}
               >
                 <Select
                   loading={loading}
-                  allowClear
+                  // allowClear
                   showSearch
                   optionFilterProp="label"
                 >
@@ -295,9 +295,9 @@ const Profile = () => {
             </Col>
             <Col lg={8} offset={1}>
               <Form.Item 
-                label={<FormattedMessage id="profile.fiscalYear" defaultMessage="Fiscal Year" />}
+                label={<FormattedMessage id="label.fiscalYear" defaultMessage="Fiscal Year" />}
                 name="fiscalYear" labelAlign="left" labelCol={{ span: 7 }}>
-                <Select showSearch allowClear>
+                <Select showSearch>
                   <Select.Option value="Jan">Jan-Dec</Select.Option>
                   <Select.Option value="Feb">Feb-Jan</Select.Option>
                   <Select.Option value="Mar">Mar-Feb</Select.Option>
@@ -318,16 +318,16 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="profile.reportBasis" defaultMessage="Report Basis" />}
+                label={<FormattedMessage id="label.reportBasis" defaultMessage="Report Basis" />}
                 name="reportBasis" labelAlign="left"
                 labelCol={{ span: 7 }}
               >
                 <Radio.Group>
                   <Radio value="Accrual">
-                    <FormattedMessage id="profile.reportBasisAccrual" defaultMessage="Accrual" />
+                    <FormattedMessage id="label.reportBasisAccrual" defaultMessage="Accrual" />
                   </Radio>
                   <Radio value="Cash">
-                    <FormattedMessage id="profile.reportBasisCash" defaultMessage="Cash" />
+                    <FormattedMessage id="label.reportBasisCash" defaultMessage="Cash" />
                   </Radio>
                 </Radio.Group>
               </Form.Item>
@@ -337,14 +337,14 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item 
-                label={<FormattedMessage id="profile.companyId" defaultMessage="Company ID" />}
+                label={<FormattedMessage id="label.companyId" defaultMessage="Company ID" />}
                 name="companyId" labelAlign="left" labelCol={{ span: 7 }}>
                 <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
               <Form.Item 
-                label={<FormattedMessage id="profile.taxId" defaultMessage="Tax ID" />}
+                label={<FormattedMessage id="label.taxId" defaultMessage="Tax ID" />}
                 name="taxId" labelAlign="left" labelCol={{ span: 7 }}>
                 <Input maxLength={100}></Input>
               </Form.Item>

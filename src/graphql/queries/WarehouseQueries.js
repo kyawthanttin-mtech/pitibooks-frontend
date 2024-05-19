@@ -14,28 +14,28 @@ const GET_WAREHOUSES = gql`
   query GetWarehoues($name: String) {
     listWarehouse(name: $name) {
       id
-      name
-      city
-      country
       branch {
         id
         name
       }
+      name
+      phone
+      mobile
+      address
+      country
+      city
       state {
         id
         stateNameEn
         code
       }
-      businessId
-      isActive
       township {
         id
+        stateCode
         townshipNameEn
         code
       }
-      phone
-      mobile
-      address
+      isActive
     }
   }
 `;
@@ -44,22 +44,28 @@ const GET_WAREHOUSE = gql`
   query GetWarehouse($id: ID!) {
     getWarehouse(id: $id) {
       id
-      name
       branch {
         id
         name
       }
-      state {
-        stateNameEn
-      }
-      township {
-        townshipNameEn
-      }
+      name
+      phone
+      mobile
+      address
       country
       city
-      businessId
+      state {
+        id
+        stateNameEn
+        code
+      }
+      township {
+        id
+        stateCode
+        townshipNameEn
+        code
+      }
       isActive
-      address
     }
   }
 `;

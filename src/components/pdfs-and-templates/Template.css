@@ -7,6 +7,7 @@
   position: relative;
   margin-bottom: 35px;
   box-shadow: 0px 0px 6px #ccc;
+  /* min-height: 840px; */
 }
 
 .text-ellipsis {

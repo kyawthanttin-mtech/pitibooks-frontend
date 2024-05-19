@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { UploadImage } from "../../components";
+import { SupplierSearchModal, UploadImage } from "../../components";
 
 import {
   Button,
@@ -10,23 +10,21 @@ import {
   Checkbox,
   Select,
 } from "antd";
-import { FormattedMessage } from "react-intl";
-import { CloseOutlined } from "@ant-design/icons";
-import { useMutation, useQuery, gql } from "@apollo/client";
+import { FormattedMessage, useIntl } from "react-intl";
+import { CloseOutlined, SearchOutlined } from "@ant-design/icons";
+import { useMutation, useReadQuery, gql } from "@apollo/client";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-
-import { CategoryQueries, UnitQueries } from "../../graphql";
 import { ProductMutations } from "../../graphql";
-import { useReadQuery } from "@apollo/client";
-const { GET_PRODUCT_UNITS } = UnitQueries;
-const { GET_PRODUCT_CATEGORIES } = CategoryQueries;
+import { SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET } from "../../config/Constants";
+
 const { UPDATE_PRODUCT } = ProductMutations;
 
 const ProductsEdit = () => {
+  const intl = useIntl();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,36 +37,29 @@ const ProductsEdit = () => {
     allTaxGroupsQueryRef,
     allTaxesQueryRef,
     allAccountsQueryRef,
+    allProductUnitsQueryRef,
+    allProductCategoriesQueryRef,
   } = useOutletContext();
-  const [customFileList, setCustomFileList] = useState([]);
-  const [isInventoryTracked, setIsInventoryTracked] = useState(false);
+
   const record = location.state?.record;
+  
+  const [customFileList, setCustomFileList] = useState([]);
+  const [isInventoryTracked, setIsInventoryTracked] = useState(
+    record.inventoryAccount?.id && record.inventoryAccount?.id !== 0 ? true : false
+  );
+  console.log(isInventoryTracked);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(
+    record.supplier?.id ? record.supplier : ""
+  );
 
   // Queries
+  const { data: unitData } = useReadQuery(allProductUnitsQueryRef);
+  const { data: categoryData } = useReadQuery(allProductCategoriesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: taxData } = useReadQuery(allTaxesQueryRef);
   const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
 
-  const { data: unitData, loading: unitLoading } = useQuery(GET_PRODUCT_UNITS, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
-
-  const { data: categoryData, loading: categoryLoading } = useQuery(
-    GET_PRODUCT_CATEGORIES,
-    {
-      errorPolicy: "all",
-      fetchPolicy: "cache-and-network",
-      notifyOnNetworkStatusChange: true,
-      onError(err) {
-        openErrorNotification(notiApi, err.message);
-      },
-    }
-  );
   // Mutations
   const [updateProduct, { loading: updateLoading }] = useMutation(
     UPDATE_PRODUCT,
@@ -91,7 +82,62 @@ const ProductsEdit = () => {
     }
   );
 
-  const loading = updateLoading || unitLoading || categoryLoading;
+  const taxes = useMemo(() => {
+    return taxData?.listAllTax;
+  }, [taxData]);
+
+  const taxGroups = useMemo(() => {
+    return taxGroupData?.listAllTaxGroup;
+  }, [taxGroupData]);
+
+  const units = useMemo(() => {
+    return unitData?.listAllProductUnit;
+  }, [unitData]);
+
+  const categories = useMemo(() => {
+    return categoryData?.listAllProductCategory;
+  }, [categoryData]);
+
+  const salesAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.mainType === "Income"
+    );
+  }, [accountData]);
+
+  const purchaseAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.mainType === "Expense"
+    );
+  }, [accountData]);
+
+  const inventoryAccounts = useMemo(() => {
+    return accountData?.listAllAccount?.filter(
+      (acc) => acc.detailType === "Stock"
+    );
+  }, [accountData]);
+  const defaultInventoryAccountId = inventoryAccounts.find(x => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET)?.id;
+
+  const allTax = [
+    {
+      title: "Tax",
+      taxes: taxes
+        ? [...taxes.map((tax) => ({ ...tax, id: "I" + tax.id }))]
+        : [],
+    },
+    {
+      title: "Tax Group",
+      taxes: taxGroups
+        ? [
+            ...taxGroups.map((group) => ({
+              ...group,
+              id: "G" + group.id,
+            })),
+          ]
+        : [],
+    },
+  ];
+
+  const loading = updateLoading;
 
   useMemo(() => {
     // const salesTaxId = record?.salesTax?.type + record?.salesTax?.id;
@@ -102,7 +148,7 @@ const ProductsEdit = () => {
           description: record?.description,
           category: record?.category?.id,
           unit: record?.productUnit?.id,
-          supplier: record?.supplier?.id,
+          supplierName: record?.supplier?.name,
           sku: record?.sku,
           barcode: record?.barcode,
           salesAccount:
@@ -112,13 +158,18 @@ const ProductsEdit = () => {
           purchaseAccount: record?.purchaseAccount?.id,
           purchasePrice: record?.purchasePrice,
           purchaseTax: record?.purchaseTax?.id === "I0" ? null : record?.purchaseTax?.id,
-          inventoryAccount: record?.inventoryAccount?.id,      
+          inventoryAccount: record?.inventoryAccount?.id !== 0 ? record?.inventoryAccount?.id : defaultInventoryAccountId,      
         }
       : {};
         console.log(record);
-    setIsInventoryTracked(record?.inventoryAccountId?.id !== 0 ? true : false);
+    setIsInventoryTracked(record?.inventoryAccount?.id !== 0 ? true : false);
     form.setFieldsValue(parsedRecord);
-  }, [form, record]);
+  }, [form, record, defaultInventoryAccountId]);
+
+  const handleModalRowSelect = (record) => {
+    setSelectedSupplier(record);
+    form.setFieldsValue({ supplierName: record.name });
+  };
 
   const onFinish = (values) => {
     const selectedSalesTax = allTax.find((taxGroup) =>
@@ -158,21 +209,18 @@ const ProductsEdit = () => {
       purchaseTaxId,
       purchaseTaxType,
       // productNature: values.productNature,
-      // supplier: values.supplier,
+      supplierId: selectedSupplier?.id || 0,
       categoryId: values.category,
       salesAccountId: values.salesAccount,
       purchaseAccountId: values.purchaseAccount,
-      inventoryAccountId: values.inventoryAccount,
+      inventoryAccountId: isInventoryTracked ? values.inventoryAccount : 0,
       isSalesTaxInclusive: false,
       salesPrice: parseFloat(values.salesPrice),
-      purchasePrice: values.purchasePrice
-        ? parseFloat(values.purchasePrice)
-        : 0,
-      supplierId: values.supplier || 0,
+      purchasePrice: parseFloat(values.purchasePrice),
       isBatchTracking: false,
-      // images: imageUrls,
+      images: imageUrls,
     };
-    console.log("Input", input);
+    // console.log("Input", input);
     updateProduct({
       variables: { id: record.id, input },
       update(cache, { data: { updateProduct } }) {
@@ -189,12 +237,22 @@ const ProductsEdit = () => {
                     fragment NewProduct on Product {
                       id
                       name
-                      sku
-                      barcode
                       description
-                      unit
+                      sku
+                      category
+                      modifiers
+                      images
+                      productUnit
+                      supplier
+                      barcode
+                      salesPrice
+                      salesAccount
                       salesTax
+                      purchasePrice
+                      purchaseAccount
                       purchaseTax
+                      inventoryAccount
+                      isBatchTracking
                     }
                   `,
                 });
@@ -210,60 +268,6 @@ const ProductsEdit = () => {
       },
     });
   };
-
-  const taxes = useMemo(() => {
-    return taxData?.listAllTax;
-  }, [taxData]);
-
-  const taxGroups = useMemo(() => {
-    return taxGroupData?.listAllTaxGroup;
-  }, [taxGroupData]);
-
-  const units = useMemo(() => {
-    return unitData?.listProductUnit;
-  }, [unitData]);
-
-  const categories = useMemo(() => {
-    return categoryData?.listProductCategory;
-  }, [categoryData]);
-
-  const salesAccounts = useMemo(() => {
-    return accountData?.listAllAccount?.filter(
-      (acc) => acc.mainType === "Income"
-    );
-  }, [accountData]);
-
-  const purchaseAccounts = useMemo(() => {
-    return accountData?.listAllAccount?.filter(
-      (acc) => acc.mainType === "Expense"
-    );
-  }, [accountData]);
-
-  const inventoryAccounts = useMemo(() => {
-    return accountData?.listAllAccount?.filter(
-      (acc) => acc.detailType === "Stock"
-    );
-  }, [accountData]);
-
-  const allTax = [
-    {
-      title: "Tax",
-      taxes: taxes
-        ? [...taxes.map((tax) => ({ ...tax, id: "I" + tax.id }))]
-        : [],
-    },
-    {
-      title: "Tax Group",
-      taxes: taxGroups
-        ? [
-            ...taxGroups.map((group) => ({
-              ...group,
-              id: "G" + group.id,
-            })),
-          ]
-        : [],
-    },
-  ];
 
   function groupByDetailType(accounts) {
     return accounts?.reduce((groupedAccounts, account) => {
@@ -341,9 +345,6 @@ const ProductsEdit = () => {
           >
             <Input.TextArea maxLength={1000} rows={4}></Input.TextArea>
           </Form.Item>
-          {/* </Col> */}
-          {/* </Row> */}
-          <br />
           <br />
         </Col>
         <Col span={12}>
@@ -423,19 +424,43 @@ const ProductsEdit = () => {
           </Form.Item>
           <Form.Item
             label={
-              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+              <FormattedMessage
+                id="label.supplier"
+                defaultMessage="Supplier"
+              />
             }
+            name="supplierName"
+            shouldUpdate
+            labelAlign="left"
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 12 }}
-            labelAlign="left"
-            name="supplier"
           >
-            <Select
-              // placeholder="Select a Supplier"
-              showSearch
-              allowClear
-              loading={loading}
-            ></Select>
+            <Input
+              readOnly
+              onClick={setSearchModalOpen}
+              className="search-input"
+              suffix={
+                <>
+                  {selectedSupplier && (
+                    <CloseOutlined
+                      style={{ height: 11, width: 11, cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedSupplier(null);
+                        form.resetFields(["supplierName"]);
+                      }}
+                    />
+                  )}
+
+                  <Button
+                    style={{ width: "2.5rem" }}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    className="search-btn"
+                    onClick={setSearchModalOpen}
+                  />
+                </>
+              }
+            />
           </Form.Item>
           <Form.Item
             name="sku"
@@ -533,6 +558,17 @@ const ProductsEdit = () => {
                   />
                 ),
               },
+              () => ({
+                validator(_, value) {
+                  if (!value) {
+                    return Promise.resolve();
+                  } else if (isNaN(value) || value.length > 20) {
+                    return Promise.reject(intl.formatMessage({ id: "validation.invalidInput", defaultMessage: "Invalid Input" }));
+                  } else {
+                    return Promise.resolve();
+                  }
+                }
+              })
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -641,6 +677,17 @@ const ProductsEdit = () => {
                   />
                 ),
               },
+              () => ({
+                validator(_, value) {
+                  if (!value) {
+                    return Promise.resolve();
+                  } else if (isNaN(value) || value.length > 20) {
+                    return Promise.reject(intl.formatMessage({ id: "validation.invalidInput", defaultMessage: "Invalid Input" }));
+                  } else {
+                    return Promise.resolve();
+                  }
+                }
+              })
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -768,6 +815,11 @@ const ProductsEdit = () => {
 
   return (
     <>
+      <SupplierSearchModal
+        modalOpen={searchModalOpen}
+        setModalOpen={setSearchModalOpen}
+        onRowSelect={handleModalRowSelect}
+      />
       <div className="page-header">
         <p className="page-header-text">
           {<FormattedMessage id="product.edit" defaultMessage="Edit Product" />}

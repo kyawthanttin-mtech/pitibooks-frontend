@@ -14,9 +14,6 @@ import {
 import {
   PlusOutlined,
   DownCircleFilled,
-  // EditOutlined,
-  // DeleteOutlined,
-  // CheckCircleOutlined,
   PercentageOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@apollo/client";
@@ -488,7 +485,7 @@ const TaxRates = () => {
         <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
-        label={<FormattedMessage id="tax.rate" defaultMessage="Rate (%)" />}
+        label={<FormattedMessage id="label.rate" defaultMessage="Rate (%)" />}
         name="rate"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -498,8 +495,8 @@ const TaxRates = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="tax.rate.required"
-                defaultMessage="Enter the Tax Rate"
+                id="label.rate.required"
+                defaultMessage="Enter the Rate"
               />
             ),
           },
@@ -548,7 +545,7 @@ const TaxRates = () => {
         <Input maxLength={100}></Input>
       </Form.Item>
       <Form.Item
-        label={<FormattedMessage id="tax.rate" defaultMessage="Rate (%)" />}
+        label={<FormattedMessage id="label.rate" defaultMessage="Rate (%)" />}
         name="rate"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -558,8 +555,8 @@ const TaxRates = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="tax.rate.required"
-                defaultMessage="Enter the Tax Rate"
+                id="label.rate.required"
+                defaultMessage="Enter the Rate"
               />
             ),
           },
@@ -639,7 +636,7 @@ const TaxRates = () => {
             ),
           },
           {
-            title: "Tax Name",
+            title: <FormattedMessage id="tax.name" defaultMessage="Tax Name" />,
             dataIndex: "name",
             key: "name",
             render: (text, record) => (
@@ -647,7 +644,7 @@ const TaxRates = () => {
             ),
           },
           {
-            title: "Rate",
+            title: <FormattedMessage id="label.rate" defaultMessage="Rate" />,
             dataIndex: "rate",
             key: "rate",
             render: (text, record) => <>{text}%</>,
@@ -717,7 +714,7 @@ const TaxRates = () => {
             ),
           },
           {
-            title: "Tax Name",
+            title: <FormattedMessage id="tax.name" defaultMessage="Tax Name" />,
             dataIndex: "name",
             key: "name",
             render: (text, record) => (
@@ -725,7 +722,7 @@ const TaxRates = () => {
             ),
           },
           {
-            title: "Rate",
+            title: <FormattedMessage id="label.rate" defaultMessage="Rate" />,
             dataIndex: "rate",
             key: "rate",
             render: (text, record) => <>{text}%</>,
@@ -751,7 +748,7 @@ const TaxRates = () => {
         <>
           {text}
           {!record.isActive ? (
-            <Tag className="active-status">inactive</Tag>
+            <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
           ) : (
             <></>
           )}

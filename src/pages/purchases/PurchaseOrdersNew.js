@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import "./PurchaseOrdersNew.css";
 import {
   Button,
   Form,
@@ -37,14 +36,14 @@ import {
   AddPurchaseProductsModal,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ReactComponent as TaxOutlined } from "../../assets/icons/TaxOutlined.svg";
 import { ReactComponent as PercentageOutlined } from "../../assets/icons/PercentageOutlined.svg";
+import { PurchaseOrderMutations, WarehouseQueries } from "../../graphql";
 import {
-  PurchaseOrderMutations,
-  WarehouseQueries,
-} from "../../graphql";
-import { calculateItemDiscountAndTax, calculateDiscountAmount } from "../../utils/HelperFunctions";
+  calculateItemDiscountAndTax,
+  calculateDiscountAmount,
+} from "../../utils/HelperFunctions";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 const { CREATE_PURCHASE_ORDER } = PurchaseOrderMutations;
@@ -85,11 +84,12 @@ const taxPreferences = [
 ];
 
 const PurchaseOrdersNew = () => {
+  const intl = useIntl();
   const [form] = Form.useForm();
-  const [data, setData] = useState([{ key: 1, amount: 0, taxAmount: 0, discountAmount: 0, taxRate: 0, discount: 0, discountType: 'P' }]);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const record = location.state?.clonePO;
   const {
     notiApi,
     msgApi,
@@ -102,40 +102,91 @@ const PurchaseOrdersNew = () => {
     allWarehousesQueryRef,
     allProductsQueryRef,
     allShipmentPreferencesQueryRef,
+    allProductVariantsQueryRef,
   } = useOutletContext();
+  const [data, setData] = useState(
+    record
+      ? record.details?.map((detail, index) => ({
+          key: index + 1,
+          name: detail.name,
+          amount: detail.detailTotalAmount,
+          taxAmount: detail.detailTaxAmount,
+          discountAmount: detail.detailDiscountAmount,
+          taxRate: detail.detailTax.rate,
+          discount: detail.detailDiscount,
+          discountType: detail.detailDiscountType,
+          id: detail.productType + detail.productId,
+          detailDiscountType: detail.detailDiscountType,
+          quantity: detail.detailQty,
+          rate: detail.detailUnitRate,
+        }))
+      : [
+          {
+            key: 1,
+            amount: 0,
+            taxAmount: 0,
+            discountAmount: 0,
+            taxRate: 0,
+            discount: 0,
+            discountType: "P",
+          },
+        ]
+  );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-  const [discountPreference, setDiscountPreference] = useState({
-    key: "0",
-    label: "At Transaction Level",
-  });
-  const [taxPreference, setTaxPreference] = useState({
-    key: "0",
-    label: "Tax Exclusive",
-  });
-  const [addProductsModalOpen, setAddPurchaseProductsModalOpen] = useState(false);
-  const [subTotal, setSubTotal] = useState(0);
-  const [totalTaxAmount, setTotalTaxAmount] = useState(0);
-  const [totalDiscountAmount, setTotalDiscountAmount] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [adjustment, setAdjustment] = useState(0);
+  const [selectedSupplier, setSelectedSupplier] = useState(
+    record?.supplier?.id ? record.supplier : null
+  );
+  const [selectedWarehouse, setSelectedWarehouse] = useState(
+    record?.warehouse?.id > 0 ? record.warehouse.id : null
+  );
+  const [discountPreference, setDiscountPreference] = useState(
+    record?.orderDiscount > 0
+      ? {
+          key: "0",
+          label: "At Transaction Level",
+        }
+      : { key: "1", label: "At Line Item Level" }
+  );
+  const [taxPreference, setTaxPreference] = useState(
+    record?.isDetailTaxInclusive
+      ? { key: "1", label: "Tax Inclusive" }
+      : {
+          key: "0",
+          label: "Tax Exclusive",
+        }
+  );
+  const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
+    useState(false);
+  const [subTotal, setSubTotal] = useState(record?.orderSubtotal || 0);
+  const [totalTaxAmount, setTotalTaxAmount] = useState(
+    record?.orderTotalTaxAmount || 0
+  );
+  const [totalDiscountAmount, setTotalDiscountAmount] = useState(
+    record?.orderTotalDiscountAmount || 0
+  );
+  const [totalAmount, setTotalAmount] = useState((record?.orderTotalAmount || 0) - (record?.adjustmentAmount || 0));
+  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const client = useApolloClient();
-  const [tableKeyCounter, setTableKeyCounter] = useState(1);
-  const [selectedCurrency, setSelectedCurrency] = useState(business.baseCurrency.id);
+  const [tableKeyCounter, setTableKeyCounter] = useState(
+    record?.details?.length || 1
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    record?.currency.id || business.baseCurrency.id
+  );
   const [discount, setDiscount] = useState(0);
-  const [selectedDiscountType, setSelectedDiscountType] = useState('P');
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [isTaxInclusive, setIsTaxInclusive] = useState(false);
-  const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(true);
-  const [saveStatus, setSaveStatus] = useState('Draft');
-  
-  const initialValues = {
-    currency: business.baseCurrency.id,
-    paymentTerms: "DueOnReceipt",
-    date: dayjs(),
-    branch: business.primaryBranch.id,
-  };
+  const [selectedDiscountType, setSelectedDiscountType] = useState(
+    record?.orderDiscountType || "P"
+  );
+  const [discountAmount, setDiscountAmount] = useState(
+    record?.orderDiscountAmount || 0
+  );
+  const [isTaxInclusive, setIsTaxInclusive] = useState(
+    record?.isDetailTaxInclusive || false
+  );
+  const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
+    discountPreference.key === "0"
+  );
+  const [saveStatus, setSaveStatus] = useState("Draft");
 
   // Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -148,6 +199,7 @@ const PurchaseOrdersNew = () => {
   const { data: shipmentPreferenceData } = useReadQuery(
     allShipmentPreferencesQueryRef
   );
+  const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
 
   // Mutations
   const [createPO, { loading: createLoading }] = useMutation(
@@ -193,6 +245,12 @@ const PurchaseOrdersNew = () => {
     return productData?.listAllProduct?.filter((p) => p.isActive === true);
   }, [productData]);
 
+  const productVariants = useMemo(() => {
+    return productVariantData?.listAllProductVariant?.filter(
+      (p) => p.isActive === true
+    );
+  }, [productVariantData]);
+
   const shipmentPreferences = useMemo(() => {
     return shipmentPreferenceData?.listAllShipmentPreference?.filter(
       (s) => s.isActive === true
@@ -209,7 +267,17 @@ const PurchaseOrdersNew = () => {
     );
   }, [taxGroupData]);
 
-  const allProducts = products ? products.map((product) => ({ ...product, id: "S" + product.id})) : [];
+  const allProducts = useMemo(() => {
+    const productsWithS = products
+      ? products.map((product) => ({ ...product, id: "S" + product.id }))
+      : [];
+
+    const productsWithV = productVariants
+      ? productVariants.map((variant) => ({ ...variant, id: "V" + variant.id }))
+      : [];
+
+    return [...productsWithS, ...productsWithV];
+  }, [products, productVariants]);
 
   const allTax = [
     {
@@ -230,14 +298,65 @@ const PurchaseOrdersNew = () => {
         : [],
     },
   ];
-  
-  const decimalPlaces = currencies.find(c => c.id === selectedCurrency).decimalPlaces;
+
+  const decimalPlaces = currencies.find(
+    (c) => c.id === selectedCurrency
+  ).decimalPlaces;
+
+  useMemo(() => {
+    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
+    const parsedRecord = record
+      ? {
+          supplierName: record?.supplierName,
+          branch: record?.branch?.id,
+          referenceNumber: record?.referenceNumber,
+          date: dayjs(record?.orderDate),
+          deliveryDate: dayjs(record?.expectedDeliveryDate),
+          deliveryWarehouse:
+            record?.deliveryWarehouseId === 0
+              ? null
+              : record?.deliveryWarehouseId,
+          deliveryAddress: record?.deliveryAddress,
+          shipmentPreference:
+            record?.shipmentPreferenceId === 0
+              ? null
+              : record?.shipmentPreferenceId,
+          paymentTerms: record?.orderPaymentTerms,
+          customDays: record?.orderPaymentTermsCustomDays,
+          currency: record?.currency?.id,
+          exchangeRate: record?.currency?.exchangeRate,
+          warehouse: record?.warehouse.id,
+          customerNotes: record?.notes,
+          discount: record?.orderDiscount,
+          adjustment: record?.adjustmentAmount || null,
+          // Map transactions to form fields
+          ...record?.details?.reduce((acc, d, index) => {
+            acc[`account${index + 1}`] = d.detailAccount.id || null;
+            acc[`quantity${index + 1}`] = d.detailQty;
+            acc[`rate${index + 1}`] = d.detailUnitRate;
+            acc[`detailDiscount${index + 1}`] = d.detailDiscount;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
+            acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
+            return acc;
+          }, {}),
+        }
+      : {
+          currency: business.baseCurrency.id,
+          paymentTerms: "DueOnReceipt",
+          date: dayjs(),
+          branch: business.primaryBranch.id,
+        };
+
+    form.setFieldsValue(parsedRecord);
+  }, [form, record, business]);
 
   const onFinish = (values) => {
     console.log("values", values);
     let foundInvalid = false;
+    console.log(data);
     const details = data.map((item) => {
-      if (!item.name || item.amount === 0) {
+      if (!(item.name || values[`product${item.key}`]) || item.amount === 0) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -248,10 +367,12 @@ const PurchaseOrdersNew = () => {
       const detailTaxId = taxId ? parseInt(taxId?.replace(/[IG]/, ""), 10) : 0;
       const productId = item.id;
       const detailProductType = productId ? Array.from(productId)[0] : "S";
-      let detailProductId = productId ? parseInt(productId?.replace(/[SGCV]/, ""), 10) : 0;
+      let detailProductId = productId
+        ? parseInt(productId?.replace(/[SGCV]/, ""), 10)
+        : 0;
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
-        productId: detailProductId, 
+        productId: detailProductId,
         productType: detailProductType,
         // batchNumber
         name: item.name || values[`product${item.key}`],
@@ -266,7 +387,13 @@ const PurchaseOrdersNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      openErrorNotification(notiApi, "Invalid Product Details");
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -289,10 +416,11 @@ const PurchaseOrdersNew = () => {
       orderDiscountType: selectedDiscountType,
       adjustmentAmount: adjustment,
       isDetailTaxInclusive: isTaxInclusive,
+
       orderTaxId: 0,
-      orderTaxType: 'I',
+      orderTaxType: "I",
       currentStatus: saveStatus,
-      // documents: 
+      // documents:
       warehouseId: values.warehouse,
       details,
     };
@@ -304,9 +432,20 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter+1;
-    setTableKeyCounter(tableKeyCounter+1);
-    setData([...data, { key: newRowKey, amount: 0, taxAmount: 0, discountAmount: 0, taxRate: 0, discount: 0, discountType: 'P' }]);
+    const newRowKey = tableKeyCounter + 1;
+    setTableKeyCounter(tableKeyCounter + 1);
+    setData([
+      ...data,
+      {
+        key: newRowKey,
+        amount: 0,
+        taxAmount: 0,
+        discountAmount: 0,
+        taxRate: 0,
+        discount: 0,
+        discountType: "P",
+      },
+    ]);
   };
 
   const handleRemoveRow = (keyToRemove) => {
@@ -360,7 +499,9 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleDiscountPreferenceChange = (key) => {
-    const discountPreference = discountPreferences.find((option) => option.key === key);
+    const discountPreference = discountPreferences.find(
+      (option) => option.key === key
+    );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
@@ -386,10 +527,13 @@ const PurchaseOrdersNew = () => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
-  
+
         if (matchingSelectedItem) {
           const newQuantity = dataItem.quantity + matchingSelectedItem.quantity;
-          const [amount, discountAmount, taxAmount] = calculateItemAmount({...dataItem, quantity: newQuantity});
+          const [amount, discountAmount, taxAmount] = calculateItemAmount({
+            ...dataItem,
+            quantity: newQuantity,
+          });
           return {
             ...dataItem,
             quantity: newQuantity,
@@ -398,12 +542,12 @@ const PurchaseOrdersNew = () => {
             taxAmount,
           };
         }
-  
+
         return dataItem;
       });
       newData = updatedData;
     }
-    
+
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
@@ -412,10 +556,12 @@ const PurchaseOrdersNew = () => {
     if (nonExistingItems.length > 0) {
       // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
       let newRowKey = tableKeyCounter;
-  
+
       selectedItemsBulk.forEach((selectedItem, index) => {
         newRowKey++;
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({...selectedItem});
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...selectedItem,
+        });
         const newDataItem = {
           ...selectedItem,
           key: newRowKey,
@@ -423,10 +569,10 @@ const PurchaseOrdersNew = () => {
           discountAmount,
           taxAmount,
         };
-  
+
         // Add the new data item to the existing data array
         newData = [...newData, newDataItem];
-  
+
         // Set the form fields for the new data item
         form.setFieldsValue({
           [`product${newRowKey}`]: selectedItem.id,
@@ -440,7 +586,7 @@ const PurchaseOrdersNew = () => {
     if (newData.length > 0) {
       recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     }
-  }
+  };
 
   const handleSelectItem = (value, rowKey) => {
     const selectedItem = allProducts?.find((product) => product.id === value);
@@ -455,7 +601,9 @@ const PurchaseOrdersNew = () => {
       };
       if (selectedItem && selectedItem.id) {
         // cancel if selected item is already in the list
-        const foundIndex = data.findIndex((dataItem) => dataItem.id === selectedItem.id);
+        const foundIndex = data.findIndex(
+          (dataItem) => dataItem.id === selectedItem.id
+        );
         if (foundIndex !== -1) {
           return;
         }
@@ -466,7 +614,7 @@ const PurchaseOrdersNew = () => {
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
-        newData.account = selectedItem.purchaseAccount?.id;
+        newData.account = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -480,13 +628,13 @@ const PurchaseOrdersNew = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.purchaseAccount?.id,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
       [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
       [`quantity${rowKey}`]: 1,
     });
   };
-  
+
   const handleRemoveSelectedItem = (idToRemove, rowKey) => {
     const updatedData = data.map((dataItem) => {
       if (dataItem.id === idToRemove) {
@@ -515,32 +663,47 @@ const PurchaseOrdersNew = () => {
       parseFloat(item.quantity) || 0,
       parseFloat(item.rate) || 0,
       itemDiscount,
-      item.discountType || 'P',
+      item.discountType || "P",
       parseFloat(item.taxRate) || 0,
       isTaxInclusive,
-      decimalPlaces,
+      decimalPlaces
     );
     const newTotalTaxAmount = totalTaxAmount - item.taxAmount + taxAmount;
     const newSubTotal = subTotal - item.amount + amount;
-    setTotalDiscountAmount(totalDiscountAmount - item.discountAmount + discountAmount);
+    setTotalDiscountAmount(
+      totalDiscountAmount - item.discountAmount + discountAmount
+    );
     setTotalTaxAmount(newTotalTaxAmount);
     setSubTotal(newSubTotal);
     calculateTotalAmount(newSubTotal, newTotalTaxAmount, isAtTransactionLevel);
     return [amount, discountAmount, taxAmount];
-  }
+  };
 
-  const calculateTotalAmount = (newSubTotal, newTotalTaxAmount, isAtTransactionLevel) => {
+  const calculateTotalAmount = (
+    newSubTotal,
+    newTotalTaxAmount,
+    isAtTransactionLevel
+  ) => {
     // discount at transaction level
     if (isAtTransactionLevel) {
-      const newDiscountAmount = calculateDiscountAmount(newSubTotal, discount, selectedDiscountType, decimalPlaces);
+      const newDiscountAmount = calculateDiscountAmount(
+        newSubTotal,
+        discount,
+        selectedDiscountType,
+        decimalPlaces
+      );
       setDiscountAmount(newDiscountAmount);
       setTotalAmount(newSubTotal + newTotalTaxAmount - newDiscountAmount);
     } else {
       setTotalAmount(newSubTotal + newTotalTaxAmount);
     }
-  }
+  };
 
-  const recalculateTotalAmount = (data, isTaxInclusive, isAtTransactionLevel) => {
+  const recalculateTotalAmount = (
+    data,
+    isTaxInclusive,
+    isAtTransactionLevel
+  ) => {
     // recalculate subtotal
     let subTotal = 0;
     let totalDiscountAmount = 0;
@@ -555,12 +718,12 @@ const PurchaseOrdersNew = () => {
         parseFloat(item.quantity) || 0,
         parseFloat(item.rate) || 0,
         itemDiscount,
-        item.discountType || 'P',
+        item.discountType || "P",
         parseFloat(item.taxRate) || 0,
         isTaxInclusive,
-        decimalPlaces,
+        decimalPlaces
       );
-      newData.push({...item, amount, discountAmount, taxAmount});
+      newData.push({ ...item, amount, discountAmount, taxAmount });
       subTotal += amount;
       totalDiscountAmount += discountAmount;
       totalTaxAmount += taxAmount;
@@ -570,30 +733,43 @@ const PurchaseOrdersNew = () => {
     setTotalDiscountAmount(totalDiscountAmount);
     setTotalTaxAmount(totalTaxAmount);
     calculateTotalAmount(subTotal, totalTaxAmount, isAtTransactionLevel);
-  }
+  };
 
   const handleDiscountChange = (value) => {
     const newDiscount = parseFloat(value) || 0;
-    const newDiscountAmount = calculateDiscountAmount(subTotal, newDiscount, selectedDiscountType, decimalPlaces);
+    const newDiscountAmount = calculateDiscountAmount(
+      subTotal,
+      newDiscount,
+      selectedDiscountType,
+      decimalPlaces
+    );
     setDiscount(newDiscount);
     setDiscountAmount(newDiscountAmount);
     setTotalAmount(totalAmount + discountAmount - newDiscountAmount);
-  }
+  };
 
   const handleDiscountTypeChange = (value) => {
-    const type = value === 'P' ? 'P' : 'A';
-    const newDiscountAmount = calculateDiscountAmount(subTotal, discount, type, decimalPlaces);
+    const type = value === "P" ? "P" : "A";
+    const newDiscountAmount = calculateDiscountAmount(
+      subTotal,
+      discount,
+      type,
+      decimalPlaces
+    );
     setSelectedDiscountType(type);
     setDiscountAmount(newDiscountAmount);
     setTotalAmount(totalAmount + discountAmount - newDiscountAmount);
-  }
+  };
 
   const handleQuantityChange = (value, rowKey) => {
     const updatedData = data.map((item) => {
       if (item.key === rowKey) {
         const quantity = parseFloat(value) || 0;
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({ ...item, quantity });
-        return { ...item, quantity, amount, discountAmount, taxAmount }
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...item,
+          quantity,
+        });
+        return { ...item, quantity, amount, discountAmount, taxAmount };
       }
       return item;
     });
@@ -604,20 +780,26 @@ const PurchaseOrdersNew = () => {
     const updatedData = data.map((item) => {
       if (item.key === rowKey) {
         const rate = parseFloat(value) || 0;
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({ ...item, rate });
-        return { ...item, rate, amount, discountAmount, taxAmount }
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...item,
+          rate,
+        });
+        return { ...item, rate, amount, discountAmount, taxAmount };
       }
       return item;
     });
     setData(updatedData);
   };
-  
+
   const handleDetailDiscountChange = (value, rowKey) => {
     const updatedData = data.map((item) => {
       if (item.key === rowKey) {
         const discount = parseFloat(value) || 0;
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({ ...item, discount });
-        return { ...item, discount, amount, discountAmount, taxAmount }
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...item,
+          discount,
+        });
+        return { ...item, discount, amount, discountAmount, taxAmount };
       }
       return item;
     });
@@ -627,14 +809,17 @@ const PurchaseOrdersNew = () => {
   const handleDetailDiscountTypeChange = (value, rowKey) => {
     const updatedData = data.map((item) => {
       if (item.key === rowKey) {
-        const discountType = value || 'P';
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({ ...item, discountType });
-        return { ...item, discountType, amount, discountAmount, taxAmount }
+        const discountType = value || "P";
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...item,
+          discountType,
+        });
+        return { ...item, discountType, amount, discountAmount, taxAmount };
       }
       return item;
     });
     setData(updatedData);
-  }
+  };
 
   const handleDetailTaxChange = (value, rowKey) => {
     const updatedData = data.map((item) => {
@@ -646,20 +831,25 @@ const PurchaseOrdersNew = () => {
             taxGroup.taxes.some((tax) => tax.id === taxId)
           );
           const detailTaxType = tax && tax.title === "Tax Group" ? "G" : "I";
-          const detailTaxId = taxId ? parseInt(taxId?.replace(/[IG]/, ""), 10) : 0;
-          if (detailTaxType === 'I') {
-            taxRate = taxes.find(t => t.id === detailTaxId).rate;
+          const detailTaxId = taxId
+            ? parseInt(taxId?.replace(/[IG]/, ""), 10)
+            : 0;
+          if (detailTaxType === "I") {
+            taxRate = taxes.find((t) => t.id === detailTaxId).rate;
           } else {
-            taxRate = taxGroups.find(t => t.id === detailTaxId).rate;
+            taxRate = taxGroups.find((t) => t.id === detailTaxId).rate;
           }
         }
-        const [amount, discountAmount, taxAmount] = calculateItemAmount({ ...item, taxRate });
-        return { ...item, taxRate, amount, discountAmount, taxAmount }
+        const [amount, discountAmount, taxAmount] = calculateItemAmount({
+          ...item,
+          taxRate,
+        });
+        return { ...item, taxRate, amount, discountAmount, taxAmount };
       }
       return item;
     });
     setData(updatedData);
-  }
+  };
 
   const columns = [
     // {
@@ -678,7 +868,7 @@ const PurchaseOrdersNew = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div>
+            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
               <Flex justify="space-between">
                 {text}
                 <CloseCircleOutlined
@@ -693,7 +883,17 @@ const PurchaseOrdersNew = () => {
           <Form.Item
             hidden={text}
             name={`product${record.key}`}
-            className="margin-less-input"
+            rules={[
+              {
+                required: text ? false : true,
+                message: (
+                  <FormattedMessage
+                    id="label.product.required"
+                    defaultMessage="Select the Product"
+                  />
+                ),
+              },
+            ]}
           >
             <AutoComplete
               className="custom-select"
@@ -744,7 +944,20 @@ const PurchaseOrdersNew = () => {
       key: "account",
       width: "10%",
       render: (_, record) => (
-        <Form.Item name={`account${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`account${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.account.required"
+                  defaultMessage="Select the Account"
+                />
+              ),
+            },
+          ]}
+        >
           <Select
             allowClear
             showSearch
@@ -775,7 +988,36 @@ const PurchaseOrdersNew = () => {
       key: "quantity",
       width: "10%",
       render: (text, record) => (
-        <Form.Item name={`quantity${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`quantity${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.quantity.required"
+                  defaultMessage="Enter the Quantity"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input
             maxLength={15}
             value={text ? text : "1.00"}
@@ -791,7 +1033,36 @@ const PurchaseOrdersNew = () => {
       key: "rate",
       width: "10%",
       render: (text, record) => (
-        <Form.Item name={`rate${record.key}`} className="margin-less-input">
+        <Form.Item
+          name={`rate${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.rate.required"
+                  defaultMessage="Enter the Rate"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input
             maxLength={15}
             value={text ? text : "1.00"}
@@ -807,16 +1078,45 @@ const PurchaseOrdersNew = () => {
       key: "detailDiscount",
       width: "10%",
       hidden: discountPreference.key === "0",
-      render: (text, record) => (
-        <Form.Item name={`detailDiscount${record.key}`} className="margin-less-input">
+      render: (_, record) => (
+        <Form.Item
+          name={`detailDiscount${record.key}`}
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input
             maxLength={15}
-            onBlur={(e) => handleDetailDiscountChange(e.target.value, record.key)}
+            onBlur={(e) =>
+              handleDetailDiscountChange(e.target.value, record.key)
+            }
             addonAfter={
               <Form.Item noStyle name={`detailDiscountType${record.key}`}>
-                <Select onChange={(value) => handleDetailDiscountTypeChange(value, record.key)} defaultValue="P">
+                <Select
+                  onChange={(value) =>
+                    handleDetailDiscountTypeChange(value, record.key)
+                  }
+                  defaultValue="P"
+                >
                   <Select.Option value="P">%</Select.Option>
-                  <Select.Option value="A">{currencies.find(c => c.id === selectedCurrency).symbol}</Select.Option>
+                  <Select.Option value="A">
+                    {currencies.find((c) => c.id === selectedCurrency).symbol}
+                  </Select.Option>
                 </Select>
               </Form.Item>
             }
@@ -830,7 +1130,7 @@ const PurchaseOrdersNew = () => {
       key: "detailTax",
       width: "10%",
       render: (_, record) => (
-        <Form.Item name={`detailTax${record.key}`} className="margin-less-input">
+        <Form.Item name={`detailTax${record.key}`}>
           <Select
             onChange={(value) => handleDetailTaxChange(value, record.key)}
             showSearch
@@ -856,25 +1156,30 @@ const PurchaseOrdersNew = () => {
       dataIndex: "amount",
       key: "amount",
       width: "10%",
-      // render: (text, record) => (
-      //   <Form.Item name={`account${record.key}`}>
-      //     <Input
-      //       value={text ? text.toFixed(2) : "1.00"}
-      //       className="text-align-right"
-      //     />
-      //   </Form.Item>
-      // ),
+      render: (text) => (
+        <div
+          style={{
+            marginBottom: "24px",
+            textAlign: "right",
+            paddingRight: "1rem",
+          }}
+        >
+          {text}
+        </div>
+      ),
     },
     {
       title: "",
       dataIndex: "actions",
       key: "actions",
-      width: "3%",
+      width: "5%",
       render: (_, record) => (
-        <CloseCircleOutlined
-          style={{ color: "red" }}
-          onClick={() => handleRemoveRow(record.key)}
-        />
+        <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
+          <CloseCircleOutlined
+            style={{ color: "red" }}
+            onClick={() => handleRemoveRow(record.key)}
+          />
+        </Flex>
       ),
     },
   ];
@@ -887,7 +1192,7 @@ const PurchaseOrdersNew = () => {
         onRowSelect={handleModalRowSelect}
       />
       <AddPurchaseProductsModal
-        products={products}
+        products={allProducts}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -911,7 +1216,7 @@ const PurchaseOrdersNew = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish} initialValues={initialValues}>
+        <Form form={form} onFinish={onFinish}>
           <Row>
             <Col span={12}>
               <Form.Item
@@ -1170,7 +1475,7 @@ const PurchaseOrdersNew = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-            <Form.Item
+              <Form.Item
                 noStyle
                 shouldUpdate={(prevValues, currentValues) =>
                   prevValues.paymentTerms !== currentValues.paymentTerms
@@ -1234,7 +1539,11 @@ const PurchaseOrdersNew = () => {
                   },
                 ]}
               >
-                <Select onChange={(value) => setSelectedCurrency(value)} showSearch optionFilterProp="label">
+                <Select
+                  onChange={(value) => setSelectedCurrency(value)}
+                  showSearch
+                  optionFilterProp="label"
+                >
                   {currencies.map((currency) => (
                     <Select.Option
                       key={currency.id}
@@ -1278,9 +1587,25 @@ const PurchaseOrdersNew = () => {
                             />
                           ),
                         },
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (isNaN(value) || value.length > 20) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
                       ]}
                     >
-                      <InputNumber />
+                      <Input />
                     </Form.Item>
                   ) : null
                 }
@@ -1499,15 +1824,45 @@ const PurchaseOrdersNew = () => {
                         />
                       </td>
                       <td style={{ width: "20%" }} offset={10}>
-                        <Form.Item name="discount" style={{ margin: 0 }}>
+                        <Form.Item
+                          name="discount"
+                          style={{ margin: 0 }}
+                          rules={[
+                            () => ({
+                              validator(_, value) {
+                                if (!value) {
+                                  return Promise.resolve();
+                                } else if (isNaN(value) || value.length > 20) {
+                                  return Promise.reject(
+                                    intl.formatMessage({
+                                      id: "validation.invalidInput",
+                                      defaultMessage: "Invalid Input",
+                                    })
+                                  );
+                                } else {
+                                  return Promise.resolve();
+                                }
+                              },
+                            }),
+                          ]}
+                        >
                           <Input
-                            onBlur={(e) =>
-                              handleDiscountChange(e.target.value)
-                            }
+                            onBlur={(e) => handleDiscountChange(e.target.value)}
                             addonAfter={
-                              <Select onChange={(value) => handleDiscountTypeChange(value)} value={selectedDiscountType}>
+                              <Select
+                                onChange={(value) =>
+                                  handleDiscountTypeChange(value)
+                                }
+                                value={selectedDiscountType}
+                              >
                                 <Select.Option value="P">%</Select.Option>
-                                <Select.Option value="A">{currencies.find(c => c.id === selectedCurrency).symbol}</Select.Option>
+                                <Select.Option value="A">
+                                  {
+                                    currencies.find(
+                                      (c) => c.id === selectedCurrency
+                                    ).symbol
+                                  }
+                                </Select.Option>
                               </Select>
                             }
                           />
@@ -1517,7 +1872,9 @@ const PurchaseOrdersNew = () => {
                         <span
                           style={{
                             color:
-                              Math.sign(discountAmount) === 1 ? "var(--red)" : "",
+                              Math.sign(discountAmount) === 1
+                                ? "var(--red)"
+                                : "",
                           }}
                         >
                           {Math.sign(discountAmount) === 1 && "-"}
@@ -1526,14 +1883,11 @@ const PurchaseOrdersNew = () => {
                       </td>
                     </tr>
                   )}
-                  {totalTaxAmount > 0 &&
+                  {totalTaxAmount > 0 && (
                     <tr>
                       <td style={{ verticalAlign: "middle", width: "20%" }}>
-                        <FormattedMessage
-                          id="label.tax"
-                          defaultMessage="Tax"
-                        />
-                         {isTaxInclusive && ' (Inclusive)'}
+                        <FormattedMessage id="label.tax" defaultMessage="Tax" />
+                        {isTaxInclusive && " (Inclusive)"}
                       </td>
 
                       <td
@@ -1544,11 +1898,32 @@ const PurchaseOrdersNew = () => {
                         {totalTaxAmount.toFixed(decimalPlaces)}
                       </td>
                     </tr>
-                  }
+                  )}
                   <tr>
                     <td>Adjustment</td>
                     <td style={{ width: "20%" }} offset={10}>
-                      <Form.Item name="adjustment" style={{ margin: 0 }}>
+                      <Form.Item
+                        name="adjustment"
+                        style={{ margin: 0 }}
+                        rules={[
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (isNaN(value) || value.length > 20) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
                         <Input
                           onBlur={(e) =>
                             setAdjustment(parseFloat(e.target.value) || 0)
@@ -1575,9 +1950,11 @@ const PurchaseOrdersNew = () => {
                       />
                     </td>
                     <td className="text-align-right" colSpan="2">
-                      {isTaxInclusive 
-                      ? (totalAmount + adjustment - totalTaxAmount).toFixed(decimalPlaces) 
-                      : (totalAmount + adjustment).toFixed(decimalPlaces)}
+                      {isTaxInclusive
+                        ? (totalAmount + adjustment - totalTaxAmount).toFixed(
+                            decimalPlaces
+                          )
+                        : (totalAmount + adjustment).toFixed(decimalPlaces)}
                     </td>
                   </tr>
                 </tbody>
@@ -1614,18 +1991,28 @@ const PurchaseOrdersNew = () => {
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus('Draft')}
+              onClick={() => setSaveStatus("Draft")}
             >
-              {<FormattedMessage id="button.saveAsDraft" defaultMessage="Save As Draft" />}
+              {
+                <FormattedMessage
+                  id="button.saveAsDraft"
+                  defaultMessage="Save As Draft"
+                />
+              }
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus('Confirmed')}
+              onClick={() => setSaveStatus("Confirmed")}
             >
-              {<FormattedMessage id="button.saveAndConfirm" defaultMessage="Save And Confirm" />}
+              {
+                <FormattedMessage
+                  id="button.saveAndConfirm"
+                  defaultMessage="Save And Confirm"
+                />
+              }
             </Button>
             <Button
               className="page-actions-btn"

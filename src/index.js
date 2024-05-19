@@ -15,7 +15,7 @@ import reportWebVitals from "./reportWebVitals";
 import Wrapper from "./localeWrapper";
 
 const httpLink = new HttpLink({ uri: "http://139.59.236.210:3000/query" });
-// const httpLink = new HttpLink({ uri: "http://192.168.88.108:8081/query" });
+// const httpLink = new HttpLink({ uri: "http://192.168.88.110:8081/query" });
 // const httpLink = new HttpLink({ uri: "http://localhost:8081/query" });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
@@ -51,6 +51,11 @@ const client = new ApolloClient({
           paginateSupplierCredit: relayStylePagination(),
           paginateCustomer: relayStylePagination(),
           paginateSalesPerson: relayStylePagination(),
+          paginateSalesOrder: relayStylePagination(),
+          paginateCustomerPayment: relayStylePagination(),
+          paginateExpense: relayStylePagination(),
+          paginateInvoice: relayStylePagination(),
+          paginateCreditNote: relayStylePagination(),
         },
       },
     },

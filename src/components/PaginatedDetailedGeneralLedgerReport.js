@@ -1,12 +1,23 @@
 /* eslint-disable react/style-prop-object */
-import React, {useState} from "react";
-import { LeftOutlined, RightOutlined, SyncOutlined, FileTextOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import {
+  LeftOutlined,
+  RightOutlined,
+  SyncOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
 import { Button, Row, Space, Modal, Tooltip, Spin, Flex, Empty } from "antd";
 import { useQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
-import { convertTransactionType, paginateArray } from "../utils/HelperFunctions";
-import { DETAILED_GENERAL_LEDGER_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
+import {
+  convertTransactionType,
+  paginateArray,
+} from "../utils/HelperFunctions";
+import {
+  DETAILED_GENERAL_LEDGER_LIMIT,
+  REPORT_DATE_FORMAT,
+} from "../config/Constants";
 import moment from "moment";
 import ReportHeader from "./ReportHeader";
 
@@ -21,7 +32,7 @@ const PaginatedDetailedGeneralLedgerReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useState("currentPage", 1);
+  const [currentPage, setCurrentPage] = useState("detailedGLCurrentPage", 1);
   const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
@@ -119,7 +130,10 @@ const PaginatedDetailedGeneralLedgerReport = ({
           <h4>{business.name}</h4>
           <h3 style={{ marginTop: "-5px" }}>Detailed General Ledger</h3>
           <span>Basis: {reportBasis}</span>
-          <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
+          <h5>
+            From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+            {toDate.format(REPORT_DATE_FORMAT)}
+          </h5>
         </div>
         {queryLoading ? (
           <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -134,28 +148,52 @@ const PaginatedDetailedGeneralLedgerReport = ({
                     <FormattedMessage id="report.date" defaultMessage="Date" />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.account" defaultMessage="Account" />
+                    <FormattedMessage
+                      id="report.account"
+                      defaultMessage="Account"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionDetails" defaultMessage="Transaction Details" />
+                    <FormattedMessage
+                      id="report.transactionDetails"
+                      defaultMessage="Transaction Details"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionType" defaultMessage="Transaction Type" />
+                    <FormattedMessage
+                      id="report.transactionType"
+                      defaultMessage="Transaction Type"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.transactionNumber" defaultMessage="Transaction #" />
+                    <FormattedMessage
+                      id="report.transactionNumber"
+                      defaultMessage="Transaction #"
+                    />
                   </th>
                   <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.referenceNumber" defaultMessage="Reference #" />
+                    <FormattedMessage
+                      id="report.referenceNumber"
+                      defaultMessage="Reference #"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.debit" defaultMessage="Debit" />
+                    <FormattedMessage
+                      id="report.debit"
+                      defaultMessage="Debit"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.credit" defaultMessage="Credit" />
+                    <FormattedMessage
+                      id="report.credit"
+                      defaultMessage="Credit"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.amount" defaultMessage="Amount" />
+                    <FormattedMessage
+                      id="report.amount"
+                      defaultMessage="Amount"
+                    />
                   </th>
                 </tr>
               </thead>
@@ -172,7 +210,9 @@ const PaginatedDetailedGeneralLedgerReport = ({
                     <tr>
                       <td style={{ verticalAlign: "top" }}>
                         As On{" "}
-                        {moment(data?.openingBalanceDate).format(REPORT_DATE_FORMAT)}
+                        {moment(data?.openingBalanceDate).format(
+                          REPORT_DATE_FORMAT
+                        )}
                       </td>
                       <td>Opening Balance</td>
                       <td></td>
@@ -180,19 +220,22 @@ const PaginatedDetailedGeneralLedgerReport = ({
                       <td></td>
                       <td></td>
                       <td className="text-align-right">
-                        {data.openingBalance >= 0 && data.currencySymbol + ' ' + data.openingBalance}
+                        {data.openingBalance >= 0 &&
+                          data.currencySymbol + " " + data.openingBalance}
                       </td>
                       <td className="text-align-right">
                         {data.openingBalance !== 0 &&
                           data.openingBalance < 0 &&
-                          data.currencySymbol + ' ' + data.openingBalance}
+                          data.currencySymbol + " " + data.openingBalance}
                       </td>
                       <td className="text-align-right"></td>
                     </tr>
                     {data.transactions.map((transaction, index) => (
                       <tr key={index}>
                         <td style={{ verticalAlign: "top" }}>
-                          {moment.utc(transaction?.transactionDateTime).format(REPORT_DATE_FORMAT)}
+                          {moment
+                            .utc(transaction?.transactionDateTime)
+                            .format(REPORT_DATE_FORMAT)}
                         </td>
                         <td>{transaction.accountName}</td>
                         {/* <td>
@@ -201,34 +244,63 @@ const PaginatedDetailedGeneralLedgerReport = ({
                           </span>
                         </td> */}
                         <td>
-                          <Tooltip title={transaction.transactionDetails}>
-                            <FileTextOutlined />
-                          </Tooltip>
+                          {transaction.transactionDetails && (
+                            <Tooltip title={transaction.transactionDetails}>
+                              <FileTextOutlined />
+                            </Tooltip>
+                          )}
                         </td>
-                        <td>{convertTransactionType(transaction.transactionType)}</td>
+                        <td>
+                          {convertTransactionType(transaction.transactionType)}
+                        </td>
                         <td>{transaction.transactionNumber}</td>
                         <td>{transaction.referenceNumber}</td>
                         <td className="text-align-right">
                           <a href="/">
-                            {transaction.debit !== 0 && 
-                              <FormattedNumber value={transaction.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />}
+                            {transaction.debit !== 0 && (
+                              <FormattedNumber
+                                value={transaction.debit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
                           </a>
                         </td>
                         <td className="text-align-right">
                           <a href="/">
-                            {transaction.credit !== 0 && 
-                              <FormattedNumber value={transaction.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />}
+                            {transaction.credit !== 0 && (
+                              <FormattedNumber
+                                value={transaction.credit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
                           </a>
                         </td>
                         <td className="text-align-right">
                           <a href="/">
-                            {transaction.debit === 0
-                              ? <FormattedNumber value={transaction.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
-                              : <FormattedNumber value={transaction.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
-                            }
-                            {transaction.debit === 0
-                              ? ` Cr`
-                              : ` Dr`}
+                            {transaction.debit === 0 ? (
+                              <FormattedNumber
+                                value={transaction.credit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            ) : (
+                              <FormattedNumber
+                                value={transaction.debit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            )}
+                            {transaction.debit === 0 ? ` Cr` : ` Dr`}
                           </a>
                         </td>
                       </tr>
@@ -236,7 +308,9 @@ const PaginatedDetailedGeneralLedgerReport = ({
                     <tr>
                       <td style={{ verticalAlign: "top" }}>
                         As On{" "}
-                        {moment.utc(data?.closingBalanceDate).format(REPORT_DATE_FORMAT)}
+                        {moment
+                          .utc(data?.closingBalanceDate)
+                          .format(REPORT_DATE_FORMAT)}
                       </td>
                       <td>Closing Balance</td>
                       <td></td>
@@ -245,12 +319,15 @@ const PaginatedDetailedGeneralLedgerReport = ({
                       <td></td>
 
                       <td className="text-align-right">
-                        {data.closingBalance >= 0 && data.currencySymbol + ' ' + data.closingBalance}
+                        {data.closingBalance >= 0 &&
+                          data.currencySymbol + " " + data.closingBalance}
                       </td>
                       <td className="text-align-right">
                         {data.closingBalance !== 0 &&
                           data.closingBalance < 0 &&
-                          data.currencySymbol + ' ' + Math.abs(data.closingBalance)}
+                          data.currencySymbol +
+                            " " +
+                            Math.abs(data.closingBalance)}
                       </td>
                       <td className="text-align-right"></td>
                     </tr>
@@ -338,7 +415,11 @@ const PaginatedDetailedGeneralLedgerReport = ({
       </Row>
       <Row>
         <div style={{ paddingLeft: "1.5rem" }}>
-          <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+          <FormattedMessage
+            values={{ currency: business.baseCurrency.symbol }}
+            id="label.displayedBaseCurrency"
+            defaultMessage="**Amount is displayed in {currency}"
+          />
         </div>
       </Row>
     </div>

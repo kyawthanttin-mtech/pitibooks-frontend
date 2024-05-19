@@ -4,28 +4,26 @@ import { Button, Dropdown, Form, Modal, Input, Space, Table, Tag } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
 import { useMutation } from "@apollo/client";
 import { useOutletContext } from "react-router-dom";
-import { SalesPersonQueries, SalesPersonMutations } from "../../graphql";
+import { DeliveryMethodMutations, DeliveryMethodQueries } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { gql } from "@apollo/client";
-import { PaginatedTable } from "../../components";
-const { GET_PAGINATE_SALES_PERSON } = SalesPersonQueries;
+import { useQuery } from "@apollo/client";
 const {
-  CREATE_SALES_PERSON,
-  UPDATE_SALES_PERSON,
-  DELETE_SALES_PERSON,
-  TOGGLE_ACTIVE_SALES_PERSON,
-} = SalesPersonMutations;
+  CREATE_DELIVERY_METHOD,
+  UPDATE_DELIVERY_METHOD,
+  DELETE_DELIVERY_METHOD,
+  TOGGLE_ACTIVE_DELIVERY_METHOD,
+} = DeliveryMethodMutations;
+const { GET_DELIVERY_METHODS } = DeliveryMethodQueries;
 
-const SalesPersons = () => {
+const DeliveryMethods = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi, allReasonsQueryRef, refetchAllReasons } =
-    useOutletContext();
+  const { notiApi, msgApi, refetchAllPaymentModes } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -33,143 +31,97 @@ const SalesPersons = () => {
   const [editRecord, setEditRecord] = useState(null);
 
   //Queries
+  const { data, loading: queryLoading } = useQuery(GET_DELIVERY_METHODS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+  });
 
-  const [createSalesPerson, { loading: createLoading }] = useMutation(
-    CREATE_SALES_PERSON,
+  const [createDeliveryMethod, { loading: createLoading }] = useMutation(
+    CREATE_DELIVERY_METHOD,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="salesPerson.created"
-            defaultMessage="New Sale Person Created"
+            id="deliveryMethod.created"
+            defaultMessage="New Delivery Method Created"
           />
         );
+        refetchAllPaymentModes();
       },
+      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  const [updateSalesPerson, { loading: updateLoading }] = useMutation(
-    UPDATE_SALES_PERSON,
+  const [updateDeliveryMethod, { loading: updateLoading }] = useMutation(
+    UPDATE_DELIVERY_METHOD,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="salesPerson.updated"
-            defaultMessage="Sale Person Updated"
+            id="deliveryMethod.updated"
+            defaultMessage="Delivery Method Updated"
           />
         );
+        refetchAllPaymentModes();
       },
-      update(cache, { data }) {
-        const existingSalesPersons = cache.readQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-        });
-        const updatedSuppliers =
-          existingSalesPersons.paginateSalesPerson.edges.filter(
-            ({ node }) => node.id !== data.toggleActiveSalesPerson.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-          data: {
-            paginateSalesPerson: {
-              ...existingSalesPersons.paginateSalesPerson,
-              edges: updatedSuppliers,
-            },
-          },
-        });
-      },
+      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  const [deleteSalesPerson, { loading: deleteLoading }] = useMutation(
-    DELETE_SALES_PERSON,
+  const [deleteDeliveryMethod, { loading: deleteLoading }] = useMutation(
+    DELETE_DELIVERY_METHOD,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="salesPerson.deleted"
-            defaultMessage="Sale Person Deleted"
+            id="deliveryMethod.deleted"
+            defaultMessage="Delivery Method Deleted"
           />
         );
+        refetchAllPaymentModes();
       },
-      update(cache, { data }) {
-        const existingSalesPersons = cache.readQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-        });
-        const updatedSuppliers =
-          existingSalesPersons.paginateSalesPerson.edges.filter(
-            ({ node }) => node.id !== data.toggleActiveSalesPerson.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-          data: {
-            paginateSalesPerson: {
-              ...existingSalesPersons.paginateSalesPerson,
-              edges: updatedSuppliers,
-            },
-          },
-        });
-      },
+      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  const [toggleActiveSalesPerson, { loading: toggleActiveLoading }] =
-    useMutation(TOGGLE_ACTIVE_SALES_PERSON, {
+  const [toggleActiveDeliveryMethod, { loading: toggleActiveLoading }] =
+    useMutation(TOGGLE_ACTIVE_DELIVERY_METHOD, {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="salesPerson.updated.status"
-            defaultMessage="Sales Person Status Updated"
+            id="deliveryMethod.updated.status"
+            defaultMessage="Delivery Method Status Updated"
           />
         );
+        refetchAllPaymentModes();
       },
     });
 
   const loading =
-    createLoading || updateLoading || deleteLoading || toggleActiveLoading;
+    createLoading ||
+    updateLoading ||
+    deleteLoading ||
+    toggleActiveLoading ||
+    queryLoading;
 
-  const parseData = (data) => {
-    let salesPerson = [];
-    data?.paginateSalesPerson?.edges.forEach(({ node }) => {
-      if (node != null) {
-        salesPerson.push({
-          key: node.id,
-          ...node,
-        });
-      }
-    });
-    // console.log("Products", products);
-    return salesPerson ? salesPerson : [];
-  };
-
-  const parsePageInfo = (data) => {
-    let pageInfo = {
-      hasPreviousPage: false,
-      hasNextPage: false,
-      endCursor: null,
-    };
-    if (data?.paginateSalesPerson) {
-      pageInfo = {
-        hasNextPage: data.paginateSalesPerson.pageInfo.hasNextPage,
-        endCursor: data.paginateSalesPerson.pageInfo.endCursor,
-      };
-    }
-
-    return pageInfo;
-  };
+  const queryData = useMemo(() => data?.listDeliveryMethod, [data]);
 
   const handleCreateModalOk = async () => {
     try {
       const values = await createFormRef.validateFields();
       console.log("Field values:", values);
-      await createSalesPerson({
+      await createDeliveryMethod({
         variables: {
           input: {
             name: values.name,
-            email: values.email,
           },
         },
       });
@@ -198,7 +150,7 @@ const SalesPersons = () => {
     });
     if (confirmed) {
       try {
-        await deleteSalesPerson({
+        await deleteDeliveryMethod({
           variables: {
             id: record.id,
           },
@@ -215,7 +167,6 @@ const SalesPersons = () => {
     editFormRef.setFieldsValue({
       id: record.id,
       name: record.name,
-      email: record.email,
     });
     // console.log(record.state);
 
@@ -225,36 +176,9 @@ const SalesPersons = () => {
   const handleEditModalOk = async () => {
     try {
       const values = await editFormRef.validateFields();
-      await updateSalesPerson({
+      // console.log("Field values:", values);
+      await updateDeliveryMethod({
         variables: { id: editRecord.id, input: values },
-        update(cache, { data: { updateSalesPerson } }) {
-          cache.modify({
-            fields: {
-              paginateSalesPerson(pagination = []) {
-                const index = pagination.edges.findIndex(
-                  (x) => x.node.__ref === "SalesPerson:" + updateSalesPerson.id
-                );
-                if (index >= 0) {
-                  const newSalesPerson = cache.writeFragment({
-                    data: updateSalesPerson,
-                    fragment: gql`
-                      fragment NewSalesPerson on SalesPerson {
-                        id
-                        name
-                        email
-                      }
-                    `,
-                  });
-                  let paginationCopy = JSON.parse(JSON.stringify(pagination));
-                  paginationCopy.edges[index].node = newSalesPerson;
-                  return paginationCopy;
-                } else {
-                  return pagination;
-                }
-              },
-            },
-          });
-        },
       });
 
       setEditModalOpen(false);
@@ -270,7 +194,7 @@ const SalesPersons = () => {
 
   const handleToggleActive = async (record) => {
     try {
-      await toggleActiveSalesPerson({
+      await toggleActiveDeliveryMethod({
         variables: { id: record.id, isActive: !record.isActive },
       });
     } catch (err) {
@@ -296,15 +220,17 @@ const SalesPersons = () => {
       }}
     >
       <Form.Item
-        label={<FormattedMessage id="salesPerson.name" defaultMessage="Name" />}
+        label={
+          <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+        }
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="salesPerson.name.required"
-                defaultMessage="Enter the Sale Person Name"
+                id="deliveryMethod.name.required"
+                defaultMessage="Enter the Shipment Preference Name"
               />
             ),
           },
@@ -312,26 +238,6 @@ const SalesPersons = () => {
         labelAlign="left"
       >
         <Input maxLength={20} />
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage id="salesPerson.email" defaultMessage="Email" />
-        }
-        name="email"
-        // rules={[
-        //   {
-        //     required: true,
-        //     message: (
-        //       <FormattedMessage
-        //         id="salesPerson.email.required"
-        //         defaultMessage="Enter the Sale Person Name"
-        //       />
-        //     ),
-        //   },
-        // ]}
-        labelAlign="left"
-      >
-        <Input maxLength={40} type="email" />
       </Form.Item>
     </Form>
   );
@@ -353,15 +259,17 @@ const SalesPersons = () => {
       }}
     >
       <Form.Item
-        label={<FormattedMessage id="salesPerson.name" defaultMessage="Name" />}
+        label={
+          <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+        }
         name="name"
         rules={[
           {
             required: true,
             message: (
               <FormattedMessage
-                id="salesPerson.name.required"
-                defaultMessage="Enter the Sale Person Name"
+                id="deliveryMethod.name.required"
+                defaultMessage="Enter the Delivery Method Name"
               />
             ),
           },
@@ -370,32 +278,14 @@ const SalesPersons = () => {
       >
         <Input maxLength={20} />
       </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage id="salesPerson.email" defaultMessage="Email" />
-        }
-        name="email"
-        // rules={[
-        //   {
-        //     required: true,
-        //     message: (
-        //       <FormattedMessage
-        //         id="salesPerson.email.required"
-        //         defaultMessage="Enter the Sale Person Name"
-        //       />
-        //     ),
-        //   },
-        // ]}
-        labelAlign="left"
-      >
-        <Input maxLength={40} type="email" />
-      </Form.Item>
     </Form>
   );
 
   const columns = [
     {
-      title: <FormattedMessage id="salesPerson.name" defaultMessage="Name" />,
+      title: (
+        <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+      ),
       key: "name",
       dataIndex: "name",
       render: (text, record) => (
@@ -408,11 +298,6 @@ const SalesPersons = () => {
           )}
         </>
       ),
-    },
-    {
-      title: <FormattedMessage id="salesPerson.email" defaultMessage="Email" />,
-      key: "email",
-      dataIndex: "email",
     },
 
     {
@@ -474,11 +359,12 @@ const SalesPersons = () => {
     <>
       {contextHolder}
       <Modal
+        //   loading={loading}
         width="40rem"
         title={
           <FormattedMessage
-            id="salesPerson.new"
-            defaultMessage="New Sale Person"
+            id="deliveryMethod.new"
+            defaultMessage="New Delivery Method"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -495,8 +381,8 @@ const SalesPersons = () => {
         width="40rem"
         title={
           <FormattedMessage
-            id="salesPerson.edit"
-            defaultMessage="Edit Sale Person"
+            id="deliveryMethod.edit"
+            defaultMessage="Edit Delivery Method"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -512,40 +398,39 @@ const SalesPersons = () => {
       <div className="page-header">
         <p className="page-header-text">
           <FormattedMessage
-            id="label.salesPersons"
-            defaultMessage="Sale Persons"
+            id="label.deliveryMethods"
+            defaultMessage="Delivery Methods"
           />
         </p>
         <Button type="primary" onClick={setCreateModalOpen}>
           <Space>
             <PlusOutlined />
             <FormattedMessage
-              id="salesPerson.new"
-              defaultMessage="New Sales Person"
+              id="deliveryMethod.new"
+              defaultMessage="New Delivery Method"
             />
           </Space>
         </Button>
       </div>
       <div className="page-content">
-        <PaginatedTable
+        <Table
           loading={loading}
-          api={notiApi}
+          pagination={false}
           columns={columns}
-          gqlQuery={GET_PAGINATE_SALES_PERSON}
-          // searchForm={searchForm}
-          searchFormRef={searchFormRef}
-          searchQqlQuery={GET_PAGINATE_SALES_PERSON}
-          parseData={parseData}
-          parsePageInfo={parsePageInfo}
-          searchModalOpen={searchModalOpen}
-          // searchCriteria={searchCriteria}
-          // setSearchCriteria={setSearchCriteria}
-          hoveredRow={hoveredRow}
-          setHoveredRow={setHoveredRow}
+          dataSource={queryData?.map((item) => ({
+            ...item,
+            key: item.id,
+          }))}
+          rowKey={(record) => record.id}
+          onRow={(record) => ({
+            key: record.id,
+            onMouseEnter: () => setHoveredRow(record.id),
+            onMouseLeave: () => setHoveredRow(null),
+          })}
         />
       </div>
     </>
   );
 };
 
-export default SalesPersons;
+export default DeliveryMethods;

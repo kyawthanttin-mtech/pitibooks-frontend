@@ -1,29 +1,33 @@
 import React, { useMemo, useState } from "react";
 import { FormattedMessage } from "react-intl";
-import { Button, Dropdown, Form, Modal, Input, Space, Table, Tag } from "antd";
+import { Button, Dropdown, Form, Modal, Input, Table, Tag } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
 import { useMutation } from "@apollo/client";
 import { useOutletContext } from "react-router-dom";
-import { DeliveryMethodMutations, DeliveryMethodQueries } from "../../graphql";
+import { ShipmentPreferenceMutations } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { useQuery } from "@apollo/client";
+import { useReadQuery } from "@apollo/client";
 const {
-  CREATE_DELIVERY_METHOD,
-  UPDATE_DELIVERY_METHOD,
-  DELETE_DELIVERY_METHOD,
-} = DeliveryMethodMutations;
-const { GET_DELIVERY_METHODS } = DeliveryMethodQueries;
+  CREATE_SHIPMENT_PREFERENCE,
+  UPDATE_SHIPMENT_PREFERENCE,
+  DELETE_SHIPMENT_PREFERENCE,
+  TOGGLE_ACTIVE_SHIPMENT_PREFERENCE,
+} = ShipmentPreferenceMutations;
 
-const DeliveryMethods = () => {
+const ShipmentPreferences = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi, allPaymentModesQueryRef, refetchAllPaymentModes } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allShipmentPreferencesQueryRef,
+    refetchAllShipmentPreferences,
+  } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -31,91 +35,82 @@ const DeliveryMethods = () => {
   const [editRecord, setEditRecord] = useState(null);
 
   //Queries
-  const { data, loading: queryLoading } = useQuery(GET_DELIVERY_METHODS, {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
-    onError(err) {
-      openErrorNotification(notiApi, err.message);
-    },
-  });
+  const { data } = useReadQuery(allShipmentPreferencesQueryRef);
 
-  const [createPaymentMode, { loading: createLoading }] = useMutation(
-    CREATE_DELIVERY_METHOD,
+  const [createShipmentPreference, { loading: createLoading }] = useMutation(
+    CREATE_SHIPMENT_PREFERENCE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="deliveryMethod.created"
-            defaultMessage="New Delivery Method Created"
+            id="shipmentPreference.created"
+            defaultMessage="New Shipment Preference Created"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllShipmentPreferences();
       },
-      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  const [updatePaymentMode, { loading: updateLoading }] = useMutation(
-    UPDATE_DELIVERY_METHOD,
+  const [updateShipmentPreference, { loading: updateLoading }] = useMutation(
+    UPDATE_SHIPMENT_PREFERENCE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="deliveryMethod.updated"
-            defaultMessage="Delivery Method Updated"
+            id="shipmentPreference.updated"
+            defaultMessage="Shipment Preference Updated"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllShipmentPreferences();
       },
-      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  const [deletePaymentMode, { loading: deleteLoading }] = useMutation(
-    DELETE_DELIVERY_METHOD,
+  const [deleteShipmentPreference, { loading: deleteLoading }] = useMutation(
+    DELETE_SHIPMENT_PREFERENCE,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="deliveryMethod.deleted"
-            defaultMessage="Delivery Method Deleted"
+            id="shipmentPreference.deleted"
+            defaultMessage="Shipment Preference Deleted"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllShipmentPreferences();
       },
-      refetchQueries: [GET_DELIVERY_METHODS],
     }
   );
 
-  // const [toggleActiveUnit, { loading: toggleActiveLoading }] = useMutation(
-  //   TOGGLE_ACTIVE_PRODUCT_UNIT,
-  //   {
-  //     onCompleted() {
-  //       openSuccessMessage(
-  //         msgApi,
-  //         <FormattedMessage
-  //           id="shipmentPreference.updated.status"
-  //           defaultMessage="Shipment Preference Updated"
-  //         />
-  //       );
-  //       refetchAllShipmentPreferences();
-  //     },
-  //   }
-  // );
+  const [toggleActiveUnit, { loading: toggleActiveLoading }] = useMutation(
+    TOGGLE_ACTIVE_SHIPMENT_PREFERENCE,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="shipmentPreference.updated.status"
+            defaultMessage="Shipment Preference Status Updated"
+          />
+        );
+        refetchAllShipmentPreferences();
+      },
+    }
+  );
 
-  const loading = createLoading || updateLoading || deleteLoading;
+  const loading =
+    createLoading || updateLoading || deleteLoading || toggleActiveLoading;
 
-  const queryData = useMemo(() => data?.listDeliveryMethod, [data]);
+  const queryData = useMemo(() => data?.listAllShipmentPreference, [data]);
 
   const handleCreateModalOk = async () => {
     try {
       const values = await createFormRef.validateFields();
       console.log("Field values:", values);
-      await createPaymentMode({
+      await createShipmentPreference({
         variables: {
           input: {
             name: values.name,
@@ -147,7 +142,7 @@ const DeliveryMethods = () => {
     });
     if (confirmed) {
       try {
-        await deletePaymentMode({
+        await deleteShipmentPreference({
           variables: {
             id: record.id,
           },
@@ -174,7 +169,7 @@ const DeliveryMethods = () => {
     try {
       const values = await editFormRef.validateFields();
       // console.log("Field values:", values);
-      await updatePaymentMode({
+      await updateShipmentPreference({
         variables: { id: editRecord.id, input: values },
       });
 
@@ -189,15 +184,15 @@ const DeliveryMethods = () => {
     setEditModalOpen(false);
   };
 
-  // const handleToggleActive = async (record) => {
-  //   try {
-  //     await toggleActiveUnit({
-  //       variables: { id: record.id, isActive: !record.isActive },
-  //     });
-  //   } catch (err) {
-  //     openErrorNotification(notiApi, err.message);
-  //   }
-  // };
+  const handleToggleActive = async (record) => {
+    try {
+      await toggleActiveUnit({
+        variables: { id: record.id, isActive: !record.isActive },
+      });
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
 
   const createForm = (
     <Form
@@ -218,7 +213,10 @@ const DeliveryMethods = () => {
     >
       <Form.Item
         label={
-          <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+          <FormattedMessage
+            id="shipmentPreference.name"
+            defaultMessage="Name"
+          />
         }
         name="name"
         rules={[
@@ -226,7 +224,7 @@ const DeliveryMethods = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="deliveryMethod.name.required"
+                id="shipmentPreference.name.required"
                 defaultMessage="Enter the Shipment Preference Name"
               />
             ),
@@ -257,7 +255,10 @@ const DeliveryMethods = () => {
     >
       <Form.Item
         label={
-          <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+          <FormattedMessage
+            id="shipmentPreference.name"
+            defaultMessage="Name"
+          />
         }
         name="name"
         rules={[
@@ -265,8 +266,8 @@ const DeliveryMethods = () => {
             required: true,
             message: (
               <FormattedMessage
-                id="deliveryMethod.name.required"
-                defaultMessage="Enter the Delivery Method Name"
+                id="shipmentPreference.name.required"
+                defaultMessage="Enter the Shipment Preference Name"
               />
             ),
           },
@@ -281,7 +282,7 @@ const DeliveryMethods = () => {
   const columns = [
     {
       title: (
-        <FormattedMessage id="deliveryMethod.name" defaultMessage="Name" />
+        <FormattedMessage id="shipmentPreference.name" defaultMessage="Name" />
       ),
       key: "name",
       dataIndex: "name",
@@ -308,7 +309,7 @@ const DeliveryMethods = () => {
             menu={{
               onClick: ({ key }) => {
                 if (key === "1") handleEdit(record);
-                // else if (key === "2") handleToggleActive(record);
+                else if (key === "2") handleToggleActive(record);
                 else if (key === "3") handleDelete(record);
               },
               items: [
@@ -318,20 +319,20 @@ const DeliveryMethods = () => {
                   ),
                   key: "1",
                 },
-                // {
-                //   label: !record.isActive ? (
-                //     <FormattedMessage
-                //       id="button.markActive"
-                //       defaultMessage="Mark As Active"
-                //     />
-                //   ) : (
-                //     <FormattedMessage
-                //       id="button.markInactive"
-                //       defaultMessage="Mark As Inactive"
-                //     />
-                //   ),
-                //   key: "2",
-                // },
+                {
+                  label: !record.isActive ? (
+                    <FormattedMessage
+                      id="button.markActive"
+                      defaultMessage="Mark As Active"
+                    />
+                  ) : (
+                    <FormattedMessage
+                      id="button.markInactive"
+                      defaultMessage="Mark As Inactive"
+                    />
+                  ),
+                  key: "2",
+                },
                 {
                   label: (
                     <FormattedMessage
@@ -360,8 +361,8 @@ const DeliveryMethods = () => {
         width="40rem"
         title={
           <FormattedMessage
-            id="deliveryMethod.new"
-            defaultMessage="New Delivery Method"
+            id="shipmentPreference.new"
+            defaultMessage="New Shipment Preference"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -375,11 +376,12 @@ const DeliveryMethods = () => {
         {createForm}
       </Modal>
       <Modal
+        //   loading={loading}
         width="40rem"
         title={
           <FormattedMessage
-            id="deliveryMethod.edit"
-            defaultMessage="Edit Delivery Method"
+            id="shipmentPreference.edit"
+            defaultMessage="Edit Shipment Preference"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -395,18 +397,19 @@ const DeliveryMethods = () => {
       <div className="page-header">
         <p className="page-header-text">
           <FormattedMessage
-            id="label.deliveryMethods"
-            defaultMessage="Delivery Methods"
+            id="label.Shipment Preferences"
+            defaultMessage="Shipment Preferences"
           />
         </p>
-        <Button type="primary" onClick={setCreateModalOpen}>
-          <Space>
-            <PlusOutlined />
-            <FormattedMessage
-              id="deliveryMethod.new"
-              defaultMessage="New Delivery Method"
-            />
-          </Space>
+        <Button
+          icon={<PlusOutlined />}
+          type="primary"
+          onClick={setCreateModalOpen}
+        >
+          <FormattedMessage
+            id="shipmentPreference.new"
+            defaultMessage="New Shipment Preference"
+          />
         </Button>
       </div>
       <div className="page-content">
@@ -430,4 +433,4 @@ const DeliveryMethods = () => {
   );
 };
 
-export default DeliveryMethods;
+export default ShipmentPreferences;

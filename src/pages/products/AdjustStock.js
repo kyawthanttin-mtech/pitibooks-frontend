@@ -3,7 +3,6 @@ import React from "react";
 import "./AdjustStock.css";
 
 import { Row, Col, Button, Form, Radio, Input, Select } from "antd";
-import { CloseOutlined } from "@ant-design/icons";
 
 const AdjustStock = ({ selectedProductRecord, onClose }) => {
   const adjustStockForm = (
