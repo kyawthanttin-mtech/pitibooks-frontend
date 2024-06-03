@@ -541,11 +541,17 @@ const ChartOfAccounts = () => {
         (group) => group.id === mainTypeId
       );
       const mainType = selectedMainType.mainType;
-      let input = {}
-      
+      let input = {};
+
       if (detailType === "Bank") {
         if (!values.branch || values.branch.length === 0) {
-          openErrorNotification(notiApi, intl.formatMessage({id:"validation.requiredAtLeastOneBranch", defaultMessage:"At least one Branch is required"}));
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "validation.requiredAtLeastOneBranch",
+              defaultMessage: "At least one Branch is required",
+            })
+          );
           return;
         }
         input = {
@@ -666,11 +672,17 @@ const ChartOfAccounts = () => {
       );
       const mainType = selectedMainType.mainType;
 
-      let input = {}
-      
+      let input = {};
+
       if (detailType === "Bank") {
         if (!values.branch || values.branch.length === 0) {
-          openErrorNotification(notiApi, intl.formatMessage({id:"validation.requiredAtLeastOneBranch", defaultMessage:"At least one Branch is required"}));
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "validation.requiredAtLeastOneBranch",
+              defaultMessage: "At least one Branch is required",
+            })
+          );
           return;
         }
         input = {
@@ -777,7 +789,11 @@ const ChartOfAccounts = () => {
           {accountTypes.map((group) => (
             <Select.OptGroup key={group.id} label={group.mainType}>
               {group.detailTypes.map((options) => (
-                <Select.Option key={options.id} value={options.id} label={options.name}>
+                <Select.Option
+                  key={options.id}
+                  value={options.id}
+                  label={options.name}
+                >
                   {options.name}
                 </Select.Option>
               ))}
@@ -900,20 +916,21 @@ const ChartOfAccounts = () => {
         </>
       )}
 
-      {detailType !== "Bank" && <Form.Item
-        shouldUpdate
-        name="subAccount"
-        valuePropName="checked"
-        wrapperCol={{ span: 13, offset: 8 }}
-      >
-        <Checkbox>
-          <FormattedMessage
-            id="action.markSubAccount"
-            defaultMessage="Mark this a sub-account"
-          />
-        </Checkbox>
-      </Form.Item>
-      }
+      {detailType !== "Bank" && (
+        <Form.Item
+          shouldUpdate
+          name="subAccount"
+          valuePropName="checked"
+          wrapperCol={{ span: 13, offset: 8 }}
+        >
+          <Checkbox>
+            <FormattedMessage
+              id="action.markSubAccount"
+              defaultMessage="Mark this a sub-account"
+            />
+          </Checkbox>
+        </Form.Item>
+      )}
       {detailType !== "Bank" && subAccountCheckedNew && (
         <Form.Item
           label={
@@ -1003,13 +1020,21 @@ const ChartOfAccounts = () => {
           showSearch
           onChange={(value) => handleAccountTypeChange(value)}
           allowClear
-          disabled={detailType === "Bank" || selectedRecord?.isSystemDefault ? true : false}
+          disabled={
+            detailType === "Bank" || selectedRecord?.isSystemDefault
+              ? true
+              : false
+          }
           optionFilterProp="label"
         >
           {accountTypes.map((group) => (
             <Select.OptGroup key={group.id} label={group.mainType}>
               {group.detailTypes.map((options) => (
-                <Select.Option key={options.id} value={options.id} label={options.name}>
+                <Select.Option
+                  key={options.id}
+                  value={options.id}
+                  label={options.name}
+                >
                   {options.name}
                 </Select.Option>
               ))}
@@ -1131,20 +1156,21 @@ const ChartOfAccounts = () => {
           </Form.Item>
         </>
       )}
-      {detailType !== "Bank" && <Form.Item
-        shouldUpdate
-        name="subAccount"
-        valuePropName="checked"
-        wrapperCol={{ span: 13, offset: 8 }}
-      >
-        <Checkbox disabled={selectedRecord?.isSystemDefault ? true : false}>
-          <FormattedMessage
-            id="action.markSubAccount"
-            defaultMessage="Mark this a sub-account"
-          />
-        </Checkbox>
-      </Form.Item>
-      }
+      {detailType !== "Bank" && (
+        <Form.Item
+          shouldUpdate
+          name="subAccount"
+          valuePropName="checked"
+          wrapperCol={{ span: 13, offset: 8 }}
+        >
+          <Checkbox disabled={selectedRecord?.isSystemDefault ? true : false}>
+            <FormattedMessage
+              id="action.markSubAccount"
+              defaultMessage="Mark this a sub-account"
+            />
+          </Checkbox>
+        </Form.Item>
+      )}
       {detailType !== "Bank" && subAccountCheckedEdit && (
         <Form.Item
           label={
@@ -1724,7 +1750,6 @@ const ChartOfAccounts = () => {
           </div>
         )}
       </div>
-      +
     </>
   );
 };

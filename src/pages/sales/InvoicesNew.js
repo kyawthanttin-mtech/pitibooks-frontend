@@ -99,6 +99,7 @@ const InvoicesNew = () => {
     allWarehousesQueryRef,
     allProductsQueryRef,
     allProductVariantsQueryRef,
+    allSalesPersonsQueryRef,
   } = useOutletContext();
   const [data, setData] = useState(
     record
@@ -193,6 +194,8 @@ const InvoicesNew = () => {
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+  const { data: salesPersonData } = useReadQuery(allSalesPersonsQueryRef);
+
   // Mutations
   const [createInvoice, { loading: createLoading }] = useMutation(
     CREATE_INVOICE,
@@ -238,6 +241,12 @@ const InvoicesNew = () => {
       (p) => p.isActive === true
     );
   }, [productVariantData]);
+
+  const salesPersons = useMemo(() => {
+    return salesPersonData?.listAllSalesPerson?.filter(
+      (sp) => sp.isActive === true
+    );
+  }, [salesPersonData]);
 
   const taxes = useMemo(() => {
     return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
@@ -375,7 +384,8 @@ const InvoicesNew = () => {
       customerId: selectedCustomer.id,
       purchaseOrderNumber: values.purchaseOrderNumber,
       referenceNumber: values.referenceNumber,
-      invoiceNumber: 1,
+      salesPersonId: values.salesPerson,
+      // invoiceNumber: 2,
       invoiceDate: values.invoiceDate,
       invoiceDueDate: values.invoiceDueDate,
       notes: values.notes,
@@ -549,12 +559,20 @@ const InvoicesNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.purchasePrice;
+        newData.rate = selectedItem.salesPrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
@@ -571,8 +589,11 @@ const InvoicesNew = () => {
     }
 
     form.setFieldsValue({
-      [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`rate${rowKey}`]: selectedItem.salesPrice,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };
@@ -1293,6 +1314,41 @@ const InvoicesNew = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.salesPerson"
+                    defaultMessage="Sales Person"
+                  />
+                }
+                name="salesPerson"
+                labelAlign="left"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+                // rules={[
+                //   {
+                //     required: true,
+                //     message: (
+                //       <FormattedMessage
+                //         id="label.salesPerson.required"
+                //         defaultMessage="Select the Sales Person"
+                //       />
+                //     ),
+                //   },
+                // ]}
+              >
+                <Select showSearch optionFilterProp="label">
+                  {salesPersons?.map((salesPerson) => (
+                    <Select.Option
+                      key={salesPerson.id}
+                      value={salesPerson.id}
+                      label={salesPerson.name}
+                    >
+                      {salesPerson.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
               <Form.Item
                 label={
                   <FormattedMessage

@@ -20,6 +20,7 @@ const ErrorPage = ({error, refetch}) => {
       <p>{error.message}</p>
       <br />
       <Button type="default" onClick={() => refetch()} >Try Again</Button>
+      <br />
       <Button type="default" onClick={() => navigate("/logout", { replace: true })} >Logout</Button>
     </div>
   )

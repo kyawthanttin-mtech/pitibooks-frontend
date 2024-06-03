@@ -62,6 +62,8 @@ export function convertTransactionType(type) {
       return "SupplierOpeningBalance";
     case "OB":
       return "OpeningBalance";
+    case "SC":
+      return "SupplierCredit";
     default:
       return "";
   }

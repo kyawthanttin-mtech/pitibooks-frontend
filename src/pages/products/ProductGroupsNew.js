@@ -69,12 +69,14 @@ const ProductGroupsNew = () => {
     allAccountsQueryRef,
     allProductCategoriesQueryRef,
     allProductUnitsQueryRef,
+    business,
   } = useOutletContext();
   // const [imageList, setImageList] = useState([]);
   const renderCount = useRef(0);
   const [isInventoryTracked, setIsInventoryTracked] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [imageList, setImageList] = useState(null);
 
   useEffect(() => {
     renderCount.current += 1;
@@ -407,12 +409,18 @@ const ProductGroupsNew = () => {
       return;
     }
 
+    const imageUrls = imageList.map((img) => ({
+      imageUrl: img.imageUrl,
+      thumbnailUrl: img.thumbnailUrl,
+    }));
+
     const input = {
       // productNature: values.productNature,
       name: values.productGroupName,
       description: values.description,
       categoryId: values.category,
       supplierId: selectedSupplier?.id || 0,
+      images: imageUrls,
       variants,
       options,
     };
@@ -425,6 +433,11 @@ const ProductGroupsNew = () => {
     //     state: { combinationPairs },
     //   });
     // }
+  };
+
+  const handleCustomFileListChange = (newCustomFileList) => {
+    setImageList(newCustomFileList);
+    console.log("Changed");
   };
 
   const columns = [
@@ -458,7 +471,37 @@ const ProductGroupsNew = () => {
     },
     {
       title: (
-        <FormattedMessage id="label.salesPrice" defaultMessage="SalesPrice" />
+        <Col>
+          <Row>
+            <Space>
+              <FormattedMessage
+                id="label.sellingPrice"
+                defaultMessage="Selling Price"
+              />
+              <span>({business.baseCurrency.symbol})</span>
+            </Space>
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const values = createProductFormRef.getFieldsValue();
+                for (var i = 1; i < combinationPairs.length; i++) {
+                  createProductFormRef.setFieldValue(
+                    `salesPrice${combinationPairs[i].key}`,
+                    values[`salesPrice${combinationPairs[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
       ),
       dataIndex: "salesPrice",
       key: "salesPrice",
@@ -499,10 +542,37 @@ const ProductGroupsNew = () => {
     },
     {
       title: (
-        <FormattedMessage
-          id="label.purchasePrice"
-          defaultMessage="Purchase Price"
-        />
+        <Col>
+          <Row>
+            <Space>
+              <FormattedMessage
+                id="label.costPrice"
+                defaultMessage="Cost Price"
+              />
+              <span>({business.baseCurrency.symbol})</span>
+            </Space>
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const values = createProductFormRef.getFieldsValue();
+                for (var i = 1; i < combinationPairs.length; i++) {
+                  createProductFormRef.setFieldValue(
+                    `purchasePrice${combinationPairs[i].key}`,
+                    values[`purchasePrice${combinationPairs[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
       ),
       dataIndex: "purchasePrice",
       key: "purchasePrice",
@@ -784,7 +854,7 @@ const ProductGroupsNew = () => {
           <br />
         </Col>
         <Col span={12}>
-          <UploadImage />
+          <UploadImage onCustomFileListChange={handleCustomFileListChange} />
         </Col>
       </Row>
       <p style={{ fontSize: "var(--title-text)", marginTop: 0 }}>
@@ -1213,7 +1283,12 @@ const ProductGroupsNew = () => {
         {editForm}
       </Modal>
       <div className="page-header page-header-with-button">
-        <p className="page-header-text">New Product Group</p>
+        <p className="page-header-text">
+          <FormattedMessage
+            id="productGroup.new"
+            defaultMessage=" New Product Group"
+          />
+        </p>
         <Button
           icon={<CloseOutlined />}
           type="text"

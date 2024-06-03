@@ -9,9 +9,8 @@ import {
   Col,
   Select,
   Tabs,
-  InputNumber,
 } from "antd";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import {
   CloseOutlined,
   UploadOutlined,
@@ -43,6 +42,7 @@ const initialValues = {
 };
 
 const CustomersNew = () => {
+  const intl = useIntl();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -457,9 +457,26 @@ const CustomersNew = () => {
                             />
                           ),
                         },
+
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (isNaN(value) || value.length > 20) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
                       ]}
                     >
-                      <InputNumber />
+                      <Input />
                     </Form.Item>
                   ) : null
                 }
@@ -537,9 +554,35 @@ const CustomersNew = () => {
                   <Form.Item
                     name="openingBalance"
                     labelAlign="left"
-                    // labelCol={{ span: 16 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.salesPrice.required"
+                            defaultMessage="Enter the Sales Price"
+                          />
+                        ),
+                      },
+                      () => ({
+                        validator(_, value) {
+                          if (!value) {
+                            return Promise.resolve();
+                          } else if (isNaN(value) || value.length > 20) {
+                            return Promise.reject(
+                              intl.formatMessage({
+                                id: "validation.invalidInput",
+                                defaultMessage: "Invalid Input",
+                              })
+                            );
+                          } else {
+                            return Promise.resolve();
+                          }
+                        },
+                      }),
+                    ]}
                   >
-                    <InputNumber />
+                    <Input />
                   </Form.Item>
                 </Col>
               </Row>
@@ -609,9 +652,26 @@ const CustomersNew = () => {
                             />
                           ),
                         },
+
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (isNaN(value) || value.length > 3 || !Number.isInteger(Number(value)) || Number(value) < 1) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
                       ]}
                     >
-                      <InputNumber min={1} />
+                      <Input />
                     </Form.Item>
                   ) : null
                 }

@@ -8,6 +8,14 @@ import Reports from "./Reports";
 import BalanceSheet from "./BalanceSheet";
 import ProfitAndLoss from "./ProfitAndLoss";
 import ReportHeader from "../../components/ReportHeader";
+import SalesByCustomer from "./SalesByCustomer";
+import SalesBySalesPerson from "./SalesBySalesPerson";
+import SalesByProduct from "./SalesByProduct";
+import ProductSalesReport from "./ProductSalesReport";
+import InventoryValuationSummary from "./InventoryValuationSummary";
+import StockSummaryReport from "./StockSummaryReport";
+import CashFlowReport from "./CashFlowReport";
+import MovementOfEquity from "./MovementOfEquity";
 
 export {
   JournalReport,
@@ -20,4 +28,12 @@ export {
   BalanceSheet,
   ProfitAndLoss,
   ReportHeader,
+  SalesByCustomer,
+  SalesBySalesPerson,
+  SalesByProduct,
+  ProductSalesReport,
+  InventoryValuationSummary,
+  StockSummaryReport,
+  CashFlowReport,
+  MovementOfEquity,
 };

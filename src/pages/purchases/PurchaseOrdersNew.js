@@ -164,7 +164,9 @@ const PurchaseOrdersNew = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
     record?.orderTotalDiscountAmount || 0
   );
-  const [totalAmount, setTotalAmount] = useState((record?.orderTotalAmount || 0) - (record?.adjustmentAmount || 0));
+  const [totalAmount, setTotalAmount] = useState(
+    (record?.orderTotalAmount || 0) - (record?.adjustmentAmount || 0)
+  );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const client = useApolloClient();
   const [tableKeyCounter, setTableKeyCounter] = useState(
@@ -318,13 +320,13 @@ const PurchaseOrdersNew = () => {
               : record?.deliveryWarehouseId,
           deliveryAddress: record?.deliveryAddress,
           shipmentPreference:
-            record?.shipmentPreferenceId === 0
+            record?.shipmentPreference.id === 0
               ? null
-              : record?.shipmentPreferenceId,
+              : record?.shipmentPreference.id,
           paymentTerms: record?.orderPaymentTerms,
           customDays: record?.orderPaymentTermsCustomDays,
           currency: record?.currency?.id,
-          exchangeRate: record?.currency?.exchangeRate,
+          exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse.id,
           customerNotes: record?.notes,
           discount: record?.orderDiscount,
@@ -512,6 +514,7 @@ const PurchaseOrdersNew = () => {
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
+
     // Update quantity for existing items
     existingItems.forEach((existingItem) => {
       const matchingSelectedItem = selectedItemsBulk.find(
@@ -522,6 +525,7 @@ const PurchaseOrdersNew = () => {
           existingItem.quantity + matchingSelectedItem.quantity,
       });
     });
+
     if (existingItems.length > 0) {
       const updatedData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
@@ -605,6 +609,14 @@ const PurchaseOrdersNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
@@ -626,11 +638,14 @@ const PurchaseOrdersNew = () => {
       recalculateTotalAmount(updatedData, isTaxInclusive, isAtTransactionLevel);
       setData(updatedData);
     }
-
+    console.log("account id", selectedItem.inventoryAccount?.id);
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.inventoryAccount?.id,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id || null,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };

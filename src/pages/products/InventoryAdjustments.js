@@ -1,230 +1,423 @@
-import React, { useState } from "react";
-
-import "./InventoryAdjustments.css";
-import { InventoryAdjustmentsTemplate } from "../../components";
-
+/* eslint-disable react/style-prop-object */
+import React, { useState, useMemo } from "react";
 import {
-  Button,
   Space,
+  Button,
   Table,
   Row,
+  Dropdown,
+  Divider,
   Modal,
-  Form,
   Col,
+  Form,
   Input,
   Select,
-  Dropdown,
-  Switch,
-  Divider,
+  DatePicker,
 } from "antd";
 import {
   MoreOutlined,
-  SearchOutlined,
   PlusOutlined,
+  SearchOutlined,
   PaperClipOutlined,
   CloseOutlined,
-  PrinterOutlined,
+  EditOutlined,
   FilePdfOutlined,
   CaretDownFilled,
+  PrinterOutlined,
 } from "@ant-design/icons";
+import {
+  InventoryAdjustmentsTemplate,
+  PaginatedSelectionTable,
+  SearchCriteriaDisplay,
+  SupplierSearchModal,
+} from "../../components";
+import { useReadQuery } from "@apollo/client";
+import { FormattedMessage, FormattedNumber } from "react-intl";
+import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
+import {
+  PurchaseOrderMutations,
+  InventoryAdjustmentQueries,
+  InventoryAdjustmentMutations,
+} from "../../graphql";
+import dayjs from "dayjs";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
+import { useHistoryState } from "../../utils/HelperFunctions";
+import { useMutation } from "@apollo/client";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+const { GET_PAGINATE_INVENTORY_ADJUSTMENT } = InventoryAdjustmentQueries;
+const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER } =
+  PurchaseOrderMutations;
+const { DELETE_INVENTORY_ADJUSTMENT } = InventoryAdjustmentMutations;
 
-import { ReactComponent as ImageOutlined } from "../../assets/icons/ImageOutlined.svg";
-import { useNavigate } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
-
-const dataSource = [
+const actionItems = [
   {
-    key: 1,
-    id: 1,
-    date: "07 Nov 2023",
-    reason: "Inventory Revaluation",
-    status: "Adjusted",
-    referenceNumber: "12121",
-    type: "Value",
-    warehouseName: "YGN Warehouse",
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
   },
   {
-    key: 2,
-    id: 2,
-    date: "12 Jan 2024",
-    reason: "Damaged Goods",
-    status: "Adjusted",
-    referenceNumber: "0003",
-    type: "Quantity",
-    warehouseName: "MDY Warehouse",
-  },
-];
-
-const compactColumns = [
-  {
-    title: "",
-    dataIndex: "column",
-    render: (text, record) => {
-      return (
-        <div>
-          <div className="column-list-item">
-            <span>{record.referenceNumber}</span>
-          </div>
-          <div className="column-list-item">
-            <span>{record.reason}</span>
-            <span
-              style={{
-                textTransform: "uppercase",
-                color: "var(--primary-color)",
-              }}
-            >
-              {record.status}
-            </span>
-          </div>
-          <div className="column-list-item">
-            <span>{record.date}</span>
-          </div>
-        </div>
-      );
-    },
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "1",
   },
 ];
-
-const searchJournalModalForm = (
-  <Form>
-    <Row>
-      <Col lg={12}>
-        <Form.Item
-          label="Product Name"
-          name="productName"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Input></Input>
-        </Form.Item>
-      </Col>
-      <Col lg={12}>
-        <Form.Item
-          label="Description"
-          name="description"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Input></Input>
-        </Form.Item>
-      </Col>
-    </Row>
-    <Row>
-      <Col lg={12}>
-        <Form.Item
-          label="Reference#"
-          name="reference"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Input></Input>
-        </Form.Item>
-      </Col>
-      <Col lg={12}>
-        <Form.Item
-          label="Adjustment Type"
-          name="adjustmentType"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Select></Select>
-        </Form.Item>
-      </Col>
-    </Row>
-    <Row>
-      <Col lg={12}>
-        <Form.Item
-          label="Reason"
-          name="reason"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Input></Input>
-        </Form.Item>
-      </Col>
-      <Col lg={12}>
-        <Form.Item
-          label="Warehouse Name"
-          name="warehouseName"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Select></Select>
-        </Form.Item>
-      </Col>
-    </Row>
-    <Row>
-      <Col lg={12}>
-        <Form.Item
-          label="Sales Account"
-          name="salesAccount"
-          labelAlign="left"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 15 }}
-        >
-          <Input></Input>
-        </Form.Item>
-      </Col>
-    </Row>
-  </Form>
-);
 
 const InventoryAdjustments = () => {
-  const [searchInventoryModalOpen, setSearchInventoryModalOpen] =
-    useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
-  const [showPdfView, setShowPdfView] = useState(false);
+  const [isContentExpanded, setContentExpanded] = useState(false);
+  const [caretRotation, setCaretRotation] = useState(0);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
+    useOutletContext();
+  const [deleteModal, contextHolder] = Modal.useModal();
+  const [searchFormRef] = Form.useForm();
+  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [searchCriteria, setSearchCriteria] = useHistoryState(
+    "adjustmentSearchCriteria",
+    null
+  );
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "adjustmentCurrentPage",
+    1
+  );
+
+  //Queries
+  const { data: branchData } = useReadQuery(allBranchesQueryRef);
+  const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
+
+  //Mutations
+  const [deleteInventoryAdjustment, { loading: deleteLoading }] = useMutation(
+    DELETE_INVENTORY_ADJUSTMENT,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="inventoryAdjustment.deleted"
+            defaultMessage="Adjustment Deleted"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingInventoryAdjustments = cache.readQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+        });
+        const updatedInventoryAdjustments =
+          existingInventoryAdjustments.paginateInventoryAdjustment.edges.filter(
+            ({ node }) => node.id !== data.deleteInventoryAdjustment.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+          data: {
+            paginateInventoryAdjustment: {
+              ...existingInventoryAdjustments.paginateInventoryAdjustment,
+              edges: updatedInventoryAdjustments,
+            },
+          },
+        });
+      },
+      // refetchQueries: [GET_ACCOUNTS],
+    }
+  );
+
+  const [confirmPO, { loading: confirmLoading }] = useMutation(
+    CONFIRM_PURCHASE_ORDER,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="purchaseOrder.confirmed"
+            defaultMessage="Purchase Order Confirmed"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingPurchaseOrders = cache.readQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+        });
+        const updatedPurchaseOrders =
+          existingPurchaseOrders.paginatePurchaseOrder.edges.filter(
+            ({ node }) => node.id !== data.confirmPurchaseOrder.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+          data: {
+            paginatePurchaseOrder: {
+              ...existingPurchaseOrders.paginatePurchaseOrder,
+              edges: updatedPurchaseOrders,
+            },
+          },
+        });
+      },
+      // refetchQueries: [GET_ACCOUNTS],
+    }
+  );
+
+  const [cancelPO, { loading: cancelLoading }] = useMutation(
+    CANCEL_PURCHASE_ORDER,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="purchaseOrder.cancelled"
+            defaultMessage="Purchase Order Cancelled"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingPurchaseOrders = cache.readQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+        });
+        const updatedPurchaseOrders =
+          existingPurchaseOrders.paginatePurchaseOrder.edges.filter(
+            ({ node }) => node.id !== data.cancelPurchaseOrder.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVENTORY_ADJUSTMENT,
+          data: {
+            paginatePurchaseOrder: {
+              ...existingPurchaseOrders.paginatePurchaseOrder,
+              edges: updatedPurchaseOrders,
+            },
+          },
+        });
+      },
+      // refetchQueries: [GET_ACCOUNTS],
+    }
+  );
+
+  const loading = deleteLoading || confirmLoading || cancelLoading;
+
+  const branches = useMemo(() => {
+    return branchData?.listAllBranch?.filter(
+      (branch) => branch.isActive === true
+    );
+  }, [branchData]);
+
+  const warehouses = useMemo(() => {
+    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
+  }, [warehouseData]);
+
+  const parseData = (data) => {
+    let inventoryAdjustments = [];
+    data?.paginateInventoryAdjustment?.edges.forEach(({ node }) => {
+      if (node != null) {
+        inventoryAdjustments.push({
+          key: node.id,
+          ...node,
+        });
+      }
+    });
+    return inventoryAdjustments ? inventoryAdjustments : [];
+  };
+
+  const parsePageInfo = (data) => {
+    let pageInfo = {
+      hasPreviousPage: false,
+      hasNextPage: false,
+      endCursor: null,
+    };
+    if (data?.paginatePurchaseOrder) {
+      pageInfo = {
+        hasNextPage: data.paginateInventoryAdjustment.pageInfo.hasNextPage,
+        endCursor: data.paginateInventoryAdjustment.pageInfo.endCursor,
+      };
+    }
+
+    return pageInfo;
+  };
+
+  const getStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Draft") {
+      color = "gray";
+    } else if (status === "Closed") {
+      color = "var(--primary-color)";
+    } else {
+      color = "var(--blue)";
+    }
+
+    return color;
+  };
+
+  const toggleContent = () => {
+    setContentExpanded(!isContentExpanded);
+    setCaretRotation(caretRotation === 0 ? 90 : 0);
+  };
+
+  const handleEdit = (record, navigate, location) => {
+    // console.log("edit record", record);
+    navigate("edit", {
+      state: {
+        ...location.state,
+        from: { pathname: location.pathname },
+        record,
+      },
+    });
+  };
+
+  const handleConfirmPurchaseOrder = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.confirmPurchaseOrder"
+          defaultMessage="Are you sure to confirm purchase order?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await confirmPO({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleCancelPurchaseOrder = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.cancelPurchaseOrder"
+          defaultMessage="Are you sure to cancel purchase order?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await cancelPO({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleDelete = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteInventoryAdjustment({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleModalRowSelect = (record) => {
+    setSelectedSupplier(record);
+    searchFormRef.setFieldsValue({
+      supplierId: record.id,
+      supplierName: record.name,
+    });
+  };
+
+  const handleModalClear = () => {
+    setSearchCriteria(null);
+    searchFormRef.resetFields();
+    setSearchModalOpen(false);
+  };
 
   const columns = [
     {
-      title: "Date",
+      title: <FormattedMessage id="label.date" defaultMessage="Date" />,
       dataIndex: "date",
       key: "date",
+      render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
-      title: "Reason",
+      title: <FormattedMessage id="label.reason" defaultMessage="Reason" />,
       dataIndex: "reason",
       key: "reason",
     },
     {
-      title: "Description",
+      title: (
+        <FormattedMessage id="label.description" defaultMessage="Description" />
+      ),
       dataIndex: "description",
       key: "description",
     },
     {
-      title: "Statue",
-      dataIndex: "status",
-      key: "status",
+      title: <FormattedMessage id="label.status" defaultMessage="Status" />,
+      dataIndex: "currentStatus",
+      key: "currentStatus",
+      render: (text) => (
+        <span style={{ color: getStatusColor(text) }}>{text}</span>
+      ),
     },
     {
-      title: "Reference Number",
+      title: (
+        <FormattedMessage
+          id="label.referenceNumber"
+          defaultMessage="Reference Number"
+        />
+      ),
       dataIndex: "referenceNumber",
       key: "referenceNumber",
     },
 
     {
-      title: "Type",
+      title: <FormattedMessage id="label.type" defaultMessage="Type" />,
       dataIndex: "type",
       key: "type",
     },
     {
-      title: "Warehouse Name",
+      title: (
+        <FormattedMessage
+          id="label.warehouseName"
+          defaultMessage="Warehouse Name"
+        />
+      ),
       dataIndex: "warehouseName",
       key: "warehouseName",
+      render: (_, record) => record?.warehouse?.name,
     },
     {
       title: (
         <SearchOutlined
           className="table-header-search-icon"
-          onClick={() => setSearchInventoryModalOpen(true)}
+          onClick={() => setSearchModalOpen(true)}
         />
       ),
       dataIndex: "search",
@@ -232,94 +425,307 @@ const InventoryAdjustments = () => {
     },
   ];
 
-  const adjustmentDetailsTableColumns = [
+  const compactColumns = [
     {
-      title: "Item Details",
-      dataIndex: "itemDetails",
-      key: "itemDetails",
-      render: (text) => (
-        <Space>
-          <ImageOutlined style={{ opacity: "50%" }} />
-          {text}
-        </Space>
-      ),
-    },
-    {
-      title: "Adjusted Value",
-      dataIndex: "adjustedValue",
-      key: "adjustedValue",
+      title: "",
+      dataIndex: "column",
+      render: (text, record) => {
+        return (
+          <div>
+            <div className="column-list-item">
+              <span>{record.referenceNumber}</span>
+            </div>
+            <div className="column-list-item">
+              <span>{record.reason}</span>
+              <span
+                style={{
+                  color: getStatusColor(record.currentStatus),
+                }}
+              >
+                {record.currentStatus}
+              </span>
+            </div>
+            <div className="column-list-item">
+              <span> {dayjs(record.date).format(REPORT_DATE_FORMAT)}</span>
+            </div>
+          </div>
+        );
+      },
     },
   ];
 
-  const adjustmentDetailsTableDataSource = [
-    {
-      key: 1,
-      id: 1,
-      itemDetails: "cake (Purple)",
-      adjustedValue: "MMK 990.00",
-    },
-  ];
-  // const tableView = (
+  const searchForm = (
+    <Form form={searchFormRef}>
+      <Row>
+        <Col lg={12}>
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.dateRange"
+                defaultMessage="Date Range"
+              />
+            }
+            name="dateRange"
+            labelAlign="left"
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <DatePicker.RangePicker
+              format={REPORT_DATE_FORMAT}
+              onChange={(value) => {
+                searchFormRef.setFieldsValue({
+                  startDate: value && value[0],
+                  endDate: value && value[1],
+                });
+              }}
+              onClear={() =>
+                searchFormRef.resetFields(["startDate", "endDate"])
+              }
+            />
+          </Form.Item>
+          <Form.Item noStyle hidden name="startDate" shouldUpdate>
+            <Input />
+          </Form.Item>
+          <Form.Item noStyle hidden name="endDate" shouldUpdate>
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Status"
+            name="currentStatus"
+            labelAlign="left"
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select
+              options={[
+                {
+                  value: "Draft",
+                  label: "Draft",
+                },
+                {
+                  value: "Adjusted",
+                  label: "Adjusted",
+                },
+              ]}
+            ></Select>
+          </Form.Item>
+          <Form.Item
+            label={
+              <FormattedMessage id="label.branch" defaultMessage="Branch" />
+            }
+            name="branchId"
+            labelAlign="left"
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select showSearch optionFilterProp="label">
+              {branches?.map((branch) => (
+                <Select.Option
+                  key={branch.id}
+                  value={branch.id}
+                  label={branch.name}
+                >
+                  {branch.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
+        <Col lg={12}>
+          <Form.Item
+            label="Reference #"
+            name="referenceNumber"
+            labelAlign="left"
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Input></Input>
+          </Form.Item>
 
-  // );
+          <Form.Item
+            label={
+              <FormattedMessage
+                id="label.warehouse"
+                defaultMessage="Warehouse"
+              />
+            }
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+            labelAlign="left"
+            name="warehouseId"
+          >
+            <Select
+              showSearch
+              allowClear
+              loading={loading}
+              optionFilterProp="label"
+            >
+              {warehouses?.map((w) => (
+                <Select.Option key={w.id} value={w.id} label={w.name}>
+                  {w.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label="Adjustment Type"
+            name="adjustmentType"
+            labelAlign="left"
+            labelCol={{ span: 7 }}
+            wrapperCol={{ span: 15 }}
+          >
+            <Select
+              options={[
+                {
+                  value: "Quantity",
+                  label: "Quantity",
+                },
+                {
+                  value: "Value",
+                  label: "Value",
+                },
+              ]}
+            ></Select>
+          </Form.Item>
+        </Col>
+      </Row>
+    </Form>
+  );
 
   return (
     <>
-      <Modal
-        className="search-journal-modal"
-        width="65.5rem"
-        title="Search Journal"
-        okText={<FormattedMessage id="button.search" defaultMessage="Search" />}
-        cancelText={
-          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-        }
-        open={searchInventoryModalOpen}
-        onCancel={() => setSearchInventoryModalOpen(false)}
-      >
-        {searchJournalModalForm}
-      </Modal>
+      <SupplierSearchModal
+        modalOpen={supplierSearchModalOpen}
+        setModalOpen={setSupplierSearchModalOpen}
+        onRowSelect={handleModalRowSelect}
+      />
+      {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
           <div className="page-header page-header-with-button">
-            <p className="page-header-text">Inventory Adjustments</p>
+            <div className="page-header-text">
+              <FormattedMessage
+                id="label.inventoryAdjustments"
+                defaultMessage="Inventory Adjustments"
+              />
+            </div>
             <Space>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => navigate("/inventoryAdjustments/new")}
+                onClick={() =>
+                  navigate("new", {
+                    state: {
+                      ...location.state,
+                      from: { pathname: location.pathname },
+                      clonePO: null,
+                    },
+                  })
+                }
               >
-                {!selectedRecord && "New"}
+                {!selectedRecord && (
+                  <FormattedMessage id="button.new" defaultMessage="new" />
+                )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
-            <Row className="table-actions-header">
-              <span>VIEW BY:</span>
-              <span>Status: </span>
-              <span>Period: </span>
-            </Row>
-            <Table
-              className={selectedRecord && "header-less-table"}
-              pagination={false}
-              columns={selectedRecord ? compactColumns : columns}
-              dataSource={dataSource}
-              rowSelection={{ selectedRowKeys: [selectedRowIndex] }}
-              onRow={(record) => {
-                return {
-                  onClick: () => {
-                    setSelectedRecord(record);
-                    setSelectedRowIndex(record.id);
-                  },
-                };
-              }}
-            ></Table>
+            {searchCriteria && (
+              <SearchCriteriaDisplay
+                searchCriteria={searchCriteria}
+                handleModalClear={handleModalClear}
+              >
+                {searchCriteria.referenceNumber && (
+                  <li>
+                    Reference Number contains{" "}
+                    <b>{searchCriteria.referenceNumber}</b>
+                  </li>
+                )}
+                {searchCriteria.startDate && searchCriteria.endDate && (
+                  <li>
+                    Date between{" "}
+                    <b>
+                      {dayjs(searchCriteria.startDate).format(
+                        REPORT_DATE_FORMAT
+                      )}{" "}
+                      and{" "}
+                      {dayjs(searchCriteria.endDate).format(REPORT_DATE_FORMAT)}
+                    </b>
+                  </li>
+                )}{" "}
+                {searchCriteria.currentStatus && (
+                  <li>
+                    Adjustment Status is <b>{searchCriteria.currentStatus}</b>
+                  </li>
+                )}
+                {searchCriteria.warehouseId && (
+                  <li>
+                    Warehouse is{" "}
+                    <b>
+                      {
+                        warehouses?.find(
+                          (x) => x.id === searchCriteria.warehouseId
+                        ).name
+                      }
+                    </b>
+                  </li>
+                )}
+                {searchCriteria.branchId && (
+                  <li>
+                    Branch is{" "}
+                    <b>
+                      {
+                        branches?.find((x) => x.id === searchCriteria.branchId)
+                          .name
+                      }
+                    </b>
+                  </li>
+                )}
+                {searchCriteria.adjustmentType && (
+                  <li>
+                    Adjustment Type is <b>{searchCriteria.adjustmentType}</b>
+                  </li>
+                )}
+              </SearchCriteriaDisplay>
+            )}
+            <PaginatedSelectionTable
+              loading={loading}
+              api={notiApi}
+              columns={columns}
+              compactColumns={compactColumns}
+              gqlQuery={GET_PAGINATE_INVENTORY_ADJUSTMENT}
+              searchForm={searchForm}
+              searchTitle={
+                <FormattedMessage
+                  id="inventoryAdjustment.search"
+                  defaultMessage="Search Adjustments"
+                />
+              }
+              searchFormRef={searchFormRef}
+              searchQqlQuery={GET_PAGINATE_INVENTORY_ADJUSTMENT}
+              parseData={parseData}
+              parsePageInfo={parsePageInfo}
+              showAddNew={true}
+              searchModalOpen={searchModalOpen}
+              searchCriteria={searchCriteria}
+              setSearchCriteria={setSearchCriteria}
+              setSearchModalOpen={setSearchModalOpen}
+              selectedRecord={selectedRecord}
+              setSelectedRecord={setSelectedRecord}
+              setSelectedRowIndex={setSelectedRowIndex}
+              selectedRowIndex={selectedRowIndex}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
           </div>
         </div>
         {selectedRecord && (
           <div className="content-column">
             <Row className="content-column-header-row">
-              <p className="page-header-text"></p>
+              <div className="content-column-header-row-text content-column-header-row-text">
+                <span>Branch: {selectedRecord.branch?.name}</span>
+                <span>Adjustment Details</span>
+              </div>
               <div className="content-column-header-row-actions">
                 <div>
                   <PaperClipOutlined />
@@ -338,6 +744,23 @@ const InventoryAdjustments = () => {
               </div>
             </Row>
             <Row className="content-column-action-row">
+              {selectedRecord.adjustmentType === "Quantity" && (
+                <div
+                  className="actions"
+                  onClick={() => handleEdit(selectedRecord, navigate, location)}
+                >
+                  <EditOutlined />
+                  <FormattedMessage id="button.edit" defaultMessage="Edit" />
+                </div>
+              )}
+              {selectedRecord.currentStatus === "Draft" && (
+                <div className="actions">
+                  <FormattedMessage
+                    id="button.ConvertToAdjusted"
+                    defaultMessage="Convert to Adjusted"
+                  />
+                </div>
+              )}
               <Dropdown
                 menu={{
                   items: [
@@ -355,96 +778,46 @@ const InventoryAdjustments = () => {
               >
                 <div>
                   <FilePdfOutlined />
-                  PDF/Print <CaretDownFilled />
+                  <FormattedMessage
+                    id="button.pdf/print"
+                    defaultMessage="PDF/Print"
+                  />
+                  <CaretDownFilled />
                 </div>
               </Dropdown>
-              <div>
-                <MoreOutlined />
-              </div>
+
+              <Dropdown
+                menu={{
+                  onClick: ({ key }) => {
+                    if (key === "0") {
+                      //nothing
+                    } else if (key === "1") {
+                      handleDelete(selectedRecord.id);
+                    }
+                  },
+                  items: actionItems,
+                }}
+                trigger={["click"]}
+              >
+                <div style={{ fontSize: "1.1rem" }}>
+                  <MoreOutlined />
+                </div>
+              </Dropdown>
             </Row>
             <div className="content-column-full-row">
               <div className="toggle-pdf-view">
-                <Space style={{ marginLeft: 0 }} defaultChecked>
-                  <span>Show PDF View</span>
-                  <Switch onChange={(checked) => setShowPdfView(checked)} />
-                </Space>
-              </div>
-
-              {showPdfView ? (
-                <InventoryAdjustmentsTemplate selectedRecord={selectedRecord} />
-              ) : (
-                <div className="table-view">
-                  <table>
-                    <thead></thead>
-                    <tbody>
-                      <tr>
-                        <td
-                          style={{
-                            width: 279,
-                            paddingTop: "2.5rem",
-                            paddingRight: "5.438rem",
-                          }}
-                        >
-                          Date
-                        </td>
-                        <td style={{ paddingTop: "2.5rem" }}>
-                          {selectedRecord.date}
-                        </td>
-                      </tr>
-                      <tr style={{ marginTop: "30px" }}>
-                        <td style={{ paddingTop: "1rem" }}>Reason</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          {selectedRecord.reason}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Status</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          <div className="adjustment-status">
-                            {selectedRecord.status}
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Account</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          Cost of Goods Sold
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Adjustment Type</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          {selectedRecord.type}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Reference Number</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          {selectedRecord.referenceNumber}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Adjusted By</td>
-                        <td style={{ paddingTop: "1rem" }}>piti baby</td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingTop: "1rem" }}>Created Time</td>
-                        <td style={{ paddingTop: "1rem" }}>
-                          {selectedRecord.date} 03:10 PM
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <Divider />
-                  <p>Adjusted Items</p>
-                  <Table
-                    className="adjustment-details-table"
-                    pagination={false}
-                    columns={adjustmentDetailsTableColumns}
-                    dataSource={adjustmentDetailsTableDataSource}
-                  ></Table>
+                <div>
+                  <span>Adjustment Status: </span>
+                  <span
+                    style={{
+                      color: getStatusColor(selectedRecord.currentStatus),
+                    }}
+                  >
+                    {selectedRecord.currentStatus}
+                  </span>
                 </div>
-              )}
+              </div>
+              <InventoryAdjustmentsTemplate selectedRecord={selectedRecord} />
             </div>
           </div>
         )}

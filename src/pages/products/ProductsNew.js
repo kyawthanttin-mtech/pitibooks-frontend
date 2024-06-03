@@ -208,8 +208,8 @@ const ProductsNew = () => {
       : 0;
 
     const imageUrls = imageList.map((img) => ({
-      imageUrl: img.url,
-      thumbnailUrl: img.url,
+      imageUrl: img.imageUrl,
+      thumbnailUrl: img.thumbnailUrl,
     }));
 
     console.log("image urls", imageUrls);
@@ -257,7 +257,7 @@ const ProductsNew = () => {
       isSalesTaxInclusive: false,
       salesPrice: parseFloat(values.salesPrice),
       purchasePrice: parseFloat(values.purchasePrice),
-      // images: imageUrls,
+      images: imageUrls,
       isBatchTracking: false,
       openingStocks,
     };
@@ -280,7 +280,6 @@ const ProductsNew = () => {
 
   const handleCustomFileListChange = (newCustomFileList) => {
     setImageList(newCustomFileList);
-    console.log("Changed");
   };
   console.log(imageList);
 
@@ -736,8 +735,8 @@ const ProductsNew = () => {
             name="salesPrice"
             label={
               <FormattedMessage
-                id="label.salesPrice"
-                defaultMessage="Sales Price"
+                id="label.sellingPrice"
+                defaultMessage="Selling Price"
               />
             }
             labelCol={{ span: 8 }}
@@ -860,8 +859,8 @@ const ProductsNew = () => {
             name="purchasePrice"
             label={
               <FormattedMessage
-                id="label.purchasePrice"
-                defaultMessage="Purchase Price"
+                id="label.costPrice"
+                defaultMessage="Cost Price"
               />
             }
             labelCol={{ span: 8 }}

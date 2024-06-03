@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 const GET_PAGINATE_INVOICE = gql`
-  query PaginateSalesInvoice {
-    paginateSalesInvoice {
+  query PaginateSalesInvoice($limit: Int = 10, $after: String) {
+    paginateSalesInvoice(limit: $limit, after: $after) {
       edges {
         cursor
         node {
@@ -31,6 +31,10 @@ const GET_PAGINATE_INVOICE = gql`
           invoiceTotalTaxAmount
           invoiceTotalAmount
           invoiceTotalPaidAmount
+          salesPerson {
+            id
+            name
+          }
           details {
             id
             productId
@@ -59,6 +63,8 @@ const GET_PAGINATE_INVOICE = gql`
           customer {
             id
             name
+            unusedCreditAmount
+            prepaidCreditAmount
           }
           branch {
             id

@@ -129,6 +129,7 @@ const BillsNew = () => {
           },
         ]
   );
+  console.log("data", data);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(
     record?.supplier?.id ? record.supplier : null
@@ -164,11 +165,13 @@ const BillsNew = () => {
     record?.orderTotalDiscountAmount || record?.billTotalDiscountAmount || 0
   );
   const [totalAmount, setTotalAmount] = useState(
-    (record?.orderTotalAmount || record?.billTotalAmount || 0) - 
-    (record?.adjustmentAmount || 0)
+    (record?.orderTotalAmount || record?.billTotalAmount || 0) -
+      (record?.adjustmentAmount || 0)
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
-  const [tableKeyCounter, setTableKeyCounter] = useState(1);
+  const [tableKeyCounter, setTableKeyCounter] = useState(
+    record?.details.length || 1
+  );
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
@@ -298,7 +301,7 @@ const BillsNew = () => {
           referenceNumber: record?.referenceNumber,
           billDate: dayjs(record?.billDate),
           currency: record?.currency?.id,
-          exchangeRate: record?.currency?.exchangeRate,
+          exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse.id || null,
           discount: record?.billDiscount,
           adjustment: record?.adjustmentAmount || null,
@@ -365,10 +368,13 @@ const BillsNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      intl.formatMessage({
-        id: "validation.invalidProductDetails",
-        defaultMessage: "Invalid Product Details",
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -552,6 +558,14 @@ const BillsNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
@@ -575,9 +589,12 @@ const BillsNew = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.inventoryAccount?.id,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id || null,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };

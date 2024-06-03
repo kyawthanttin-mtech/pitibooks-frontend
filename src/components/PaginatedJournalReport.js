@@ -1,11 +1,15 @@
 /* eslint-disable react/style-prop-object */
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { LeftOutlined, RightOutlined, SyncOutlined } from "@ant-design/icons";
 import { Button, Row, Space, Modal, Tooltip, Spin, Flex, Empty } from "antd";
 import { useQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
-import { convertTransactionType, paginateArray } from "../utils/HelperFunctions";
+import {
+  convertTransactionType,
+  paginateArray,
+  useHistoryState,
+} from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import moment from "moment";
 import ReportHeader from "./ReportHeader";
@@ -27,11 +31,11 @@ const PaginatedJournalReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useState("currentPage", 1);
+  const [currentPage, setCurrentPage] = useHistoryState("currentPage", 1);
   const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
-  
+
   const {
     data,
     loading: queryLoading,
@@ -119,7 +123,10 @@ const PaginatedJournalReport = ({
             <h4>{business.name}</h4>
             <h3 style={{ marginTop: "-5px" }}>Journal Report</h3>
             <span>Basis: {reportBasis}</span>
-            <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
+            <h5>
+              From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+              {toDate.format(REPORT_DATE_FORMAT)}
+            </h5>
           </div>
           {loading ? (
             <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -142,9 +149,14 @@ const PaginatedJournalReport = ({
                       <tr>
                         <th style={{ width: "400px", textAlign: "left" }}>
                           <span>
-                            {moment(data.transactionDateTime).format(REPORT_DATE_FORMAT)}
+                            {moment(data.transactionDateTime).format(
+                              REPORT_DATE_FORMAT
+                            )}
                           </span>{" "}
-                          - <span>{convertTransactionType(data.referenceType)} </span>
+                          -{" "}
+                          <span>
+                            {convertTransactionType(data.referenceType)}{" "}
+                          </span>
                           <span>{data.transactionNumber} </span>
                           <a href="#/">{data.supplier && data.supplier}</a>
                         </th>
@@ -153,13 +165,19 @@ const PaginatedJournalReport = ({
                           className="text-align-right"
                           style={{ width: "210px" }}
                         >
-                          <FormattedMessage id="report.debit" defaultMessage="Debit" />
+                          <FormattedMessage
+                            id="report.debit"
+                            defaultMessage="Debit"
+                          />
                         </th>
                         <th
                           className="text-align-right"
                           style={{ width: "210px" }}
                         >
-                          <FormattedMessage id="report.credit" defaultMessage="Credit" />
+                          <FormattedMessage
+                            id="report.credit"
+                            defaultMessage="Credit"
+                          />
                         </th>
                       </tr>
                     </thead>
@@ -173,10 +191,22 @@ const PaginatedJournalReport = ({
                             <td>{transaction.account.name}</td>
                             <td></td>
                             <td className="text-align-right">
-                              <FormattedNumber value={transaction.baseDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                              <FormattedNumber
+                                value={transaction.baseDebit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
                             </td>
                             <td className="text-align-right">
-                              <FormattedNumber value={transaction.baseCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                              <FormattedNumber
+                                value={transaction.baseCredit}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
                             </td>
                           </tr>
                         );
@@ -186,12 +216,24 @@ const PaginatedJournalReport = ({
                         <td></td>
                         <td className="text-align-right">
                           <a href="#/">
-                            <FormattedNumber value={totalDebit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                            <FormattedNumber
+                              value={totalDebit}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
                           </a>
                         </td>
                         <td className="text-align-right">
                           <a href="#/">
-                            <FormattedNumber value={totalCredit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                            <FormattedNumber
+                              value={totalCredit}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
                           </a>
                         </td>
                       </tr>
@@ -207,7 +249,9 @@ const PaginatedJournalReport = ({
                   <tr>
                     <th style={{ width: "400px", textAlign: "left" }}>
                       <span>
-                        {moment(data?.transactionDateTime).format(REPORT_DATE_FORMAT)}
+                        {moment(data?.transactionDateTime).format(
+                          REPORT_DATE_FORMAT
+                        )}
                       </span>{" "}
                       - <span>{data?.referenceType} </span>
                       <span>{data?.id} </span>
@@ -215,10 +259,16 @@ const PaginatedJournalReport = ({
                     </th>
                     <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
                     <th className="text-align-right" style={{ width: "210px" }}>
-                      <FormattedMessage id="report.debit" defaultMessage="Debit" />
+                      <FormattedMessage
+                        id="report.debit"
+                        defaultMessage="Debit"
+                      />
                     </th>
                     <th className="text-align-right" style={{ width: "210px" }}>
-                      <FormattedMessage id="report.credit" defaultMessage="Credit" />
+                      <FormattedMessage
+                        id="report.credit"
+                        defaultMessage="Credit"
+                      />
                     </th>
                   </tr>
                 </thead>
@@ -312,7 +362,11 @@ const PaginatedJournalReport = ({
         </Row>
         <Row>
           <div style={{ paddingLeft: "1.5rem" }}>
-            <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+            <FormattedMessage
+              values={{ currency: business.baseCurrency.symbol }}
+              id="label.displayedBaseCurrency"
+              defaultMessage="**Amount is displayed in {currency}"
+            />
           </div>
         </Row>
       </div>

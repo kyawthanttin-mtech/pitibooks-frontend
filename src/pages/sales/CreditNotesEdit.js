@@ -217,7 +217,8 @@ const CreditNotesEdit = () => {
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
             acc[`detailDiscount${index + 1}`] = d.detailDiscount;
-            acc[`detailTax${index + 1}`] = d.detailTax.id;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
             acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
             return acc;
           }, {}),
@@ -283,7 +284,7 @@ const CreditNotesEdit = () => {
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
@@ -348,7 +349,7 @@ const CreditNotesEdit = () => {
       details,
     };
     console.log("Input", input);
-    updateCreditNote({
+    await updateCreditNote({
       variables: { id: record.id, input },
       update(cache, { data: { updateCreditNote } }) {
         cache.modify({
@@ -553,12 +554,20 @@ const CreditNotesEdit = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.purchasePrice;
+        newData.rate = selectedItem.salesPrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
@@ -576,9 +585,12 @@ const CreditNotesEdit = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.purchaseAccount?.id,
-      [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`account${rowKey}`]: selectedItem.salesAccount?.id || null,
+      [`rate${rowKey}`]: selectedItem.salesPrice,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };

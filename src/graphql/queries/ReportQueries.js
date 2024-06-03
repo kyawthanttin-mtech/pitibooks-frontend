@@ -344,6 +344,111 @@ const GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT = gql`
   }
 `;
 
+const GET_CASH_FLOW_REPORT = gql`
+  query GetCashFlowReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    getCashFlowReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      beginCashBalance
+      netChange
+      endCashBalance
+      cashAccountGroups {
+        groupName
+        total
+        accounts {
+          accountName
+          accountCode
+          accountID
+          amount
+        }
+      }
+    }
+  }
+`;
+
+const GET_MOVEMENT_OF_EQUITY_REPORT = gql`
+  query GetMovementOfEquityReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $reportType: String!
+    $branchId: Int
+  ) {
+    getMovementOfEquityReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      reportType: $reportType
+      branchId: $branchId
+    ) {
+      openingBalance
+      netChange
+      closingBalance
+      accountGroups {
+        groupName
+        total
+        accounts {
+          accountName
+          accountCode
+          accountID
+          amount
+        }
+      }
+    }
+  }
+`;
+
+const GET_SALES_BY_CUSTOMER_REPORT = gql`
+  query GetSalesByCustomerReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $branchId: Int
+  ) {
+    getSalesByCustomerReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      branchId: $branchId
+    ) {
+      CustomerId
+      CustomerName
+      InvoiceCount
+      TotalSales
+      TotalSalesWithTax
+    }
+  }
+`;
+
+const GET_SALES_BY_SALES_PERSON_REPORT = gql`
+  query GetSalesBySalesPersonReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $branchId: Int
+  ) {
+    getSalesBySalesPersonReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      branchId: $branchId
+    ) {
+      SalesPersonId
+      SalesPersonName
+      InvoiceCount
+      TotalInvoiceSales
+      TotalInvoiceSalesWithTax
+      CreditNoteCount
+      TotalCreditNoteSales
+      TotalCreditNoteSalesWithTax
+      TotalSales
+      TotalSalesWithTax
+    }
+  }
+`;
+
 const ReportQueries = {
   GET_PAGINATED_JOURNAL_REPORTS,
   GET_ACCOUNT_TYPE_SUMMARY_REPORT,
@@ -354,6 +459,10 @@ const ReportQueries = {
   GET_TRIAL_BALANCE_REPORT,
   GET_BALANCE_SHEET_REPORT,
   GET_PROFIT_AND_LOSS_REPORT,
+  GET_CASH_FLOW_REPORT,
+  GET_MOVEMENT_OF_EQUITY_REPORT,
+  GET_SALES_BY_CUSTOMER_REPORT,
+  GET_SALES_BY_SALES_PERSON_REPORT,
 };
 
 export default ReportQueries;

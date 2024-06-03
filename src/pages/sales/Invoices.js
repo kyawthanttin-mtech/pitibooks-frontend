@@ -81,7 +81,11 @@ const Invoices = () => {
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
 
-  const { data, loading: queryLoading } = useQuery(GET_PAGINATE_INVOICE, {
+  const {
+    data,
+    loading: queryLoading,
+    refetch,
+  } = useQuery(GET_PAGINATE_INVOICE, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
@@ -182,10 +186,10 @@ const Invoices = () => {
 
     if (status === "Paid") {
       color = "var(--dark-green)";
-    } else if (status === "Overdue") {
-      color = "var(--red)";
+    } else if (status === "Confirmed") {
+      color = "var(--blue)";
     } else {
-      color = "var(--orange)";
+      color = "gray";
     }
 
     return color;
@@ -997,7 +1001,7 @@ const Invoices = () => {
                     <b>
                       {selectedRecord.currency.symbol}{" "}
                       <FormattedNumber
-                        value={selectedRecord.supplier?.unusedCreditAmount}
+                        value={selectedRecord.customer?.unusedCreditAmount}
                         style="decimal"
                         minimumFractionDigits={
                           selectedRecord.currency.decimalPlaces
@@ -1040,7 +1044,9 @@ const Invoices = () => {
               </p>
             </Row>
             <RecordPayment
-              selectedProductRecord={selectedRecord}
+              refetch={refetch}
+              branches={branches}
+              selectedRecord={selectedRecord}
               onClose={() => setShowRecordPaymentForm(false)}
             />
           </div>

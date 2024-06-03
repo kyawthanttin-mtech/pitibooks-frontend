@@ -12,6 +12,8 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
             email
             phone
             mobile
+            prepaidCreditAmount
+            unusedCreditAmount
             customerTax {
               id
               name
@@ -22,6 +24,12 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
           branch {
             id
             name
+          }
+          currency {
+            id
+            name
+            symbol
+            decimalPlaces
           }
           amount
           bankCharges
@@ -37,10 +45,10 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
             mainType
             name
             code
-            parentAccount {
-              id
-              name
-            }
+            # parentAccount {
+            #   id
+            #   name
+            # }
           }
           referenceNumber
           notes
@@ -52,7 +60,43 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
           paidInvoices {
             id
             customerPaymentId
-            invoiceId
+            invoice {
+              id
+              businessId
+              # salesOrderNumber
+              invoiceNumber
+              referenceNumber
+              invoiceDate
+              invoiceDueDate
+              invoicePaymentTerms
+              # invoicePaymentTermsCustomDays
+              invoiceSubject
+              notes
+              exchangeRate
+              invoiceDiscount
+              invoiceDiscountType
+              invoiceDiscountAmount
+              adjustmentAmount
+              isTaxInclusive
+              invoiceTaxAmount
+              currentStatus
+              invoiceSubtotal
+              invoiceTotalDiscountAmount
+              invoiceTotalTaxAmount
+              invoiceTotalAmount
+              invoiceTotalPaidAmount
+              branch {
+                id
+                name
+              }
+              currency {
+                id
+                decimalPlaces
+                exchangeRate
+                name
+                symbol
+              }
+            }
             paidAmount
           }
         }

@@ -147,13 +147,17 @@ const Bills = () => {
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
 
-  const { data, loading: queryLoading, refetch } = useQuery(GET_PAGINATE_BILL, {
+  const {
+    data,
+    loading: queryLoading,
+    refetch,
+  } = useQuery(GET_PAGINATE_BILL, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
-    variables: {
-      limit: 1,
-    },
+    // variables: {
+    //   limit: 1,
+    // },
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
@@ -250,7 +254,8 @@ const Bills = () => {
     },
   });
 
-  const loading = queryLoading || deleteLoading || confirmLoading || voidLoading;
+  const loading =
+    queryLoading || deleteLoading || confirmLoading || voidLoading;
 
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
@@ -319,10 +324,10 @@ const Bills = () => {
 
     if (status === "Paid") {
       color = "var(--dark-green)";
-    } else if (status === "Overdue") {
-      color = "var(--red)";
+    } else if (status === "Confirmed") {
+      color = "var(--blue)";
     } else {
-      color = "var(--orange)";
+      color = "gray";
     }
 
     return color;
@@ -353,6 +358,7 @@ const Bills = () => {
         />
       ),
     });
+    console.log(id);
     if (confirmed) {
       try {
         await confirmBill({
@@ -969,6 +975,8 @@ const Bills = () => {
                     state: {
                       ...location.state,
                       from: { pathname: location.pathname },
+                      cloneBill: null,
+                      convertPO: null,
                     },
                   })
                 }
@@ -1220,6 +1228,7 @@ const Bills = () => {
                           ...location.state,
                           from: { pathname: location.pathname },
                           cloneBill: selectedRecord,
+                          convertPO: null,
                         },
                       });
                     } else if (key === "1") {
@@ -1254,7 +1263,8 @@ const Bills = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              {(selectedRecord.status === "Paid" || selectedRecord.status === "Partial Paid") && 
+              {(selectedRecord.status === "Paid" ||
+                selectedRecord.status === "Partial Paid") && (
                 <div className="bill-receives-container">
                   <div
                     className={`nav-bar ${!isContentExpanded && "collapsed"}`}
@@ -1305,7 +1315,7 @@ const Bills = () => {
                         <Table
                           className="bill-table"
                           columns={paymentMadeColumns}
-                          dataSource={[selectedRecord.paymentMade]}
+                          dataSource={[selectedRecord.supplierPayment]}
                           pagination={false}
                         />
                       </div>
@@ -1322,13 +1332,14 @@ const Bills = () => {
                     )}
                   </div>
                 </div>
-              } 
-              {selectedRecord.status === "Confirmed" && <div
+              )}
+              {(selectedRecord.status === "Confirmed" || selectedRecord.status === "Partial Paid") &&
+                <div
                   className="bill-receives-container"
                   style={{ minHeight: "8.875rem", padding: "1.2rem 1rem " }}
                 >
                   <span>
-                    Credits Available:{" "}
+                  <FormattedMessage id="lable.availableCredits" defaultMessage="Available Credits" />{" "}
                     <b>
                       {selectedRecord.currency.symbol}{" "}
                       <FormattedNumber
@@ -1383,7 +1394,7 @@ const Bills = () => {
               </p>
             </Row>
             <RecordPayment
-              refetch={refetch}
+              refetch={() => {refetch(); setSelectedRecord(null)}}
               branches={branches}
               selectedRecord={selectedRecord}
               onClose={() => setShowRecordPaymentForm(false)}

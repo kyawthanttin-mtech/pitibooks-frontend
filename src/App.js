@@ -28,16 +28,18 @@ import {
   Products,
   InventoryAdjustments,
   ProductGroups,
-  TransferOrder,
+  TransferOrders,
   ProductGroupsNew,
   OpeningStock,
   InventoryAdjustmentsNew,
-  TransferOrderNew,
+  TransferOrdersNew,
   ProductsNew,
   ProductCategories,
   ProductUnits,
   ProductsEdit,
   ProductGroupsEdit,
+  TransferOrdersEdit,
+  InventoryAdjustmentsEdit,
 } from "./pages/products";
 import {
   ManualJournals,
@@ -54,7 +56,15 @@ import {
   JournalReport,
   ProfitAndLoss,
   Reports,
+  SalesByCustomer,
+  SalesByProduct,
+  SalesBySalesPerson,
   TrialBalance,
+  InventoryValuationSummary,
+  ProductSalesReport,
+  StockSummaryReport,
+  CashFlowReport,
+  MovementOfEquity,
 } from "./pages/reports";
 import {
   Profile,
@@ -88,11 +98,13 @@ import {
   SalesOrdersNew,
 } from "./pages/sales";
 
-import InvoicesPage from "./pages/InvoicesPage";
 import TaxRates from "./pages/settings/TaxRates";
 // import TaxSettings from "./pages/settings/TaxSettings";
 import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
 import Banking from "./pages/banking/Banking";
+import PaymentsMadeEdit from "./pages/purchases/PaymentsMadeEdit";
+import PaymentsReceivedNew from "./pages/sales/PaymentsReceivedNew";
+import PaymentsReceivedEdit from "./pages/sales/PaymentsReceivedEdit";
 
 if (process.env.NODE_ENV !== "production") {
   // Adds messages only in a dev environment
@@ -143,6 +155,10 @@ const router = createHashRouter([
         Component: InventoryAdjustmentsNew,
       },
       {
+        path: "inventoryAdjustments/edit",
+        Component: InventoryAdjustmentsEdit,
+      },
+      {
         path: "productGroups",
         Component: ProductGroups,
       },
@@ -160,11 +176,15 @@ const router = createHashRouter([
       },
       {
         path: "transferOrders/new",
-        Component: TransferOrderNew,
+        Component: TransferOrdersNew,
+      },
+      {
+        path: "transferOrders/edit",
+        Component: TransferOrdersEdit,
       },
       {
         path: "transferOrders",
-        Component: TransferOrder,
+        Component: TransferOrders,
       },
       {
         path: "productCategories",
@@ -206,6 +226,14 @@ const router = createHashRouter([
       {
         path: "paymentsReceived",
         Component: PaymentsReceived,
+      },
+      {
+        path: "paymentsReceived/new",
+        Component: PaymentsReceivedNew,
+      },
+      {
+        path: "paymentsReceived/edit",
+        Component: PaymentsReceivedEdit,
       },
       {
         path: "invoices",
@@ -289,6 +317,10 @@ const router = createHashRouter([
         Component: PaymentsMadeNew,
       },
       {
+        path: "paymentsMade/edit",
+        Component: PaymentsMadeEdit,
+      },
+      {
         path: "supplierCredits",
         Component: SupplierCredits,
       },
@@ -353,6 +385,38 @@ const router = createHashRouter([
       {
         path: "reports/trialBalance",
         Component: TrialBalance,
+      },
+      {
+        path: "reports/salesByCustomer",
+        Component: SalesByCustomer,
+      },
+      {
+        path: "reports/salesBySalesPerson",
+        Component: SalesBySalesPerson,
+      },
+      {
+        path: "reports/salesByProduct",
+        Component: SalesByProduct,
+      },
+      {
+        path: "reports/productSalesReport",
+        Component: ProductSalesReport,
+      },
+      {
+        path: "reports/inventoryValuationSummary",
+        Component: InventoryValuationSummary,
+      },
+      {
+        path: "reports/stockSummaryReport",
+        Component: StockSummaryReport,
+      },
+      {
+        path: "reports/cashFlowReport",
+        Component: CashFlowReport,
+      },
+      {
+        path: "reports/movementOfEquity",
+        Component: MovementOfEquity,
       },
       //Settings
       {

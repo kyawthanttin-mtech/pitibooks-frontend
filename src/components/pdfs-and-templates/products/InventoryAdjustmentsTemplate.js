@@ -1,10 +1,16 @@
+import dayjs from "dayjs";
 import React from "react";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
+import { useOutletContext } from "react-router-dom";
 
 const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
+  const { business } = useOutletContext();
+  const details = selectedRecord?.details ? selectedRecord?.details : [];
+
   return (
     <div className="details-page">
       <div className="details-container">
-        <div className="ribbon text-ellipsis">
+        {/* <div className="ribbon text-ellipsis">
           <div
             className={`ribbon-inner ${
               selectedRecord.status === "Adjusted"
@@ -14,17 +20,32 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
           >
             {selectedRecord.status}
           </div>
-        </div>
+        </div> */}
         <div className="template">
           <div className="template-header header-content"></div>
           <div className="template-body">
             <table className="title-section" id="title-table">
               <tbody>
                 <tr>
-                  <td></td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: "var(--detail-text)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <b>{business.name}</b>
+                    </span>
+                    <br />
+                    <span>{business.country}</span>
+                    <br />
+                    <span>{business.email}</span>
+                    <br />
+                    <br />
+                  </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>
-                      Inventory Adjustment
+                      Inventory Adjustments
                     </span>
                   </td>
                 </tr>
@@ -69,7 +90,11 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                             className="text-align-right"
                             style={{ padding: "5px 10px 5px 0" }}
                           >
-                            <span>{selectedRecord.date}</span>
+                            <span>
+                              {dayjs(selectedRecord.transferDate).format(
+                                REPORT_DATE_FORMAT
+                              )}
+                            </span>
                           </td>
                         </tr>
                         <tr>
@@ -123,7 +148,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Costs of Goods Sold</span>
+                            <span>{selectedRecord.account?.name}</span>
                           </td>
                         </tr>
                         <tr>
@@ -141,7 +166,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.type}</span>
+                            <span>{selectedRecord.adjustmentType}</span>
                           </td>
                         </tr>
                         <tr>
@@ -159,7 +184,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Head Office</span>
+                            <span>{selectedRecord.branch?.name}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -221,46 +246,48 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                   border: "1px solid black",
                 }}
               >
-                <tr
-                  style={{
-                    pageBreakAfter: "auto",
-                    pageBreakInside: "avoid",
-                    display: "table-row",
-                    verticalAlign: "top",
-                  }}
-                >
-                  <td
-                    rowSpan="1"
-                    valign="top"
+                {details?.map((data, index) => (
+                  <tr
                     style={{
-                      wordBreak: "break-word",
-                      padding: "10px 0 10px 20px",
-                    }}
-                  >
-                    <span>1</span>
-                  </td>
-                  <td
-                    rowSpan="1"
-                    style={{
-                      padding: "10px 10px 5px 10px",
+                      pageBreakAfter: "auto",
+                      pageBreakInside: "avoid",
+                      display: "table-row",
                       verticalAlign: "top",
-                      wordWrap: "break-word",
                     }}
                   >
-                    <span>cake (Purple)</span>
-                  </td>
-                  <td
-                    className="text-align-right"
-                    rowSpan="1"
-                    style={{
-                      padding: "10px 10px 5px 10px",
-                      verticalAlign: "top",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    <span>MMK 990.00</span>
-                  </td>
-                </tr>
+                    <td
+                      rowSpan="1"
+                      valign="top"
+                      style={{
+                        wordBreak: "break-word",
+                        padding: "10px 0 10px 20px",
+                      }}
+                    >
+                      <span>{index + 1}</span>
+                    </td>
+                    <td
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span>{data.name}</span>
+                    </td>
+                    <td
+                      className="text-align-right"
+                      rowSpan="1"
+                      style={{
+                        padding: "10px 10px 5px 10px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      <span>{data.adjustedValue}</span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
 

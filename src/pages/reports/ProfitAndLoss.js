@@ -46,7 +46,7 @@ const ProfitAndLoss = () => {
     );
   const costOfGoodsSold =
     queryData?.getProfitAndLossReport[0]?.plAccountGroups.find(
-      (group) => group.groupType === "Cost of Goods Sold"
+      (group) => group.groupType === "Cost Of Goods Sold"
     );
   const operatingExpense =
     queryData?.getProfitAndLossReport[0]?.plAccountGroups.find(

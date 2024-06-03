@@ -160,10 +160,12 @@ const PurchaseOrdersNew = () => {
     record?.orderTotalDiscountAmount
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
-  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount - record?.adjustmentAmount);
+  const [totalAmount, setTotalAmount] = useState(
+    record?.orderTotalAmount - record?.adjustmentAmount
+  );
   const client = useApolloClient();
   const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details?.length
+    record?.details?.length || 1
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
@@ -303,7 +305,7 @@ const PurchaseOrdersNew = () => {
     // const taxId = record?.supplierTaxType + record?.supplierTaxId;
     const parsedRecord = record
       ? {
-          supplierName: record?.supplierName,
+          supplierName: record?.supplier?.name,
           branch: record?.branch?.id,
           referenceNumber: record?.referenceNumber,
           date: dayjs(record?.orderDate),
@@ -320,7 +322,7 @@ const PurchaseOrdersNew = () => {
           paymentTerms: record?.orderPaymentTerms,
           customDays: record?.orderPaymentTermsCustomDays,
           currency: record?.currency?.id,
-          exchangeRate: record?.currency?.exchangeRate,
+          exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse.id,
           customerNotes: record?.notes,
           discount: record?.orderDiscount,
@@ -342,10 +344,13 @@ const PurchaseOrdersNew = () => {
     form.setFieldsValue(parsedRecord);
   }, [form, record]);
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     let foundInvalid = false;
     const details = data.map((item) => {
-      if ((!(item.name || values[`product${item.key}`]) || item.amount === 0) && !item.isDeletedItem) {
+      if (
+        (!(item.name || values[`product${item.key}`]) || item.amount === 0) &&
+        !item.isDeletedItem
+      ) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -378,7 +383,13 @@ const PurchaseOrdersNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      openErrorNotification(notiApi, "Invalid Product Details");
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -409,7 +420,7 @@ const PurchaseOrdersNew = () => {
       details,
     };
     console.log("Input", input);
-    updatePurchaseOrder({
+    await updatePurchaseOrder({
       variables: { id: record.id, input },
       update(cache, { data: { updatePurchaseOrder } }) {
         cache.modify({
@@ -578,6 +589,7 @@ const PurchaseOrdersNew = () => {
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
+    console.log("existing items", existingItems);
     // Update quantity for existing items
     existingItems.forEach((existingItem) => {
       const matchingSelectedItem = selectedItemsBulk.find(
@@ -593,6 +605,7 @@ const PurchaseOrdersNew = () => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
+        console.log("matching selected item", matchingSelectedItem);
 
         if (matchingSelectedItem) {
           const newQuantity = dataItem.quantity + matchingSelectedItem.quantity;
@@ -607,9 +620,9 @@ const PurchaseOrdersNew = () => {
             discountAmount,
             taxAmount,
           };
+        } else {
+          return dataItem;
         }
-
-        return dataItem;
       });
       newData = updatedData;
     }
@@ -672,8 +685,17 @@ const PurchaseOrdersNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
+
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
@@ -695,9 +717,12 @@ const PurchaseOrdersNew = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.inventoryAccount?.id,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id || null,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };

@@ -29,6 +29,7 @@ const PaginatedSelectionTable = ({
   searchTitle = "Search",
   setCurrentPage,
   currentPage,
+  compactTableHeader = false,
 }) => {
   const intl = useIntl();
 
@@ -76,7 +77,7 @@ const PaginatedSelectionTable = ({
         openErrorNotification(
           api,
           intl.formatMessage({
-            id: "validation.atLeastOneSearchCriteria",
+            id: "error.atLeastOneSearchCriteria",
             defaultMessage: "Please fill in at least one search criteria",
           })
         );
@@ -176,7 +177,13 @@ const PaginatedSelectionTable = ({
         {searchForm}
       </Modal>
       <Table
-        className={selectedRecord ? "header-less-table" : "main-table"}
+        className={
+          selectedRecord
+            ? compactTableHeader
+              ? ""
+              : "header-less-table"
+            : "main-table"
+        }
         rowKey={(record) => record.id}
         loading={loading}
         columns={selectedRecord ? compactColumns : columns}

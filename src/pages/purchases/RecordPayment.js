@@ -1,13 +1,5 @@
-import React, {useMemo} from "react";
-import {
-  Row,
-  Col,
-  Button,
-  Form,
-  Input,
-  Select,
-  DatePicker,
-} from "antd";
+import React, { useMemo } from "react";
+import { Row, Col, Button, Form, Input, Select, DatePicker } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useOutletContext } from "react-router-dom";
@@ -18,24 +10,14 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { SupplierPaymentMutations } from "../../graphql";
-const {
-  CREATE_SUPPLIER_PAYMENT,
-} = SupplierPaymentMutations;
+import dayjs from "dayjs";
+const { CREATE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
 
-const RecordPayment = ({ 
-  refetch,
-  branches, 
-  selectedRecord, 
-  onClose,  
-}) => {
+const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const { 
-    notiApi,
-    msgApi,
-    allPaymentModesQueryRef, 
-    allAccountsQueryRef,
-  } = useOutletContext();
+  const { notiApi, msgApi, business, allPaymentModesQueryRef, allAccountsQueryRef } =
+    useOutletContext();
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -50,12 +32,13 @@ const RecordPayment = ({
     if (!accountData?.listAllAccount) return [];
 
     const groupedAccounts = accountData.listAllAccount
-      .filter((account) => 
-        account.detailType === "Cash" ||
-        account.detailType === "Bank" ||
-        account.detailType === "OtherAsset" ||
-        account.detailType === "OtherCurrentAsset" ||
-        account.detailType === "Equity"
+      .filter(
+        (account) =>
+          account.detailType === "Cash" ||
+          account.detailType === "Bank" ||
+          account.detailType === "OtherAsset" ||
+          account.detailType === "OtherCurrentAsset" ||
+          account.detailType === "Equity"
       )
       .reduce((acc, account) => {
         const { detailType } = account;
@@ -68,7 +51,6 @@ const RecordPayment = ({
 
     return Object.values(groupedAccounts);
   }, [accountData]);
-
 
   const [createSupplierPayment, { loading: createLoading }] = useMutation(
     CREATE_SUPPLIER_PAYMENT,
@@ -94,6 +76,7 @@ const RecordPayment = ({
         branchId: values.branch,
         supplierId: selectedRecord.supplier.id,
         currencyId: selectedRecord.currency.id,
+        exchangeRate: values.exchangeRate,
         amount: values.amount,
         bankCharges: values.bankCharges,
         paymentDate: values.date,
@@ -101,11 +84,13 @@ const RecordPayment = ({
         withdrawAccountId: values.paidThrough,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
-        paidBills: [{
-          paidBillId: 0,
-          billId: selectedRecord.id,
-          paidAmount: values.amount,
-        }]
+        paidBills: [
+          {
+            paidBillId: 0,
+            billId: selectedRecord.id,
+            paidAmount: values.amount,
+          },
+        ],
       };
 
       await createSupplierPayment({ variables: { input: input } });
@@ -121,17 +106,20 @@ const RecordPayment = ({
     console.log(selectedRecord);
     form.setFieldsValue({
       branch: selectedRecord?.branch.id,
-      amount: selectedRecord?.billTotalAmount - selectedRecord?.billTotalPaidAmount,
-    })
+      amount:
+        selectedRecord?.billTotalAmount - selectedRecord?.billTotalPaidAmount,
+    });
   }, [form, selectedRecord]);
 
   return (
     <div className="content-column-full-row page-content-with-form-buttons">
-      <Form layout="vertical" form={form} onFinish={handleSubmit} >
+      <Form layout="vertical" form={form} onFinish={handleSubmit}>
         <Row>
           <Col span={7}>
             <Form.Item
-              label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
+              label={
+                <FormattedMessage id="label.branch" defaultMessage="Branch" />
+              }
               name="branch"
               rules={[
                 {
@@ -157,8 +145,13 @@ const RecordPayment = ({
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item 
-              label={<FormattedMessage id="label.paidThrough" defaultMessage="Paid Through" />}
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.paidThrough"
+                  defaultMessage="Paid Through"
+                />
+              }
               name="paidThrough"
               rules={[
                 {
@@ -174,9 +167,16 @@ const RecordPayment = ({
             >
               <Select showSearch optionFilterProp="label">
                 {accounts.map((group) => (
-                  <Select.OptGroup key={group.detailType} label={group.detailType}>
+                  <Select.OptGroup
+                    key={group.detailType}
+                    label={group.detailType}
+                  >
                     {group.accounts.map((acc) => (
-                      <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+                      <Select.Option
+                        key={acc.id}
+                        value={acc.id}
+                        label={acc.name}
+                      >
                         {acc.name}
                       </Select.Option>
                     ))}
@@ -185,7 +185,41 @@ const RecordPayment = ({
               </Select>
             </Form.Item>
             <Form.Item
-              label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
+              label={
+                <FormattedMessage
+                  id="label.paymentMode"
+                  defaultMessage="Payment Mode"
+                />
+              }
+              name="paymentMode"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.paymentMode.required"
+                      defaultMessage="Select the Payment Mode"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select showSearch optionFilterProp="label">
+                {paymentModes?.map((mode) => (
+                  <Select.Option
+                    key={mode.id}
+                    value={mode.id}
+                    label={mode.name}
+                  >
+                    {mode.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.amount" defaultMessage="Amount" />
+              }
               name="amount"
               rules={[
                 {
@@ -217,38 +251,12 @@ const RecordPayment = ({
             >
               <Input addonBefore={selectedRecord.currency.symbol}></Input>
             </Form.Item>
-            <Form.Item 
-              label={<FormattedMessage id="label.paymentMode" defaultMessage="Payment Mode" />}
-              name="paymentMode"
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.paymentMode.required"
-                      defaultMessage="Select the Payment Mode"
-                    />
-                  ),
-                },
-              ]}
-            >
-              <Select showSearch optionFilterProp="label">
-                {paymentModes?.map((mode) => (
-                  <Select.Option
-                    key={mode.id}
-                    value={mode.id}
-                    label={mode.name}
-                  >
-                    {mode.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
           </Col>
           <Col span={7} offset={1}>
-            <Form.Item 
+            <Form.Item
               label={<FormattedMessage id="label.date" defaultMessage="date" />}
               name="date"
+              initialValue={dayjs()}
               rules={[
                 {
                   required: true,
@@ -263,14 +271,24 @@ const RecordPayment = ({
             >
               <DatePicker format={REPORT_DATE_FORMAT} />
             </Form.Item>
-            <Form.Item 
-              label={<FormattedMessage id="label.referenceNumber" defaultMessage="Reference #" />}
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.referenceNumber"
+                  defaultMessage="Reference #"
+                />
+              }
               name="referenceNumber"
             >
               <Input maxLength={255}></Input>
             </Form.Item>
-            <Form.Item 
-              label={<FormattedMessage id="label.bankCharges" defaultMessage="Bank Charges" />}
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.bankCharges"
+                  defaultMessage="Bank Charges"
+                />
+              }
               name="bankCharges"
               rules={[
                 () => ({
@@ -293,11 +311,49 @@ const RecordPayment = ({
             >
               <Input></Input>
             </Form.Item>
+            {selectedRecord.currency.id !== business.baseCurrency.id && <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.exchangeRate"
+                  defaultMessage="Exchange Rate"
+                />
+              }
+              name="exchangeRate"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.exchangeRate.required"
+                      defaultMessage="Enter the Exchange Rate"
+                    />
+                  ),
+                },
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
+              ]}
+            >
+              <Input />
+            </Form.Item>}
           </Col>
         </Row>
-        <Form.Item 
+        <Form.Item
           label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
-          name="notes" 
+          name="notes"
           wrapperCol={{ span: 15 }}
         >
           <Input.TextArea rows={4} maxLength={1000}></Input.TextArea>
@@ -327,10 +383,19 @@ const RecordPayment = ({
           </p>
         </div>
         <div className="page-actions-bar page-actions-bar-margin">
-          <Button loading={createLoading} type="primary" htmlType="submit" className="page-actions-btn">
+          <Button
+            loading={createLoading}
+            type="primary"
+            htmlType="submit"
+            className="page-actions-btn"
+          >
             <FormattedMessage id="button.save" defaultMessage="Save" />
           </Button>
-          <Button loading={createLoading} className="page-actions-btn" onClick={onClose}>
+          <Button
+            loading={createLoading}
+            className="page-actions-btn"
+            onClick={onClose}
+          >
             <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
           </Button>
         </div>

@@ -24,15 +24,15 @@ import {
 } from "antd";
 import {
   CloseOutlined,
-  RightOutlined,
-  CheckCircleFilled,
+  // RightOutlined,
+  // CheckCircleFilled,
   MinusCircleOutlined,
   PlusOutlined,
-  DeleteOutlined,
+  // DeleteOutlined,
   PlusCircleFilled,
   SearchOutlined,
 } from "@ant-design/icons";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ProductGroupMutations } from "../../graphql";
 import { useMutation, useReadQuery, gql } from "@apollo/client";
 import { SupplierSearchModal } from "../../components";
@@ -42,6 +42,7 @@ const { UPDATE_PRODUCT_GROUP } = ProductGroupMutations;
 const defaultPrice = "0.00";
 
 const ProductGroupsEdit = () => {
+  const intl = useIntl();
   const [productGroupName, setProductGroupName] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -64,15 +65,19 @@ const ProductGroupsEdit = () => {
     allAccountsQueryRef,
     allProductCategoriesQueryRef,
     allProductUnitsQueryRef,
+    business,
   } = useOutletContext();
   // const [imageList, setImageList] = useState([]);
   const record = location.state?.record;
   const renderCount = useRef(0);
-  const [isInventoryTracked, setIsInventoryTracked] = useState(false);
+  const [isInventoryTracked, setIsInventoryTracked] = useState(
+    record?.inventoryAccount?.id !== 0 ? true : false
+  );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(
     record?.supplier || null
   );
+  const [imageList, setImageList] = useState(null);
 
   useEffect(() => {
     renderCount.current += 1;
@@ -125,13 +130,13 @@ const ProductGroupsEdit = () => {
         ? {
             productGroupName: record?.name,
             description: record?.description,
-            inventoryAccount: record?.variants[0]?.inventoryAccount?.id,
-            purchaseAccount: record?.variants[0]?.purchaseAccount?.id,
-            salesAccount: record?.variants[0]?.salesAccount?.id,
+            inventoryAccount: record?.variants[0]?.inventoryAccount?.id || null,
+            purchaseAccount: record?.variants[0]?.purchaseAccount?.id || null,
+            salesAccount: record?.variants[0]?.salesAccount?.id || null,
             unit: record?.productUnit?.id,
-            salesTax: record.variants[0]?.salesTax?.id,
-            purchaseTax: record.variants[0]?.purchaseTax?.id,
-            category: record?.category?.id,
+            salesTax: record.variants[0]?.salesTax?.id || null,
+            purchaseTax: record.variants[0]?.purchaseTax?.id || null,
+            category: record?.category?.id || null,
             supplierName: record?.supplier?.name,
             // Map variants to form fields
             ...record.variants.reduce((item, variant, index) => {
@@ -411,20 +416,28 @@ const ProductGroupsEdit = () => {
       salesTaxType,
       purchaseTaxId,
       purchaseTaxType,
+      unitId: 0,
     }));
     const options = productVariations.map((item) => ({
       optionName: item.name,
       optionUnits: item.values.map((item) => item.value).join("|"),
     }));
+
+    const imageUrls = imageList.map((img) => ({
+      imageUrl: img.imageUrl,
+      thumbnailUrl: img.thumbnailUrl,
+    }));
+
     const input = {
       // productNature: values.productNature,
       name: values.productGroupName,
       description: values.description,
-      unitId: values.unit,
       categoryId: values.category,
-      supplierId: 2,
+      images: imageUrls,
+      supplierId: selectedSupplier.id || 0,
       variants,
       options,
+      isBatchTracking: false,
     };
     console.log("input", input);
     updateProductGroup({
@@ -470,9 +483,19 @@ const ProductGroupsEdit = () => {
     editProductFormRef.setFieldsValue({ supplierName: record.name });
   };
 
+  const handleCustomFileListChange = (newCustomFileList) => {
+    setImageList(newCustomFileList);
+    console.log("Changed");
+  };
+
   const columns = [
     {
-      title: "Product Name",
+      title: (
+        <FormattedMessage
+          id="label.productName"
+          defaultMessage="Product Name"
+        />
+      ),
       dataIndex: "productName",
       key: "productName",
       width: "30%",
@@ -485,7 +508,7 @@ const ProductGroupsEdit = () => {
       ),
     },
     {
-      title: "SKU",
+      title: <FormattedMessage id="label.sku" defaultMessage="SKU" />,
       dataIndex: "sku",
       key: "sku",
       render: (_, record) => (
@@ -495,21 +518,143 @@ const ProductGroupsEdit = () => {
       ),
     },
     {
-      title: "Cost Price (MMK)",
-      dataIndex: "costPrice",
-      key: "costPrice",
+      title: (
+        <Col>
+          <Row>
+            <Space>
+              <FormattedMessage
+                id="label.sellingPrice"
+                defaultMessage="Selling Price"
+              />
+              <span>({business.baseCurrency.symbol})</span>
+            </Space>
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const values = editProductFormRef.getFieldsValue();
+                for (var i = 1; i < combinationPairs.length; i++) {
+                  editProductFormRef.setFieldValue(
+                    `salesPrice${combinationPairs[i].key}`,
+                    values[`salesPrice${combinationPairs[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
+      ),
+      dataIndex: "salesPrice",
+      key: "salesPrice",
       render: (_, record) => (
-        <Form.Item name={`purchasePrice${record.key}`}>
+        <Form.Item
+          name={`salesPrice${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.salesPrice.required"
+                  defaultMessage="Enter the Sales Price"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input />
         </Form.Item>
       ),
     },
     {
-      title: "Selling Price (MMK)",
-      dataIndex: "sellingPrice",
-      key: "sellingPrice",
+      title: (
+        <Col>
+          <Row>
+            <Space>
+              <FormattedMessage
+                id="label.costPrice"
+                defaultMessage="Cost Price"
+              />
+              <span>({business.baseCurrency.symbol})</span>
+            </Space>
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const values = editProductFormRef.getFieldsValue();
+                for (var i = 1; i < combinationPairs.length; i++) {
+                  editProductFormRef.setFieldValue(
+                    `purchasePrice${combinationPairs[i].key}`,
+                    values[`purchasePrice${combinationPairs[0].key}`]
+                  );
+                }
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </Col>
+      ),
+      dataIndex: "purchasePrice",
+      key: "purchasePrice",
       render: (_, record) => (
-        <Form.Item name={`salesPrice${record.key}`}>
+        <Form.Item
+          name={`purchasePrice${record.key}`}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.purchasePrice.required"
+                  defaultMessage="Enter the Purchase Price"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input />
         </Form.Item>
       ),
@@ -744,7 +889,10 @@ const ProductGroupsEdit = () => {
           <br />
         </Col>
         <Col span={12}>
-          <UploadImage />
+          <UploadImage
+            onCustomFileListChange={handleCustomFileListChange}
+            images={record?.images}
+          />
         </Col>
       </Row>
       <p style={{ fontSize: "var(--title-text)", marginTop: 0 }}>
@@ -789,7 +937,7 @@ const ProductGroupsEdit = () => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
+          {/* <Form.Item
             label={<FormattedMessage id="label.unit" defaultMessage="Unit" />}
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 12 }}
@@ -820,7 +968,7 @@ const ProductGroupsEdit = () => {
                 </Select.Option>
               ))}
             </Select>
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item
             label={
               <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
@@ -1029,7 +1177,10 @@ const ProductGroupsEdit = () => {
         </Col>
       </Row>
       <Row>
-        <Checkbox onChange={(e) => setIsInventoryTracked(e.target.checked)}>
+        <Checkbox
+          checked={isInventoryTracked}
+          onChange={(e) => setIsInventoryTracked(e.target.checked)}
+        >
           <FormattedMessage
             id="label.trackInventory"
             defaultMessage="Track Inventory"
@@ -1099,25 +1250,8 @@ const ProductGroupsEdit = () => {
         </>
       )}
       <div className="page-actions-bar page-actions-bar-margin">
-        <Button
-          type="primary"
-          htmlType="submit"
-          className="page-actions-btn"
-          // loading={updateLoading}
-          // onClick={() =>
-          //   navigate("/openingStock", {
-          //     state: { combinationPairs },
-          //   })
-          // }
-        >
-          {isInventoryTracked ? (
-            <FormattedMessage
-              id="button.saveAndNext"
-              defaultMessage="Save And Next"
-            />
-          ) : (
-            <FormattedMessage id="button.save" defaultMessage="Save" />
-          )}
+        <Button type="primary" htmlType="submit" className="page-actions-btn">
+          <FormattedMessage id="button.save" defaultMessage="Save" />
         </Button>
         <Button
           className="page-actions-btn"
@@ -1184,7 +1318,7 @@ const ProductGroupsEdit = () => {
               justify="center"
             >
               <Space>
-                <CheckCircleFilled style={{ opacity: "60%" }} />
+                {/* <CheckCircleFilled style={{ opacity: "60%" }} /> */}
                 <span>
                   <FormattedMessage
                     id="title.productDetails"
@@ -1193,13 +1327,13 @@ const ProductGroupsEdit = () => {
                 </span>
               </Space>
             </Flex>
-            <RightOutlined />
+            {/* <RightOutlined />
             <span>
               <FormattedMessage
                 id="title.openingStocks"
                 defaultMessage="Opening Stocks"
               />
-            </span>
+            </span> */}
           </Space>
         </Row>
         {editProductForm}
@@ -1211,22 +1345,25 @@ const ProductGroupsEdit = () => {
               <div
                 className="product-variants"
                 key={variant.id}
-                onClick={() => handleEditClick(variant, index)}
+                style={{
+                  cursor: "not-allowed",
+                }}
+                // onClick={() => handleEditClick(variant, index)}
               >
                 <div className="product-variant-header">
                   <div className="product-variant-name">{variant.name}</div>
-                  <DeleteOutlined
+                  {/* <DeleteOutlined
                     className="product-variant-delete-icon"
                     style={{
                       fontSize: "1rem",
-                      color: "red",
-                      cursor: "pointer",
+                      color: "var(--gray)",
+                      cursor: "not-allowed",
                     }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleRemoveVariation(index);
-                    }}
-                  />
+                    // onClick={(event) => {
+                    //   event.stopPropagation();
+                    //   handleRemoveVariation(index);
+                    // }}
+                  /> */}
                 </div>
                 <div className="product-variant-values-container">
                   {variant.values.map((values) => (
@@ -1236,17 +1373,20 @@ const ProductGroupsEdit = () => {
               </div>
             ))}
           </Flex>
-          <Space>
-            <PlusCircleFilled style={{ color: "var(--primary-color)" }} />
-            <a
-              onClick={(event) => {
-                setCreateModalOpen(true);
-              }}
+          <div>
+            <Button
+              icon={<PlusCircleFilled />}
+              disabled
+              style={{ padding: 0 }}
+              type="link"
+              // onClick={(event) => {
+              //   setCreateModalOpen(true);
+              // }}
               className="add-variant"
             >
               Add Variants
-            </a>
-          </Space>
+            </Button>
+          </div>
         </div>
         <Form form={editProductFormRef} onFinish={onFinish}>
           <Table

@@ -53,6 +53,8 @@ import {
   ReasonQueries,
   UnitQueries,
   DeliveryMethodQueries,
+  SalesPersonMutations,
+  SalesPersonQueries,
 } from "../graphql";
 
 const { GET_ALL_ACCOUNTS } = AccountQueries;
@@ -70,7 +72,7 @@ const { GET_ALL_PAYMENT_MODES } = PaymentModeQueries;
 const { GET_ALL_REASONS } = ReasonQueries;
 const { GET_ALL_PRODUCT_UNITS } = UnitQueries;
 const { GET_ALL_DELIVERY_METHODS } = DeliveryMethodQueries;
-
+const { GET_ALL_SALES_PERSONS } = SalesPersonQueries;
 const { Header, Content, Sider } = Layout;
 
 const App = () => {
@@ -138,6 +140,8 @@ const App = () => {
     useBackgroundQuery(GET_ALL_DELIVERY_METHODS);
   const [allProductVariantsQueryRef, { refetch: refetchAllProductVariants }] =
     useBackgroundQuery(GET_ALL_PRODUCT_VARIANTS);
+  const [allSalesPersonsQueryRef, { refetch: refetchAllSalesPersons }] =
+    useBackgroundQuery(GET_ALL_SALES_PERSONS);
 
   if (loading) {
     return <InitialLoadingPage />;
@@ -157,6 +161,10 @@ const App = () => {
 
   const business = data.getBusiness;
 
+  const isActive = (key) => {
+    return location.pathname === key;
+  };
+
   return (
     <ConfigProvider
       theme={{
@@ -170,7 +178,7 @@ const App = () => {
       {msgCtxHolder}
       <Layout className="main-layout">
         <Sider
-          style={{ backgroundColor: Theme.colorPrimary }}
+          // style={{ backgroundColor: Theme.colorPrimary }}
           breakpoint="lg"
           collapsedWidth="0"
           width="17rem"
@@ -186,7 +194,7 @@ const App = () => {
           <div className="app-logo-container">
             <div className="app-logo">
               <img
-                alt="Pitibooks"
+                alt="MKitchen"
                 // src={process.env.PUBLIC_URL + "/mkitchen-logo.svg"}
                 src={process.env.PUBLIC_URL + "/pitibooks.png"}
               />
@@ -194,12 +202,13 @@ const App = () => {
           </div>
 
           <Menu
+            className="main-menu"
+            mode="inline"
             style={{
               backgroundColor: Theme.colorPrimary,
             }}
-            className="main-menu"
-            color={Theme.bgColorPrimary}
-            mode="inline"
+            // theme="dark"
+            // color={Theme.bgColorPrimary}
             defaultSelectedKeys={"Home"}
             selectedKeys={[currentMenuItem]}
             openKeys={openKeys}
@@ -212,13 +221,11 @@ const App = () => {
             items={[
               {
                 key: "home",
-                style: isActiveRoute("/")
-                  ? { backgroundColor: Theme.darkGreen }
-                  : {},
                 icon: <HomeOutlined />,
                 label: (
                   <FormattedMessage id="menu.home" defaultMessage="Home" />
                 ),
+                className: isActive("/home") ? "active-menu-item" : "",
               },
 
               //Products
@@ -823,6 +830,8 @@ const App = () => {
                       refetchAllDeliveryMethods,
                       allProductVariantsQueryRef,
                       refetchAllProductVariants,
+                      allSalesPersonsQueryRef,
+                      refetchAllSalesPersons,
                     }}
                   />
                 </Suspense>

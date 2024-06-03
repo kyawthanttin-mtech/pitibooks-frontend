@@ -46,63 +46,84 @@ import { useHistoryState } from "../../utils/HelperFunctions";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 const { GET_PAGINATE_PURCHASE_ORDER } = PurchaseOrderQueries;
-const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER, DELETE_PURCHASE_ORDER } = PurchaseOrderMutations;
+const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER, DELETE_PURCHASE_ORDER } =
+  PurchaseOrderMutations;
 
 const draftActionItems = [
   {
-    label: (<FormattedMessage id="button.clone" defaultMessage="Clone"/>),
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
   {
-    label: (<FormattedMessage id="button.covertToBill" defaultMessage="Convert to Bill"/>),
+    label: (
+      <FormattedMessage
+        id="button.covertToBill"
+        defaultMessage="Convert to Bill"
+      />
+    ),
     key: "1",
   },
   {
-    label: (<FormattedMessage id="button.confirmPurchaseOrder" defaultMessage="Confirm Purchase Order"/>),
+    label: (
+      <FormattedMessage
+        id="button.confirmPurchaseOrder"
+        defaultMessage="Confirm Purchase Order"
+      />
+    ),
     key: "2",
   },
   {
-    label: (<FormattedMessage id="button.delete" defaultMessage="Delete"/>),
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
     key: "4",
   },
-]
+];
 
 const confirmedActionItems = [
   {
-    label: (<FormattedMessage id="button.clone" defaultMessage="Clone"/>),
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
   {
-    label: (<FormattedMessage id="button.covertToBill" defaultMessage="Convert to Bill"/>),
+    label: (
+      <FormattedMessage
+        id="button.covertToBill"
+        defaultMessage="Convert to Bill"
+      />
+    ),
     key: "1",
   },
   {
-    label: (<FormattedMessage id="button.cancelPurchaseOrder" defaultMessage="Cancel Purchase Order"/>),
+    label: (
+      <FormattedMessage
+        id="button.cancelPurchaseOrder"
+        defaultMessage="Cancel Purchase Order"
+      />
+    ),
     key: "3",
   },
   {
-    label: (<FormattedMessage id="button.delete" defaultMessage="Delete"/>),
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
     key: "4",
   },
-]
+];
 
 const cancelledActionItems = [
   {
-    label: (<FormattedMessage id="button.clone" defaultMessage="Clone"/>),
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
   {
-    label: (<FormattedMessage id="button.delete" defaultMessage="Delete"/>),
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
     key: "4",
   },
-]
+];
 
 const closedActionItems = [
   {
-    label: (<FormattedMessage id="button.clone" defaultMessage="Clone"/>),
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
-]
+];
 
 const billTableColumns = [
   {
@@ -797,7 +818,12 @@ const PurchaseOrders = () => {
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
           <div className="page-header page-header-with-button">
-            <div className="page-header-text">Purchase Orders</div>
+            <div className="page-header-text">
+              <FormattedMessage
+                id="label.purchaseOrders"
+                defaultMessage="Purchase Orders"
+              />
+            </div>
             <Space>
               <Button
                 type="primary"
@@ -807,6 +833,7 @@ const PurchaseOrders = () => {
                     state: {
                       ...location.state,
                       from: { pathname: location.pathname },
+                      clonePO: null,
                     },
                   })
                 }
@@ -906,7 +933,6 @@ const PurchaseOrders = () => {
               columns={columns}
               compactColumns={compactColumns}
               gqlQuery={GET_PAGINATE_PURCHASE_ORDER}
-              showSearch={false}
               searchForm={searchForm}
               searchTitle={
                 <FormattedMessage
@@ -1016,10 +1042,14 @@ const PurchaseOrders = () => {
                       handleCancelPurchaseOrder(selectedRecord.id);
                     } else if (key === "4") handleDelete(selectedRecord.id);
                   },
-                  items: selectedRecord.currentStatus === "Draft" ? draftActionItems :
-                  selectedRecord.currentStatus === "Confirmed" ? confirmedActionItems :
-                  selectedRecord.currentStatus === "Cancelled" ? cancelledActionItems :
-                  closedActionItems,
+                  items:
+                    selectedRecord.currentStatus === "Draft"
+                      ? draftActionItems
+                      : selectedRecord.currentStatus === "Confirmed"
+                      ? confirmedActionItems
+                      : selectedRecord.currentStatus === "Cancelled"
+                      ? cancelledActionItems
+                      : closedActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -1104,10 +1134,7 @@ const PurchaseOrders = () => {
                   <span>PO Status: </span>
                   <span
                     style={{
-                      color:
-                        selectedRecord.bill?.currentStatus === "Draft"
-                          ? "gray"
-                          : "var(--primary-color)",
+                      color: getStatusColor(selectedRecord.currentStatus),
                     }}
                   >
                     {selectedRecord.currentStatus}

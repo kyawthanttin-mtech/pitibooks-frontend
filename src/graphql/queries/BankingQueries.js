@@ -22,10 +22,6 @@ const GET_BANKING_ACCOUNTS = gql`
       branches
       recentTransactions {
         id
-        branch {
-          id
-          name
-        }
         description
         transactionDateTime
         baseDebit
@@ -35,14 +31,42 @@ const GET_BANKING_ACCOUNTS = gql`
         foreignCredit
         foreignClosingBalance
         exchangeRate
+        accountJournal {
+          id
+          businessId
+          transactionDateTime
+          transactionNumber
+          transactionDetails
+          referenceNumber
+          referenceId
+          referenceType
+        }
+        account {
+          id
+          businessId
+          accountNumber
+          currencyId
+          branches
+          detailType
+          mainType
+          name
+          code
+          description
+          isActive
+          isSystemDefault
+          systemDefaultCode
+        }
+        branch {
+          name
+          id
+        }
       }
     }
   }
 `;
 
 const BankingQueries = {
-    GET_BANKING_ACCOUNTS,
+  GET_BANKING_ACCOUNTS,
 };
-  
+
 export default BankingQueries;
-  

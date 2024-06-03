@@ -117,6 +117,7 @@ const InvoicesEdit = () => {
     allWarehousesQueryRef,
     allProductsQueryRef,
     allProductVariantsQueryRef,
+    allSalesPersonsQueryRef,
   } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(
@@ -186,6 +187,8 @@ const InvoicesEdit = () => {
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+  const { data: salesPersonData } = useReadQuery(allSalesPersonsQueryRef);
+
   // Mutations
   const [updateInvoice, { loading: updateLoading }] = useMutation(
     UPDATE_INVOICE,
@@ -215,7 +218,8 @@ const InvoicesEdit = () => {
           customerName: record?.customerName,
           branch: record?.branch?.id,
           salesOrderId: record?.salesOrderId,
-          salesOrderNumber: record?.salesOrderNumber,
+          // salesOrderNumber: record?.salesOrderNumber,
+          salesPerson: record?.salesPerson?.id || null,
           invoiceDate: dayjs(record?.invoiceDate),
           invoiceDueDate: dayjs(record?.invoiceDueDate),
           currency: record?.currency?.id,
@@ -264,6 +268,12 @@ const InvoicesEdit = () => {
     return productVariantData?.listAllProductVariant;
   }, [productVariantData]);
 
+  const salesPersons = useMemo(() => {
+    return salesPersonData?.listAllSalesPerson?.filter(
+      (sp) => sp.isActive === true
+    );
+  }, [salesPersonData]);
+
   const taxes = useMemo(() => {
     return taxData?.listAllTax;
   }, [taxData]);
@@ -308,7 +318,7 @@ const InvoicesEdit = () => {
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
@@ -355,11 +365,11 @@ const InvoicesEdit = () => {
     const input = {
       branchId: values.branch,
       customerId: selectedCustomer.id,
-      invoiceNumber: 1,
       invoiceDate: values.invoiceDate,
       invoiceDueDate: values.invoiceDueDate,
       notes: values.notes,
       currencyId: values.currency,
+      salesPersonId: values.salesPerson,
       // exchangeRate: values.exchangeRate ? parseFloat(values.exchangeRate) : 0,
       invoicePaymentTerms: values.paymentTerms,
       // invoicePaymentTermsCustomDays: values.customDays ? values.customDays : 0,
@@ -377,7 +387,7 @@ const InvoicesEdit = () => {
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);
-    updateInvoice({
+    await updateInvoice({
       variables: { id: record.id, input },
       update(cache, { data: { updateBill } }) {
         cache.modify({
@@ -610,12 +620,20 @@ const InvoicesEdit = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.purchasePrice;
+        newData.rate = selectedItem.salesPrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
@@ -632,8 +650,11 @@ const InvoicesEdit = () => {
     }
 
     form.setFieldsValue({
-      [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`rate${rowKey}`]: selectedItem.salesPrice,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };
@@ -1372,6 +1393,41 @@ const InvoicesEdit = () => {
                 wrapperCol={{ span: 12 }}
               >
                 <Input></Input>
+              </Form.Item>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.salesPerson"
+                    defaultMessage="Sales Person"
+                  />
+                }
+                name="salesPerson"
+                labelAlign="left"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+                // rules={[
+                //   {
+                //     required: true,
+                //     message: (
+                //       <FormattedMessage
+                //         id="label.salesPerson.required"
+                //         defaultMessage="Select the Sales Person"
+                //       />
+                //     ),
+                //   },
+                // ]}
+              >
+                <Select showSearch optionFilterProp="label">
+                  {salesPersons?.map((salesPerson) => (
+                    <Select.Option
+                      key={salesPerson.id}
+                      value={salesPerson.id}
+                      label={salesPerson.name}
+                    >
+                      {salesPerson.name}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
               <Form.Item
                 label={

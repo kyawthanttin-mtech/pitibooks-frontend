@@ -15,10 +15,10 @@ const GET_PAGINATE_SALES_ORDER = gql`
             id
             name
           }
-          # warehouse {
-          #   id
-          #   name
-          # }
+          warehouse {
+            id
+            name
+          }
           orderNumber
           expectedShipmentDate
           orderPaymentTerms

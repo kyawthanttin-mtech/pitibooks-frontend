@@ -1,9 +1,11 @@
 import React from "react";
 import "./Reports.css";
 import { Row, Col, Input, Flex } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, DollarOutlined } from "@ant-design/icons";
 import { ReactComponent as AccountantOutlined } from "../../assets/icons/AccountOutlinedVariant.svg";
 import { ReactComponent as StarOutlined } from "../../assets/icons/StarOutlined.svg";
+import { ReactComponent as BuildingOutlined } from "../../assets/icons/BuildingOutlined.svg";
+import { ReactComponent as InventoryOutlined } from "../../assets/icons/InventoryOutlined.svg";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -40,7 +42,7 @@ const Reports = () => {
       <div className="page-header">
         <Flex dir="row" gap={"2rem"} align="center">
           <span className="page-header-text">
-            <FormattedMessage id="menu.branches" defaultMessage="Branches" />
+            <FormattedMessage id="menu.reports" defaultMessage="Reports" />
           </span>
           <Input
             prefix={<SearchOutlined />}
@@ -51,9 +53,9 @@ const Reports = () => {
       </div>
       <div className="page-content page-content-with-padding">
         <Row>
-          <Col lg={6}>
+          <Col span={6}>
             <ReportMenuItem
-              icon={<AccountantOutlined />}
+              icon={<BuildingOutlined />}
               label="Business Overview"
               isTitle={true}
             />
@@ -65,7 +67,7 @@ const Reports = () => {
             <ReportMenuItem
               icon={<StarOutlined />}
               label="Cash Flow Statement"
-              to="accountTransactions"
+              to="cashFlowReport"
             />
             <ReportMenuItem
               icon={<StarOutlined />}
@@ -80,10 +82,10 @@ const Reports = () => {
             <ReportMenuItem
               icon={<StarOutlined />}
               label="Movement of Equity"
-              to="accountTransactions"
+              to="movementOfEquity"
             />
           </Col>
-          <Col lg={6} offset={2}>
+          <Col span={6} offset={2}>
             <ReportMenuItem
               icon={<AccountantOutlined />}
               label="Accountant"
@@ -120,7 +122,58 @@ const Reports = () => {
               to="trialBalance"
             />
           </Col>
-          <Col lg={6} offset={2}></Col>
+          <Col span={6} offset={2}>
+            <ReportMenuItem
+              icon={
+                <DollarOutlined
+                  style={{ width: 20, height: 20, fontSize: "1.2rem" }}
+                />
+              }
+              label="Sales"
+              isTitle={true}
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Sales by Customer"
+              to="salesByCustomer"
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Sales by Product"
+              to="salesByProduct"
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Sales by Sales Person"
+              to="salesBySalesPerson"
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col span={6}>
+            <ReportMenuItem
+              icon={<InventoryOutlined />}
+              label="Inventory"
+              isTitle={true}
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Stock Summary Report"
+              to="stockSummaryReport"
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Inventory Valuation Summary"
+              to="inventoryValuationSummary"
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
+              label="Product Sales Report"
+              to="productSalesReport"
+            />
+          </Col>
+          <Col span={6} offset={1}></Col>
+          <Col span={6} offset={1}></Col>
         </Row>
       </div>
     </>

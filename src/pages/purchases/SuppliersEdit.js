@@ -9,9 +9,8 @@ import {
   Col,
   Select,
   Tabs,
-  InputNumber,
 } from "antd";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import {
   CloseOutlined,
   UploadOutlined,
@@ -42,6 +41,7 @@ const initialValues = {
 };
 
 const SuppliersEdit = () => {
+  const intl = useIntl();
   const location = useLocation();
   const record = location.state?.record;
   const [form] = Form.useForm();
@@ -113,7 +113,11 @@ const SuppliersEdit = () => {
             mobile: record?.mobile,
             currency: record?.currency?.id,
             openingBalance: record?.openingBalance,
-            openingBalanceBranch: record?.openingBalanceBranchId && record?.openingBalanceBranchId > 0 ? record?.openingBalanceBranchId : null,
+            openingBalanceBranch:
+              record?.openingBalanceBranchId &&
+              record?.openingBalanceBranchId > 0
+                ? record?.openingBalanceBranchId
+                : null,
             tax:
               record?.supplierTax?.id === "I0" ? null : record?.supplierTax?.id,
             notes: record?.notes,
@@ -197,7 +201,7 @@ const SuppliersEdit = () => {
     },
   ];
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     const contactPersons = data.map((item) => ({
       name: values[`name${item.key}`],
@@ -262,7 +266,7 @@ const SuppliersEdit = () => {
     };
     console.log("ContactPersons", contactPersons);
     console.log("Input", input);
-    updateSupplier({
+    await updateSupplier({
       variables: { id: record.id, input },
       update(cache, { data: { updateSupplier } }) {
         cache.modify({
@@ -605,9 +609,35 @@ const SuppliersEdit = () => {
                   <Form.Item
                     name="openingBalance"
                     labelAlign="left"
-                    // labelCol={{ span: 4 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.salesPrice.required"
+                            defaultMessage="Enter the Sales Price"
+                          />
+                        ),
+                      },
+                      () => ({
+                        validator(_, value) {
+                          if (!value) {
+                            return Promise.resolve();
+                          } else if (isNaN(value) || value.length > 20) {
+                            return Promise.reject(
+                              intl.formatMessage({
+                                id: "validation.invalidInput",
+                                defaultMessage: "Invalid Input",
+                              })
+                            );
+                          } else {
+                            return Promise.resolve();
+                          }
+                        },
+                      }),
+                    ]}
                   >
-                    <InputNumber />
+                    <Input />
                   </Form.Item>
                 </Col>
               </Row>
@@ -677,9 +707,26 @@ const SuppliersEdit = () => {
                             />
                           ),
                         },
+
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (isNaN(value) || value.length > 3 || !Number.isInteger(Number(value)) || Number(value) < 1) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
                       ]}
                     >
-                      <InputNumber min={1} />
+                      <Input />
                     </Form.Item>
                   ) : null
                 }

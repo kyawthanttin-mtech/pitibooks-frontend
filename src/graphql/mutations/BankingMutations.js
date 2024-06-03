@@ -1,7 +1,9 @@
 import { gql } from "@apollo/client";
 
 const CREATE_ACCOUNT_TRANSFER = gql`
-  mutation CreateAccountTransferTransaction($input: NewAccountTransferTransaction!) {
+  mutation CreateAccountTransferTransaction(
+    $input: NewAccountTransferTransaction!
+  ) {
     createAccountTransferTransaction(input: $input) {
       id
       branch {
@@ -27,16 +29,19 @@ const CREATE_ACCOUNT_TRANSFER = gql`
       referenceNumber
       description
       transferDate
-      documents {
-        id
-        documentUrl
-      }
+      # documents {
+      #   id
+      #   documentUrl
+      # }
     }
   }
 `;
 
 const UPDATE_ACCOUNT_TRANSFER = gql`
-  mutation UpdateAccountTransferTransaction($id: ID!, $input: NewAccountTransferTransaction!) {
+  mutation UpdateAccountTransferTransaction(
+    $id: ID!
+    $input: NewAccountTransferTransaction!
+  ) {
     updateAccountTransferTransaction(id: $id, input: $input) {
       id
       branch {

@@ -89,6 +89,46 @@ const GET_PAGINATE_CUSTOMER = gql`
             referenceID
           }
           isActive
+          # unpaidInvoices {
+          #   id
+          #   businessId
+          #   purchaseOrderNumber
+          #   invoiceNumber
+          #   referenceNumber
+          #   invoiceDate
+          #   invoiceDueDate
+          #   invoicePaymentTerms
+          #   invoicePaymentTermsCustomDays
+          #   invoiceSubject
+          #   notes
+          #   exchangeRate
+          #   invoiceDiscount
+          #   invoiceDiscountType
+          #   invoiceDiscountAmount
+          #   adjustmentAmount
+          #   isTaxInclusive
+          #   invoiceTaxAmount
+          #   currentStatus
+          #   invoiceSubtotal
+          #   invoiceTotalDiscountAmount
+          #   invoiceTotalTaxAmount
+          #   invoiceTotalAmount
+          #   invoiceTotalPaidAmount
+          #   balanceDue
+          #   createdAt
+          #   updatedAt
+          #   branch {
+          #     id
+          #     name
+          #   }
+          #   currency {
+          #     id
+          #     decimalPlaces
+          #     exchangeRate
+          #     name
+          #     symbol
+          #   }
+          # }
         }
       }
       pageInfo {

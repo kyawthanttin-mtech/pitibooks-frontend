@@ -1,58 +1,59 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
-import { CloseOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  SearchOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
 
+import { BankingMutations } from "../../graphql";
+import dayjs from "dayjs";
+import { CustomerSearchModal } from "../../components";
+const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+
+const initialValues = {
+  date: dayjs(),
+};
 const CreditNoteRefund = ({
+  refetch,
   modalOpen,
   setModalOpen,
-  branches,
-  currencies,
-  parsedData,
-  accounts,
-  selectedRecord,
+  paymentModes,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const {
-    notiApi,
-    msgApi,
-    allBranchesQueryRef,
-    allCurrenciesQueryRef,
-    allAccountsQueryRef,
-    business,
-    refetchAllAccounts,
-  } = useOutletContext();
+  const { notiApi, msgApi, business } = useOutletContext();
 
-  const creditNoteRefundForm = (
-    <Form form={form}>
-      <Form.Item
-        label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
-        name="branchId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
-      >
-        <Select showSearch optionFilterProp="label">
-          {branches?.map((branch) => (
-            <Select.Option
-              key={branch.id}
-              value={branch.id}
-              label={branch.name}
-            >
-              {branch.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(false);
 
+  const handleSubmit = async () => {
+    // try {
+    //   const values = await form.validateFields();
+    //   await createAccountTransfer({ variables: { input: values } });
+    //   setModalOpen(false);
+    //   form.resetFields();
+    // } catch (err) {
+    //   openErrorNotification(notiApi, err.message);
+    // }
+  };
+
+  const refundForm = (
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={
-          <FormattedMessage id="label.currency" defaultMessage="Currency" />
+          <FormattedMessage id="label.customer" defaultMessage="Customer" />
         }
-        name="currency"
+        name="customerName"
+        shouldUpdate
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -60,83 +61,77 @@ const CreditNoteRefund = ({
             required: true,
             message: (
               <FormattedMessage
-                id="label.currency.required"
-                defaultMessage="Select the Currency"
+                id="label.customer.required"
+                defaultMessage="Select the Customer"
               />
             ),
           },
         ]}
       >
-        <Select
-          //   onChange={(value) => setSelectedCurrency(value)}
-          showSearch
-          optionFilterProp="label"
-        >
-          {currencies.map((currency) => (
-            <Select.Option
-              key={currency.id}
-              value={currency.id}
-              label={currency.name + currency.symbol}
-            >
-              {currency.name} ({currency.symbol})
+        <Input
+          readOnly
+          onClick={setCustomerSearchModalOpen}
+          className="search-input"
+          allowClear
+          suffix={
+            <>
+              {selectedCustomer && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedCustomer(null);
+                    form.resetFields(["customerName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setCustomerSearchModalOpen}
+              />
+            </>
+          }
+        />
+      </Form.Item>
+
+      <Form.Item
+        label={<FormattedMessage id="label.date" defaultMessage="date" />}
+        name="date"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.date.required"
+                defaultMessage="Select the Date"
+              />
+            ),
+          },
+        ]}
+      >
+        <DatePicker format={REPORT_DATE_FORMAT} />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
+        }
+        name="paidVia"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+      >
+        <Select showSearch optionFilterProp="label">
+          {paymentModes?.map((p) => (
+            <Select.Option key={p.id} value={p.id} label={p.name}>
+              {p.name}
             </Select.Option>
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
-                />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
-
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
-
       <Form.Item
         label={
           <FormattedMessage
@@ -148,7 +143,7 @@ const CreditNoteRefund = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input></Input>
+        <Input maxLength={255}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -161,30 +156,67 @@ const CreditNoteRefund = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input.TextArea></Input.TextArea>
+        <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
+      <div className="attachment-upload">
+        <p>
+          <FormattedMessage
+            id="label.attachments"
+            defaultMessage="Attachments"
+          />
+        </p>
+        <Button
+          type="dashed"
+          icon={<UploadOutlined />}
+          className="attachment-upload-button"
+        >
+          <FormattedMessage
+            id="button.uploadFile"
+            defaultMessage="Upload File"
+          />
+        </Button>
+        <p>
+          <FormattedMessage
+            id="label.uploadLimit"
+            defaultMessage="You can upload a maximum of 5 files, 5MB each"
+          />
+        </p>
+      </div>
     </Form>
   );
 
   return (
-    <Modal
-      width="40rem"
-      title={
-        <FormattedMessage
-          id="label.paymentFund"
-          defaultMessage="Credit Note Refund"
-        />
-      }
-      okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
-      cancelText={
-        <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-      }
-      open={modalOpen}
-      onCancel={() => setModalOpen(false)}
-    >
-      {creditNoteRefundForm}
-    </Modal>
+    <>
+      <Modal
+        con
+        width="40rem"
+        title={
+          <FormattedMessage
+            id="label.creditNoteRefund"
+            defaultMessage="Credit Note Refund"
+          />
+        }
+        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
+        cancelText={
+          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+        }
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={form.submit}
+        // confirmLoading={createLoading}
+      >
+        {refundForm}
+      </Modal>
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedCustomer(record);
+          form.setFieldsValue({ customerName: record.name });
+        }}
+      />
+    </>
   );
 };
 

@@ -1,45 +1,76 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
-import { CloseOutlined, UploadOutlined } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
+import dayjs from "dayjs";
+
+const initialValues = {
+  transferDate: dayjs(),
+};
 
 const OwnerContribution = ({
-  ownerContributionModalOpen,
-  setOwnerContributionModalOpen,
+  modalOpen,
+  setModalOpen,
   branches,
-  currencies,
   parsedData,
   accounts,
   selectedRecord,
+  allAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const {
-    notiApi,
-    msgApi,
-    allBranchesQueryRef,
-    allCurrenciesQueryRef,
-    allAccountsQueryRef,
-    business,
-    refetchAllAccounts,
-  } = useOutletContext();
+  const { notiApi, msgApi, business } = useOutletContext();
+  const [currencies, setCurrencies] = useState([
+    selectedRecord?.currency?.id > 0
+      ? selectedRecord.currency
+      : business.baseCurrency,
+  ]);
 
-  if (form && ownerContributionModalOpen) {
+  if (form && modalOpen) {
     form.setFieldsValue({
       toAccountId: selectedRecord.id,
     });
   }
 
+  const handleFromAccountChange = (id) => {
+    const toAccountCurrency =
+      selectedRecord?.currency?.id > 0
+        ? selectedRecord.currency
+        : business.baseCurrency;
+    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+      fromAccountCurrency = business.baseCurrency;
+    }
+    let newCurrencies = [toAccountCurrency];
+    if (toAccountCurrency.id !== fromAccountCurrency.id) {
+      newCurrencies.push(fromAccountCurrency);
+    }
+    console.log(newCurrencies);
+    setCurrencies(newCurrencies);
+    form.setFieldValue("currency", null);
+  };
+
   const ownerContributionForm = (
-    <Form form={form}>
+    <Form form={form} initialValues={initialValues}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.branch.required"
+                defaultMessage="Select the Branch"
+              />
+            ),
+          },
+        ]}
       >
         <Select showSearch optionFilterProp="label">
           {branches?.map((branch) => (
@@ -60,8 +91,18 @@ const OwnerContribution = ({
         name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
-
         // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
       >
         <Select showSearch optionFilterProp="label" disabled>
           {parsedData?.map((acc) => (
@@ -82,8 +123,23 @@ const OwnerContribution = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
       >
-        <Select showSearch optionFilterProp="label">
+        <Select
+          showSearch
+          optionFilterProp="label"
+          onChange={handleFromAccountChange}
+        >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
               {group.accounts.map((acc) => (
@@ -97,9 +153,20 @@ const OwnerContribution = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="date"
+        name="transferDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.date.required"
+                defaultMessage="Select the Date"
+              />
+            ),
+          },
+        ]}
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
@@ -107,7 +174,7 @@ const OwnerContribution = ({
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
-        name="currency"
+        name="currencyId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -196,36 +263,66 @@ const OwnerContribution = ({
         name="amount"
         labelAlign="left"
         labelCol={{ span: 8 }}
-      >
-        <Input
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="label.amount.required"
-                  defaultMessage="Enter the Amount"
-                />
-              ),
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.amount.required"
+                defaultMessage="Enter the Amount"
+              />
+            ),
+          },
+          () => ({
+            validator(_, value) {
+              if (!value) {
+                return Promise.resolve();
+              } else if (isNaN(value) || value.length > 20) {
+                return Promise.reject(
+                  intl.formatMessage({
+                    id: "validation.invalidInput",
+                    defaultMessage: "Invalid Input",
+                  })
+                );
+              } else {
+                return Promise.resolve();
+              }
             },
-            () => ({
-              validator(_, value) {
-                if (!value) {
-                  return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
-                  return Promise.reject(
-                    intl.formatMessage({
-                      id: "validation.invalidInput",
-                      defaultMessage: "Invalid Input",
-                    })
-                  );
-                } else {
-                  return Promise.resolve();
-                }
-              },
-            }),
-          ]}
-        />
+          }),
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage
+            id="label.bankCharges"
+            defaultMessage="Bank Charges"
+          />
+        }
+        name="bankCharges"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          () => ({
+            validator(_, value) {
+              if (!value) {
+                return Promise.resolve();
+              } else if (isNaN(value) || value.length > 20) {
+                return Promise.reject(
+                  intl.formatMessage({
+                    id: "validation.invalidInput",
+                    defaultMessage: "Invalid Input",
+                  })
+                );
+              } else {
+                return Promise.resolve();
+              }
+            },
+          }),
+        ]}
+      >
+        <Input />
       </Form.Item>
       <Form.Item
         label={
@@ -285,16 +382,16 @@ const OwnerContribution = ({
       width="40rem"
       title={
         <FormattedMessage
-          id="label.ownerDrawings"
-          defaultMessage="Owner Drawings"
+          id="label.ownerContribution"
+          defaultMessage="Owner Contribution"
         />
       }
       okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
       cancelText={
         <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
       }
-      open={ownerContributionModalOpen}
-      onCancel={() => setOwnerContributionModalOpen(false)}
+      open={modalOpen}
+      onCancel={() => setModalOpen(false)}
     >
       {ownerContributionForm}
     </Modal>

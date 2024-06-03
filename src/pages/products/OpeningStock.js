@@ -1,46 +1,140 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Row, Space, Table, Input, Select, Form, Flex } from "antd";
 import "./OpeningStock.css";
 import {
   CloseOutlined,
   CheckCircleFilled,
   RightOutlined,
-  LeftOutlined,
+  // LeftOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
+import { useReadQuery, useMutation } from "@apollo/client";
+import { OpeningStockMutations } from "../../graphql";
+const { CREATE_OPENING_STOCK_GROUP } = OpeningStockMutations;
 
 const OpeningStock = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [form] = Form.useForm();
   const record = location.state?.record;
-  const [data, setData] = useState(record.variants);
-  const from = location.state?.from?.pathname || "/";
+  const intl = useIntl();
+  const [data, setData] = useState(
+    record.variants.map((variant) => ({
+      ...variant,
+      warehouseRows: [
+        {
+          warehouseName: "",
+          openingStock: "",
+          openingStockValue: "",
+        },
+      ],
+    }))
+  );
+  // const from = location.state?.from?.pathname || "/";
+  const { notiApi, msgApi, allWarehousesQueryRef, business } =
+    useOutletContext();
 
-  console.log("Product Group", record);
+  const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
 
-  const handleAddWarehouse = (index) => {
-    console.log("Added Index", index + 1);
+  // Mutations
+  const [createOpeningStock, { loading: createLoading }] = useMutation(
+    CREATE_OPENING_STOCK_GROUP,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="openingStock.created"
+            defaultMessage="New Opening Stock Created"
+          />
+        );
+        navigate("/productGroups");
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
+
+  const warehouses = useMemo(() => {
+    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
+  }, [warehouseData]);
+
+  const handleAddWarehouseRow = (productIndex) => {
     const newData = [...data];
-    newData.splice(index + 1, 0, {
-      productName: "",
+    newData[productIndex].warehouseRows.push({
       warehouseName: "",
       openingStock: "",
       openingStockValue: "",
     });
     setData(newData);
   };
-  console.log("data", data);
 
-  const handleRemoveRow = (index) => {
-    console.log("Removed Index", index);
+  const handleRemoveWarehouseRow = (productIndex, warehouseIndex) => {
     const newData = [...data];
-    newData.splice(index, 1);
+    newData[productIndex].warehouseRows.splice(warehouseIndex, 1);
+    // removes the warehouse row at the specified warehouseIndex.
+    // then shifts the form values for all rows after the removed one up by one position, filling the gap left by the removed row.
+    // resets the fields of the last row, which is now empty and should not have any data.
+    for (
+      let i = warehouseIndex;
+      i < newData[productIndex].warehouseRows.length;
+      i++
+    ) {
+      form.setFieldsValue({
+        [`warehouse-${productIndex}-${i}`]: form.getFieldValue(
+          `warehouse-${productIndex}-${i + 1}`
+        ),
+        [`openingStock-${productIndex}-${i}`]: form.getFieldValue(
+          `openingStock-${productIndex}-${i + 1}`
+        ),
+        [`openingStockValue-${productIndex}-${i}`]: form.getFieldValue(
+          `openingStockValue-${productIndex}-${i + 1}`
+        ),
+      });
+    }
+
+    form.resetFields([
+      `warehouse-${productIndex}-${newData[productIndex].warehouseRows.length}`,
+      `openingStock-${productIndex}-${newData[productIndex].warehouseRows.length}`,
+      `openingStockValue-${productIndex}-${newData[productIndex].warehouseRows.length}`,
+    ]);
+
     setData(newData);
   };
 
-  const warehouseOptions = ["Piti Baby", "YGN Warehouse", "MDY Warehouse"];
+  const onFinish = async (values) => {
+    try {
+      const input = data.flatMap((product, productIndex) =>
+        product.warehouseRows.map((warehouse, warehouseIndex) => ({
+          productVariantId: product.ID,
+          warehouseId: values[`warehouse-${productIndex}-${warehouseIndex}`],
+          unitValue:
+            values[`openingStockValue-${productIndex}-${warehouseIndex}`],
+          qty: values[`openingStock-${productIndex}-${warehouseIndex}`],
+        }))
+      );
+
+      console.log("id", record.id);
+      console.log("Input:", input);
+      console.log("values", values);
+
+      await createOpeningStock({
+        variables: { groupId: record.id, input: input },
+      });
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
+  console.log("DATA", data);
 
   const columns = [
     {
@@ -52,7 +146,6 @@ const OpeningStock = () => {
       ),
       dataIndex: "name",
       key: "name",
-      width: "15%",
     },
     {
       title: (
@@ -61,78 +154,234 @@ const OpeningStock = () => {
           defaultMessage="Warehouse Name"
         />
       ),
-      dataIndex: "warehouseName",
+      dataIndex: "warehouseRows",
       key: "warehouseName",
       width: "20%",
-      render: (text, record, index) => (
+      render: (warehouseRows, record, productIndex) => (
         <>
-          <Form.Item name={`warehouse${index}`}>
-            <Select
-              showSearch
-              className="custom-select"
-              defaultValue={warehouseOptions[1]}
-            >
-              {warehouseOptions.map((option) => (
-                <Select.Option value={option} key={option}></Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Space>
-            <PlusOutlined className="add-icon" />
-            <Button
-              style={{ margin: 0, padding: 0 }}
-              type="link"
-              onClick={() => handleAddWarehouse(index, record.ID)}
-            >
-              Add Warehouse
-            </Button>
-          </Space>
+          {warehouseRows.map((warehouse, warehouseIndex) => (
+            <div key={`warehouse-${productIndex}-${warehouseIndex}`}>
+              <Form.Item
+                name={`warehouse-${productIndex}-${warehouseIndex}`}
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.warehouse.required"
+                        defaultMessage="Select the Warehouse"
+                      />
+                    ),
+                  },
+                ]}
+              >
+                <Select showSearch className="custom-select">
+                  {warehouses?.map((w) => (
+                    <Select.Option key={w.id} value={w.id} label={w.name}>
+                      {w.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              {warehouseIndex === warehouseRows.length - 1 && (
+                <>
+                  {warehouseRows.length < warehouses.length && (
+                    <Button
+                      style={{ padding: 0 }}
+                      icon={<PlusOutlined className="add-icon" />}
+                      type="link"
+                      onClick={() => handleAddWarehouseRow(productIndex)}
+                    >
+                      Add Warehouse
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
         </>
       ),
     },
     {
       title: (
-        <FormattedMessage
-          id="label.openingStock"
-          defaultMessage="Opening Stock"
-        />
+        <>
+          <Row>
+            <FormattedMessage
+              id="label.openingStock"
+              defaultMessage="Opening Stock"
+            />
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const firstRowValues = form.getFieldValue(
+                  `openingStock-0-${data[0].warehouseRows.length > 0 ? 0 : ""}`
+                );
+                data.forEach((product, productIndex) => {
+                  product.warehouseRows.forEach((_, warehouseIndex) => {
+                    form.setFieldsValue({
+                      [`openingStock-${productIndex}-${warehouseIndex}`]:
+                        firstRowValues,
+                    });
+                  });
+                });
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </>
       ),
-      dataIndex: "openingStock",
+      dataIndex: "warehouseRows",
       key: "openingStock",
       width: "20%",
-      render: (text, record, index) => (
-        <Form.Item name={`openingStock${index}`}>
-          <Input />
-        </Form.Item>
+      render: (warehouseRows, record, productIndex) => (
+        <>
+          {warehouseRows.map((warehouse, warehouseIndex) => (
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.openingStock.required"
+                      defaultMessage="Enter the Opening Stock"
+                    />
+                  ),
+                },
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
+              ]}
+              key={`openingStock-${productIndex}-${warehouseIndex}`}
+              name={`openingStock-${productIndex}-${warehouseIndex}`}
+            >
+              <Input />
+            </Form.Item>
+          ))}
+        </>
       ),
     },
     {
       title: (
-        <FormattedMessage
-          id="label.openingStockValue"
-          defaultMessage="Opening Stock Value"
-        />
+        <>
+          <Row>
+            <FormattedMessage
+              id="label.openingStockValue"
+              defaultMessage="Opening Stock Value"
+            />
+          </Row>
+          <Row>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              onClick={() => {
+                const firstRowValues = form.getFieldValue(
+                  `openingStockValue-0-${
+                    data[0].warehouseRows.length > 0 ? 0 : ""
+                  }`
+                );
+                data.forEach((product, productIndex) => {
+                  product.warehouseRows.forEach((_, warehouseIndex) => {
+                    form.setFieldsValue({
+                      [`openingStockValue-${productIndex}-${warehouseIndex}`]:
+                        firstRowValues,
+                    });
+                  });
+                });
+              }}
+            >
+              <FormattedMessage
+                id="action.copyToAll"
+                defaultMessage="Copy to All"
+              />
+            </Button>
+          </Row>
+        </>
       ),
-      dataIndex: "openingStockValue",
+      dataIndex: "warehouseRows",
       key: "openingStockValue",
       width: "20%",
-      render: (text, record, index) => (
-        <Form.Item name={`openingStockValue${index}`}>
-          <Input />
-        </Form.Item>
+      render: (warehouseRows, record, productIndex) => (
+        <>
+          {warehouseRows.map((warehouse, warehouseIndex) => (
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.openingStockValue.required"
+                      defaultMessage="Enter the Opening Stock Value"
+                    />
+                  ),
+                },
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
+              ]}
+              key={`openingStockValue-${productIndex}-${warehouseIndex}`}
+              name={`openingStockValue-${productIndex}-${warehouseIndex}`}
+            >
+              <Input addonBefore={business.baseCurrency.symbol} />
+            </Form.Item>
+          ))}
+        </>
       ),
     },
     {
       title: "",
-      dataIndex: "removeRow",
-      key: "removeRow",
-      width: "10%",
-      render: (text, record, index) =>
-        index + 1 > data.length ? (
-          <CloseOutlined onClick={() => handleRemoveRow(record.key)} />
-        ) : (
-          <></>
-        ),
+      dataIndex: "warehouseRows",
+      key: "remove",
+      width: "5%",
+      render: (warehouseRows, record, productIndex) => (
+        <>
+          {warehouseRows.map((warehouse, warehouseIndex) => (
+            <div key={`remove-${productIndex}-${warehouseIndex}`}>
+              {warehouseRows.length > 1 && (
+                <div style={{ height: "2.5rem", marginBottom: "24px" }}>
+                  <CloseOutlined
+                    onClick={() =>
+                      handleRemoveWarehouseRow(productIndex, warehouseIndex)
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      ),
     },
   ];
 
@@ -140,9 +389,13 @@ const OpeningStock = () => {
     <>
       <div className="page-header">
         <p className="page-header-text">Distribution Of Opening Stock</p>
-        <Button icon={<CloseOutlined />} type="text" />
+        <Button
+          icon={<CloseOutlined />}
+          type="text"
+          onClick={() => navigate("/productGroups")}
+        />
       </div>
-      <div className="page-content">
+      <div className="page-content page-content-with-form-buttons">
         <Row className="product-new-top-band">
           <Space size="large">
             <Space>
@@ -154,7 +407,6 @@ const OpeningStock = () => {
                 />
               </span>
             </Space>
-
             <RightOutlined />
             <Flex
               style={{
@@ -164,18 +416,19 @@ const OpeningStock = () => {
               align="center"
               justify="center"
             >
-              <span>
-                {
+              <Space>
+                <CheckCircleFilled style={{ opacity: "60%" }} />
+                <span>
                   <FormattedMessage
                     id="title.openingStock"
                     defaultMessage="Opening Stock"
                   />
-                }
-              </span>
+                </span>
+              </Space>
             </Flex>
           </Space>
         </Row>
-        <Form>
+        <Form form={form} onFinish={onFinish}>
           <Table
             className="opening-stock-table"
             columns={columns}
@@ -183,26 +436,34 @@ const OpeningStock = () => {
             pagination={false}
             rowKey={(record) => record.ID}
           />
+
+          <div className="page-actions-bar">
+            {/* <Button
+              className="back-button"
+              icon={<LeftOutlined />}
+              style={{ height: "2.5rem" }}
+              loading={createLoading}
+              onClick={() =>
+                navigate(from, { state: location.state, replace: true })
+              }
+            /> */}
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="page-actions-btn"
+              loading={createLoading}
+            >
+              <FormattedMessage id="button.save" defaultMessage="Save" />
+            </Button>
+            <Button
+              className="page-actions-btn"
+              loading={createLoading}
+              onClick={() => navigate("/productGroups")}
+            >
+              <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+            </Button>
+          </div>
         </Form>
-        <div className="page-actions-bar">
-          <Button
-            className="back-button"
-            icon={<LeftOutlined />}
-            style={{ height: "2.5rem" }}
-            onClick={() =>
-              navigate(from, { state: location.state, replace: true })
-            }
-          />
-          <Button type="primary" htmlType="submit" className="page-actions-btn">
-            {<FormattedMessage id="button.save" defaultMessage="Save" />}
-          </Button>
-          <Button
-            className="page-actions-btn"
-            onClick={() => navigate("/productGroups")}
-          >
-            {<FormattedMessage id="button.cancel" defaultMessage="Cancel" />}
-          </Button>
-        </div>
       </div>
     </>
   );

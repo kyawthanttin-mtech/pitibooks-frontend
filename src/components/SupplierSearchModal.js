@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
@@ -223,7 +223,14 @@ const SupplierSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
+    skip: !modalOpen,
   });
+
+  useEffect(() => {
+    if (modalOpen) {
+      refetch();
+    }
+  }, [modalOpen, refetch]);
 
   // useEffect(() => {
   //   if (searchCriteria) {
@@ -262,12 +269,13 @@ const SupplierSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
 
   return (
     <Modal
-      loading={loading}
       title="Advanced Supplier Search"
       width="50rem"
       open={modalOpen}
       onCancel={handleModalCancel}
       footer={null}
+      className="supplier-search-modal"
+      confirmLoading={queryLoading}
     >
       <Flex>
         <Dropdown

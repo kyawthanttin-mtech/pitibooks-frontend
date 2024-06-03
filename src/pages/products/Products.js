@@ -449,6 +449,7 @@ const Products = () => {
               </SearchCriteriaDisplay>
             )}
             <PaginatedSelectionTable
+              compactTableHeader={true}
               loading={loading}
               api={notiApi}
               columns={columns}
@@ -682,7 +683,10 @@ const Products = () => {
                       </table>
                     </Col>
                     <Col offset={3} style={{ paddingTop: "2rem" }}>
-                      <UploadImage />
+                      <UploadImage
+                        images={selectedRecord.images}
+                        key={selectedRecord.id}
+                      />
                     </Col>
                   </Row>
                   <br />

@@ -482,12 +482,20 @@ const SalesOrdersNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.purchasePrice;
+        newData.rate = selectedItem.salesPrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
@@ -504,7 +512,7 @@ const SalesOrdersNew = () => {
     }
 
     form.setFieldsValue({
-      [`rate${rowKey}`]: selectedItem.purchasePrice,
+      [`rate${rowKey}`]: selectedItem.salesPrice,
       [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
       [`quantity${rowKey}`]: 1,
     });

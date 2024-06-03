@@ -12,6 +12,7 @@ import { FormattedMessage, FormattedNumber } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
 import { paginateArray } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
+import { useHistoryState } from "../utils/HelperFunctions";
 import moment from "moment";
 import ReportHeader from "./ReportHeader";
 
@@ -26,7 +27,7 @@ const PaginatedAccountTransactionReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useState(
+  const [currentPage, setCurrentPage] = useHistoryState(
     "accountTransactionCurrentPage",
     1
   );
@@ -103,11 +104,11 @@ const PaginatedAccountTransactionReport = ({
     hasNextPage = true;
   }
 
+  const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
   const loading = queryLoading;
 
-  const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
-
-  // console.log("page data", pageData);
+  console.log("page data", allData);
+  console.log("cur", currentPage);
   return (
     <div className="report">
       <ReportHeader

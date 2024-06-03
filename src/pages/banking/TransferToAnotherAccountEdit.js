@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -11,34 +11,50 @@ import {
 } from "../../utils/Notification";
 
 import { BankingMutations } from "../../graphql";
-const {
-  CREATE_ACCOUNT_TRANSFER,
-} = BankingMutations;
+import dayjs from "dayjs";
+const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
 
-const TransferToAnotherAcc = ({
+const initialValues = {
+  transferDate: dayjs(),
+};
+const TransferToAnotherAccEdit = ({
   refetch,
-  transferToModalOpen,
-  setTransferToModalOpen,
+  modalOpen,
+  setModalOpen,
   branches,
   parsedData,
   accounts,
   allAccounts,
   selectedRecord,
+  transactionRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const { 
-    notiApi,
-    msgApi,
-    business 
-  } = useOutletContext();
-  const [currencies, setCurrencies] = useState([selectedRecord?.currency?.id > 0 ? selectedRecord.currency : business.baseCurrency])
+  const { notiApi, msgApi, business } = useOutletContext();
+  const [currencies, setCurrencies] = useState([
+    selectedRecord?.currency?.id > 0
+      ? selectedRecord.currency
+      : business.baseCurrency,
+  ]);
 
-  if (form && transferToModalOpen) {
+  if (form && modalOpen) {
     form.setFieldsValue({
       fromAccountId: selectedRecord.id,
     });
   }
+
+  useMemo(() => {
+    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
+    const parsedRecord =
+      form && modalOpen && transactionRecord
+        ? {
+            branchId: transactionRecord.branch?.id,
+            toAccountId: transactionRecord.account?.id,
+          }
+        : {};
+
+    form.setFieldsValue(parsedRecord);
+  }, [form, transactionRecord, modalOpen]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
     CREATE_ACCOUNT_TRANSFER,
@@ -47,8 +63,8 @@ const TransferToAnotherAcc = ({
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="account.created"
-            defaultMessage="New Account Created"
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
           />
         );
         refetch();
@@ -57,8 +73,11 @@ const TransferToAnotherAcc = ({
   );
 
   const handleToAccountChange = (id) => {
-    const fromAccountCurrency = selectedRecord?.currency?.id > 0 ? selectedRecord.currency : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find(a => a.id === id)?.currency;
+    const fromAccountCurrency =
+      selectedRecord?.currency?.id > 0
+        ? selectedRecord.currency
+        : business.baseCurrency;
+    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
     if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
       toAccountCurrency = business.baseCurrency;
     }
@@ -69,37 +88,14 @@ const TransferToAnotherAcc = ({
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
     form.setFieldValue("currency", null);
-  }
+  };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
-      let input = {};
-
-      // if (!values.branch || values.branch.length === 0) {
-      //   openErrorNotification(
-      //     notiApi,
-      //     intl.formatMessage({
-      //       id: "validation.requiredAtLeastOneBranch",
-      //       defaultMessage: "At least one Branch is required",
-      //     })
-      //   );
-      //   return;
-      // }
-      // input = {
-      //   detailType: "Bank",
-      //   mainType: "Asset",
-      //   code: values.code,
-      //   name: values.name,
-      //   parentAccountId: 0,
-      //   accountNumber: values.accountNumber,
-      //   branches: values.branch?.join(" | "),
-      //   currencyId: values.currency,
-      // };
-
-      await createAccountTransfer({ variables: { input: input } });
-      setTransferToModalOpen(false);
+      await createAccountTransfer({ variables: { input: values } });
+      setModalOpen(false);
       form.resetFields();
     } catch (err) {
       openErrorNotification(notiApi, err.message);
@@ -107,7 +103,7 @@ const TransferToAnotherAcc = ({
   };
 
   const transferToForm = (
-    <Form form={form} onFinish={handleSubmit}>
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -188,7 +184,11 @@ const TransferToAnotherAcc = ({
           },
         ]}
       >
-        <Select showSearch optionFilterProp="label" onChange={handleToAccountChange}>
+        <Select
+          showSearch
+          optionFilterProp="label"
+          onChange={handleToAccountChange}
+        >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
               {group.accounts.map((acc) => (
@@ -202,7 +202,7 @@ const TransferToAnotherAcc = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="date"
+        name="transferDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -223,7 +223,7 @@ const TransferToAnotherAcc = ({
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
-        name="currency"
+        name="currencyId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -340,10 +340,15 @@ const TransferToAnotherAcc = ({
           }),
         ]}
       >
-        <Input/>
+        <Input />
       </Form.Item>
       <Form.Item
-        label={<FormattedMessage id="label.bankCharges" defaultMessage="Bank Charges" />}
+        label={
+          <FormattedMessage
+            id="label.bankChargesIfAny"
+            defaultMessage="Bank Charges"
+          />
+        }
         name="bankCharges"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -366,7 +371,7 @@ const TransferToAnotherAcc = ({
           }),
         ]}
       >
-        <Input/>
+        <Input />
       </Form.Item>
       <Form.Item
         label={
@@ -436,8 +441,8 @@ const TransferToAnotherAcc = ({
       cancelText={
         <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
       }
-      open={transferToModalOpen}
-      onCancel={() => setTransferToModalOpen(false)}
+      open={modalOpen}
+      onCancel={() => setModalOpen(false)}
       onOk={form.submit}
       confirmLoading={createLoading}
     >
@@ -446,4 +451,4 @@ const TransferToAnotherAcc = ({
   );
 };
 
-export default TransferToAnotherAcc;
+export default TransferToAnotherAccEdit;

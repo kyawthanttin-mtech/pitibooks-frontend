@@ -21,9 +21,11 @@ import ErrorBoundary from "./ErrorBoundary";
 import CustomerSearchModal from "./CustomerSearchModal";
 import BillTemplate from "./pdfs-and-templates/purchases/BillTemplate";
 import SupplierCreditTemplate from "./pdfs-and-templates/purchases/SupplierCreditTemplate";
-import PaymentMadeTemplate from "./pdfs-and-templates/purchases/PaymentMadeTemplate";
+import SupplierPaymentTemplate from "./pdfs-and-templates/purchases/SupplierPaymentTemplate";
 import SearchCriteriaDisplay from "./SearchCriteriaDisplay";
 import CreditNoteTemplate from "./pdfs-and-templates/sales/CreditNoteTemplate";
+import CustomerPaymentTemplate from "./pdfs-and-templates/sales/CustomerPaymentTemplate";
+import TransferOrderTemplate from "./pdfs-and-templates/products/TransferOrderTemplate";
 
 export {
   ErrorBoundary,
@@ -49,7 +51,9 @@ export {
   CustomerSearchModal,
   BillTemplate,
   SupplierCreditTemplate,
-  PaymentMadeTemplate,
+  SupplierPaymentTemplate,
   SearchCriteriaDisplay,
   CreditNoteTemplate,
+  CustomerPaymentTemplate,
+  TransferOrderTemplate,
 };

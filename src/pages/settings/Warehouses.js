@@ -9,10 +9,7 @@ import {
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 
-import {
-  WarehouseMutations,
-  WarehouseQueries,
-} from "../../graphql";
+import { WarehouseMutations, WarehouseQueries } from "../../graphql";
 
 const { GET_WAREHOUSES } = WarehouseQueries;
 const {
@@ -30,10 +27,17 @@ const Warehouses = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
-  const {notiApi, msgApi, allBranchesQueryRef, allStatesQueryRef, allTownshipsQueryRef, refetchAllWarehouses} = useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allStatesQueryRef,
+    allTownshipsQueryRef,
+    refetchAllWarehouses,
+  } = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
   const [selectedEditState, setSelectedEditState] = useState(null);
-  
+
   // Queries and mutations
   const { data, loading: queryLoading } = useQuery(GET_WAREHOUSES, {
     errorPolicy: "all",
@@ -218,7 +222,7 @@ const Warehouses = () => {
         ...values,
         stateId: values.stateId ? values.stateId : 0,
         townshipId: values.townshipId ? values.townshipI : 0,
-      }
+      };
       // console.log("Field values:", values);
       await updateWarehouse({
         variables: { id: editRecord.id, input },
@@ -254,7 +258,9 @@ const Warehouses = () => {
         <>
           {text}
           {!record.isActive ? (
-            <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
+            <Tag className="active-status">
+              <FormattedMessage id="label.inactive" defaultMessage="inactive" />
+            </Tag>
           ) : (
             <></>
           )}
@@ -267,9 +273,7 @@ const Warehouses = () => {
     //   key: "email",
     // },
     {
-      title: (
-        <FormattedMessage id="label.phone" defaultMessage="Phone" />
-      ),
+      title: <FormattedMessage id="label.phone" defaultMessage="Phone" />,
       dataIndex: "phoneNumber",
       key: "phoneNumber",
     },
@@ -337,12 +341,7 @@ const Warehouses = () => {
   const createForm = (
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
-        label={
-          <FormattedMessage
-            id="label.name"
-            defaultMessage="Name"
-          />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -390,14 +389,14 @@ const Warehouses = () => {
           optionFilterProp="label"
           onChange={(value) => {
             setSelectedState(
-              stateData?.listAllState.find((state) => state.id === value)
+              stateData?.listAllState?.find((state) => state.id === value)
             );
             createFormRef.setFieldsValue({
               townshipId: null,
             });
           }}
         >
-          {stateData?.listAllState.map((state) => (
+          {stateData?.listAllState?.map((state) => (
             <Select.Option
               key={state.id}
               value={state.id}
@@ -433,7 +432,7 @@ const Warehouses = () => {
           optionFilterProp="label"
           disabled={!selectedState}
         >
-          {townshipData?.listAllTownship.map((township) => {
+          {townshipData?.listAllTownship?.map((township) => {
             if (township.stateCode === selectedState?.code) {
               return (
                 <Select.Option
@@ -491,12 +490,7 @@ const Warehouses = () => {
   const editForm = (
     <Form form={editFormRef} onFinish={handleEditModalOk}>
       <Form.Item
-        label={
-          <FormattedMessage
-            id="label.name"
-            defaultMessage="Name"
-          />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         labelAlign="left"
         labelCol={{ span: 8 }}
@@ -512,7 +506,7 @@ const Warehouses = () => {
         wrapperCol={{ span: 13 }}
       >
         <Select loading={loading}>
-          {branchData?.listAllBranch.map((branch) => (
+          {branchData?.listAllBranch?.map((branch) => (
             <Select.Option key={branch.id} value={branch.id}>
               {branch.name}
             </Select.Option>
@@ -543,14 +537,14 @@ const Warehouses = () => {
           optionFilterProp="label"
           onChange={(value) => {
             setSelectedEditState(
-              stateData?.listAllState.find((state) => state.id === value)
+              stateData?.listAllState?.find((state) => state.id === value)
             );
             editFormRef.setFieldsValue({
               townshipId: null,
             });
           }}
         >
-          {stateData?.listAllState.map((state) => (
+          {stateData?.listAllState?.map((state) => (
             <Select.Option
               key={state.id}
               value={state.id}
@@ -586,7 +580,7 @@ const Warehouses = () => {
           optionFilterProp="label"
           disabled={!selectedEditState}
         >
-          {townshipData?.listAllTownship.map((township) => {
+          {townshipData?.listAllTownship?.map((township) => {
             if (township.stateCode === selectedEditState?.code) {
               return (
                 <Select.Option

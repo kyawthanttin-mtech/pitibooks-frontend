@@ -64,7 +64,7 @@ const SupplierCreditTemplate = ({ selectedRecord }) => {
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
                         <b>
-                          MMK{" "}
+                          {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
                             value={selectedRecord.supplier?.unusedCreditAmount}
                             style="decimal"

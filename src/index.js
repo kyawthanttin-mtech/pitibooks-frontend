@@ -7,16 +7,24 @@ import {
   concat,
   HttpLink,
   InMemoryCache,
+  split,
 } from "@apollo/client";
 import { relayStylePagination } from "@apollo/client/utilities";
+import { getMainDefinition } from "@apollo/client/utilities";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import Wrapper from "./localeWrapper";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 const httpLink = new HttpLink({ uri: "http://139.59.236.210:3000/query" });
-// const httpLink = new HttpLink({ uri: "http://192.168.88.110:8081/query" });
+// const httpLink = new HttpLink({ uri: "http://192.168.88.119:8081/query" });
+// const httpLink = new HttpLink({ uri: "http://192.168.88.46:8081/query" });
 // const httpLink = new HttpLink({ uri: "http://localhost:8081/query" });
+
+const uploadLink = createUploadLink({
+  uri: "http://139.59.236.210:3000/query",
+});
 
 const authMiddleware = new ApolloLink((operation, forward) => {
   // add the authorization to the headers
@@ -31,6 +39,29 @@ const authMiddleware = new ApolloLink((operation, forward) => {
 
   return forward(operation);
 });
+
+// check if the operation involves file upload
+const isUploadOperation = ({ variables }) => {
+  return Object.values(variables).some(
+    (value) =>
+      value instanceof File ||
+      (Array.isArray(value) && value.some((file) => file instanceof File))
+  );
+};
+
+const link = split(
+  // split based on operation type
+  ({ query, variables }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "mutation" &&
+      isUploadOperation({ variables })
+    );
+  },
+  uploadLink,
+  httpLink
+);
 
 const client = new ApolloClient({
   cache: new InMemoryCache({
@@ -56,11 +87,15 @@ const client = new ApolloClient({
           paginateExpense: relayStylePagination(),
           paginateInvoice: relayStylePagination(),
           paginateCreditNote: relayStylePagination(),
+          paginateSupplierPayment: relayStylePagination(),
+          paginateTransferOrder: relayStylePagination(),
+          paginateInventoryAdjustment: relayStylePagination(),
+          paginateSalesInvoice: relayStylePagination(),
         },
       },
     },
   }),
-  link: concat(authMiddleware, httpLink),
+  link: concat(authMiddleware, link),
 });
 
 const root = ReactDOM.createRoot(document.getElementById("root"));

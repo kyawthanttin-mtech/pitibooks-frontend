@@ -21,6 +21,10 @@ const GET_PAGINATE_PRODUCT = gql`
           purchasePrice
           # isActive
           isBatchTracking
+          images {
+            imageUrl
+            thumbnailUrl
+          }
           productUnit {
             id
             name
@@ -251,6 +255,15 @@ const GET_ALL_PRODUCTS = gql`
         type
         isActive
       }
+      stocks {
+        warehouseId
+        description
+        productId
+        productType
+        batchNumber
+        receivedDate
+        qty
+      }
     }
   }
 `;
@@ -266,6 +279,7 @@ const GET_ALL_PRODUCT_VARIANTS = gql`
       purchasePrice
       productGroupId
       isActive
+
       salesAccount {
         id
         detailType

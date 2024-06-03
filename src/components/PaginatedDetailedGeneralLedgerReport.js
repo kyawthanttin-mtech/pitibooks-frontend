@@ -13,6 +13,7 @@ import { openErrorNotification } from "../utils/Notification";
 import {
   convertTransactionType,
   paginateArray,
+  useHistoryState,
 } from "../utils/HelperFunctions";
 import {
   DETAILED_GENERAL_LEDGER_LIMIT,
@@ -32,7 +33,10 @@ const PaginatedDetailedGeneralLedgerReport = ({
   setSearchModalOpen,
   modalOpen,
 }) => {
-  const [currentPage, setCurrentPage] = useState("detailedGLCurrentPage", 1);
+  const [currentPage, setCurrentPage] = useHistoryState(
+    "detailedGLCurrentPage",
+    1
+  );
   const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");

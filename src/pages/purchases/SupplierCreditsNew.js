@@ -147,7 +147,7 @@ const SupplierCreditsNew = () => {
   const initialValues = {
     currency: business.baseCurrency.id,
     paymentTerms: "DueOnReceipt",
-    date: dayjs(),
+    creditDate: dayjs(),
     branch: business.primaryBranch.id,
   };
 
@@ -301,10 +301,13 @@ const SupplierCreditsNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      intl.formatMessage({
-        id: "validation.invalidProductDetails",
-        defaultMessage: "Invalid Product Details",
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -510,6 +513,14 @@ const SupplierCreditsNew = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
@@ -533,9 +544,12 @@ const SupplierCreditsNew = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.purchaseAccount?.id,
+      [`account${rowKey}`]: selectedItem.purchaseAccount?.id || null,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };
@@ -1765,12 +1779,12 @@ const SupplierCreditsNew = () => {
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus("Open")}
+              onClick={() => setSaveStatus("Confirmed")}
             >
               {
                 <FormattedMessage
-                  id="button.saveAsOpen"
-                  defaultMessage="Save As Open"
+                  id="button.saveAndConfirm"
+                  defaultMessage="Save And Confirm"
                 />
               }
             </Button>

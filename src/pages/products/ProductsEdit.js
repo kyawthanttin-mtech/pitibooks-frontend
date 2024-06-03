@@ -1,15 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { SupplierSearchModal, UploadImage } from "../../components";
 
-import {
-  Button,
-  Row,
-  Input,
-  Form,
-  Col,
-  Checkbox,
-  Select,
-} from "antd";
+import { Button, Row, Input, Form, Col, Checkbox, Select } from "antd";
 import { FormattedMessage, useIntl } from "react-intl";
 import { CloseOutlined, SearchOutlined } from "@ant-design/icons";
 import { useMutation, useReadQuery, gql } from "@apollo/client";
@@ -42,10 +34,12 @@ const ProductsEdit = () => {
   } = useOutletContext();
 
   const record = location.state?.record;
-  
-  const [customFileList, setCustomFileList] = useState([]);
+
+  const [imageList, setImageList] = useState([]);
   const [isInventoryTracked, setIsInventoryTracked] = useState(
-    record.inventoryAccount?.id && record.inventoryAccount?.id !== 0 ? true : false
+    record.inventoryAccount?.id && record.inventoryAccount?.id !== 0
+      ? true
+      : false
   );
   console.log(isInventoryTracked);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -115,7 +109,9 @@ const ProductsEdit = () => {
       (acc) => acc.detailType === "Stock"
     );
   }, [accountData]);
-  const defaultInventoryAccountId = inventoryAccounts.find(x => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET)?.id;
+  const defaultInventoryAccountId = inventoryAccounts.find(
+    (x) => x.systemDefaultCode === SYSTEM_ACCOUNT_CODE_INVENTORY_ASSET
+  )?.id;
 
   const allTax = [
     {
@@ -157,11 +153,15 @@ const ProductsEdit = () => {
           salesTax: record?.salesTax?.id === "I0" ? null : record?.salesTax?.id,
           purchaseAccount: record?.purchaseAccount?.id,
           purchasePrice: record?.purchasePrice,
-          purchaseTax: record?.purchaseTax?.id === "I0" ? null : record?.purchaseTax?.id,
-          inventoryAccount: record?.inventoryAccount?.id !== 0 ? record?.inventoryAccount?.id : defaultInventoryAccountId,      
+          purchaseTax:
+            record?.purchaseTax?.id === "I0" ? null : record?.purchaseTax?.id,
+          inventoryAccount:
+            record?.inventoryAccount?.id !== 0
+              ? record?.inventoryAccount?.id
+              : defaultInventoryAccountId,
         }
       : {};
-        console.log(record);
+    console.log(record);
     setIsInventoryTracked(record?.inventoryAccount?.id !== 0 ? true : false);
     form.setFieldsValue(parsedRecord);
   }, [form, record, defaultInventoryAccountId]);
@@ -193,12 +193,15 @@ const ProductsEdit = () => {
       ? parseInt(values?.purchaseTax?.replace(/[IG]/, ""), 10)
       : 0;
 
-    const imageUrls = customFileList.map((file) => ({
-      imageUrl: file.url,
-      thumbnailUrl: file.url,
+    const imageUrls = imageList.map((img) => ({
+      imageUrl: img.imageUrl,
+      thumbnailUrl: img.thumbnailUrl,
     }));
 
+    console.log(imageUrls);
+
     const input = {
+      // modifiers: record.modifiers,
       name: values.name,
       sku: values.sku,
       barcode: values.barcode,
@@ -280,15 +283,12 @@ const ProductsEdit = () => {
   }
 
   const handleCustomFileListChange = (newCustomFileList) => {
-    setCustomFileList(newCustomFileList);
+    setImageList(newCustomFileList);
+    console.log(newCustomFileList);
   };
 
   const productEditForm = (
-    <Form
-      className="product-new-form"
-      onFinish={onFinish}
-      form={form}
-    >
+    <Form className="product-new-form" onFinish={onFinish} form={form}>
       <Row>
         <Col span={12}>
           {/* <Row> */}
@@ -348,7 +348,10 @@ const ProductsEdit = () => {
           <br />
         </Col>
         <Col span={12}>
-          <UploadImage onCustomFileListChange={handleCustomFileListChange} />
+          <UploadImage
+            onCustomFileListChange={handleCustomFileListChange}
+            images={record?.images}
+          />
         </Col>
       </Row>
       <p style={{ fontSize: "var(--title-text)", marginTop: 0 }}>
@@ -424,10 +427,7 @@ const ProductsEdit = () => {
           </Form.Item>
           <Form.Item
             label={
-              <FormattedMessage
-                id="label.supplier"
-                defaultMessage="Supplier"
-              />
+              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
             }
             name="supplierName"
             shouldUpdate
@@ -541,8 +541,8 @@ const ProductsEdit = () => {
             name="salesPrice"
             label={
               <FormattedMessage
-                id="label.salesPrice"
-                defaultMessage="Sales Price"
+                id="label.sellingPrice"
+                defaultMessage="Selling Price"
               />
             }
             labelCol={{ span: 8 }}
@@ -563,12 +563,17 @@ const ProductsEdit = () => {
                   if (!value) {
                     return Promise.resolve();
                   } else if (isNaN(value) || value.length > 20) {
-                    return Promise.reject(intl.formatMessage({ id: "validation.invalidInput", defaultMessage: "Invalid Input" }));
+                    return Promise.reject(
+                      intl.formatMessage({
+                        id: "validation.invalidInput",
+                        defaultMessage: "Invalid Input",
+                      })
+                    );
                   } else {
                     return Promise.resolve();
                   }
-                }
-              })
+                },
+              }),
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -660,8 +665,8 @@ const ProductsEdit = () => {
             name="purchasePrice"
             label={
               <FormattedMessage
-                id="label.purchasePrice"
-                defaultMessage="Purchase Price"
+                id="label.costPrice"
+                defaultMessage="Cost Price"
               />
             }
             labelCol={{ span: 8 }}
@@ -682,12 +687,17 @@ const ProductsEdit = () => {
                   if (!value) {
                     return Promise.resolve();
                   } else if (isNaN(value) || value.length > 20) {
-                    return Promise.reject(intl.formatMessage({ id: "validation.invalidInput", defaultMessage: "Invalid Input" }));
+                    return Promise.reject(
+                      intl.formatMessage({
+                        id: "validation.invalidInput",
+                        defaultMessage: "Invalid Input",
+                      })
+                    );
                   } else {
                     return Promise.resolve();
                   }
-                }
-              })
+                },
+              }),
             ]}
           >
             <Input addonBefore={business.baseCurrency.symbol} />
@@ -724,14 +734,20 @@ const ProductsEdit = () => {
           </Form.Item>
         </Col>
       </Row>
-      
+
       {/* <p style={{ fontSize: " var(--title-text)", marginTop: 0 }}>Inventory</p> */}
       <Row>
-        <Checkbox checked={isInventoryTracked} onChange={(e) => setIsInventoryTracked(e.target.checked)}>
-          <FormattedMessage id="label.trackInventory" defaultMessage="Track Inventory" />
+        <Checkbox
+          checked={isInventoryTracked}
+          onChange={(e) => setIsInventoryTracked(e.target.checked)}
+        >
+          <FormattedMessage
+            id="label.trackInventory"
+            defaultMessage="Track Inventory"
+          />
         </Checkbox>
       </Row>
-      {isInventoryTracked &&
+      {isInventoryTracked && (
         <>
           <Row>
             <Col span={12}>
@@ -791,7 +807,7 @@ const ProductsEdit = () => {
             </Col>
           </Row>
         </>
-      }
+      )}
       <div className="page-actions-bar page-actions-bar-margin">
         <Button
           type="primary"

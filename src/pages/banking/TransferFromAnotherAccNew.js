@@ -1,39 +1,113 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
 
-const TransferFromAnotherAcc = ({
-  transferFromModalOpen,
-  setTransferFromModalOpen,
+import { BankingMutations } from "../../graphql";
+import dayjs from "dayjs";
+const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+
+const initialValues = {
+  transferDate: dayjs(),
+};
+
+const TransferFromAnotherAccNew = ({
+  refetch,
+  modalOpen,
+  setModalOpen,
   branches,
-  currencies,
   parsedData,
   accounts,
   selectedRecord,
+  allAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const {
-    business,
-  } = useOutletContext();
+  const { notiApi, msgApi, business } = useOutletContext();
+  const [currencies, setCurrencies] = useState([
+    selectedRecord?.currency?.id > 0
+      ? selectedRecord.currency
+      : business.baseCurrency,
+  ]);
 
-  if (form && transferFromModalOpen) {
+  if (form && modalOpen) {
     form.setFieldsValue({
       toAccountId: selectedRecord.id,
     });
   }
 
+  const [createAccountTransfer, { loading: createLoading }] = useMutation(
+    CREATE_ACCOUNT_TRANSFER,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
+          />
+        );
+        refetch();
+      },
+    }
+  );
+
+  const handleFromAccountChange = (id) => {
+    const fromAccountCurrency =
+      selectedRecord?.currency?.id > 0
+        ? selectedRecord.currency
+        : business.baseCurrency;
+    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
+      toAccountCurrency = business.baseCurrency;
+    }
+    let newCurrencies = [fromAccountCurrency];
+    if (fromAccountCurrency.id !== toAccountCurrency.id) {
+      newCurrencies.push(toAccountCurrency);
+    }
+    console.log(newCurrencies);
+    setCurrencies(newCurrencies);
+    form.setFieldValue("currency", null);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      await createAccountTransfer({ variables: { input: values } });
+      setModalOpen(false);
+      form.resetFields();
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
   const transferFromForm = (
-    <Form form={form}>
+    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.branch.required"
+                defaultMessage="Select the Branch"
+              />
+            ),
+          },
+        ]}
       >
         <Select showSearch optionFilterProp="label">
           {branches?.map((branch) => (
@@ -98,7 +172,11 @@ const TransferFromAnotherAcc = ({
           },
         ]}
       >
-        <Select showSearch optionFilterProp="label">
+        <Select
+          showSearch
+          optionFilterProp="label"
+          onChange={handleFromAccountChange}
+        >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
               {group.accounts.map((acc) => (
@@ -112,7 +190,7 @@ const TransferFromAnotherAcc = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="date"
+        name="transferDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -133,7 +211,7 @@ const TransferFromAnotherAcc = ({
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
-        name="currency"
+        name="currencyId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -250,7 +328,38 @@ const TransferFromAnotherAcc = ({
           }),
         ]}
       >
-        <Input/>
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage
+            id="label.bankChargesIfAny"
+            defaultMessage="Bank Charges"
+          />
+        }
+        name="bankCharges"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          () => ({
+            validator(_, value) {
+              if (!value) {
+                return Promise.resolve();
+              } else if (isNaN(value) || value.length > 20) {
+                return Promise.reject(
+                  intl.formatMessage({
+                    id: "validation.invalidInput",
+                    defaultMessage: "Invalid Input",
+                  })
+                );
+              } else {
+                return Promise.resolve();
+              }
+            },
+          }),
+        ]}
+      >
+        <Input />
       </Form.Item>
       <Form.Item
         label={
@@ -318,12 +427,14 @@ const TransferFromAnotherAcc = ({
       cancelText={
         <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
       }
-      open={transferFromModalOpen}
-      onCancel={() => setTransferFromModalOpen(false)}
+      open={modalOpen}
+      onCancel={() => setModalOpen(false)}
+      onOk={form.submit}
+      confirmLoading={createLoading}
     >
       {transferFromForm}
     </Modal>
   );
 };
 
-export default TransferFromAnotherAcc;
+export default TransferFromAnotherAccNew;

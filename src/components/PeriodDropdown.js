@@ -115,11 +115,11 @@ const PeriodDropdown = ({
       const dateRange = form.getFieldValue("dateRange");
       if (dateRange && dateRange.length === 2) {
         const [fromDate, toDate] = dateRange;
-        setFromDate(fromDate.startOf("day").utc(true));
-        setToDate(toDate.endOf("day").utc(true));
+        setFromDate(fromDate);
+        setToDate(toDate);
         refetch({
-          fromDate: fromDate.startOf("day").utc(true),
-          toDate: toDate.endOf("day").utc(true),
+          fromDate: fromDate,
+          toDate: toDate,
         });
         isPaginated && setCurrentPage(1);
         setDropdownOpen(false);
@@ -127,9 +127,9 @@ const PeriodDropdown = ({
     } else {
       const toDate = form.getFieldValue("endDate");
       if (toDate) {
-        setToDate(toDate.endOf("day").utc(true));
+        setToDate(toDate);
         refetch({
-          toDate: toDate.endOf("day").utc(true),
+          toDate: toDate,
         });
         isPaginated && setCurrentPage(1);
         setDropdownOpen(false);
@@ -247,10 +247,10 @@ const PeriodDropdown = ({
               .utc(true);
           }
           break;
-        case "11":
-          setShowDateRange(true);
-          setDropdownOpen(true);
-          return;
+        // case "11":
+        //   setShowDateRange(true);
+        //   setDropdownOpen(true);
+        //   return;
         default:
           fromDate = moment().startOf("month").utc(true);
           toDate = moment().endOf("month").utc(true);
@@ -270,10 +270,13 @@ const PeriodDropdown = ({
         });
       }
     };
-    if (selectedPeriod.key !== "11") {
+    if (selectedPeriod.key === "11") {
+      setShowDateRange(true);
+      setDropdownOpen(true);
+    } else {
       setShowDateRange(false);
+      updateDates();
     }
-    updateDates();
   }, [selectedPeriod, setFromDate, setToDate, refetch, hasFromDate]);
 
   return (

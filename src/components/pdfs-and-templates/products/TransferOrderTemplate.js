@@ -1,27 +1,19 @@
-/* eslint-disable react/style-prop-object */
-import React from "react";
 import dayjs from "dayjs";
+import React from "react";
 import { REPORT_DATE_FORMAT } from "../../../config/Constants";
-import { Divider, Space, Flex } from "antd";
 import { useOutletContext } from "react-router-dom";
-import { FormattedNumber } from "react-intl";
 
-const PaymentMadeTemplate = ({ selectedRecord }) => {
+const TransferOrdersTemplate = ({ selectedRecord }) => {
   const { business } = useOutletContext();
   const details = selectedRecord?.details ? selectedRecord?.details : [];
-  let hasDetailDiscount = false;
-  details.forEach((d) => {
-    if (d.detailDiscountAmount > 0) {
-      hasDetailDiscount = true;
-    }
-  });
+
   return (
     <div className="details-page">
       <div className="details-container">
         {/* <div className="ribbon text-ellipsis">
           <div
             className={`ribbon-inner ${
-              selectedRecord.status === "CLOSED"
+              selectedRecord.status === "Adjusted"
                 ? "ribbon-success"
                 : "ribbon-overdue"
             }`}
@@ -33,7 +25,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
           <div className="template-header header-content"></div>
           <div className="template-body">
             <table className="title-section" id="title-table">
-              <tbody style={{ lineHeight: "1.5rem" }}>
+              <tbody>
                 <tr>
                   <td>
                     <span
@@ -48,33 +40,19 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                     <span>{business.country}</span>
                     <br />
                     <span>{business.email}</span>
-                    {/* <br />
                     <br />
-                    <span>Supplier:</span>
                     <br />
-                    <span style={{ color: "var(--primary-color)" }}>
-                      {selectedRecord.supplier.name}
-                    </span> */}
                   </td>
                   <td className="text-align-right">
-                    <span style={{ fontSize: "2.2rem" }}>PAYMENTS MADE</span>
+                    <span style={{ fontSize: "2.2rem" }}>TRANSFER ORDER</span>
                     <br />
                     <span># {selectedRecord.orderNumber}</span>
-                    <div style={{ clear: "both", marginTop: "20px" }}>
-                      <span style={{ fontSize: "1rem" }}>
-                        <b>Amount Paid</b>
-                      </span>
-                      <br />
-                      <span style={{ fontSize: "1.1rem" }}>
-                        <b>MMK Placeholder</b>
-                      </span>
-                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
             <table className="invoice-details" id="invoice-table">
-              <tbody style={{ lineHeight: "1.5rem" }}>
+              <tbody>
                 <tr>
                   <td
                     style={{
@@ -83,19 +61,18 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                       wordWrap: "break-word",
                     }}
                   >
-                    <div>
-                      <label>Paid To:</label>
-                      <br />
-                      <span>
-                        <span style={{ color: "var(--primary-color)" }}>
-                          {selectedRecord.deliveryAddress}
-                        </span>
-                      </span>
-                      {/* <br />
-                      <span>
-                        <span>{selectedRecord.supplier?.address}</span>
-                      </span> */}
-                    </div>
+                    {/* <span>Source Warehouse:</span>
+                    <br />
+                    <span style={{ color: "var(--primary-color)" }}>
+                      {selectedRecord.sourceWarehouse?.name}
+                    </span>
+                    <br />
+                    
+                    <span>Source Warehouse:</span>
+                    <br />
+                    <span style={{ color: "var(--primary-color)" }}>
+                      {selectedRecord.sourceWarehouse?.name}
+                    </span> */}
                   </td>
                   <td
                     align="right"
@@ -120,16 +97,14 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Payment Date :</span>
+                            <span>Date :</span>
                           </td>
                           <td
                             className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
+                            style={{ padding: "5px 10px 5px 0" }}
                           >
                             <span>
-                              {dayjs(selectedRecord.orderDate).format(
+                              {dayjs(selectedRecord.transferDate).format(
                                 REPORT_DATE_FORMAT
                               )}
                             </span>
@@ -142,7 +117,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Reference Number :</span>
+                            <span>Ref# :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -160,7 +135,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Payment Mode :</span>
+                            <span>Reason :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -168,7 +143,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.referenceNumber}</span>
+                            <span>{selectedRecord.reason}</span>
                           </td>
                         </tr>
                         <tr>
@@ -178,7 +153,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Paid Through :</span>
+                            <span>Source Warehouse :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -186,7 +161,27 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.referenceNumber}</span>
+                            <span>{selectedRecord.sourceWarehouse?.name}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Destination Warehouse :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>
+                              {selectedRecord.destinationWarehouse?.name}
+                            </span>
                           </td>
                         </tr>
                       </tbody>
@@ -195,8 +190,6 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                 </tr>
               </tbody>
             </table>
-            <Divider />
-            <p style={{ fontSize: "1.1rem" }}>Payment For</p>
             <table
               id="main-table"
               className="main-table"
@@ -219,20 +212,20 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                 >
                   <td
                     style={{
-                      padding: "5px 0 5px 10px",
-                      textAlign: "left",
-                      height: "2.5rem",
+                      padding: "5px 0 5px 5px",
+                      width: "5%",
+                      textAlign: "center",
                     }}
                   >
-                    Bill Number
+                    #
                   </td>
                   <td
                     style={{
-                      padding: "5px 10px 5px 5px",
+                      padding: "5px 10px 5px 20px",
                       textAlign: "left",
                     }}
                   >
-                    Bill Date
+                    Product & Description
                   </td>
                   <td
                     className="text-align-right"
@@ -240,38 +233,18 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                       padding: "5px 10px 5px 5px",
                     }}
                   >
-                    Bill Amount
+                    Transfer Qty
                   </td>
-                  <td
-                    className="text-align-right"
-                    style={{
-                      padding: "5px 10px 5px 5px",
-                    }}
-                  >
-                    Payment Amount
-                  </td>
-                  {hasDetailDiscount && (
-                    <td
-                      className="text-align-right"
-                      style={{
-                        padding: "5px 10px 5px 5px",
-                        width: "12%",
-                      }}
-                    >
-                      Discount
-                    </td>
-                  )}
                 </tr>
               </thead>
               <tbody
                 style={{
                   verticalAlign: "middle",
-                  border: "1px solid red",
+                  border: "1px solid black",
                 }}
               >
-                {details.map((detail, index) => (
+                {details?.map((data, index) => (
                   <tr
-                    key={index}
                     style={{
                       pageBreakAfter: "auto",
                       pageBreakInside: "avoid",
@@ -297,18 +270,7 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{detail.name}</span>
-                    </td>
-                    <td
-                      rowSpan="1"
-                      className="text-align-right"
-                      style={{
-                        padding: "10px 10px 5px 10px",
-                        verticalAlign: "top",
-                        wordWrap: "break-word",
-                      }}
-                    >
-                      <span>{detail.detailQty}</span>
+                      <span>{data.name}</span>
                     </td>
                     <td
                       className="text-align-right"
@@ -319,48 +281,15 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>
-                        <FormattedNumber
-                          value={detail.detailUnitRate}
-                          style="decimal"
-                          minimumFractionDigits={
-                            selectedRecord.currency.decimalPlaces
-                          }
-                        />
-                      </span>
+                      <span>{data.transferQty}</span>
                     </td>
-                    {hasDetailDiscount && (
-                      <td
-                        rowSpan="1"
-                        className="text-align-right"
-                        style={{
-                          padding: "10px 10px 5px 10px",
-                          verticalAlign: "top",
-                          wordWrap: "break-word",
-                        }}
-                      >
-                        <span>
-                          {detail.detailDiscountType === "P" ? (
-                            detail.detailDiscount + "%"
-                          ) : (
-                            <FormattedNumber
-                              value={detail.detailDiscountAmount}
-                              style="decimal"
-                              minimumFractionDigits={
-                                selectedRecord.currency.decimalPlaces
-                              }
-                            />
-                          )}
-                        </span>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
 
-          <div style={{ clear: "both" }}></div>
+            <div style={{ clear: "both" }}></div>
+          </div>
           <div
             className="template-footer"
             style={{
@@ -377,4 +306,4 @@ const PaymentMadeTemplate = ({ selectedRecord }) => {
   );
 };
 
-export default PaymentMadeTemplate;
+export default TransferOrdersTemplate;

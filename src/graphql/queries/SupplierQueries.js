@@ -2,6 +2,7 @@ import { gql } from "@apollo/client";
 
 const GET_PAGINATE_SUPPLIER = gql`
   query PaginateSupplier(
+    $limit: Int = 10
     $name: String
     $email: String
     $phone: String
@@ -9,6 +10,7 @@ const GET_PAGINATE_SUPPLIER = gql`
     $isActive: Boolean
   ) {
     paginateSupplier(
+      limit: $limit
       name: $name
       email: $email
       phone: $phone
@@ -88,6 +90,46 @@ const GET_PAGINATE_SUPPLIER = gql`
             referenceID
           }
           isActive
+          unpaidBills {
+            id
+            businessId
+            purchaseOrderNumber
+            billNumber
+            referenceNumber
+            billDate
+            billDueDate
+            billPaymentTerms
+            billPaymentTermsCustomDays
+            billSubject
+            notes
+            exchangeRate
+            billDiscount
+            billDiscountType
+            billDiscountAmount
+            adjustmentAmount
+            isTaxInclusive
+            billTaxAmount
+            currentStatus
+            billSubtotal
+            billTotalDiscountAmount
+            billTotalTaxAmount
+            billTotalAmount
+            billTotalPaidAmount
+            balanceDue
+            createdAt
+            updatedAt
+            branch {
+              id
+              name
+            }
+            currency {
+              id
+              decimalPlaces
+              exchangeRate
+              name
+              symbol
+            }
+          }
         }
       }
       pageInfo {
@@ -111,9 +153,53 @@ const GET_SUPPLIER = gql`
   }
 `;
 
+const GET_SUPPLIER_UNPAID_BILLS = gql`
+  query GetSupplier($id: ID!) {
+    getSupplier(id: $id) {
+      id
+      name
+      bills {
+        supplier {
+          id
+          unpaidBills {
+            id
+            businessId
+            purchaseOrderNumber
+            billNumber
+            referenceNumber
+            billDate
+            billDueDate
+            billPaymentTerms
+            billPaymentTermsCustomDays
+            billSubject
+            notes
+            exchangeRate
+            billDiscount
+            billDiscountType
+            billDiscountAmount
+            adjustmentAmount
+            isTaxInclusive
+            billTaxAmount
+            currentStatus
+            billSubtotal
+            billTotalDiscountAmount
+            billTotalTaxAmount
+            billTotalAmount
+            billTotalPaidAmount
+            balanceDue
+            createdAt
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+`;
+
 const SupplierQueries = {
   GET_PAGINATE_SUPPLIER,
   GET_SUPPLIER,
+  GET_SUPPLIER_UNPAID_BILLS,
 };
 
 export default SupplierQueries;

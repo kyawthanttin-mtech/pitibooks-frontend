@@ -41,7 +41,12 @@ const CREATE_SUPPLIER_PAYMENT = gql`
       paidBills {
         id
         supplierPaymentId
-        billId
+        bill {
+          billNumber
+          billDate
+          billTotalAmount
+          billTotalPaidAmount
+        }
         paidAmount
       }
     }
@@ -89,7 +94,12 @@ const UPDATE_SUPPLIER_PAYMENT = gql`
       paidBills {
         id
         supplierPaymentId
-        billId
+        bill {
+          billNumber
+          billDate
+          billTotalAmount
+          billTotalPaidAmount
+        }
         paidAmount
       }
     }
@@ -136,7 +146,12 @@ const DELETE_SUPPLIER_PAYMENT = gql`
       paidBills {
         id
         supplierPaymentId
-        billId
+        bill {
+          billNumber
+          billDate
+          billTotalAmount
+          billTotalPaidAmount
+        }
         paidAmount
       }
     }

@@ -122,7 +122,7 @@ const SalesOrdersEdit = () => {
     record.customer?.id ? record.customer : ""
   );
   const [selectedWarehouse, setSelectedWarehouse] = useState(
-    record?.warehouse?.id > 0 ? record?.warehouseId : null
+    record?.warehouse?.id > 0 ? record?.warehouse?.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
     record?.orderDiscount > 0
@@ -298,7 +298,7 @@ const SalesOrdersEdit = () => {
           customDays: record?.orderPaymentTermsCustomDays,
           currency: record?.currency?.id,
           exchangeRate: record?.currency?.exchangeRate,
-          warehouse: record?.warehouseId,
+          warehouse: record?.warehouse?.id || null,
           customerNotes: record?.notes,
           discount: record?.orderDiscount,
           deliveryMethod: record?.deliveryMethod?.id || null,
@@ -308,7 +308,8 @@ const SalesOrdersEdit = () => {
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
             acc[`detailDiscount${index + 1}`] = d.detailDiscount;
-            acc[`detailTax${index + 1}`] = d.detailTax?.id;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
             acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
             return acc;
           }, {}),
@@ -322,7 +323,7 @@ const SalesOrdersEdit = () => {
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
@@ -391,7 +392,7 @@ const SalesOrdersEdit = () => {
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);
-    updateSalesOrder({
+    await updateSalesOrder({
       variables: { id: record.id, input },
       update(cache, { data: { updateSalesOrder } }) {
         cache.modify({
@@ -595,12 +596,20 @@ const SalesOrdersEdit = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.purchasePrice;
+        newData.rate = selectedItem.salesPrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
@@ -617,7 +626,7 @@ const SalesOrdersEdit = () => {
     }
 
     form.setFieldsValue({
-      [`rate${rowKey}`]: selectedItem.purchasePrice,
+      [`rate${rowKey}`]: selectedItem.salesPrice,
       [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
       [`quantity${rowKey}`]: 1,
     });

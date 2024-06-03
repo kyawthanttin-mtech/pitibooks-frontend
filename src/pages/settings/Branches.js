@@ -612,7 +612,7 @@ const Branches = () => {
           optionFilterProp="label"
           disabled={!selectedEditState}
         >
-          {townshipData?.listAllTownship.map((township) => {
+          {townshipData?.listAllTownship?.map((township) => {
             if (township.stateCode === selectedEditState?.code) {
               return (
                 <Select.Option
@@ -688,7 +688,7 @@ const Branches = () => {
         ]}
       >
         <Select allowClear showSearch optionFilterProp="label">
-          {tnsData?.listTransactionNumberSeries.map((series) => (
+          {tnsData?.listTransactionNumberSeries?.map((series) => (
             <Select.Option
               key={series.id}
               value={series.id}

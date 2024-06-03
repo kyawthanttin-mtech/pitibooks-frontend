@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
@@ -217,7 +217,14 @@ const CustomerSearchModal = ({ modalOpen, setModalOpen, onRowSelect }) => {
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
+    skip: !modalOpen,
   });
+
+  useEffect(() => {
+    if (modalOpen) {
+      refetch(); // Fetch data when modal is opened
+    }
+  }, [modalOpen, refetch]);
 
   // useEffect(() => {
   //   if (searchCriteria) {

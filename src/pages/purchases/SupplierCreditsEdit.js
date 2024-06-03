@@ -143,7 +143,7 @@ const SupplierCreditsEdit = () => {
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
   const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details.length
+    record.details.length || 1
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
     business.baseCurrency.id
@@ -220,7 +220,8 @@ const SupplierCreditsEdit = () => {
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
             acc[`detailDiscount${index + 1}`] = d.detailDiscount;
-            acc[`detailTax${index + 1}`] = d.detailTax.id;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
             acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
             return acc;
           }, {}),
@@ -286,7 +287,7 @@ const SupplierCreditsEdit = () => {
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
@@ -323,10 +324,13 @@ const SupplierCreditsEdit = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      intl.formatMessage({
-        id: "validation.invalidProductDetails",
-        defaultMessage: "Invalid Product Details",
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -352,7 +356,7 @@ const SupplierCreditsEdit = () => {
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);
-    updateSupplierCredit({
+    await updateSupplierCredit({
       variables: { id: record.id, input },
       update(cache, { data: { updateSupplierCredit } }) {
         cache.modify({
@@ -558,6 +562,14 @@ const SupplierCreditsEdit = () => {
           (dataItem) => dataItem.id === selectedItem.id
         );
         if (foundIndex !== -1) {
+          form.setFieldsValue({ [`product${rowKey}`]: null });
+          openErrorNotification(
+            notiApi,
+            intl.formatMessage({
+              id: "error.productIsAlreadyAdded",
+              defaultMessage: "Product is already added",
+            })
+          );
           return;
         }
         newData.id = selectedItem.id;
@@ -581,9 +593,12 @@ const SupplierCreditsEdit = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.purchaseAccount?.id,
+      [`account${rowKey}`]: selectedItem.purchaseAccount?.id || null,
       [`rate${rowKey}`]: selectedItem.purchasePrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };
@@ -1799,6 +1814,7 @@ const SupplierCreditsEdit = () => {
               className="page-actions-btn"
               loading={loading}
               onClick={() => setSaveStatus("Draft")}
+              disabled={record?.currentStatus !== "Draft"}
             >
               {
                 <FormattedMessage
@@ -1812,7 +1828,11 @@ const SupplierCreditsEdit = () => {
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus("Open")}
+              onClick={() => setSaveStatus("Confirmed")}
+              disabled={
+                record?.currentStatus !== "Draft" &&
+                record?.currentStatus !== "Confirmed"
+              }
             >
               {
                 <FormattedMessage

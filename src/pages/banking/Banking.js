@@ -16,6 +16,7 @@ import {
   Input,
   Select,
   Tag,
+  Tabs,
 } from "antd";
 import {
   PlusOutlined,
@@ -25,29 +26,34 @@ import {
   DownCircleFilled,
   BankOutlined,
   DownOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
-
+import dayjs from "dayjs";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import {
-  useMutation,
-  useReadQuery,
-  useQuery,
-} from "@apollo/client";
+import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 // import { useHistoryState } from "../../utils/HelperFunctions";
 import { BankingQueries, AccountMutations } from "../../graphql";
 import { ReactComponent as CashOutlined } from "../../assets/icons/CashOutlined.svg";
 import {
-  OwnerDrawings,
-  TransferFromAnotherAcc,
-  TransferToAnotherAcc,
+  OwnerDrawingsNew,
+  TransferFromAnotherAccNew,
+  TransferToAnotherAccNew,
   OwnerContribution,
   PaymentRefund,
   CreditNoteRefund,
+  SupplierAdvance,
+  CustomerAdvance,
+  SupplierCreditRefund,
+  ExpenseRefund,
+  OtherIncome,
+  TransferToAnotherAccEdit,
+  TxnDetailColumn,
 } from "./";
 const { GET_BANKING_ACCOUNTS } = BankingQueries;
 const {
@@ -59,48 +65,124 @@ const {
 
 const addTransactionItems = [
   {
-    label: <FormattedMessage id="button.moneyOut" defaultMessage="Money Out" />,
+    label: <FormattedMessage id="label.moneyOut" defaultMessage="Money Out" />,
     type: "group",
     key: "1",
     children: [
       {
         key: "1-1",
-        label: "Transfer To Another Account",
+        label: (
+          <FormattedMessage
+            id="label.transferToAnotherAccount"
+            defaultMessage="Transfer To Another Account"
+          />
+        ),
       },
       {
         key: "1-2",
-        label: "Owner Drawings",
+        label: (
+          <FormattedMessage
+            id="label.ownerDrawings"
+            defaultMessage="Owner Drawings"
+          />
+        ),
       },
       {
         key: "1-3",
-        label: "Payment Refund",
+        label: (
+          <FormattedMessage
+            id="label.paymentRefund"
+            defaultMessage="Payment Refund"
+          />
+        ),
       },
       {
         key: "1-4",
-        label: "Credit Note Refund",
+        label: (
+          <FormattedMessage
+            id="label.creditNoteRefund"
+            defaultMessage="Credit Note Refund"
+          />
+        ),
+      },
+      {
+        key: "1-5",
+        label: (
+          <FormattedMessage
+            id="label.supplierAdvance"
+            defaultMessage="Supplier Advance"
+          />
+        ),
       },
     ],
   },
   {
-    label: <FormattedMessage id="button.moneyIn" defaultMessage="Money In" />,
+    label: <FormattedMessage id="label.moneyIn" defaultMessage="Money In" />,
     type: "group",
     key: "2",
     children: [
       {
         key: "2-1",
-        label: "Transfer From Another Account",
+        label: (
+          <FormattedMessage
+            id="label.transferFromAnotherAccount"
+            defaultMessage="Transfer From Another Account"
+          />
+        ),
       },
       {
         key: "2-2",
-        label: "Owner's Contribution",
+        label: (
+          <FormattedMessage
+            id="label.ownerContribution"
+            defaultMessage="Owner's Contribution"
+          />
+        ),
       },
       {
         key: "2-3",
-        label: "Supplier Credit Refund",
+        label: (
+          <FormattedMessage
+            id="label.supplierCreditRefund"
+            defaultMessage="Supplier Credit Refund"
+          />
+        ),
       },
       {
         key: "2-4",
-        label: "Supplier Payment Refund",
+        label: (
+          <FormattedMessage
+            id="label.supplierPaymentRefund"
+            defaultMessage="Supplier Payment Refund"
+          />
+        ),
+      },
+      {
+        key: "2-5",
+        label: (
+          <FormattedMessage
+            id="label.customerAdvance"
+            defaultMessage="Customer Advance"
+          />
+        ),
+      },
+      {
+        key: "2-6",
+        label: (
+          <FormattedMessage
+            id="label.otherIncome"
+            defaultMessage="Other Income"
+          />
+        ),
+      },
+      {
+        key: "2-7",
+        label: (
+          <FormattedMessage
+            id="label.expenseRefund"
+            defaultMessage="Expense Refund"
+          />
+        ),
       },
     ],
   },
@@ -130,6 +212,9 @@ const Banking = () => {
     allAccountsQueryRef,
     business,
     refetchAllAccounts,
+    allPaymentModesQueryRef,
+    allTaxesQueryRef,
+    allTaxGroupsQueryRef,
   } = useOutletContext();
   // const [searchFormRef] = Form.useForm();
   const [createFormRef] = Form.useForm();
@@ -144,7 +229,8 @@ const Banking = () => {
     key: "1",
     label: "All Accounts",
   });
-  const [transferToModalOpen, setTransferToModalOpen] = useState(false);
+  const [transferToNewModalOpen, setTransferToNewModalOpen] = useState(false);
+  const [transferToEditModalOpen, setTransferToEditModalOpen] = useState(false);
   const [transferFromModalOpen, setTransferFromModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -154,13 +240,29 @@ const Banking = () => {
   const [paymentRefundModalOpen, setPaymentRefundModalOpen] = useState(false);
   const [creditNoteRefundModalOpen, setCreditNoteRefundModalOpen] =
     useState(false);
-
+  const [supplierAdvanceModalOpen, setSupplierAdvanceModalOpen] =
+    useState(false);
+  const [customerAdvanceModalOpen, setCustomerAdvanceModalOpen] =
+    useState(false);
+  const [supplierCreditRefundModalOpen, setSupplierCreditRefundModalOpen] =
+    useState(false);
+  const [otherIncomeModalOpen, setOtherIncomeModalOpen] = useState(false);
+  const [expenseRefundModalOpen, setExpenseRefundModalOpen] = useState(false);
+  const [transactionRecord, setTransactionRecord] = useState(null);
+  const [transactionRowIndex, setTransactionRowIndex] = useState(null);
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: currencyData } = useReadQuery(allCurrenciesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
+  const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
+  const { data: taxData } = useReadQuery(allTaxesQueryRef);
+  const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
 
-  const { data, loading: queryLoading, refetch } = useQuery(GET_BANKING_ACCOUNTS, {
+  const {
+    data,
+    loading: queryLoading,
+    refetch,
+  } = useQuery(GET_BANKING_ACCOUNTS, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
@@ -256,10 +358,46 @@ const Banking = () => {
   }, [currencyData]);
 
   const parsedData = useMemo(() => {
-    return data?.listBankingAccount.map((item) => ({
+    return data?.listBankingAccount?.map((item) => ({
       ...item,
     }));
   }, [data]);
+
+  const paymentModes = useMemo(() => {
+    return paymentModeData?.listAllPaymentMode?.filter(
+      (p) => p.isActive === true
+    );
+  }, [paymentModeData]);
+
+  const taxes = useMemo(() => {
+    return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
+  }, [taxData]);
+
+  const taxGroups = useMemo(() => {
+    return taxGroupData?.listAllTaxGroup?.filter(
+      (tax) => tax.isActive === true
+    );
+  }, [taxGroupData]);
+
+  const allTax = [
+    {
+      title: "Tax",
+      taxes: taxes
+        ? [...taxes.map((tax) => ({ ...tax, id: "I" + tax.id }))]
+        : [],
+    },
+    {
+      title: "Tax Group",
+      taxes: taxGroups
+        ? [
+            ...taxGroups.map((group) => ({
+              ...group,
+              id: "G" + group.id,
+            })),
+          ]
+        : [],
+    },
+  ];
 
   const queryData = useMemo(() => {
     let queryData = parsedData ? parsedData : [];
@@ -281,12 +419,13 @@ const Banking = () => {
     if (!accountData?.listAllAccount) return [];
 
     const groupedAccounts = accountData.listAllAccount
-      .filter((account) => 
-        account.detailType === "Cash" ||
-        account.detailType === "Bank" ||
-        account.detailType === "OtherAsset" ||
-        account.detailType === "OtherCurrentAsset" ||
-        account.detailType === "Equity"
+      .filter(
+        (account) =>
+          account.detailType === "Cash" ||
+          account.detailType === "Bank" ||
+          account.detailType === "OtherAsset" ||
+          account.detailType === "OtherCurrentAsset" ||
+          account.detailType === "Equity"
       )
       .reduce((acc, account) => {
         const { detailType } = account;
@@ -304,9 +443,7 @@ const Banking = () => {
     if (!accountData?.listAllAccount) return [];
 
     const groupedAccounts = accountData.listAllAccount
-      .filter((account) => 
-        account.detailType === "Equity"
-      )
+      .filter((account) => account.detailType === "Equity")
       .reduce((acc, account) => {
         const { detailType } = account;
         if (!acc[detailType]) {
@@ -396,11 +533,8 @@ const Banking = () => {
       code: record.code,
       description: record.description,
       accountNumber: record.accountNumber,
-      branch: record.branches
-        ? record.branches.split(" | ")
-        : null,
-      currency:
-        record.currency?.id || business.baseCurrency.id,
+      branch: record.branches ? record.branches.split(" | ") : null,
+      currency: record.currency?.id || business.baseCurrency.id,
     });
     setEditModalOpen(true);
   };
@@ -419,7 +553,10 @@ const Banking = () => {
     try {
       const values = await editFormRef.validateFields();
       let input = {};
-      if (editRecord.detailType === "Bank" && (!values.branch || values.branch.length === 0)) {
+      if (
+        editRecord.detailType === "Bank" &&
+        (!values.branch || values.branch.length === 0)
+      ) {
         openErrorNotification(
           notiApi,
           intl.formatMessage({
@@ -465,11 +602,17 @@ const Banking = () => {
           <div>
             <div className="column-list-item">
               <Flex align="center">
-                {record?.detailType === "Bank" ? (
-                  <BankOutlined style={{ height: 22, width: 21 }} />
-                ) : (
-                  <CashOutlined style={{ height: 21, width: 21 }} />
-                )}
+                <Flex
+                  justify="center"
+                  align="center"
+                  style={{ width: "1rem", height: "1rem" }}
+                >
+                  {record?.detailType === "Bank" ? (
+                    <BankOutlined style={{ height: 22, width: 22 }} />
+                  ) : (
+                    <CashOutlined style={{ height: 21, width: 21 }} />
+                  )}
+                </Flex>
                 <Divider type="vertical" />
                 <Flex vertical>
                   <span>{record.name}</span>
@@ -500,11 +643,17 @@ const Banking = () => {
       key: "accountDetails",
       render: (_, record) => (
         <Flex align="center">
-          {record?.detailType === "Bank" ? (
-            <BankOutlined style={{ height: 22, width: 21 }} />
-          ) : (
-            <CashOutlined style={{ height: 21, width: 21 }} />
-          )}
+          <Flex
+            justify="center"
+            align="center"
+            style={{ width: "1rem", height: "1rem" }}
+          >
+            {record?.detailType === "Bank" ? (
+              <BankOutlined style={{ height: 22, width: 22 }} />
+            ) : (
+              <CashOutlined style={{ height: 21, width: 21 }} />
+            )}
+          </Flex>
           <Divider type="vertical" />
           <Space>
             <Flex vertical>
@@ -613,6 +762,57 @@ const Banking = () => {
     //   dataIndex: "search",
     //   key: "search",
     // },
+  ];
+
+  const transactionColumns = [
+    {
+      title: <FormattedMessage id="label.date" defaultMessage="Date" />,
+      key: "date",
+      dataIndex: "transactionDateTime",
+      render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: <FormattedMessage id="label.branch" defaultMessage="Branch" />,
+      key: "branch",
+      dataIndex: "branch",
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="label.transactionDetails"
+          defaultMessage="Transaction Details"
+        />
+      ),
+      key: "transactionDetails",
+      dataIndex: "description",
+    },
+    {
+      title: <FormattedMessage id="label.type" defaultMessage="Type" />,
+      key: "type",
+      dataIndex: "type",
+    },
+    {
+      title: <FormattedMessage id="label.deposits" defaultMessage="Deposits" />,
+      key: "deposits",
+      dataIndex: "baseDebit",
+    },
+    {
+      title: (
+        <FormattedMessage id="label.withdrawals" defaultMessage="Withdrawals" />
+      ),
+      key: "withdrawals",
+      dataIndex: "baseCredit",
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="label.runningBalance"
+          defaultMessage="Running Balance"
+        />
+      ),
+      key: "runningBalance",
+      dataIndex: "baseClosingBalance",
+    },
   ];
 
   const createForm = (
@@ -785,89 +985,95 @@ const Banking = () => {
         <Input maxLength={100}></Input>
       </Form.Item>
 
-      {editRecord?.detailType === "Bank" && <Form.Item
-        name="accountNumber"
-        label={
-          <FormattedMessage
-            id="label.accountNumber"
-            defaultMessage="Account Number"
-          />
-        }
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-        labelAlign="left"
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.accountNumber.required"
-                defaultMessage="Enter the Account Number"
-              />
-            ),
-          },
-        ]}
-      >
-        <Input />
-      </Form.Item>}
-      {editRecord?.detailType === "Bank" && <Form.Item
-        label={
-          <FormattedMessage id="label.currency" defaultMessage="Currency" />
-        }
-        name="currency"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.currency.required"
-                defaultMessage="Select the Currency"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select allowClear showSearch optionFilterProp="label">
-          {currencies?.map((currency) => (
-            <Select.Option
-              key={currency.id}
-              value={currency.id}
-              label={currency.name + "" + currency.symbol}
-            >
-              {currency.name} ({currency.symbol})
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>}
-
-      {editRecord?.detailType === "Bank" && <Form.Item
-        label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
-        name="branch"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-      >
-        <Select
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          mode="multiple"
-          maxTagCount="responsive"
+      {editRecord?.detailType === "Bank" && (
+        <Form.Item
+          name="accountNumber"
+          label={
+            <FormattedMessage
+              id="label.accountNumber"
+              defaultMessage="Account Number"
+            />
+          }
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 13 }}
+          labelAlign="left"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.accountNumber.required"
+                  defaultMessage="Enter the Account Number"
+                />
+              ),
+            },
+          ]}
         >
-          {branches?.map((branch) => (
-            <Select.Option
-              key={branch.id}
-              value={branch.name}
-              label={branch.name}
-            >
-              {branch.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>}
+          <Input />
+        </Form.Item>
+      )}
+      {editRecord?.detailType === "Bank" && (
+        <Form.Item
+          label={
+            <FormattedMessage id="label.currency" defaultMessage="Currency" />
+          }
+          name="currency"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 13 }}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.currency.required"
+                  defaultMessage="Select the Currency"
+                />
+              ),
+            },
+          ]}
+        >
+          <Select allowClear showSearch optionFilterProp="label">
+            {currencies?.map((currency) => (
+              <Select.Option
+                key={currency.id}
+                value={currency.id}
+                label={currency.name + "" + currency.symbol}
+              >
+                {currency.name} ({currency.symbol})
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+      )}
+
+      {editRecord?.detailType === "Bank" && (
+        <Form.Item
+          label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
+          name="branch"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 13 }}
+        >
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            mode="multiple"
+            maxTagCount="responsive"
+          >
+            {branches?.map((branch) => (
+              <Select.Option
+                key={branch.id}
+                value={branch.name}
+                label={branch.name}
+              >
+                {branch.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+      )}
 
       <Form.Item
         label={
@@ -900,211 +1106,7 @@ const Banking = () => {
     </Form>
   );
 
-  // const searchForm = (
-  //   <Form form={searchFormRef}>
-  //     <Row>
-  //       <Col lg={12}>
-  //         <Form.Item
-  //           label="Bill #"
-  //           name="billNumber"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <Input></Input>
-  //         </Form.Item>
-  //         <Form.Item
-  //           label={
-  //             <FormattedMessage
-  //               id="label.billDateRange"
-  //               defaultMessage="Bill Date Range"
-  //             />
-  //           }
-  //           name="billDateRange"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <DatePicker.RangePicker
-  //             format={REPORT_DATE_FORMAT}
-  //             onChange={(value) => {
-  //               searchFormRef.setFieldsValue({
-  //                 startBillDate: value && value[0],
-  //                 endBillDate: value && value[1],
-  //               });
-  //             }}
-  //             onClear={() =>
-  //               searchFormRef.resetFields(["startBillDate", "endBillDate"])
-  //             }
-  //           />
-  //         </Form.Item>
-  //         <Form.Item noStyle hidden name="startBillDate" shouldUpdate>
-  //           <Input />
-  //         </Form.Item>
-  //         <Form.Item noStyle hidden name="endBillDate" shouldUpdate>
-  //           <Input />
-  //         </Form.Item>
-  //         <Form.Item
-  //           label="Status"
-  //           name="currentStatus"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <Select
-  //             options={[
-  //               {
-  //                 value: "Draft",
-  //                 label: "Draft",
-  //               },
-  //               {
-  //                 value: "Sent",
-  //                 label: "Sent",
-  //               },
-  //               {
-  //                 value: "Partial Paid",
-  //                 label: "Partial Paid",
-  //               },
-  //               {
-  //                 value: "Paid",
-  //                 label: "Paid",
-  //               },
-  //             ]}
-  //           ></Select>
-  //         </Form.Item>
-  //         <Form.Item
-  //           label={
-  //             <FormattedMessage id="label.branch" defaultMessage="Branch" />
-  //           }
-  //           name="branchId"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           {/* <Select showSearch optionFilterProp="label">
-  //             {branches?.map((branch) => (
-  //               <Select.Option
-  //                 key={branch.id}
-  //                 value={branch.id}
-  //                 label={branch.name}
-  //               >
-  //                 {branch.name}
-  //               </Select.Option>
-  //             ))}
-  //           </Select> */}
-  //         </Form.Item>
-  //       </Col>
-  //       <Col lg={12}>
-  //         <Form.Item
-  //           label="Reference #"
-  //           name="referenceNumber"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <Input></Input>
-  //         </Form.Item>
-  //         <Form.Item
-  //           label={
-  //             <FormattedMessage
-  //               id="label.dueDateRange"
-  //               defaultMessage="Due Date Range"
-  //             />
-  //           }
-  //           name="dueDateRange"
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <DatePicker.RangePicker
-  //             format={REPORT_DATE_FORMAT}
-  //             onChange={(value) => {
-  //               searchFormRef.setFieldsValue({
-  //                 startBillDueDate: value && value[0],
-  //                 endBillDueDate: value && value[1],
-  //               });
-  //             }}
-  //             onClear={() =>
-  //               searchFormRef.resetFields([
-  //                 "startBillDueDate",
-  //                 "endBillDueDate",
-  //               ])
-  //             }
-  //           />
-  //         </Form.Item>
-  //         <Form.Item noStyle hidden name="startBillDueDate" shouldUpdate>
-  //           <Input />
-  //         </Form.Item>
-  //         <Form.Item noStyle hidden name="endBillDueDate" shouldUpdate>
-  //           <Input />
-  //         </Form.Item>
-  //         <Form.Item
-  //           label={
-  //             <FormattedMessage
-  //               id="label.warehouse"
-  //               defaultMessage="Warehouse"
-  //             />
-  //           }
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //           labelAlign="left"
-  //           name="warehouseId"
-  //         >
-  //           {/* <Select showSearch allowClear optionFilterProp="label">
-  //             {warehouses?.map((w) => (
-  //               <Select.Option key={w.id} value={w.id} label={w.name}>
-  //                 {w.name}
-  //               </Select.Option>
-  //             ))}
-  //           </Select> */}
-  //         </Form.Item>
-  //         <Form.Item noStyle hidden name="supplierId" shouldUpdate>
-  //           <Input />
-  //         </Form.Item>
-  //         <Form.Item
-  //           label={
-  //             <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
-  //           }
-  //           name="supplierName"
-  //           shouldUpdate
-  //           labelAlign="left"
-  //           labelCol={{ span: 7 }}
-  //           wrapperCol={{ span: 15 }}
-  //         >
-  //           <Input
-  //             readOnly
-  //             // onClick={setSupplierSearchModalOpen}
-  //             className="search-input"
-  //             suffix={
-  //               <>
-  //                 {selectedSupplier && (
-  //                   <CloseOutlined
-  //                     style={{ height: 11, width: 11, cursor: "pointer" }}
-  //                     onClick={() => {
-  //                       setSelectedSupplier(null);
-  //                       searchFormRef.resetFields([
-  //                         "supplierName",
-  //                         "supplierId",
-  //                       ]);
-  //                     }}
-  //                   />
-  //                 )}
-
-  //                 <Button
-  //                   style={{ width: "2.5rem" }}
-  //                   type="primary"
-  //                   icon={<SearchOutlined />}
-  //                   className="search-btn"
-  //                   // onClick={setSupplierSearchModalOpen}
-  //                 />
-  //               </>
-  //             }
-  //           />
-  //         </Form.Item>
-  //       </Col>
-  //     </Row>
-  //   </Form>
-  // );
+  console.log("TransactionRecord", transactionRecord);
 
   return (
     <>
@@ -1144,10 +1146,10 @@ const Banking = () => {
       >
         {editForm}
       </Modal>
-      <TransferToAnotherAcc
+      <TransferToAnotherAccNew
         refetch={refetch}
-        transferToModalOpen={transferToModalOpen}
-        setTransferToModalOpen={setTransferToModalOpen}
+        modalOpen={transferToNewModalOpen}
+        setModalOpen={setTransferToNewModalOpen}
         branches={branches}
         currencies={currencies}
         parsedData={parsedData}
@@ -1155,31 +1157,65 @@ const Banking = () => {
         allAccounts={accountData?.listAllAccount}
         selectedRecord={selectedRecord}
       />
-      <TransferFromAnotherAcc
-        transferFromModalOpen={transferFromModalOpen}
-        setTransferFromModalOpen={setTransferFromModalOpen}
+      <TransferToAnotherAccEdit
+        refetch={refetch}
+        modalOpen={transferToEditModalOpen}
+        setModalOpen={setTransferToEditModalOpen}
         branches={branches}
         currencies={currencies}
         parsedData={parsedData}
         accounts={accounts}
+        allAccounts={accountData?.listAllAccount}
+        transactionRecord={transactionRecord}
         selectedRecord={selectedRecord}
       />
-      <OwnerDrawings
-        ownerDrawingsModalOpen={ownerDrawingsModalOpen}
-        setOwnerDrawingsModalOpen={setOwnerDrawingsModalOpen}
+      <TransferFromAnotherAccNew
+        refetch={refetch}
+        modalOpen={transferFromModalOpen}
+        setModalOpen={setTransferFromModalOpen}
+        branches={branches}
+        currencies={currencies}
+        parsedData={parsedData}
+        accounts={accounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedRecord={selectedRecord}
+      />
+      <OwnerDrawingsNew
+        modalOpen={ownerDrawingsModalOpen}
+        setModalOpen={setOwnerDrawingsModalOpen}
         branches={branches}
         currencies={currencies}
         parsedData={parsedData}
         accounts={equityAccounts}
+        allAccounts={accountData?.listAllAccount}
         selectedRecord={selectedRecord}
       />
       <OwnerContribution
-        ownerContributionModalOpen={ownerContributionModalOpen}
-        setOwnerContributionModalOpen={setOwnerContributionModalOpen}
+        modalOpen={ownerContributionModalOpen}
+        setModalOpen={setOwnerContributionModalOpen}
         branches={branches}
         currencies={currencies}
         parsedData={parsedData}
         accounts={equityAccounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedRecord={selectedRecord}
+      />
+      <SupplierAdvance
+        refetch={refetch}
+        modalOpen={supplierAdvanceModalOpen}
+        setModalOpen={setSupplierAdvanceModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
+        selectedRecord={selectedRecord}
+      />
+      <CustomerAdvance
+        refetch={refetch}
+        modalOpen={customerAdvanceModalOpen}
+        setModalOpen={setCustomerAdvanceModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
         selectedRecord={selectedRecord}
       />
       <PaymentRefund
@@ -1192,15 +1228,47 @@ const Banking = () => {
       <CreditNoteRefund
         modalOpen={creditNoteRefundModalOpen}
         setModalOpen={setCreditNoteRefundModalOpen}
+        paymentModes={paymentModes}
+      />
+      <SupplierCreditRefund
+        modalOpen={supplierCreditRefundModalOpen}
+        setModalOpen={setSupplierCreditRefundModalOpen}
+        paymentModes={paymentModes}
+      />
+      <ExpenseRefund
+        refetch={refetch}
+        modalOpen={expenseRefundModalOpen}
+        setModalOpen={setExpenseRefundModalOpen}
         branches={branches}
-        currencies={currencies}
+        parsedData={parsedData}
+        accounts={accounts}
+        allAccounts={accountData?.listAllAccount}
         selectedRecord={selectedRecord}
+        allTax={allTax}
+        paymentModes={paymentModes}
+      />
+      <OtherIncome
+        refetch={refetch}
+        modalOpen={otherIncomeModalOpen}
+        setModalOpen={setOtherIncomeModalOpen}
+        branches={branches}
+        parsedData={parsedData}
+        accounts={accounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedRecord={selectedRecord}
+        paymentModes={paymentModes}
       />
 
       <div className={`${selectedRecord && "page-with-column"}`}>
-        <div>
-          <div className="page-header">
-            <p className="page-header-text">
+        <div
+          className={
+            selectedRecord
+              ? `column ${transactionRecord ? "close" : "open"}`
+              : ""
+          }
+        >
+          <div className="page-header" style={{ overflow: "hidden" }}>
+            <p className="page-header-text" style={{ overflow: "hidden" }}>
               <FormattedMessage
                 id="label.bankingOverview"
                 defaultMessage="Banking Overview"
@@ -1346,17 +1414,27 @@ const Banking = () => {
                       menu={{
                         onClick: ({ key }) => {
                           if (key === "1-1") {
-                            setTransferToModalOpen(true);
-                          } else if (key === "1-2")
+                            setTransferToNewModalOpen(true);
+                          } else if (key === "1-2") {
                             setOwnerDrawingsModalOpen(true);
-                          else if (key === "1-3")
+                          } else if (key === "1-3") {
                             setPaymentRefundModalOpen(true);
-                          else if (key === "1-4") {
+                          } else if (key === "1-4") {
                             setCreditNoteRefundModalOpen(true);
+                          } else if (key === "1-5") {
+                            setSupplierAdvanceModalOpen(true);
                           } else if (key === "2-1") {
                             setTransferFromModalOpen(true);
                           } else if (key === "2-2") {
                             setOwnerContributionModalOpen(true);
+                          } else if (key === "2-3") {
+                            setSupplierCreditRefundModalOpen(true);
+                          } else if (key === "2-5") {
+                            setCustomerAdvanceModalOpen(true);
+                          } else if (key === "2-6") {
+                            setOtherIncomeModalOpen(true);
+                          } else if (key === "2-7") {
+                            setExpenseRefundModalOpen(true);
                           }
                         },
                         items: addTransactionItems,
@@ -1374,6 +1452,8 @@ const Banking = () => {
                     onClick={() => {
                       setSelectedRecord(null);
                       setSelectedRowIndex(0);
+                      setTransactionRecord(null);
+                      setTransactionRowIndex(0);
                     }}
                   />
                 </div>
@@ -1395,86 +1475,33 @@ const Banking = () => {
                 </span>
               </Row>
               <div className="content-column-full-row page-with-padding">
+                <p style={{ fontSize: "var(--title-text)" }}>
+                  Account Transactions
+                </p>
                 <Table
                   className="transaction-table"
-                  columns={[
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.date"
-                          defaultMessage="Date"
-                        />
-                      ),
-                      key: "date",
-                      dataIndex: "transactionDateTime",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.branch"
-                          defaultMessage="Branch"
-                        />
-                      ),
-                      key: "branch",
-                      dataIndex: "branch",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.transactionDetails"
-                          defaultMessage="Transaction Details"
-                        />
-                      ),
-                      key: "transactionDetails",
-                      dataIndex: "description",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.type"
-                          defaultMessage="Type"
-                        />
-                      ),
-                      key: "type",
-                      dataIndex: "type",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.deposits"
-                          defaultMessage="Deposits"
-                        />
-                      ),
-                      key: "deposits",
-                      dataIndex: "baseDebit",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.withdrawals"
-                          defaultMessage="Withdrawals"
-                        />
-                      ),
-                      key: "withdrawals",
-                      dataIndex: "baseCredit",
-                    },
-                    {
-                      title: (
-                        <FormattedMessage
-                          id="label.runningBalance"
-                          defaultMessage="Running Balance"
-                        />
-                      ),
-                      key: "runningBalance",
-                      dataIndex: "baseClosingBalance",
-                    },
-                  ]}
+                  columns={transactionColumns}
                   dataSource={selectedRecord?.recentTransactions || []}
+                  rowSelection={{ selectedRowKeys: [transactionRowIndex] }}
+                  rowKey={(record) => record.id}
+                  onRow={(record) => ({
+                    key: record.id,
+                    onClick: () => {
+                      setTransactionRecord(record);
+                      setTransactionRowIndex(record.id);
+                    },
+                  })}
                   key="id"
                   pagination={false}
-                ></Table>
+                />
               </div>
             </div>
+            <TxnDetailColumn
+              transactionRecord={transactionRecord}
+              setTransactionRecord={setTransactionRecord}
+              setTransactionRowIndex={setTransactionRowIndex}
+              setTransferToEditModalOpen={setTransferToEditModalOpen}
+            />
           </>
         )}
       </div>

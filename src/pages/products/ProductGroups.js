@@ -28,7 +28,7 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
   openErrorNotification,
   openSuccessNotification,
@@ -74,18 +74,18 @@ const dataSource = [
 const productTableColumns = [
   {
     title: "Product Details",
-    key: "productDetails",
-    dataIndex: "productDetails",
+    key: "name",
+    dataIndex: "name",
   },
   {
     title: "Cost Price",
-    key: "costPrice",
-    dataIndex: "costPrice",
+    key: "purchasePrice",
+    dataIndex: "purchasePrice",
   },
   {
     title: "Selling Price",
-    key: "sellingPrice",
-    dataIndex: "sellingPrice",
+    key: "salesPrice",
+    dataIndex: "salesPrice",
   },
   {
     title: "Stock On Hand",
@@ -168,7 +168,7 @@ const ProductGroups = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { notiApi, msgApi } = useOutletContext();
+  const { notiApi, msgApi, business } = useOutletContext();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
     "productGroupSearchCriteria",
     null
@@ -489,10 +489,8 @@ const ProductGroups = () => {
     },
   ];
 
-  const compactColumns = [
-    { title: "Product Name", key: "name", dataIndex: "name" },
-  ];
-
+  const compactColumns = [{ title: "Name", key: "name", dataIndex: "name" }];
+  console.log("product ", selectedProductRecord);
   return (
     <>
       {contextHolder}
@@ -538,6 +536,7 @@ const ProductGroups = () => {
               </SearchCriteriaDisplay>
             )}
             <PaginatedSelectionTable
+              compactTableHeader={true}
               loading={loading}
               api={notiApi}
               columns={columns}
@@ -678,12 +677,15 @@ const ProductGroups = () => {
                   </table>
                 </Col>
                 <Col lg={12}>
-                  <UploadImage />
+                  <UploadImage
+                    images={selectedRecord?.images}
+                    key={selectedRecord.id}
+                  />
                 </Col>
               </Row>
               <Table
                 columns={productTableColumns}
-                dataSource={productTableDataSource}
+                dataSource={selectedRecord.variants}
                 pagination={false}
                 rowSelection={{ selectedRowKeys: [selectedProductRowIndex] }}
                 onRow={(record) => {
@@ -739,27 +741,27 @@ const ProductGroups = () => {
                         <td width="218" className="overview-data">
                           Item Group Name
                         </td>
-                        <td className="overview-data">Shirt</td>
+                        <td className="overview-data">
+                          {selectedProductRecord.name}
+                        </td>
                       </tr>
                       <tr>
                         <td className="overview-data">Item Type</td>
-                        <td className="overview-data">Inventory Items</td>
+                        <td className="overview-data">-</td>
                       </tr>
-                      <tr>
-                        <td className="overview-data">Color</td>
-                        <td className="overview-data">White</td>
-                      </tr>
-                      <tr>
+                      {/* <tr>
                         <td className="overview-data">Size</td>
                         <td className="overview-data">S</td>
-                      </tr>
+                      </tr> */}
                       <tr>
                         <td className="overview-data">SKU</td>
-                        <td className="overview-data">123456</td>
+                        <td className="overview-data">
+                          {selectedProductRecord.sku || "-"}
+                        </td>
                       </tr>
                       <tr>
                         <td className="overview-data">Unit</td>
-                        <td className="overview-data">pcs</td>
+                        <td className="overview-data">-</td>
                       </tr>
                       <tr>
                         <td className="overview-data">Created Source</td>
@@ -768,7 +770,7 @@ const ProductGroups = () => {
                       <tr>
                         <td className="overview-data">Inventory Account</td>
                         <td className="overview-data" s>
-                          Inventory Asset
+                          {selectedProductRecord?.inventoryAccount?.name}
                         </td>
                       </tr>
                     </tbody>
@@ -782,12 +784,21 @@ const ProductGroups = () => {
                           Cost Price
                         </td>
                         <td className="overview-data">
-                          {selectedProductRecord.costPrice}
+                          {business.baseCurrency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedProductRecord.purchasePrice || 0}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </td>
                       </tr>
                       <tr>
                         <td className="overview-data">Purchase Account</td>
-                        <td className="overview-data">Cost Of Good Sold</td>
+                        <td className="overview-data">
+                          {selectedProductRecord?.purchaseAccount?.name}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -800,12 +811,21 @@ const ProductGroups = () => {
                           Selling Price
                         </td>
                         <td className="overview-data">
-                          {selectedProductRecord.sellingPrice}
+                          {business.baseCurrency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedProductRecord.salesPrice || 0}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </td>
                       </tr>
                       <tr>
                         <td className="overview-data">Sales Account</td>
-                        <td className="overview-data">Sales</td>
+                        <td className="overview-data">
+                          {selectedProductRecord?.salesAccount?.name}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
