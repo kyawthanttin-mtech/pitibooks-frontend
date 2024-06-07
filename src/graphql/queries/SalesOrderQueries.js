@@ -46,6 +46,7 @@ const GET_PAGINATE_SALES_ORDER = gql`
           shippingCharges
           adjustmentAmount
           isTaxInclusive
+          referenceNumber
           orderTax {
             id
             name
@@ -65,6 +66,7 @@ const GET_PAGINATE_SALES_ORDER = gql`
           orderTotalTaxAmount
           orderTotalAmount
           details {
+            id
             productId
             productType
             batchNumber

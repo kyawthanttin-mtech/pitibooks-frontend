@@ -671,17 +671,17 @@ const PaymentsMadeNew = () => {
                     />
                   }
                   name="paymentMode"
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="label.paymentMode.required"
-                          defaultMessage="Select the Payment Mode"
-                        />
-                      ),
-                    },
-                  ]}
+                  // rules={[
+                  //   {
+                  //     required: true,
+                  //     message: (
+                  //       <FormattedMessage
+                  //         id="label.paymentMode.required"
+                  //         defaultMessage="Select the Payment Mode"
+                  //       />
+                  //     ),
+                  //   },
+                  // ]}
                 >
                   <Select showSearch optionFilterProp="label">
                     {paymentModes?.map((mode) => (
@@ -812,10 +812,20 @@ const PaymentsMadeNew = () => {
                     justifyContent: "normal",
                   }}
                 >
-                  <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
-                    <label>Notes</label>
-                    <TextArea rows={4}></TextArea>
-                  </Form.Item>
+                  <div style={{ width: "100%" }}>
+                    <label>
+                      <FormattedMessage
+                        id="label.notes"
+                        defaultMessage="Notes"
+                      />
+                    </label>
+                    <Form.Item
+                      style={{ margin: 0, width: "100%" }}
+                      name="notes"
+                    >
+                      <TextArea rows={4}></TextArea>
+                    </Form.Item>
+                  </div>
                 </div>
               </Col>
               <Col

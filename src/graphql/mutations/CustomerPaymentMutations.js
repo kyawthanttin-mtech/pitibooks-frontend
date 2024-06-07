@@ -37,7 +37,9 @@ const CREATE_CUSTOMER_PAYMENT = gql`
       paidInvoices {
         id
         customerPaymentId
-        invoiceId
+        invoice {
+          id
+        }
         paidAmount
       }
     }
@@ -85,7 +87,9 @@ const UPDATE_CUSTOMER_PAYMENT = gql`
       paidInvoices {
         id
         customerPaymentId
-        invoiceId
+        invoice {
+          id
+        }
         paidAmount
       }
     }
@@ -132,7 +136,9 @@ const DELETE_CUSTOMER_PAYMENT = gql`
       paidInvoices {
         id
         customerPaymentId
-        invoiceId
+        invoice {
+          id
+        }
         paidAmount
       }
     }

@@ -172,6 +172,15 @@ const Customers = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        customerSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const searchForm = (
@@ -315,7 +324,11 @@ const Customers = () => {
                 })
               }
             >
-              {!selectedRecord && "New"}
+              {!selectedRecord && (
+                <span>
+                  <FormattedMessage id="button.new" defaultMessage="New" />
+                </span>
+              )}
             </Button>
             <Button icon={<MoreOutlined />}></Button>
           </Space>

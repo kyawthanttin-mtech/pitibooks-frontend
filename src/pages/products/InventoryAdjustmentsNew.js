@@ -22,7 +22,7 @@ import {
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { useReadQuery, useMutation } from "@apollo/client";
+import { useReadQuery, useMutation, useQuery } from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
@@ -30,10 +30,11 @@ import {
 import { AddPurchaseProductsModal } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, useIntl } from "react-intl";
-import { InventoryAdjustmentMutations } from "../../graphql";
+import { InventoryAdjustmentMutations, StockQueries } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 const { CREATE_INVENTORY_ADJUSTMENT } = InventoryAdjustmentMutations;
+const { GET_AVAILABLE_STOCKS } = StockQueries;
 
 const InventoryAdjustmentsNew = () => {
   const intl = useIntl();
@@ -73,6 +74,7 @@ const InventoryAdjustmentsNew = () => {
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [adjustmentType, setAdjustmentType] = useState("q");
+  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
 
   // Queries
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -80,6 +82,20 @@ const InventoryAdjustmentsNew = () => {
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+
+  const { loading: stockLoading, data: stockData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedWarehouse,
+      variables: { warehouseId: selectedWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
 
   // Mutations
   const [createInventoryAdjustment, { loading: createLoading }] = useMutation(
@@ -138,6 +154,24 @@ const InventoryAdjustmentsNew = () => {
 
     return [...productsWithS, ...productsWithV];
   }, [products, productVariants]);
+
+  const stocks = useMemo(() => {
+    return stockData?.getAvailableStocks;
+  }, [stockData]);
+
+  const productStocks = useMemo(() => {
+    return allProducts?.map((product) => {
+      const stock = stocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      return {
+        ...product,
+        currentQty: stock ? stock.currentQty : 0,
+        unit: stock?.product?.productUnit || null,
+      };
+    });
+  }, [allProducts, stocks]);
 
   console.log("all product", allProducts);
 
@@ -338,20 +372,20 @@ const InventoryAdjustmentsNew = () => {
 
   const handleSelectItem = useCallback(
     (value, rowKey) => {
-      const selectedItem = allProducts?.find((product) => product.id === value);
+      const selectedItem = productStocks?.find(
+        (product) => product.id === value
+      );
       const dataIndex = data.findIndex((dataItem) => dataItem.key === rowKey);
       if (dataIndex !== -1) {
         const oldData = data[dataIndex];
         let newData = {
           key: rowKey,
           name: value,
-          quantity: !selectedItem.isBatchTracking
-            ? selectedItem.stocks[0]?.qty
-            : 0,
-          ...oldData,
-          value: selectedItem.purchasePrice * selectedItem.stocks[0].qty,
+          currentQty: selectedItem.currentQty,
+          value: selectedItem.purchasePrice * selectedItem.currentQty,
           purchasePrice: selectedItem.purchasePrice,
           costPrice: selectedItem.costPrice,
+          ...oldData,
         };
         console.log(selectedItem);
         if (selectedItem && selectedItem.id) {
@@ -383,7 +417,7 @@ const InventoryAdjustmentsNew = () => {
         [`quantity${rowKey}`]: 1,
       });
     },
-    [allProducts, data, form, intl, notiApi]
+    [productStocks, data, form, intl, notiApi]
   );
 
   const handleRemoveSelectedItem = useCallback(
@@ -517,7 +551,7 @@ const InventoryAdjustmentsNew = () => {
                   }
                   onSelect={(value) => handleSelectItem(value, record.key)}
                 >
-                  {allProducts?.map((option) => (
+                  {productStocks?.map((option) => (
                     <AutoComplete.Option
                       value={option.id}
                       key={option.id}
@@ -549,14 +583,14 @@ const InventoryAdjustmentsNew = () => {
         },
         {
           title: "Quantity Available",
-          dataIndex: "quantity",
-          key: "quantity",
+          dataIndex: "currentQty",
+          key: "currentQty",
           align: "right",
           verticalAlign: "top",
           width: "15%",
           render: (_, record) => (
             <Flex justify="end" align="start" style={{ height: "3.6rem" }}>
-              {record.quantity}
+              {record.currentQty}
             </Flex>
           ),
         },
@@ -736,7 +770,7 @@ const InventoryAdjustmentsNew = () => {
                   }
                   onSelect={(value) => handleSelectItem(value, record.key)}
                 >
-                  {allProducts?.map((option) => (
+                  {productStocks?.map((option) => (
                     <AutoComplete.Option
                       value={option.id}
                       key={option.id}
@@ -902,7 +936,8 @@ const InventoryAdjustmentsNew = () => {
     adjustmentType,
     handleRemoveRow,
     business.baseCurrency.symbol,
-    allProducts,
+    productStocks,
+
     handleRemoveSelectedItem,
     handleSelectItem,
     handleBlur,
@@ -912,7 +947,7 @@ const InventoryAdjustmentsNew = () => {
   return (
     <>
       <AddPurchaseProductsModal
-        products={allProducts}
+        products={productStocks}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -1097,6 +1132,7 @@ const InventoryAdjustmentsNew = () => {
                   allowClear
                   loading={loading}
                   optionFilterProp="label"
+                  onChange={(value) => setSelectedWarehouse(value)}
                 >
                   {warehouses?.map((w) => (
                     <Select.Option key={w.id} value={w.id} label={w.name}>
@@ -1145,6 +1181,7 @@ const InventoryAdjustmentsNew = () => {
           <>
             <Divider style={{ margin: 0 }} />
             <Table
+              loading={stockLoading}
               columns={columns}
               dataSource={data}
               pagination={false}

@@ -557,7 +557,9 @@ const ProductUnits = () => {
           type="primary"
           onClick={setCreateModalOpen}
         >
-          <FormattedMessage id="productUnit.new" defaultMessage="New Unit" />
+          <span>
+            <FormattedMessage id="button.new" defaultMessage="New" />
+          </span>
         </Button>
       </div>
       <div className="page-content">

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Form,
@@ -25,20 +25,30 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
-import { useReadQuery, useMutation, gql } from "@apollo/client";
+import {
+  useReadQuery,
+  useMutation,
+  useApolloClient,
+  useQuery,
+  gql,
+} from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
 import {
-  AddPurchaseProductsModal,
   CustomerSearchModal,
+  AddPurchaseProductsModal,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, useIntl } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { ReactComponent as TaxOutlined } from "../../assets/icons/TaxOutlined.svg";
 import { ReactComponent as PercentageOutlined } from "../../assets/icons/PercentageOutlined.svg";
-import { CreditNoteMutations } from "../../graphql";
+import {
+  CreditNoteMutations,
+  WarehouseQueries,
+  StockQueries,
+} from "../../graphql";
 import {
   calculateItemDiscountAndTax,
   calculateDiscountAmount,
@@ -46,6 +56,8 @@ import {
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 const { UPDATE_CREDIT_NOTE } = CreditNoteMutations;
+
+const { GET_AVAILABLE_STOCKS } = StockQueries;
 
 const discountPreferences = [
   {
@@ -85,11 +97,12 @@ const CreditNotesEdit = () => {
       rate: detail.detailUnitRate,
       taxAmount: detail.detailTaxAmount,
       discountAmount: detail.detailDiscountAmount,
-      taxRate: detail.detailTax.rate,
+      taxRate: detail.detailTax?.rate,
       discount: detail.detailDiscount,
       discountType: detail.detailDiscountType,
       id: detail.productType + detail.productId,
       detailDiscountType: detail.detailDiscountType,
+      quantity: detail.detailQty,
     }))
   );
 
@@ -104,6 +117,7 @@ const CreditNotesEdit = () => {
     allAccountsQueryRef,
     allWarehousesQueryRef,
     allProductsQueryRef,
+    allProductVariantsQueryRef,
   } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(
@@ -139,9 +153,9 @@ const CreditNotesEdit = () => {
   );
   const [totalAmount, setTotalAmount] = useState(record?.creditNoteTotalAmount);
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
-  const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details.length
-  );
+  // const [tableKeyCounter, setTableKeyCounter] = useState(
+  //   record?.details.length
+  // );
   const [selectedCurrency, setSelectedCurrency] = useState(
     business.baseCurrency.id
   );
@@ -173,6 +187,21 @@ const CreditNotesEdit = () => {
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
+  const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+
+  const { loading: stockLoading, data: stockData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedWarehouse,
+      variables: { warehouseId: selectedWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
   // Mutations
   const [updateCreditNote, { loading: updateLoading }] = useMutation(
     UPDATE_CREDIT_NOTE,
@@ -248,6 +277,12 @@ const CreditNotesEdit = () => {
     return productData?.listAllProduct;
   }, [productData]);
 
+  const productVariants = useMemo(() => {
+    return productVariantData?.listAllProductVariant?.filter(
+      (p) => p.isActive === true
+    );
+  }, [productVariantData]);
+
   const taxes = useMemo(() => {
     return taxData?.listAllTax;
   }, [taxData]);
@@ -256,9 +291,54 @@ const CreditNotesEdit = () => {
     return taxGroupData?.listAllTaxGroup;
   }, [taxGroupData]);
 
-  const allProducts = products
-    ? products.map((product) => ({ ...product, id: "S" + product.id }))
-    : [];
+  const allProducts = useMemo(() => {
+    const productsWithS = products
+      ? products.map((product) => ({ ...product, id: "S" + product.id }))
+      : [];
+
+    const productsWithV = productVariants
+      ? productVariants.map((variant) => ({ ...variant, id: "V" + variant.id }))
+      : [];
+
+    return [...productsWithS, ...productsWithV];
+  }, [products, productVariants]);
+
+  const stocks = useMemo(() => {
+    return stockData?.getAvailableStocks;
+  }, [stockData]);
+
+  const productStocks = useMemo(() => {
+    return allProducts?.map((product) => {
+      const stock = stocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      return {
+        ...product,
+        currentQty: stock ? stock.currentQty : 0,
+        unit: stock?.product?.productUnit || null,
+      };
+    });
+  }, [allProducts, stocks]);
+
+  useEffect(() => {
+    if (selectedWarehouse) {
+      setData((prevData) => {
+        return prevData.map((item) => {
+          const matchingProductStock = productStocks.find(
+            (product) => product.id === item.id
+          );
+          return {
+            ...item,
+            currentQty: matchingProductStock
+              ? matchingProductStock.currentQty
+              : 0,
+            unit: matchingProductStock ? matchingProductStock.unit : item.unit,
+          };
+        });
+      });
+    }
+  }, [selectedWarehouse, productStocks]);
 
   const allTax = [
     {
@@ -381,8 +461,7 @@ const CreditNotesEdit = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter + 1;
-    setTableKeyCounter(tableKeyCounter + 1);
+    const newRowKey = data.length + 1;
     setData([
       ...data,
       {
@@ -398,41 +477,61 @@ const CreditNotesEdit = () => {
   };
 
   const handleRemoveRow = (keyToRemove) => {
-    const newData = data
-      .map((item) => {
-        if (item.key === keyToRemove) {
-          if (item.detailId) {
-            return {
-              ...item,
-              isDeletedItem: true,
-              amount: 0,
-              discount: 0,
-              discountAmount: 0,
-              quantity: 0,
-              rate: 0,
-              taxAmount: 0,
-              taxRate: 0,
-              id: null,
-              discountType: "P",
-              detailTax: null,
-            };
-          } else {
-            return null;
-          }
-        }
-        return item;
-      })
-      .filter((item) => item !== null);
+    let newData = [...data];
 
-    console.log("items", newData);
-    recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
+    // If the item to be removed doesn't have detailId
+    if (!newData[keyToRemove - 1].detailId) {
+      for (let i = keyToRemove - 1; i < newData.length - 1; i++) {
+        // Shift the data of each row
+        newData[i] = { ...newData[i + 1], key: i + 1 };
+
+        // Shift the form values to the current row
+        const nextRowValues = form.getFieldsValue([
+          `account${i + 2}`,
+          `product${i + 2}`,
+          `quantity${i + 2}`,
+          `rate${i + 2}`,
+          `detailTax${i + 2}`,
+        ]);
+
+        form.setFieldsValue({
+          [`account${i + 1}`]: nextRowValues[`account${i + 2}`],
+          [`product${i + 1}`]: nextRowValues[`product${i + 2}`],
+          [`quantity${i + 1}`]: nextRowValues[`quantity${i + 2}`],
+          [`rate${i + 1}`]: nextRowValues[`rate${i + 2}`],
+          [`detailTax${i + 1}`]: nextRowValues[`detailTax${i + 2}`],
+        });
+      }
+
+      // Clear the form values of the last row
+      form.setFieldsValue({
+        [`account${newData.length}`]: null,
+        [`product${newData.length}`]: null,
+        [`quantity${newData.length}`]: null,
+        [`rate${newData.length}`]: null,
+        [`detailTax${newData.length}`]: null,
+      });
+
+      newData.pop();
+    } else {
+      // If the item has detailId mark it as deleted
+      newData[keyToRemove - 1] = {
+        ...newData[keyToRemove - 1],
+        isDeletedItem: true,
+        amount: 0,
+        discount: 0,
+        discountAmount: 0,
+        quantity: 0,
+        rate: 0,
+        taxAmount: 0,
+        taxRate: 0,
+        id: null,
+        discountType: "P",
+        detailTax: null,
+      };
+    }
     setData(newData);
-    form.setFieldsValue({
-      [`product${keyToRemove}`]: "",
-      [`quantity${keyToRemove}`]: "",
-      [`rate${keyToRemove}`]: "",
-      [`detailTax${keyToRemove}`]: "",
-    });
+    recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
   };
 
   const handleModalRowSelect = (record) => {
@@ -457,10 +556,13 @@ const CreditNotesEdit = () => {
   };
 
   const handleAddProductsInBulk = (selectedItemsBulk) => {
-    let newData = [];
+    let newData = [...data];
+
+    // Filter existing items from the selected bulk items
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
+
     // Update quantity for existing items
     existingItems.forEach((existingItem) => {
       const matchingSelectedItem = selectedItemsBulk.find(
@@ -471,8 +573,10 @@ const CreditNotesEdit = () => {
           existingItem.quantity + matchingSelectedItem.quantity,
       });
     });
+
+    // Update data with new quantities for existing items
     if (existingItems.length > 0) {
-      const updatedData = data.map((dataItem) => {
+      newData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
@@ -494,26 +598,25 @@ const CreditNotesEdit = () => {
 
         return dataItem;
       });
-      newData = updatedData;
     }
 
+    // Filter non-existing items from the selected bulk items
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
     );
-    console.log("non existing items", nonExistingItems);
-    if (nonExistingItems.length > 0) {
-      // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
-      let newRowKey = tableKeyCounter;
 
-      selectedItemsBulk.forEach((selectedItem, index) => {
-        newRowKey++;
+    if (nonExistingItems.length > 0) {
+      const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+
+      nonExistingItems.forEach((selectedItem, index) => {
+        const newRowKey = maxKey + 1 + index;
         const [amount, discountAmount, taxAmount] = calculateItemAmount({
           ...selectedItem,
         });
         const newDataItem = {
-          ...selectedItem,
           key: newRowKey,
+          ...selectedItem,
           amount,
           discountAmount,
           taxAmount,
@@ -525,20 +628,24 @@ const CreditNotesEdit = () => {
         // Set the form fields for the new data item
         form.setFieldsValue({
           [`product${newRowKey}`]: selectedItem.id,
-          [`account${newRowKey}`]: selectedItem.account,
+          [`account${newRowKey}`]: selectedItem.account || null,
           [`rate${newRowKey}`]: selectedItem.rate,
-          [`detailTax${newRowKey}`]: selectedItem.detailTax,
+          [`detailTax${newRowKey}`]:
+            selectedItem.detailTax !== "I0" ? selectedItem.detailTax : null,
           [`quantity${newRowKey}`]: selectedItem.quantity,
         });
       });
     }
+
+    // Update state and recalculate total amount if new data is added
     if (newData.length > 0) {
+      setData(newData);
       recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     }
   };
 
   const handleSelectItem = (value, rowKey) => {
-    const selectedItem = allProducts?.find((product) => product.id === value);
+    const selectedItem = productStocks?.find((product) => product.id === value);
     const dataIndex = data.findIndex((dataItem) => dataItem.key === rowKey);
     if (dataIndex !== -1) {
       const oldData = data[dataIndex];
@@ -567,11 +674,12 @@ const CreditNotesEdit = () => {
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
-        newData.rate = selectedItem.salesPrice;
+        newData.rate = selectedItem.purchasePrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
-        newData.stockOnHand = selectedItem.stockOnHand;
-        newData.account = selectedItem.purchaseAccount?.id;
+        newData.currentQty = selectedItem.currentQty;
+        newData.account = selectedItem.inventoryAccount?.id;
+        newData.unit = selectedItem.unit;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -585,8 +693,8 @@ const CreditNotesEdit = () => {
     }
 
     form.setFieldsValue({
-      [`account${rowKey}`]: selectedItem.salesAccount?.id || null,
-      [`rate${rowKey}`]: selectedItem.salesPrice,
+      [`account${rowKey}`]: selectedItem.inventoryAccount?.id || null,
+      [`rate${rowKey}`]: selectedItem.purchasePrice,
       [`detailTax${rowKey}`]:
         selectedItem.purchaseTax.id !== "I0"
           ? selectedItem.purchaseTax.id
@@ -828,7 +936,14 @@ const CreditNotesEdit = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+            <Flex
+              vertical
+              style={{
+                marginBottom: "24px",
+                paddingRight: "0.5rem",
+                minWidth: "220px",
+              }}
+            >
               <Flex justify="space-between">
                 {text}
                 <CloseCircleOutlined
@@ -837,8 +952,37 @@ const CreditNotesEdit = () => {
                   }
                 />
               </Flex>
-              <div>SKU: {record.sku}</div>
-            </div>
+              <div>
+                {record.sku ? (
+                  <>
+                    <span style={{ fontSize: "var(--small-text)" }}>
+                      SKU: {record.sku}{" "}
+                    </span>
+                    <Divider type="vertical" />
+                  </>
+                ) : (
+                  <div></div>
+                )}
+                {record.currentQty || record.currentQty === 0 ? (
+                  <span
+                    style={{
+                      fontSize: "var(--small-text)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Stock on Hand :{" "}
+                    <FormattedNumber
+                      value={record.currentQty}
+                      style="decimal"
+                      minimumFractionDigits={record.unit?.precision}
+                    />{" "}
+                    {record.unit && record.unit.abbreviation}
+                  </span>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+            </Flex>
           )}
           <Form.Item
             hidden={text}
@@ -856,9 +1000,10 @@ const CreditNotesEdit = () => {
             ]}
           >
             <AutoComplete
+              loading={stockLoading}
               className="custom-select"
               style={{
-                width: 200,
+                minWidth: "250px",
               }}
               placeholder="Type or click to select a product."
               optionFilterProp="label"
@@ -868,7 +1013,7 @@ const CreditNotesEdit = () => {
               }
               onSelect={(value) => handleSelectItem(value, record.key)}
             >
-              {allProducts?.map((option) => (
+              {productStocks?.map((option) => (
                 <AutoComplete.Option
                   value={option.id}
                   key={option.id}
@@ -881,8 +1026,22 @@ const CreditNotesEdit = () => {
                     </div>
                     <div className="item-details-select-list">
                       <span>SKU: {option.sku}</span>
-                      <span className="stock-on-hand">
-                        {option.stockOnHand}
+                      <span
+                        className="stock-on-hand"
+                        style={{
+                          color:
+                            option.currentQty === 0
+                              ? "red"
+                              : "var(--light-green)",
+                        }}
+                      >
+                        {" "}
+                        <FormattedNumber
+                          value={option.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={option.unit?.precision}
+                        />{" "}
+                        {option.unit && option.unit.abbreviation}
                       </span>
                     </div>
                   </div>
@@ -1135,10 +1294,13 @@ const CreditNotesEdit = () => {
       width: "5%",
       render: (_, record) => (
         <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
-          <CloseCircleOutlined
-            style={{ color: "red" }}
-            onClick={() => handleRemoveRow(record.key)}
-          />
+          <span>
+            {" "}
+            <CloseCircleOutlined
+              style={{ color: "red" }}
+              onClick={() => handleRemoveRow(record.key)}
+            />
+          </span>
         </Flex>
       ),
     },
@@ -1152,8 +1314,9 @@ const CreditNotesEdit = () => {
         onRowSelect={handleModalRowSelect}
       />
       <AddPurchaseProductsModal
-        products={allProducts}
+        products={productStocks}
         data={data}
+        account="sales"
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
         setIsOpen={setAddPurchaseProductsModalOpen}
@@ -1464,7 +1627,7 @@ const CreditNotesEdit = () => {
                   placeholder="Select Warehouse"
                   showSearch
                   // allowClear
-                  loading={loading}
+                  loading={stockLoading}
                   onChange={(value) => setSelectedWarehouse(value)}
                   optionFilterProp="label"
                 >
@@ -1558,6 +1721,7 @@ const CreditNotesEdit = () => {
           {selectedWarehouse && (
             <>
               <Table
+                loading={stockLoading}
                 columns={columns}
                 dataSource={data.filter((item) => !item.isDeletedItem)}
                 pagination={false}
@@ -1569,10 +1733,12 @@ const CreditNotesEdit = () => {
                 onClick={handleAddRow}
                 className="add-row-item-btn"
               >
-                <FormattedMessage
-                  id="button.addNewRow"
-                  defaultMessage="Add New Row"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addNewRow"
+                    defaultMessage="Add New Row"
+                  />
+                </span>
               </Button>
               <Divider type="vertical" />
               <Button
@@ -1580,10 +1746,12 @@ const CreditNotesEdit = () => {
                 className="add-row-item-btn"
                 onClick={() => setAddPurchaseProductsModalOpen(true)}
               >
-                <FormattedMessage
-                  id="button.addProductsInBulk"
-                  defaultMessage="Add Products in Bulk"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addProductsInBulk"
+                    defaultMessage="Add Products in Bulk"
+                  />
+                </span>
               </Button>
             </>
           )}
@@ -1598,10 +1766,14 @@ const CreditNotesEdit = () => {
                   justifyContent: "normal",
                 }}
               >
-                <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
-                  <label>Notes</label>
-                  <TextArea rows={4}></TextArea>
-                </Form.Item>
+                <div style={{ width: "100%" }}>
+                  <label>
+                    <FormattedMessage id="label.notes" defaultMessage="Notes" />
+                  </label>
+                  <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
+                    <TextArea rows={4}></TextArea>
+                  </Form.Item>
+                </div>
               </div>
             </Col>
             <Col

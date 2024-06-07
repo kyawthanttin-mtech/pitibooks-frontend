@@ -26,6 +26,7 @@ import SearchCriteriaDisplay from "./SearchCriteriaDisplay";
 import CreditNoteTemplate from "./pdfs-and-templates/sales/CreditNoteTemplate";
 import CustomerPaymentTemplate from "./pdfs-and-templates/sales/CustomerPaymentTemplate";
 import TransferOrderTemplate from "./pdfs-and-templates/products/TransferOrderTemplate";
+import SalesOrderTemplate from "./pdfs-and-templates/sales/SalesOrderTemplate";
 
 export {
   ErrorBoundary,
@@ -56,4 +57,5 @@ export {
   CreditNoteTemplate,
   CustomerPaymentTemplate,
   TransferOrderTemplate,
+  SalesOrderTemplate,
 };

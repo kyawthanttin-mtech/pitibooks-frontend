@@ -32,8 +32,8 @@ export function convertTransactionType(type) {
       return "Journal";
     case "IV":
       return "Invoice";
-    case "IP":
-      return "InvoicePayment";
+    case "CP":
+      return "CustomerPayment";
     case "CN":
       return "CreditNote";
     case "CNR":

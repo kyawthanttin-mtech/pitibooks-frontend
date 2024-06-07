@@ -628,7 +628,9 @@ const TransferOrders = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>

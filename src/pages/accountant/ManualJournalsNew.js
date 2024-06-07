@@ -10,6 +10,7 @@ import {
   Select,
   Table,
   InputNumber,
+  Flex,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -26,7 +27,7 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, FormattedNumber } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 
 import { JournalMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -39,6 +40,7 @@ const ManualJournalsNew = () => {
   const [data, setData] = useState([{ key: 1 }, { key: 2 }]);
   const navigate = useNavigate();
   const location = useLocation();
+  const intl = useIntl();
   const from = location.state?.from?.pathname || "/";
   const {
     notiApi,
@@ -123,32 +125,41 @@ const ManualJournalsNew = () => {
     if (difference !== 0) {
       openErrorNotification(
         notiApi,
-        <FormattedMessage
-          id="debitCreditEqual"
-          defaultMessage="Please ensure that the Debits and Credits are equal"
-        />
+        intl.formatMessage({
+          id: "debitCreditEqual",
+          defaultMessage: "Please ensure that the Debits and Credits are equal",
+        })
       );
       return;
     }
+    console.log("input", input);
     createJournal({
       variables: { input },
     });
   };
-
+  console.log(data);
   const handleAddRow = () => {
-    const newRowKey = data.length + 1;
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([...data, { key: newRowKey }]);
   };
 
   const handleRemoveRow = (keyToRemove) => {
     const newData = data.filter((item) => item.key !== keyToRemove);
     setData(newData);
+    form.setFieldsValue({
+      [`account${keyToRemove}`]: null,
+      [`description${keyToRemove}`]: null,
+      [`debit${keyToRemove}`]: null,
+      [`credit${keyToRemove}`]: null,
+    });
+    updateTotalAndDifference();
   };
 
   const handleDebitBlur = (e, key) => {
     e.preventDefault();
     const debit = form.getFieldValue(`debit${key}`);
-    if (!debit || debit.trim().length === 0) return;
+    if (!debit || debit?.trim().length === 0 || isNaN(debit)) return;
     form.setFieldsValue({ [`credit${key}`]: "" });
     updateTotalAndDifference();
   };
@@ -156,7 +167,7 @@ const ManualJournalsNew = () => {
   const handleCreditBlur = (e, key) => {
     e.preventDefault();
     const credit = form.getFieldValue(`credit${key}`);
-    if (!credit || credit.trim().length === 0) return;
+    if (!credit || credit?.trim().length === 0 || isNaN(credit)) return;
     form.setFieldsValue({ [`debit${key}`]: "" });
     updateTotalAndDifference();
   };
@@ -254,7 +265,27 @@ const ManualJournalsNew = () => {
       key: "debits",
       width: "15%",
       render: (_, record) => (
-        <Form.Item name={`debit${record.key}`}>
+        <Form.Item
+          name={`debit${record.key}`}
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input onBlur={(e) => handleDebitBlur(e, record.key)} />
         </Form.Item>
       ),
@@ -265,7 +296,27 @@ const ManualJournalsNew = () => {
       key: "credits",
       width: "15%",
       render: (_, record) => (
-        <Form.Item name={`credit${record.key}`}>
+        <Form.Item
+          name={`credit${record.key}`}
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input onBlur={(e) => handleCreditBlur(e, record.key)} />
         </Form.Item>
       ),
@@ -274,13 +325,19 @@ const ManualJournalsNew = () => {
       title: "",
       dataIndex: "actions",
       key: "actions",
-      width: "5%",
+      width: "3%",
       render: (_, record, index) =>
-        index > 1 ? (
-          <CloseCircleOutlined
-            style={{ color: "red" }}
-            onClick={() => data.length > 2 && handleRemoveRow(record.key)}
-          />
+        data.length > 2 ? (
+          <Flex
+            align="center"
+            justify="center"
+            style={{ paddingTop: "0.8rem" }}
+          >
+            <CloseCircleOutlined
+              style={{ color: "red" }}
+              onClick={() => data.length > 2 && handleRemoveRow(record.key)}
+            />
+          </Flex>
         ) : (
           <></>
         ),
@@ -575,10 +632,12 @@ const ManualJournalsNew = () => {
               onClick={handleAddRow}
               className="add-row-button"
             >
-              <FormattedMessage
-                id="button.addNewRow"
-                defaultMessage="Add New Row"
-              />
+              <span>
+                <FormattedMessage
+                  id="button.addNewRow"
+                  defaultMessage="Add New Row"
+                />
+              </span>
             </Button>
 
             <table cellSpacing="0" border="0" width="100%" id="balance-table">

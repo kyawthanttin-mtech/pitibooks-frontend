@@ -29,7 +29,7 @@ import {
   PrinterOutlined,
   CaretRightFilled,
 } from "@ant-design/icons";
-import RecordPayment from "./RecordPayment";
+import RecordBillPayment from "./RecordBillPayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
   PaginatedSelectionTable,
@@ -138,7 +138,7 @@ const Bills = () => {
     null
   );
   const [currentPage, setCurrentPage] = useHistoryState("billCurrentPage", 1);
-  const [showRecordPaymentForm, setShowRecordPaymentForm] = useState(false);
+  const [showRecordBillPaymentForm, setShowRecordBillPaymentForm] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -421,6 +421,15 @@ const Bills = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        billSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const handleModalRowSelect = (record) => {
@@ -982,7 +991,9 @@ const Bills = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>
@@ -1162,7 +1173,7 @@ const Bills = () => {
             />
           </div>
         </div>
-        {selectedRecord && !showRecordPaymentForm && (
+        {selectedRecord && !showRecordBillPaymentForm && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
@@ -1333,13 +1344,17 @@ const Bills = () => {
                   </div>
                 </div>
               )}
-              {(selectedRecord.status === "Confirmed" || selectedRecord.status === "Partial Paid") &&
+              {(selectedRecord.status === "Confirmed" ||
+                selectedRecord.status === "Partial Paid") && (
                 <div
                   className="bill-receives-container"
                   style={{ minHeight: "8.875rem", padding: "1.2rem 1rem " }}
                 >
                   <span>
-                  <FormattedMessage id="lable.availableCredits" defaultMessage="Available Credits" />{" "}
+                    <FormattedMessage
+                      id="lable.availableCredits"
+                      defaultMessage="Available Credits"
+                    />{" "}
                     <b>
                       {selectedRecord.currency.symbol}{" "}
                       <FormattedNumber
@@ -1371,7 +1386,7 @@ const Bills = () => {
                       </span>
                     </Flex>
                     <Space>
-                      <Button type="primary" onClick={setShowRecordPaymentForm}>
+                      <Button type="primary" onClick={setShowRecordBillPaymentForm}>
                         Record Payment
                       </Button>
                       <Button onClick={setCreditModalOpen}>
@@ -1380,12 +1395,12 @@ const Bills = () => {
                     </Space>
                   </Flex>
                 </div>
-              }
+              )}
               <BillTemplate selectedRecord={selectedRecord} />
             </div>
           </div>
         )}
-        {showRecordPaymentForm && (
+        {showRecordBillPaymentForm && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <p className="page-header-text">
@@ -1393,11 +1408,14 @@ const Bills = () => {
                 {selectedRecord.billNumber && ` - ${selectedRecord.billNumber}`}
               </p>
             </Row>
-            <RecordPayment
-              refetch={() => {refetch(); setSelectedRecord(null)}}
+            <RecordBillPayment
+              refetch={() => {
+                refetch();
+                setSelectedRecord(null);
+              }}
               branches={branches}
               selectedRecord={selectedRecord}
-              onClose={() => setShowRecordPaymentForm(false)}
+              onClose={() => setShowRecordBillPaymentForm(false)}
             />
           </div>
         )}

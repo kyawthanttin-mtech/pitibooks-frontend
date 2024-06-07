@@ -28,7 +28,7 @@ import {
   PrinterOutlined,
   CaretRightFilled,
 } from "@ant-design/icons";
-// import RecordPayment from "./RecordPayment";
+// import RecordInvoicePayment from "./RecordInvoicePayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
   InvoiceTemplate,
@@ -36,7 +36,7 @@ import {
   SearchCriteriaDisplay,
   SupplierSearchModal,
 } from "../../components";
-import RecordPayment from "./RecordPayment";
+import RecordInvoicePayment from "./RecordInvoicePayment";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
@@ -73,7 +73,7 @@ const Invoices = () => {
     "invoiceCurrentPage",
     1
   );
-  const [showRecordPaymentForm, setShowRecordPaymentForm] = useState(false);
+  const [showRecordInvoicePaymentForm, setShowRecordInvoicePaymentForm] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
 
@@ -89,9 +89,9 @@ const Invoices = () => {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
-    variables: {
-      limit: 1,
-    },
+    // variables: {
+    //   limit: 1,
+    // },
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
@@ -147,7 +147,7 @@ const Invoices = () => {
     return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
   }, [warehouseData]);
 
-  const billTotalSummary = useMemo(() => {
+  const invoiceTotalSummary = useMemo(() => {
     return data?.paginateSalesInvoice?.invoiceTotalSummary;
   }, [data]);
 
@@ -239,6 +239,15 @@ const Invoices = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        invoiceSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const handleModalRowSelect = (record) => {
@@ -644,7 +653,9 @@ const Invoices = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>
@@ -669,7 +680,7 @@ const Invoices = () => {
                     />
                     <Statistic
                       title="Total Outstanding Receivables"
-                      value={billTotalSummary?.totalOutstandingPayable}
+                      value={invoiceTotalSummary?.totalOutstandingReceivable}
                       prefix="MMK"
                     />
                   </Card>
@@ -683,7 +694,7 @@ const Invoices = () => {
                   >
                     <Statistic
                       title="Due Today"
-                      value={billTotalSummary?.dueToday}
+                      value={invoiceTotalSummary?.dueToday}
                       prefix="MMK"
                     />
                   </Card>
@@ -697,7 +708,7 @@ const Invoices = () => {
                   >
                     <Statistic
                       title="Due Within 30 Days"
-                      value={billTotalSummary?.dueWithin30Days}
+                      value={invoiceTotalSummary?.dueWithin30Days}
                       prefix="MMK"
                     />
                   </Card>
@@ -711,7 +722,7 @@ const Invoices = () => {
                   >
                     <Statistic
                       title="Total Overdue"
-                      value={billTotalSummary?.totalOverdue}
+                      value={invoiceTotalSummary?.totalOverdue}
                       prefix="MMK"
                     />
                   </Card>
@@ -831,7 +842,7 @@ const Invoices = () => {
             />
           </div>
         </div>
-        {selectedRecord && !showRecordPaymentForm && (
+        {selectedRecord && !showRecordInvoicePaymentForm && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
@@ -1022,7 +1033,7 @@ const Invoices = () => {
                       </span>
                     </Flex>
                     <Space>
-                      <Button type="primary" onClick={setShowRecordPaymentForm}>
+                      <Button type="primary" onClick={setShowRecordInvoicePaymentForm}>
                         Record Payment
                       </Button>
                       <Button>Apply Credits</Button>
@@ -1034,7 +1045,7 @@ const Invoices = () => {
             </div>
           </div>
         )}
-        {showRecordPaymentForm && (
+        {showRecordInvoicePaymentForm && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <p className="page-header-text">
@@ -1043,11 +1054,11 @@ const Invoices = () => {
                   ` - ${selectedRecord.invoiceNumber}`}
               </p>
             </Row>
-            <RecordPayment
+            <RecordInvoicePayment
               refetch={refetch}
               branches={branches}
               selectedRecord={selectedRecord}
-              onClose={() => setShowRecordPaymentForm(false)}
+              onClose={() => setShowRecordInvoicePaymentForm(false)}
             />
           </div>
         )}

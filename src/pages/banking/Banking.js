@@ -1281,10 +1281,12 @@ const Banking = () => {
                 onClick={() => setCreateModalOpen(true)}
               >
                 {!selectedRecord && (
-                  <FormattedMessage
-                    id="account.new"
-                    defaultMessage="New Account"
-                  />
+                  <span>
+                    <FormattedMessage
+                      id="button.newAccount"
+                      defaultMessage="New Account"
+                    />
+                  </span>
                 )}
               </Button>
             )}

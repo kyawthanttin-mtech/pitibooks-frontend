@@ -158,6 +158,11 @@ const Reports = () => {
             />
             <ReportMenuItem
               icon={<StarOutlined />}
+              label="Inventory Summary"
+              to="inventorySummary"
+            />
+            <ReportMenuItem
+              icon={<StarOutlined />}
               label="Stock Summary Report"
               to="stockSummaryReport"
             />

@@ -1552,10 +1552,12 @@ const ChartOfAccounts = () => {
                   onClick={() => setCreateModalOpen(true)}
                 >
                   {!selectedRecord && (
-                    <FormattedMessage
-                      id="account.new"
-                      defaultMessage="New Account"
-                    />
+                    <span>
+                      <FormattedMessage
+                        id="button.newAccount"
+                        defaultMessage="Account"
+                      />
+                    </span>
                   )}
                 </Button>
               </Space>

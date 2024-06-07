@@ -81,7 +81,7 @@ const GET_PAGINATE_INVOICE = gql`
         }
       }
       invoiceTotalSummary {
-        totalOutstandingPayable
+        totalOutstandingReceivable
         dueToday
         dueWithin30Days
         totalOverdue

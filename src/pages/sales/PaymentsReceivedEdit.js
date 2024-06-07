@@ -122,7 +122,7 @@ const PaymentsReceivedEdit = () => {
           branch: record.branch?.id,
           currency: record.currency?.id,
           paymentDate: dayjs(record.paymentDate),
-          paidThrough: record.depositAccount?.id || null,
+          depositTo: record.depositAccount?.id || null,
           paymentMode: record.paymentMode?.id || null,
           bankCharges: record.bankCharges,
           referenceNumber: record.referenceNumber,
@@ -252,7 +252,7 @@ const PaymentsReceivedEdit = () => {
         bankCharges: values.bankCharges,
         paymentDate: values.paymentDate,
         paymentModeId: values.paymentMode,
-        depositAccountId: values.paidThrough,
+        depositAccountId: values.depositTo,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
         paidBills,
@@ -724,17 +724,17 @@ const PaymentsReceivedEdit = () => {
                   labelAlign="left"
                   label={
                     <FormattedMessage
-                      id="label.paidThrough"
+                      id="label.depositTo"
                       defaultMessage="Paid Through"
                     />
                   }
-                  name="paidThrough"
+                  name="depositTo"
                   rules={[
                     {
                       required: true,
                       message: (
                         <FormattedMessage
-                          id="label.paidThrough.required"
+                          id="label.depositTo.required"
                           defaultMessage="Select the Paid Through"
                         />
                       ),
@@ -775,17 +775,17 @@ const PaymentsReceivedEdit = () => {
                     />
                   }
                   name="paymentMode"
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="label.paymentMode.required"
-                          defaultMessage="Select the Payment Mode"
-                        />
-                      ),
-                    },
-                  ]}
+                  // rules={[
+                  //   {
+                  //     required: true,
+                  //     message: (
+                  //       <FormattedMessage
+                  //         id="label.paymentMode.required"
+                  //         defaultMessage="Select the Payment Mode"
+                  //       />
+                  //     ),
+                  //   },
+                  // ]}
                 >
                   <Select showSearch optionFilterProp="label">
                     {paymentModes?.map((mode) => (
@@ -916,10 +916,20 @@ const PaymentsReceivedEdit = () => {
                     justifyContent: "normal",
                   }}
                 >
-                  <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
-                    <label>Notes</label>
-                    <TextArea rows={4}></TextArea>
-                  </Form.Item>
+                  <div style={{ width: "100%" }}>
+                    <label>
+                      <FormattedMessage
+                        id="label.notes"
+                        defaultMessage="Notes"
+                      />
+                    </label>
+                    <Form.Item
+                      style={{ margin: 0, width: "100%" }}
+                      name="notes"
+                    >
+                      <TextArea rows={4}></TextArea>
+                    </Form.Item>
+                  </div>
                 </div>
               </Col>
               <Col

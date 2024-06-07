@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Form,
@@ -29,6 +29,7 @@ import dayjs from "dayjs";
 import {
   useReadQuery,
   useMutation,
+  useQuery,
   useApolloClient,
   gql,
 } from "@apollo/client";
@@ -41,10 +42,14 @@ import {
   AddPurchaseProductsModal,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, useIntl } from "react-intl";
+import { FormattedMessage, useIntl, FormattedNumber } from "react-intl";
 import { ReactComponent as TaxOutlined } from "../../assets/icons/TaxOutlined.svg";
 import { ReactComponent as PercentageOutlined } from "../../assets/icons/PercentageOutlined.svg";
-import { PurchaseOrderMutations, WarehouseQueries } from "../../graphql";
+import {
+  PurchaseOrderMutations,
+  WarehouseQueries,
+  StockQueries,
+} from "../../graphql";
 import {
   calculateItemDiscountAndTax,
   calculateDiscountAmount,
@@ -54,6 +59,7 @@ import { REPORT_DATE_FORMAT } from "../../config/Constants";
 const { UPDATE_PURCHASE_ORDER } = PurchaseOrderMutations;
 
 const { GET_WAREHOUSE } = WarehouseQueries;
+const { GET_AVAILABLE_STOCKS } = StockQueries;
 
 const paymentTerms = [
   "Net15",
@@ -164,9 +170,9 @@ const PurchaseOrdersNew = () => {
     record?.orderTotalAmount - record?.adjustmentAmount
   );
   const client = useApolloClient();
-  const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details?.length || 1
-  );
+  // const [tableKeyCounter, setTableKeyCounter] = useState(
+  //   record?.details?.length || 1
+  // );
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
@@ -206,6 +212,20 @@ const PurchaseOrdersNew = () => {
     allShipmentPreferencesQueryRef
   );
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+
+  const { loading: stockLoading, data: stockData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedWarehouse,
+      variables: { warehouseId: selectedWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
 
   // Mutations
   const [updatePurchaseOrder, { loading: createLoading }] = useMutation(
@@ -277,6 +297,43 @@ const PurchaseOrdersNew = () => {
     return [...productsWithS, ...productsWithV];
   }, [products, productVariants]);
 
+  const stocks = useMemo(() => {
+    return stockData?.getAvailableStocks;
+  }, [stockData]);
+
+  const productStocks = useMemo(() => {
+    return allProducts?.map((product) => {
+      const stock = stocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      return {
+        ...product,
+        currentQty: stock ? stock.currentQty : 0,
+        unit: stock?.product?.productUnit || null,
+      };
+    });
+  }, [allProducts, stocks]);
+
+  useEffect(() => {
+    if (selectedWarehouse) {
+      setData((prevData) => {
+        return prevData.map((item) => {
+          const matchingProductStock = productStocks.find(
+            (product) => product.id === item.id
+          );
+          return {
+            ...item,
+            currentQty: matchingProductStock
+              ? matchingProductStock.currentQty
+              : 0,
+            unit: matchingProductStock ? matchingProductStock.unit : item.unit,
+          };
+        });
+      });
+    }
+  }, [selectedWarehouse, productStocks]);
+
   const allTax = [
     {
       title: "Tax",
@@ -316,15 +373,15 @@ const PurchaseOrdersNew = () => {
               : record?.deliveryWarehouseId,
           deliveryAddress: record?.deliveryAddress,
           shipmentPreference:
-            record?.shipmentPreferenceId === 0
-              ? null
-              : record?.shipmentPreferenceId,
+            record?.shipmentPreference?.id > 0
+              ? record?.shipmentPreference?.id
+              : null,
           paymentTerms: record?.orderPaymentTerms,
           customDays: record?.orderPaymentTermsCustomDays,
           currency: record?.currency?.id,
           exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse.id,
-          customerNotes: record?.notes,
+          notes: record?.notes,
           discount: record?.orderDiscount,
           adjustment: record?.adjustmentAmount || null,
           // Map transactions to form fields
@@ -405,7 +462,7 @@ const PurchaseOrdersNew = () => {
       deliveryWarehouseId: values.deliveryWarehouse || 0,
       deliveryAddress: values.deliveryAddress,
       shipmentPreferenceId: values.shipmentPreference || 0,
-      notes: values.customerNotes,
+      notes: values.notes,
       currencyId: values.currency,
       exchangeRate: values.exchangeRate || 0,
       orderDiscount: isAtTransactionLevel ? discount : 0,
@@ -484,8 +541,9 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter + 1;
-    setTableKeyCounter(tableKeyCounter + 1);
+    // const newRowKey = data.length + 1;
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([
       ...data,
       {
@@ -499,6 +557,66 @@ const PurchaseOrdersNew = () => {
       },
     ]);
   };
+
+  console.log("data", data);
+
+  // const handleRemoveRow = (keyToRemove) => {
+  //   let newData = [...data];
+
+  //   // If the item to be removed doesn't have detailId
+  //   if (!newData[keyToRemove - 1].detailId) {
+  //     for (let i = keyToRemove - 1; i < newData.length - 1; i++) {
+  //       // Shift the data of each row
+  //       newData[i] = { ...newData[i + 1], key: i + 1 };
+
+  //       // Shift the form values to the current row
+  //       const nextRowValues = form.getFieldsValue([
+  //         `account${i + 2}`,
+  //         `product${i + 2}`,
+  //         `quantity${i + 2}`,
+  //         `rate${i + 2}`,
+  //         `detailTax${i + 2}`,
+  //       ]);
+
+  //       form.setFieldsValue({
+  //         [`account${i + 1}`]: nextRowValues[`account${i + 2}`],
+  //         [`product${i + 1}`]: nextRowValues[`product${i + 2}`],
+  //         [`quantity${i + 1}`]: nextRowValues[`quantity${i + 2}`],
+  //         [`rate${i + 1}`]: nextRowValues[`rate${i + 2}`],
+  //         [`detailTax${i + 1}`]: nextRowValues[`detailTax${i + 2}`],
+  //       });
+  //     }
+
+  //     // Clear the form values of the last row
+  //     form.setFieldsValue({
+  //       [`account${newData.length}`]: null,
+  //       [`product${newData.length}`]: null,
+  //       [`quantity${newData.length}`]: null,
+  //       [`rate${newData.length}`]: null,
+  //       [`detailTax${newData.length}`]: null,
+  //     });
+
+  //     newData.pop();
+  //   } else {
+  //     // If the item has detailId mark it as deleted
+  //     newData[keyToRemove - 1] = {
+  //       ...newData[keyToRemove - 1],
+  //       isDeletedItem: true,
+  //       amount: 0,
+  //       discount: 0,
+  //       discountAmount: 0,
+  //       quantity: 0,
+  //       rate: 0,
+  //       taxAmount: 0,
+  //       taxRate: 0,
+  //       id: null,
+  //       discountType: "P",
+  //       detailTax: null,
+  //     };
+  //   }
+  //   setData(newData);
+  //   recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
+  // };
 
   const handleRemoveRow = (keyToRemove) => {
     const newData = data
@@ -531,10 +649,11 @@ const PurchaseOrdersNew = () => {
     recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     setData(newData);
     form.setFieldsValue({
-      [`product${keyToRemove}`]: "",
-      [`quantity${keyToRemove}`]: "",
-      [`rate${keyToRemove}`]: "",
-      [`detailTax${keyToRemove}`]: "",
+      [`account${keyToRemove}`]: null,
+      [`product${keyToRemove}`]: null,
+      [`quantity${keyToRemove}`]: null,
+      [`rate${keyToRemove}`]: null,
+      [`detailTax${keyToRemove}`]: null,
     });
   };
 
@@ -585,11 +704,13 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleAddProductsInBulk = (selectedItemsBulk) => {
-    let newData = [];
+    let newData = [...data];
+
+    // Filter existing items from the selected bulk items
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
-    console.log("existing items", existingItems);
+
     // Update quantity for existing items
     existingItems.forEach((existingItem) => {
       const matchingSelectedItem = selectedItemsBulk.find(
@@ -600,12 +721,13 @@ const PurchaseOrdersNew = () => {
           existingItem.quantity + matchingSelectedItem.quantity,
       });
     });
+
+    // Update data with new quantities for existing items
     if (existingItems.length > 0) {
-      const updatedData = data.map((dataItem) => {
+      newData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
-        console.log("matching selected item", matchingSelectedItem);
 
         if (matchingSelectedItem) {
           const newQuantity = dataItem.quantity + matchingSelectedItem.quantity;
@@ -620,30 +742,29 @@ const PurchaseOrdersNew = () => {
             discountAmount,
             taxAmount,
           };
-        } else {
-          return dataItem;
         }
+
+        return dataItem;
       });
-      newData = updatedData;
     }
 
+    // Filter non-existing items from the selected bulk items
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
     );
-    console.log("non existing items", nonExistingItems);
-    if (nonExistingItems.length > 0) {
-      // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
-      let newRowKey = tableKeyCounter;
 
-      selectedItemsBulk.forEach((selectedItem, index) => {
-        newRowKey++;
+    if (nonExistingItems.length > 0) {
+      const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+
+      nonExistingItems.forEach((selectedItem, index) => {
+        const newRowKey = maxKey + 1 + index;
         const [amount, discountAmount, taxAmount] = calculateItemAmount({
           ...selectedItem,
         });
         const newDataItem = {
-          ...selectedItem,
           key: newRowKey,
+          ...selectedItem,
           amount,
           discountAmount,
           taxAmount,
@@ -655,21 +776,24 @@ const PurchaseOrdersNew = () => {
         // Set the form fields for the new data item
         form.setFieldsValue({
           [`product${newRowKey}`]: selectedItem.id,
-          [`account${newRowKey}`]: selectedItem.account,
+          [`account${newRowKey}`]: selectedItem.account || null,
           [`rate${newRowKey}`]: selectedItem.rate,
-          [`detailTax${newRowKey}`]: selectedItem.detailTax,
+          [`detailTax${newRowKey}`]:
+            selectedItem.detailTax !== "I0" ? selectedItem.detailTax : null,
           [`quantity${newRowKey}`]: selectedItem.quantity,
         });
       });
     }
+
+    // Update state and recalculate total amount if new data is added
     if (newData.length > 0) {
+      setData(newData);
       recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     }
   };
-  console.log("data", data);
 
   const handleSelectItem = (value, rowKey) => {
-    const selectedItem = allProducts?.find((product) => product.id === value);
+    const selectedItem = productStocks?.find((product) => product.id === value);
     const dataIndex = data.findIndex((dataItem) => dataItem.key === rowKey);
     if (dataIndex !== -1) {
       const oldData = data[dataIndex];
@@ -702,8 +826,9 @@ const PurchaseOrdersNew = () => {
         newData.rate = selectedItem.purchasePrice;
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
-        newData.stockOnHand = selectedItem.stockOnHand;
+        newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.inventoryAccount?.id;
+        newData.unit = selectedItem.unit;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -960,17 +1085,53 @@ const PurchaseOrdersNew = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+            <Flex
+              vertical
+              style={{
+                marginBottom: "24px",
+                paddingRight: "0.5rem",
+                minWidth: "220px",
+              }}
+            >
               <Flex justify="space-between">
                 {text}
-                {/* <CloseCircleOutlined
+                <CloseCircleOutlined
                   onClick={() =>
                     handleRemoveSelectedItem(record.id, record.key)
                   }
-                /> */}
+                />
               </Flex>
-              <div>SKU: {record.sku}</div>
-            </div>
+              <div>
+                {record.sku ? (
+                  <>
+                    <span style={{ fontSize: "var(--small-text)" }}>
+                      SKU: {record.sku}{" "}
+                    </span>
+                    <Divider type="vertical" />
+                  </>
+                ) : (
+                  <div></div>
+                )}
+                {record.currentQty || record.currentQty === 0 ? (
+                  <span
+                    style={{
+                      fontSize: "var(--small-text)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Stock on Hand :{" "}
+                    <FormattedNumber
+                      value={record.currentQty}
+                      style="decimal"
+                      minimumFractionDigits={record.unit?.precision}
+                    />{" "}
+                    {record.unit && record.unit.abbreviation}
+                  </span>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+            </Flex>
           )}
           <Form.Item
             hidden={text}
@@ -988,9 +1149,10 @@ const PurchaseOrdersNew = () => {
             ]}
           >
             <AutoComplete
+              loading={stockLoading}
               className="custom-select"
               style={{
-                width: 200,
+                minWidth: "250px",
               }}
               placeholder="Type or click to select a product."
               optionFilterProp="label"
@@ -1000,7 +1162,7 @@ const PurchaseOrdersNew = () => {
               }
               onSelect={(value) => handleSelectItem(value, record.key)}
             >
-              {allProducts?.map((option) => (
+              {productStocks?.map((option) => (
                 <AutoComplete.Option
                   value={option.id}
                   key={option.id}
@@ -1013,8 +1175,22 @@ const PurchaseOrdersNew = () => {
                     </div>
                     <div className="item-details-select-list">
                       <span>SKU: {option.sku}</span>
-                      <span className="stock-on-hand">
-                        {option.stockOnHand}
+                      <span
+                        className="stock-on-hand"
+                        style={{
+                          color:
+                            option.currentQty === 0
+                              ? "red"
+                              : "var(--light-green)",
+                        }}
+                      >
+                        {" "}
+                        <FormattedNumber
+                          value={option.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={option.unit?.precision}
+                        />{" "}
+                        {option.unit && option.unit.abbreviation}
                       </span>
                     </div>
                   </div>
@@ -1078,51 +1254,55 @@ const PurchaseOrdersNew = () => {
       title: "Quantity",
       dataIndex: "quantity",
       key: "quantity",
+      align: "right",
       width: "10%",
       render: (text, record) => (
-        <Form.Item
-          name={`quantity${record.key}`}
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="label.quantity.required"
-                  defaultMessage="Enter the Quantity"
-                />
-              ),
-            },
-            () => ({
-              validator(_, value) {
-                if (!value) {
-                  return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
-                  return Promise.reject(
-                    intl.formatMessage({
-                      id: "validation.invalidInput",
-                      defaultMessage: "Invalid Input",
-                    })
-                  );
-                } else {
-                  return Promise.resolve();
-                }
+        <>
+          <Form.Item
+            name={`quantity${record.key}`}
+            rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="label.quantity.required"
+                    defaultMessage="Enter the Quantity"
+                  />
+                ),
               },
-            }),
-          ]}
-        >
-          <Input
-            maxLength={15}
-            value={text ? text : "1.00"}
-            className="text-align-right "
-            onBlur={(e) => handleQuantityChange(e.target.value, record.key)}
-          />
-        </Form.Item>
+              () => ({
+                validator(_, value) {
+                  if (!value) {
+                    return Promise.resolve();
+                  } else if (isNaN(value) || value.length > 20) {
+                    return Promise.reject(
+                      intl.formatMessage({
+                        id: "validation.invalidInput",
+                        defaultMessage: "Invalid Input",
+                      })
+                    );
+                  } else {
+                    return Promise.resolve();
+                  }
+                },
+              }),
+            ]}
+          >
+            <Input
+              maxLength={15}
+              value={text ? text : "1.00"}
+              className="text-align-right "
+              onBlur={(e) => handleQuantityChange(e.target.value, record.key)}
+            />
+          </Form.Item>
+        </>
       ),
     },
     {
       title: "Rate",
       dataIndex: "rate",
       key: "rate",
+      align: "right",
       width: "10%",
       render: (text, record) => (
         <Form.Item
@@ -1168,9 +1348,10 @@ const PurchaseOrdersNew = () => {
       title: "Discount",
       dataIndex: "detailDiscount",
       key: "detailDiscount",
+      align: "right",
       width: "10%",
       hidden: discountPreference.key === "0",
-      render: (text, record) => (
+      render: (_, record) => (
         <Form.Item
           name={`detailDiscount${record.key}`}
           rules={[
@@ -1198,12 +1379,15 @@ const PurchaseOrdersNew = () => {
               handleDetailDiscountChange(e.target.value, record.key)
             }
             addonAfter={
-              <Form.Item noStyle name={`detailDiscountType${record.key}`}>
+              <Form.Item
+                noStyle
+                name={`detailDiscountType${record.key}`}
+                initialValue="P"
+              >
                 <Select
                   onChange={(value) =>
                     handleDetailDiscountTypeChange(value, record.key)
                   }
-                  defaultValue="P"
                 >
                   <Select.Option value="P">%</Select.Option>
                   <Select.Option value="A">
@@ -1247,6 +1431,7 @@ const PurchaseOrdersNew = () => {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      align: "right",
       width: "10%",
       render: (text) => (
         <div
@@ -1267,14 +1452,17 @@ const PurchaseOrdersNew = () => {
       width: "5%",
       render: (_, record) => (
         <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
-          <CloseCircleOutlined
-            style={{ color: "red" }}
-            onClick={() => handleRemoveRow(record.key)}
-          />
+          <span>
+            <CloseCircleOutlined
+              style={{ color: "red" }}
+              onClick={() => handleRemoveRow(record.key)}
+            />
+          </span>
         </Flex>
       ),
     },
   ];
+
   return (
     <>
       <SupplierSearchModal
@@ -1283,7 +1471,7 @@ const PurchaseOrdersNew = () => {
         onRowSelect={handleModalRowSelect}
       />
       <AddPurchaseProductsModal
-        products={allProducts}
+        products={productStocks}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -1737,8 +1925,8 @@ const PurchaseOrdersNew = () => {
                 <Select
                   placeholder="Select Warehouse"
                   showSearch
+                  loading={stockLoading}
                   // allowClear
-                  loading={loading}
                   onChange={(value) => setSelectedWarehouse(value)}
                   optionFilterProp="label"
                 >
@@ -1832,6 +2020,7 @@ const PurchaseOrdersNew = () => {
           {selectedWarehouse && (
             <>
               <Table
+                loading={stockLoading}
                 columns={columns}
                 dataSource={data.filter((item) => !item.isDeletedItem)}
                 pagination={false}
@@ -1844,10 +2033,12 @@ const PurchaseOrdersNew = () => {
                 onClick={handleAddRow}
                 className="add-row-item-btn"
               >
-                <FormattedMessage
-                  id="button.addNewRow"
-                  defaultMessage="Add New Row"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addNewRow"
+                    defaultMessage="Add New Row"
+                  />
+                </span>
               </Button>
               <Divider type="vertical" />
               <Button
@@ -1855,10 +2046,12 @@ const PurchaseOrdersNew = () => {
                 className="add-row-item-btn"
                 onClick={() => setAddPurchaseProductsModalOpen(true)}
               >
-                <FormattedMessage
-                  id="button.addProductsInBulk"
-                  defaultMessage="Add Products in Bulk"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addProductsInBulk"
+                    defaultMessage="Add Products in Bulk"
+                  />
+                </span>
               </Button>
             </>
           )}
@@ -1873,13 +2066,17 @@ const PurchaseOrdersNew = () => {
                   justifyContent: "normal",
                 }}
               >
-                <Form.Item
-                  style={{ margin: 0, width: "100%" }}
-                  name="customerNotes"
-                >
-                  <label>Customer Notes</label>
-                  <TextArea rows={4}></TextArea>
-                </Form.Item>
+                <div style={{ width: "100%" }}>
+                  <label>
+                    <FormattedMessage
+                      id="label.customerNotes"
+                      defaultMessage="Customer Notes"
+                    />
+                  </label>
+                  <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
+                    <TextArea rows={4}></TextArea>
+                  </Form.Item>
+                </div>
               </div>
             </Col>
             <Col

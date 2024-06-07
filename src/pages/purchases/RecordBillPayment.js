@@ -13,7 +13,7 @@ import { SupplierPaymentMutations } from "../../graphql";
 import dayjs from "dayjs";
 const { CREATE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
 
-const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
+const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business, allPaymentModesQueryRef, allAccountsQueryRef } =
@@ -192,17 +192,17 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 />
               }
               name="paymentMode"
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.paymentMode.required"
-                      defaultMessage="Select the Payment Mode"
-                    />
-                  ),
-                },
-              ]}
+              // rules={[
+              //   {
+              //     required: true,
+              //     message: (
+              //       <FormattedMessage
+              //         id="label.paymentMode.required"
+              //         defaultMessage="Select the Payment Mode"
+              //       />
+              //     ),
+              //   },
+              // ]}
             >
               <Select showSearch optionFilterProp="label">
                 {paymentModes?.map((mode) => (
@@ -404,4 +404,4 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   );
 };
 
-export default RecordPayment;
+export default RecordBillPayment;

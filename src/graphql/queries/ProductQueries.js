@@ -255,15 +255,6 @@ const GET_ALL_PRODUCTS = gql`
         type
         isActive
       }
-      stocks {
-        warehouseId
-        description
-        productId
-        productType
-        batchNumber
-        receivedDate
-        qty
-      }
     }
   }
 `;
@@ -279,7 +270,6 @@ const GET_ALL_PRODUCT_VARIANTS = gql`
       purchasePrice
       productGroupId
       isActive
-
       salesAccount {
         id
         detailType
@@ -322,11 +312,39 @@ const GET_ALL_PRODUCT_VARIANTS = gql`
   }
 `;
 
+const GET_AVAILABLE_STOCKS = gql`
+  query GetAvailableStocks($warehouseId: Int!) {
+    getAvailableStocks(warehouseId: $warehouseId) {
+      id
+      warehouseId
+      productId
+      productType
+      batchNumber
+      orderQty
+      receivedQty
+      saleQty
+      committedQty
+      currentQty
+      product {
+        id
+        name
+        sku
+        barcode
+        salesPrice
+        purchasePrice
+        isActive
+        isBatchTracking
+      }
+    }
+  }
+`;
+
 const ProductQueries = {
   GET_PRODUCT,
   GET_PAGINATE_PRODUCT,
   GET_ALL_PRODUCTS,
   GET_ALL_PRODUCT_VARIANTS,
+  GET_AVAILABLE_STOCKS,
 };
 
 export default ProductQueries;

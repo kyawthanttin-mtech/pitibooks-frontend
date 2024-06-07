@@ -275,6 +275,15 @@ const PaymentsMade = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        supplierPaymentSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const findAccountName = (accounts, withdrawAccountId) => {
@@ -349,26 +358,26 @@ const PaymentsMade = () => {
         </>
       ),
     },
-    {
-      title: (
-        <FormattedMessage
-          id="label.unusedAmount"
-          defaultMessage="Unused Amount"
-        />
-      ),
-      dataIndex: "unusedCreditAmount",
-      key: "unusedCreditAmount",
-      render: (text, record) => (
-        <>
-          {record.currency.symbol}{" "}
-          <FormattedNumber
-            value={text}
-            style="decimal"
-            minimumFractionDigits={record.currency.decimalPlaces}
-          />
-        </>
-      ),
-    },
+    // {
+    //   title: (
+    //     <FormattedMessage
+    //       id="label.unusedAmount"
+    //       defaultMessage="Unused Amount"
+    //     />
+    //   ),
+    //   dataIndex: "unusedCreditAmount",
+    //   key: "unusedCreditAmount",
+    //   render: (text, record) => (
+    //     <>
+    //       {record.currency.symbol}{" "}
+    //       <FormattedNumber
+    //         value={text}
+    //         style="decimal"
+    //         minimumFractionDigits={record.currency.decimalPlaces}
+    //       />
+    //     </>
+    //   ),
+    // },
     {
       title: (
         <SearchOutlined
@@ -578,7 +587,9 @@ const PaymentsMade = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>

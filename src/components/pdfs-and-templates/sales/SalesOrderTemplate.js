@@ -490,11 +490,11 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
             <Space>
               <span>Payment Terms :</span>
               <span>
-                {selectedRecord.customer?.customerPaymentTerms
+                {selectedRecord.orderPaymentTerms
                   ?.split(/(?=[A-Z])/)
                   .join(" ") === "Custom"
-                  ? `${selectedRecord.customer?.customerPaymentTerms} (Due in ${selectedRecord.customer?.customerPaymentTermsCustomDays}day(s))`
-                  : selectedRecord.customer?.customerPaymentTerms
+                  ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
+                  : selectedRecord.orderPaymentTerms
                       ?.split(/(?=[A-Z])/)
                       .join(" ")}
               </span>

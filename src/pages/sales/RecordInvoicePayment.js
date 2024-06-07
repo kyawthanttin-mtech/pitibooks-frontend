@@ -80,10 +80,10 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
         bankCharges: values.bankCharges,
         paymentDate: values.date,
         paymentModeId: values.paymentMode,
-        depositAccountId: values.paidThrough,
+        depositAccountId: values.depositTo,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
-        paymentNumber: 1, //temporary
+        // paymentNumber: 1, //temporary
         paidInvoices: [
           {
             paidInvoiceId: 0,
@@ -149,17 +149,17 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
             <Form.Item
               label={
                 <FormattedMessage
-                  id="label.paidThrough"
+                  id="label.depositTo"
                   defaultMessage="Paid Through"
                 />
               }
-              name="paidThrough"
+              name="depositTo"
               rules={[
                 {
                   required: true,
                   message: (
                     <FormattedMessage
-                      id="label.paidThrough.required"
+                      id="label.depositTo.required"
                       defaultMessage="Select the Paid Through"
                     />
                   ),
@@ -228,17 +228,17 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 />
               }
               name="paymentMode"
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.paymentMode.required"
-                      defaultMessage="Select the Payment Mode"
-                    />
-                  ),
-                },
-              ]}
+              // rules={[
+              //   {
+              //     required: true,
+              //     message: (
+              //       <FormattedMessage
+              //         id="label.paymentMode.required"
+              //         defaultMessage="Select the Payment Mode"
+              //       />
+              //     ),
+              //   },
+              // ]}
             >
               <Select showSearch optionFilterProp="label">
                 {paymentModes?.map((mode) => (

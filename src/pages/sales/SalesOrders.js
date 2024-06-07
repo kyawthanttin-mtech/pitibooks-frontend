@@ -29,13 +29,13 @@ import {
 import {
   CustomerSearchModal,
   PaginatedSelectionTable,
-  PurchaseOrderTemplate,
+  SalesOrderTemplate,
   SearchCriteriaDisplay,
 } from "../../components";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-import { SalesOrderQueries, PurchaseOrderMutations } from "../../graphql";
+import { SalesOrderQueries, SalesOrderMutations } from "../../graphql";
 import dayjs from "dayjs";
 import {
   openErrorNotification,
@@ -43,9 +43,84 @@ import {
 } from "../../utils/Notification";
 import { useMutation, useReadQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
-import SalesOrderTemplate from "../../components/pdfs-and-templates/sales/SalesOrderTemplate";
 const { GET_PAGINATE_SALES_ORDER } = SalesOrderQueries;
-const { DELETE_PURCHASE_ORDER } = PurchaseOrderMutations;
+const { CONFIRM_SALES_ORDER, CANCEL_SALES_ORDER, DELETE_SALES_ORDER } = SalesOrderMutations;
+
+const draftActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.covertToInvoice"
+        defaultMessage="Convert to Invoice"
+      />
+    ),
+    key: "1",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.confirmSalesOrder"
+        defaultMessage="Confirm Sales Order"
+      />
+    ),
+    key: "2",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "4",
+  },
+];
+
+const confirmedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.covertToInvoice"
+        defaultMessage="Convert to Invoice"
+      />
+    ),
+    key: "1",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.cancelSalesOrder"
+        defaultMessage="Cancel Sales Order"
+      />
+    ),
+    key: "3",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "4",
+  },
+];
+
+const cancelledActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "4",
+  },
+];
+
+const closedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+];
 
 const billTableColumns = [
   {
@@ -82,7 +157,7 @@ const billTableColumns = [
   },
 ];
 
-const PurchaseOrders = () => {
+const SalesOrders = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("bill");
@@ -112,7 +187,7 @@ const PurchaseOrders = () => {
 
   //Mutations
   const [deleteSalesOrder, { loading: deleteLoading }] = useMutation(
-    DELETE_PURCHASE_ORDER,
+    DELETE_SALES_ORDER,
     {
       onCompleted() {
         openSuccessMessage(
@@ -150,7 +225,82 @@ const PurchaseOrders = () => {
     }
   );
 
-  const loading = deleteLoading;
+  const [confirmSO, { loading: confirmLoading }] = useMutation(
+    CONFIRM_SALES_ORDER,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="salesOrder.confirmed"
+            defaultMessage="Sales Order Confirmed"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingSalesOrders = cache.readQuery({
+          query: GET_PAGINATE_SALES_ORDER,
+        });
+        const updatedSalesOrders =
+        existingSalesOrders.paginateSalesOrder.edges.filter(
+            ({ node }) => node.id !== data.confirmSalesOrder.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_SALES_ORDER,
+          data: {
+            paginateSalesOrder: {
+              ...existingSalesOrders.paginateSalesOrder,
+              edges: updatedSalesOrders,
+            },
+          },
+        });
+      },
+    }
+  );
+
+  const [cancelSO, { loading: cancelLoading }] = useMutation(
+    CANCEL_SALES_ORDER,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="salesOrder.cancelled"
+            defaultMessage="Sales Order Cancelled"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingSalesOrders = cache.readQuery({
+          query: GET_PAGINATE_SALES_ORDER,
+        });
+        const updatedSalesOrders =
+          existingSalesOrders.paginateSalesOrder.edges.filter(
+            ({ node }) => node.id !== data.cancelSalesOrder.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_SALES_ORDER,
+          data: {
+            paginateSalesOrder: {
+              ...existingSalesOrders.paginateSalesOrder,
+              edges: updatedSalesOrders,
+            },
+          },
+        });
+      },
+    }
+  );
+
+  const loading = deleteLoading || confirmLoading || cancelLoading;
+
 
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
@@ -224,6 +374,52 @@ const PurchaseOrders = () => {
     });
   };
 
+  const handleConfirmSalesOrder = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.confirmSalesOrder"
+          defaultMessage="Are you sure to confirm sales order?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await confirmSO({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleCancelSalesOrder = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.cancelSalesOrder"
+          defaultMessage="Are you sure to cancel sales order?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await cancelSO({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
   const handleDelete = async (id) => {
     console.log(id);
     const confirmed = await deleteModal.confirm({
@@ -251,6 +447,15 @@ const PurchaseOrders = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        salesOrderSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const handleModalRowSelect = (record) => {
@@ -311,16 +516,6 @@ const PurchaseOrders = () => {
       render: (text) => (
         <span style={{ color: getStatusColor(text) }}>{text}</span>
       ),
-    },
-    {
-      title: <FormattedMessage id="label.invoiced" defaultMessage="Invoiced" />,
-      dataIndex: "invoiced",
-      key: "invoiced",
-    },
-    {
-      title: <FormattedMessage id="label.payment" defaultMessage="Payment" />,
-      dataIndex: "payment",
-      key: "payment",
     },
     {
       title: <FormattedMessage id="label.amount" defaultMessage="Amount" />,
@@ -414,7 +609,7 @@ const PurchaseOrders = () => {
       <Row>
         <Col lg={12}>
           <Form.Item
-            label="Purchase Order #"
+            label="Sales Order #"
             name="orderNumber"
             labelAlign="left"
             labelCol={{ span: 7 }}
@@ -473,6 +668,10 @@ const PurchaseOrders = () => {
                 {
                   value: "Closed",
                   label: "Closed",
+                },
+                {
+                  value: "Cancelled",
+                  label: "Cancelled",
                 },
               ]}
             ></Select>
@@ -647,12 +846,15 @@ const PurchaseOrders = () => {
                     state: {
                       ...location.state,
                       from: { pathname: location.pathname },
+                      cloneSO: null,
                     },
                   })
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>
@@ -827,29 +1029,38 @@ const PurchaseOrders = () => {
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
-                    if (key === "0") console.log("clone");
-                    else if (key === "1") handleDelete(selectedRecord.id);
+                    if (key === "0") {
+                      navigate("/salesOrders/new", {
+                        state: {
+                          ...location.state,
+                          from: { pathname: location.pathname },
+                          cloneSO: selectedRecord,
+                        },
+                      });
+                    } else if (key === "1") {
+                      navigate("/invoices/new", {
+                        state: {
+                          ...location.state,
+                          from: { pathname: location.pathname },
+                          convertSO: selectedRecord,
+                        },
+                      });
+                    } else if (key === "2") {
+                      //confirm SO
+                      handleConfirmSalesOrder(selectedRecord.id);
+                    } else if (key === "3") {
+                      //cancel PO
+                      handleCancelSalesOrder(selectedRecord.id);
+                    } else if (key === "4") handleDelete(selectedRecord.id);
                   },
-                  items: [
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.clone"
-                          defaultMessage="Clone"
-                        />
-                      ),
-                      key: "0",
-                    },
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.delete"
-                          defaultMessage="Delete"
-                        />
-                      ),
-                      key: "1",
-                    },
-                  ],
+                  items:
+                    selectedRecord.currentStatus === "Draft"
+                      ? draftActionItems
+                      : selectedRecord.currentStatus === "Confirmed"
+                      ? confirmedActionItems
+                      : selectedRecord.currentStatus === "Cancelled"
+                      ? cancelledActionItems
+                      : closedActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -918,7 +1129,7 @@ const PurchaseOrders = () => {
                       <Space>
                         <span>No items have been received yet!</span>
                         <span>
-                          <a>New Purchase Receive</a>
+                          <a>New Sales Receive</a>
                         </span>
                       </Space>
                     </div>
@@ -927,7 +1138,7 @@ const PurchaseOrders = () => {
               </div>
               <div className="toggle-pdf-view">
                 <div>
-                  <span>Invoice Status: </span>
+                  <span>Order Status: </span>
                   <span
                     style={{
                       color:
@@ -949,4 +1160,4 @@ const PurchaseOrders = () => {
   );
 };
 
-export default PurchaseOrders;
+export default SalesOrders;

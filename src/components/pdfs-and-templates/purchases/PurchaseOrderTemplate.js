@@ -493,7 +493,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                 {selectedRecord.orderPaymentTerms
                   .split(/(?=[A-Z])/)
                   .join(" ") === "Custom"
-                  ? `${selectedRecord.orderPaymentTerms} (Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s))`
+                  ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
                   : selectedRecord.orderPaymentTerms
                       .split(/(?=[A-Z])/)
                       .join(" ")}

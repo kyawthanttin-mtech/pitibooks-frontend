@@ -23,7 +23,7 @@ const DeliveryMethods = () => {
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
   const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi, refetchAllPaymentModes } = useOutletContext();
+  const { notiApi, msgApi, refetchAllDeliveryMethods } = useOutletContext();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -51,7 +51,7 @@ const DeliveryMethods = () => {
             defaultMessage="New Delivery Method Created"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllDeliveryMethods();
       },
       refetchQueries: [GET_DELIVERY_METHODS],
     }
@@ -68,7 +68,7 @@ const DeliveryMethods = () => {
             defaultMessage="Delivery Method Updated"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllDeliveryMethods();
       },
       refetchQueries: [GET_DELIVERY_METHODS],
     }
@@ -85,7 +85,7 @@ const DeliveryMethods = () => {
             defaultMessage="Delivery Method Deleted"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllDeliveryMethods();
       },
       refetchQueries: [GET_DELIVERY_METHODS],
     }
@@ -101,7 +101,7 @@ const DeliveryMethods = () => {
             defaultMessage="Delivery Method Status Updated"
           />
         );
-        refetchAllPaymentModes();
+        refetchAllDeliveryMethods();
       },
     });
 

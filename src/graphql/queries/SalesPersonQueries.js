@@ -21,6 +21,16 @@ const GET_PAGINATE_SALES_PERSON = gql`
   }
 `;
 
+const GET_SALES_PERSONS = gql`
+  query GetSalesPersons {
+    listSalesPerson {
+      id
+      name
+      isActive
+    }
+  }
+`;
+
 const GET_ALL_SALES_PERSONS = gql`
   query GetAllSalesPersons {
     listAllSalesPerson {
@@ -33,6 +43,7 @@ const GET_ALL_SALES_PERSONS = gql`
 
 const SalesPersonQueries = {
   GET_PAGINATE_SALES_PERSON,
+  GET_SALES_PERSONS,
   GET_ALL_SALES_PERSONS,
 };
 

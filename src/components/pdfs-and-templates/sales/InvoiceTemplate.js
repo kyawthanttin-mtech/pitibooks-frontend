@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React, { useEffect } from "react";
 import "../Template.css";
 import { data } from "./InvoiceData";
@@ -69,11 +70,23 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                     <span># {selectedRecord.invoiceNumber}</span>
                     <div style={{ clear: "both", marginTop: "20px" }}>
                       <span style={{ fontSize: "0.8rem" }}>
-                        <b>Balance Due</b>
+                        <b>Remaining Balance</b>
                       </span>
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
-                        <b>MMK Placeholder</b>
+                        <b>
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={
+                              selectedRecord.invoiceTotalAmount -
+                              selectedRecord.invoiceTotalPaidAmount
+                            }
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </b>
                       </span>
                     </div>
                   </td>
@@ -125,7 +138,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Invoice Date :</span>
+                            <span>Invoice Date:</span>
                           </td>
                           <td style={{ textAlign: "right" }}>
                             <span>
@@ -400,28 +413,108 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                           padding: "10px 10px 10px 5px",
                         }}
                       >
-                        {total}
+                        <span>
+                          <FormattedNumber
+                            value={selectedRecord.invoiceSubtotal}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </span>
                       </td>
                     </tr>
-                    <tr className="text-align-right">
-                      <td
-                        style={{
-                          padding: "5px 10px 5px 0",
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        Commercial Tax (5%)
-                      </td>
-                      <td
-                        style={{
-                          width: "120px",
-                          verticalAlign: "middle",
-                          padding: "10px 10px 10px 5px",
-                        }}
-                      >
-                        1,500.00
-                      </td>
-                    </tr>
+                    {selectedRecord.invoiceDiscountAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Discount{" "}
+                          {selectedRecord.invoiceDiscountType === "P" &&
+                            "(" + selectedRecord.invoiceDiscount + "%)"}
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span>
+                            -
+                            <FormattedNumber
+                              value={selectedRecord.invoiceDiscountAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.invoiceTotalTaxAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Tax{" "}
+                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span>
+                            <FormattedNumber
+                              value={selectedRecord.invoiceTotalTaxAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.adjustmentAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Adjustment
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                          }}
+                        >
+                          <span>
+                            <FormattedNumber
+                              value={selectedRecord.adjustmentAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </span>
+                        </td>
+                      </tr>
+                    )}
                     <tr className="text-align-right">
                       <td
                         style={{
@@ -438,29 +531,47 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                           padding: "10px 10px 10px 5px",
                         }}
                       >
-                        <b>MMK{+total + 1500}</b>
+                        <b>
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedRecord.invoiceTotalAmount}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </b>
                       </td>
                     </tr>
-                    <tr style={{ height: "40px" }} className="text-align-right">
+                    <tr className="text-align-right">
                       <td
                         style={{
                           padding: "5px 10px 5px 0",
                           verticalAlign: "middle",
-
-                          // backgroundColor: "#f5f4f3",
                         }}
                       >
-                        <b>Balance Due</b>
+                        <b>Remaining</b>
                       </td>
                       <td
                         style={{
                           width: "120px",
                           verticalAlign: "middle",
                           padding: "10px 10px 10px 5px",
-                          // backgroundColor: "#f5f4f3",
                         }}
                       >
-                        <b>MMK{selectedRecord.balanceDue}</b>
+                        <b>
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={
+                              selectedRecord.invoiceTotalAmount -
+                              selectedRecord.invoiceTotalPaidAmount
+                            }
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </b>
                       </td>
                     </tr>
                   </tbody>

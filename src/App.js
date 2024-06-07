@@ -65,6 +65,7 @@ import {
   StockSummaryReport,
   CashFlowReport,
   MovementOfEquity,
+  InventorySummary,
 } from "./pages/reports";
 import {
   Profile,
@@ -401,6 +402,10 @@ const router = createHashRouter([
       {
         path: "reports/productSalesReport",
         Component: ProductSalesReport,
+      },
+      {
+        path: "reports/inventorySummary",
+        Component: InventorySummary,
       },
       {
         path: "reports/inventoryValuationSummary",

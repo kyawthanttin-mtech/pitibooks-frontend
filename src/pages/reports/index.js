@@ -16,6 +16,7 @@ import InventoryValuationSummary from "./InventoryValuationSummary";
 import StockSummaryReport from "./StockSummaryReport";
 import CashFlowReport from "./CashFlowReport";
 import MovementOfEquity from "./MovementOfEquity";
+import InventorySummary from "./InventorySummary";
 
 export {
   JournalReport,
@@ -36,4 +37,5 @@ export {
   StockSummaryReport,
   CashFlowReport,
   MovementOfEquity,
+  InventorySummary,
 };

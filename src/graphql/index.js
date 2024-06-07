@@ -29,6 +29,7 @@ import SupplierPaymentMutations from "./mutations/SupplierPaymentMutations";
 import CustomerPaymentMutations from "./mutations/CustomerPaymentMutations";
 import OpeningStockMutations from "./mutations/OpeningStockMutations";
 import TransferOrderMutations from "./mutations/TransferOrderMutations";
+import StockQueries from "./queries/StockQueries";
 
 import BankingQueries from "./queries/BankingQueries";
 import BranchQueries from "./queries/BranchQueries";
@@ -139,4 +140,5 @@ export {
   InventoryAdjustmentQueries,
   InventoryAdjustmentMutations,
   ImageMutations,
+  StockQueries,
 };

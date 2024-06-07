@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Form,
@@ -26,7 +26,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
-import { useReadQuery, useMutation, useApolloClient } from "@apollo/client";
+import { useReadQuery, useMutation, useQuery } from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
@@ -36,10 +36,10 @@ import {
   CustomerSearchModal,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, useIntl } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { ReactComponent as TaxOutlined } from "../../assets/icons/TaxOutlined.svg";
 import { ReactComponent as PercentageOutlined } from "../../assets/icons/PercentageOutlined.svg";
-import { SalesOrderMutations } from "../../graphql";
+import { SalesOrderMutations, StockQueries } from "../../graphql";
 import {
   calculateItemDiscountAndTax,
   calculateDiscountAmount,
@@ -47,6 +47,7 @@ import {
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 const { CREATE_SALES_ORDER } = SalesOrderMutations;
+const { GET_AVAILABLE_STOCKS } = StockQueries;
 
 const paymentTerms = [
   "Net15",
@@ -84,20 +85,10 @@ const taxPreferences = [
 const SalesOrdersNew = () => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const [data, setData] = useState([
-    {
-      key: 1,
-      amount: 0,
-      taxAmount: 0,
-      discountAmount: 0,
-      taxRate: 0,
-      discount: 0,
-      discountType: "P",
-    },
-  ]);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const record = location.state?.cloneSO;
   const {
     notiApi,
     msgApi,
@@ -108,10 +99,37 @@ const SalesOrdersNew = () => {
     allTaxGroupsQueryRef,
     allWarehousesQueryRef,
     allProductsQueryRef,
-    allShipmentPreferencesQueryRef,
     allDeliveryMethodsQueryRef,
     allProductVariantsQueryRef,
   } = useOutletContext();
+  const [data, setData] = useState(
+    record
+      ? record.details?.map((detail, index) => ({
+          key: index + 1,
+          name: detail.name,
+          amount: detail.detailTotalAmount,
+          taxAmount: detail.detailTaxAmount,
+          discountAmount: detail.detailDiscountAmount,
+          taxRate: detail.detailTax.rate,
+          discount: detail.detailDiscount,
+          discountType: detail.detailDiscountType,
+          id: detail.productType + detail.productId,
+          detailDiscountType: detail.detailDiscountType,
+          quantity: detail.detailQty,
+          rate: detail.detailUnitRate,
+        }))
+      : [
+          {
+            key: 1,
+            amount: 0,
+            taxAmount: 0,
+            discountAmount: 0,
+            taxRate: 0,
+            discount: 0,
+            discountType: "P",
+          },
+        ]
+  );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
@@ -130,7 +148,7 @@ const SalesOrdersNew = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [adjustment, setAdjustment] = useState(0);
-  const [tableKeyCounter, setTableKeyCounter] = useState(1);
+  // const [tableKeyCounter, setTableKeyCounter] = useState(1);
   const [selectedCurrency, setSelectedCurrency] = useState(
     business.baseCurrency.id
   );
@@ -155,11 +173,22 @@ const SalesOrdersNew = () => {
   const { data: taxGroupData } = useReadQuery(allTaxGroupsQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
-  const { data: shipmentPreferenceData } = useReadQuery(
-    allShipmentPreferencesQueryRef
-  );
   const { data: deliveryMethodData } = useReadQuery(allDeliveryMethodsQueryRef);
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+
+  const { loading: stockLoading, data: stockData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedWarehouse,
+      variables: { warehouseId: selectedWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
 
   // Mutations
   const [createSalesOrder, { loading: createLoading }] = useMutation(
@@ -207,18 +236,12 @@ const SalesOrdersNew = () => {
     );
   }, [productVariantData]);
 
-  const shipmentPreferences = useMemo(() => {
-    return shipmentPreferenceData?.listAllShipmentPreference?.filter(
-      (s) => s.isActive === true
-    );
-  }, [shipmentPreferenceData]);
-
   const deliveryMethods = useMemo(() => {
     return deliveryMethodData?.listAllDeliveryMethod?.filter(
       (s) => s.isActive === true
     );
   }, [deliveryMethodData]);
-
+  console.log(deliveryMethods);
   const taxes = useMemo(() => {
     return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
   }, [taxData]);
@@ -240,6 +263,43 @@ const SalesOrdersNew = () => {
 
     return [...productsWithS, ...productsWithV];
   }, [products, productVariants]);
+
+  const stocks = useMemo(() => {
+    return stockData?.getAvailableStocks;
+  }, [stockData]);
+
+  const productStocks = useMemo(() => {
+    return allProducts?.map((product) => {
+      const stock = stocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      return {
+        ...product,
+        currentQty: stock ? stock.currentQty : 0,
+        unit: stock?.product?.productUnit || null,
+      };
+    });
+  }, [allProducts, stocks]);
+
+  useEffect(() => {
+    if (selectedWarehouse) {
+      setData((prevData) => {
+        return prevData.map((item) => {
+          const matchingProductStock = productStocks.find(
+            (product) => product.id === item.id
+          );
+          return {
+            ...item,
+            currentQty: matchingProductStock
+              ? matchingProductStock.currentQty
+              : 0,
+            unit: matchingProductStock ? matchingProductStock.unit : item.unit,
+          };
+        });
+      });
+    }
+  }, [selectedWarehouse, productStocks]);
 
   const allTax = [
     {
@@ -308,15 +368,14 @@ const SalesOrdersNew = () => {
       branchId: values.branch,
       customerId: selectedCustomer.id,
       referenceNumber: values.referenceNumber,
-      orderNumber: values.orderNumber,
       orderDate: values.salesOrderDate,
       expectedShipmentDate: values.expectedShipmentDate,
       orderPaymentTerms: values.paymentTerms,
       orderPaymentTermsCustomDays: values.customDays ? values.customDays : 0,
-      // shipmentPreferenceId: values.shipmentPreference || 0,
-      notes: values.customerNotes,
+      deliveryMethodId: values.deliveryMethod || 0,
+      notes: values.notes,
       currencyId: values.currency,
-      // exchangeRate: values.exchangeRate || 0,
+      exchangeRate: values.exchangeRate || 0,
       orderDiscount: isAtTransactionLevel ? discount : 0,
       orderDiscountType: selectedDiscountType,
       adjustmentAmount: adjustment,
@@ -325,7 +384,7 @@ const SalesOrdersNew = () => {
       orderTaxType: "I",
       currentStatus: saveStatus,
       // documents:
-      // warehouseId: values.warehouse,
+      warehouseId: values.warehouse,
       details,
     };
     // console.log("Transactions", transactions);
@@ -336,8 +395,7 @@ const SalesOrdersNew = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter + 1;
-    setTableKeyCounter(tableKeyCounter + 1);
+    const newRowKey = data.length + 1;
     setData([
       ...data,
       {
@@ -353,15 +411,46 @@ const SalesOrdersNew = () => {
   };
 
   const handleRemoveRow = (keyToRemove) => {
-    const newData = data.filter((item) => item.key !== keyToRemove);
-    recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
-    setData(newData);
+    for (let i = keyToRemove; i < data.length; i++) {
+      // shift the data of each row
+      data[i - 1] = {
+        ...data[i],
+        key: i,
+      };
+
+      const nextRowValues = form.getFieldsValue([
+        `product${i + 1}`,
+
+        `quantity${i + 1}`,
+        `rate${i + 1}`,
+        `detailTax${i + 1}`,
+      ]);
+
+      // shift the form values to the current row
+      form.setFieldsValue({
+        [`product${i}`]: nextRowValues[`product${i + 1}`],
+
+        [`quantity${i}`]: nextRowValues[`quantity${i + 1}`],
+        [`rate${i}`]: nextRowValues[`rate${i + 1}`],
+        [`detailTax${i}`]: nextRowValues[`detailTax${i + 1}`],
+      });
+    }
+
+    // clear the form values of the last row
     form.setFieldsValue({
-      [`product${keyToRemove}`]: "",
-      [`quantity${keyToRemove}`]: "",
-      [`rate${keyToRemove}`]: "",
-      [`detailTax${keyToRemove}`]: "",
+      [`product${data.length}`]: null,
+
+      [`quantity${data.length}`]: null,
+      [`rate${data.length}`]: null,
+      [`detailTax${data.length}`]: null,
     });
+
+    recalculateTotalAmount(
+      data.slice(0, -1),
+      isTaxInclusive,
+      isAtTransactionLevel
+    );
+    setData(data.slice(0, -1));
   };
 
   const handleModalRowSelect = (record) => {
@@ -386,10 +475,13 @@ const SalesOrdersNew = () => {
   };
 
   const handleAddProductsInBulk = (selectedItemsBulk) => {
-    let newData = [];
+    let newData = [...data];
+
+    // Filter existing items from the selected bulk items
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
+
     // Update quantity for existing items
     existingItems.forEach((existingItem) => {
       const matchingSelectedItem = selectedItemsBulk.find(
@@ -400,8 +492,10 @@ const SalesOrdersNew = () => {
           existingItem.quantity + matchingSelectedItem.quantity,
       });
     });
+
+    // Update data with new quantities for existing items
     if (existingItems.length > 0) {
-      const updatedData = data.map((dataItem) => {
+      newData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
@@ -423,26 +517,25 @@ const SalesOrdersNew = () => {
 
         return dataItem;
       });
-      newData = updatedData;
     }
 
+    // Filter non-existing items from the selected bulk items
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
     );
-    console.log("non existing items", nonExistingItems);
-    if (nonExistingItems.length > 0) {
-      // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
-      let newRowKey = tableKeyCounter;
 
-      selectedItemsBulk.forEach((selectedItem, index) => {
-        newRowKey++;
+    if (nonExistingItems.length > 0) {
+      const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+
+      nonExistingItems.forEach((selectedItem, index) => {
+        const newRowKey = maxKey + 1 + index;
         const [amount, discountAmount, taxAmount] = calculateItemAmount({
           ...selectedItem,
         });
         const newDataItem = {
-          ...selectedItem,
           key: newRowKey,
+          ...selectedItem,
           amount,
           discountAmount,
           taxAmount,
@@ -455,18 +548,22 @@ const SalesOrdersNew = () => {
         form.setFieldsValue({
           [`product${newRowKey}`]: selectedItem.id,
           [`rate${newRowKey}`]: selectedItem.rate,
-          [`detailTax${newRowKey}`]: selectedItem.detailTax,
+          [`detailTax${newRowKey}`]:
+            selectedItem.detailTax !== "I0" ? selectedItem.detailTax : null,
           [`quantity${newRowKey}`]: selectedItem.quantity,
         });
       });
     }
+
+    // Update state and recalculate total amount if new data is added
     if (newData.length > 0) {
+      setData(newData);
       recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
     }
   };
 
   const handleSelectItem = (value, rowKey) => {
-    const selectedItem = allProducts?.find((product) => product.id === value);
+    const selectedItem = productStocks?.find((product) => product.id === value);
     const dataIndex = data.findIndex((dataItem) => dataItem.key === rowKey);
     if (dataIndex !== -1) {
       const oldData = data[dataIndex];
@@ -499,6 +596,8 @@ const SalesOrdersNew = () => {
         newData.detailTax = selectedItem.purchaseTax?.id;
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.stockOnHand = selectedItem.stockOnHand;
+        newData.currentQty = selectedItem.currentQty;
+        newData.unit = selectedItem.unit;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -513,7 +612,10 @@ const SalesOrdersNew = () => {
 
     form.setFieldsValue({
       [`rate${rowKey}`]: selectedItem.salesPrice,
-      [`detailTax${rowKey}`]: selectedItem.purchaseTax.id,
+      [`detailTax${rowKey}`]:
+        selectedItem.purchaseTax.id !== "I0"
+          ? selectedItem.purchaseTax.id
+          : null,
       [`quantity${rowKey}`]: 1,
     });
   };
@@ -750,7 +852,14 @@ const SalesOrdersNew = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+            <Flex
+              vertical
+              style={{
+                marginBottom: "24px",
+                paddingRight: "0.5rem",
+                minWidth: "220px",
+              }}
+            >
               <Flex justify="space-between">
                 {text}
                 <CloseCircleOutlined
@@ -759,8 +868,37 @@ const SalesOrdersNew = () => {
                   }
                 />
               </Flex>
-              <div>SKU: {record.sku}</div>
-            </div>
+              <div>
+                {record.sku ? (
+                  <>
+                    <span style={{ fontSize: "var(--small-text)" }}>
+                      SKU: {record.sku}{" "}
+                    </span>
+                    <Divider type="vertical" />
+                  </>
+                ) : (
+                  <div></div>
+                )}
+                {record.currentQty || record.currentQty === 0 ? (
+                  <span
+                    style={{
+                      fontSize: "var(--small-text)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Stock on Hand :{" "}
+                    <FormattedNumber
+                      value={record.currentQty}
+                      style="decimal"
+                      minimumFractionDigits={record.unit?.precision}
+                    />{" "}
+                    {record.unit && record.unit.abbreviation}
+                  </span>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+            </Flex>
           )}
           <Form.Item
             hidden={text}
@@ -778,9 +916,10 @@ const SalesOrdersNew = () => {
             ]}
           >
             <AutoComplete
+              loading={stockLoading}
               className="custom-select"
               style={{
-                width: 200,
+                minWidth: "250px",
               }}
               placeholder="Type or click to select a product."
               optionFilterProp="label"
@@ -790,7 +929,7 @@ const SalesOrdersNew = () => {
               }
               onSelect={(value) => handleSelectItem(value, record.key)}
             >
-              {allProducts?.map((option) => (
+              {productStocks?.map((option) => (
                 <AutoComplete.Option
                   value={option.id}
                   key={option.id}
@@ -803,8 +942,22 @@ const SalesOrdersNew = () => {
                     </div>
                     <div className="item-details-select-list">
                       <span>SKU: {option.sku}</span>
-                      <span className="stock-on-hand">
-                        {option.stockOnHand}
+                      <span
+                        className="stock-on-hand"
+                        style={{
+                          color:
+                            option.currentQty === 0
+                              ? "red"
+                              : "var(--light-green)",
+                        }}
+                      >
+                        {" "}
+                        <FormattedNumber
+                          value={option.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={option.unit?.precision}
+                        />{" "}
+                        {option.unit && option.unit.abbreviation}
                       </span>
                     </div>
                   </div>
@@ -820,7 +973,6 @@ const SalesOrdersNew = () => {
         </>
       ),
     },
-
     {
       title: "Quantity",
       dataIndex: "quantity",
@@ -1014,10 +1166,12 @@ const SalesOrdersNew = () => {
       width: "5%",
       render: (_, record) => (
         <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
-          <CloseCircleOutlined
-            style={{ color: "red" }}
-            onClick={() => handleRemoveRow(record.key)}
-          />
+          <span>
+            <CloseCircleOutlined
+              style={{ color: "red" }}
+              onClick={() => handleRemoveRow(record.key)}
+            />
+          </span>
         </Flex>
       ),
     },
@@ -1031,7 +1185,7 @@ const SalesOrdersNew = () => {
         onRowSelect={handleModalRowSelect}
       />
       <AddPurchaseProductsModal
-        products={allProducts}
+        products={productStocks}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -1148,40 +1302,6 @@ const SalesOrdersNew = () => {
               <Form.Item
                 label={
                   <FormattedMessage
-                    id="label.salesOrderNumber"
-                    defaultMessage="Sales Order #"
-                  />
-                }
-                name="orderNumber"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Input></Input>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.referenceNumber"
-                    defaultMessage="Reference #"
-                  />
-                }
-                name="referenceNumber"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Input></Input>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage
                     id="label.salesOrderDate"
                     defaultMessage="Sales Order Date"
                   />
@@ -1207,7 +1327,8 @@ const SalesOrdersNew = () => {
                   format={REPORT_DATE_FORMAT}
                 ></DatePicker>
               </Form.Item>
-
+            </Col>
+            <Col span={12}>
               <Form.Item
                 label={
                   <FormattedMessage
@@ -1224,6 +1345,24 @@ const SalesOrdersNew = () => {
                   onChange={(date, dateString) => console.log(date, dateString)}
                   format={REPORT_DATE_FORMAT}
                 ></DatePicker>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.referenceNumber"
+                    defaultMessage="Reference #"
+                  />
+                }
+                name="referenceNumber"
+                labelAlign="left"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+              >
+                <Input></Input>
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -1253,35 +1392,8 @@ const SalesOrdersNew = () => {
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.shipmentPreference"
-                    defaultMessage="Shipment Preference"
-                  />
-                }
-                name="shipmentPreference"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Select
-                  // placeholder="Select or type to add"
-                  showSearch
-                  allowClear
-                  loading={loading}
-                  optionFilterProp="label"
-                >
-                  {shipmentPreferences?.map((s) => (
-                    <Select.Option key={s.id} value={s.id} label={s.name}>
-                      {s.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
             </Col>
           </Row>
-
           <Row>
             <Col span={12}>
               <Form.Item
@@ -1484,7 +1596,7 @@ const SalesOrdersNew = () => {
                   placeholder="Select Warehouse"
                   showSearch
                   // allowClear
-                  loading={loading}
+                  loading={stockLoading}
                   onChange={(value) => setSelectedWarehouse(value)}
                   optionFilterProp="label"
                 >
@@ -1579,6 +1691,7 @@ const SalesOrdersNew = () => {
             <>
               <Table
                 columns={columns}
+                loading={stockLoading}
                 dataSource={data}
                 pagination={false}
                 className="item-details-table"
@@ -1589,10 +1702,13 @@ const SalesOrdersNew = () => {
                 onClick={handleAddRow}
                 className="add-row-item-btn"
               >
-                <FormattedMessage
-                  id="button.addNewRow"
-                  defaultMessage="Add New Row"
-                />
+                <span>
+                  {" "}
+                  <FormattedMessage
+                    id="button.addNewRow"
+                    defaultMessage="Add New Row"
+                  />
+                </span>
               </Button>
               <Divider type="vertical" />
               <Button
@@ -1600,10 +1716,13 @@ const SalesOrdersNew = () => {
                 className="add-row-item-btn"
                 onClick={() => setAddPurchaseProductsModalOpen(true)}
               >
-                <FormattedMessage
-                  id="button.addProductsInBulk"
-                  defaultMessage="Add Products in Bulk"
-                />
+                <span>
+                  {" "}
+                  <FormattedMessage
+                    id="button.addProductsInBulk"
+                    defaultMessage="Add Products in Bulk"
+                  />
+                </span>
               </Button>
             </>
           )}
@@ -1618,13 +1737,17 @@ const SalesOrdersNew = () => {
                   justifyContent: "normal",
                 }}
               >
-                <Form.Item
-                  style={{ margin: 0, width: "100%" }}
-                  name="customerNotes"
-                >
-                  <label>Customer Notes</label>
-                  <TextArea rows={4}></TextArea>
-                </Form.Item>
+                <div style={{ width: "100%" }}>
+                  <label>
+                    <FormattedMessage
+                      id="label.customerNotes"
+                      defaultMessage="Customer Notes"
+                    />
+                  </label>
+                  <Form.Item style={{ margin: 0, width: "100%" }} name="notes">
+                    <TextArea rows={4}></TextArea>
+                  </Form.Item>
+                </div>
               </div>
             </Col>
             <Col

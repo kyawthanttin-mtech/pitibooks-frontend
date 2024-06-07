@@ -8,6 +8,7 @@ import {
   Select,
   Table,
   InputNumber,
+  Flex,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -25,7 +26,7 @@ import {
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import dayjs from "dayjs";
-import { FormattedMessage, FormattedNumber } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { JournalMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { CustomerSearchModal, SupplierSearchModal } from "../../components";
@@ -64,6 +65,7 @@ const ManualJournalsEdit = () => {
       initialTotalCredits += transaction.credit;
     });
   }
+  const intl = useIntl();
   const [totalDebits, setTotalDebits] = useState(initialTotalDebits);
   const [totalCredits, setTotalCredits] = useState(initialTotalCredits);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
@@ -77,7 +79,6 @@ const ManualJournalsEdit = () => {
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: currencyData } = useReadQuery(allCurrenciesQueryRef);
-
   // Mutations
   const [updateJournal, { loading: updateLoading }] = useMutation(
     UPDATE_JOURNAL,
@@ -168,10 +169,10 @@ const ManualJournalsEdit = () => {
     if (difference !== 0) {
       openErrorNotification(
         notiApi,
-        <FormattedMessage
-          id="journal.debitCreditEqual"
-          defaultMessage="Please ensure that the Debits and Credits are equal"
-        />
+        intl.formatMessage({
+          id: "debitCreditEqual",
+          defaultMessage: "Please ensure that the Debits and Credits are equal",
+        })
       );
       return;
     }
@@ -191,14 +192,14 @@ const ManualJournalsEdit = () => {
                   fragment: gql`
                     fragment NewJournal on Journal {
                       id
-                      branch 
+                      branch
                       journalNumber
                       referenceNumber
                       journalDate
                       journalNotes
                       currency
-                      supplier 
-                      customer 
+                      supplier
+                      customer
                       journalTotalAmount
                       transactions
                     }
@@ -218,19 +219,27 @@ const ManualJournalsEdit = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = data.length + 1;
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([...data, { key: newRowKey }]);
   };
 
   const handleRemoveRow = (keyToRemove) => {
     const newData = data.filter((item) => item.key !== keyToRemove);
     setData(newData);
+    form.setFieldsValue({
+      [`account${keyToRemove}`]: null,
+      [`description${keyToRemove}`]: null,
+      [`debit${keyToRemove}`]: null,
+      [`credit${keyToRemove}`]: null,
+    });
+    updateTotalAndDifference();
   };
 
   const handleDebitBlur = (e, key) => {
     e.preventDefault();
     const debit = form.getFieldValue(`debit${key}`);
-    if (!debit || debit.trim().length === 0) return;
+    if (!debit || debit?.trim().length === 0 || isNaN(debit)) return;
     form.setFieldsValue({ [`credit${key}`]: "" });
     updateTotalAndDifference();
   };
@@ -238,7 +247,7 @@ const ManualJournalsEdit = () => {
   const handleCreditBlur = (e, key) => {
     e.preventDefault();
     const credit = form.getFieldValue(`credit${key}`);
-    if (!credit || credit.trim().length === 0) return;
+    if (!credit || credit?.trim().length === 0 || isNaN(credit)) return;
     form.setFieldsValue({ [`debit${key}`]: "" });
     updateTotalAndDifference();
   };
@@ -331,7 +340,27 @@ const ManualJournalsEdit = () => {
       key: "debits",
       width: "15%",
       render: (_, record) => (
-        <Form.Item name={`debit${record.key}`}>
+        <Form.Item
+          name={`debit${record.key}`}
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input onBlur={(e) => handleDebitBlur(e, record.key)} />
         </Form.Item>
       ),
@@ -342,7 +371,27 @@ const ManualJournalsEdit = () => {
       key: "credits",
       width: "15%",
       render: (_, record) => (
-        <Form.Item name={`credit${record.key}`}>
+        <Form.Item
+          name={`credit${record.key}`}
+          rules={[
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
           <Input onBlur={(e) => handleCreditBlur(e, record.key)} />
         </Form.Item>
       ),
@@ -351,13 +400,19 @@ const ManualJournalsEdit = () => {
       title: "",
       dataIndex: "actions",
       key: "actions",
-      width: "5%",
+      width: "3%",
       render: (_, record, index) =>
-        index > 1 ? (
-          <CloseCircleOutlined
-            style={{ color: "red" }}
-            onClick={() => data.length > 2 && handleRemoveRow(record.key)}
-          />
+        data.length > 2 ? (
+          <Flex
+            align="center"
+            justify="center"
+            style={{ paddingTop: "0.8rem" }}
+          >
+            <CloseCircleOutlined
+              style={{ color: "red" }}
+              onClick={() => data.length > 2 && handleRemoveRow(record.key)}
+            />
+          </Flex>
         ) : (
           <></>
         ),
@@ -638,10 +693,12 @@ const ManualJournalsEdit = () => {
               onClick={handleAddRow}
               className="add-row-button"
             >
-              <FormattedMessage
-                id="button.addNewRow"
-                defaultMessage="Add New Row"
-              />
+              <span>
+                <FormattedMessage
+                  id="button.addNewRow"
+                  defaultMessage="Add New Row"
+                />
+              </span>
             </Button>
 
             <table cellSpacing="0" border="0" width="100%" id="balance-table">

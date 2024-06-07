@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FormattedMessage } from "react-intl";
-import { Button, Dropdown, Form, Modal, Input, Space, Tag } from "antd";
+import { Button, Dropdown, Form, Modal, Input, Space, Tag, Table } from "antd";
 import { PlusOutlined, DownCircleFilled } from "@ant-design/icons";
-import { useMutation } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import { useOutletContext } from "react-router-dom";
 import { SalesPersonQueries, SalesPersonMutations } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { gql } from "@apollo/client";
-import { PaginatedTable } from "../../components";
-const { GET_PAGINATE_SALES_PERSON } = SalesPersonQueries;
+// import { gql } from "@apollo/client";
+// import { PaginatedTable } from "../../components";
+const { GET_SALES_PERSONS } = SalesPersonQueries;
 const {
   CREATE_SALES_PERSON,
   UPDATE_SALES_PERSON,
@@ -23,15 +23,23 @@ const SalesPersons = () => {
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [hoveredRow, setHoveredRow] = useState(null);
-  const [searchFormRef] = Form.useForm();
-  const { notiApi, msgApi } = useOutletContext();
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  // const [searchFormRef] = Form.useForm();
+  const { notiApi, msgApi, refetchAllSalesPersons } = useOutletContext();
+  // const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModal, contextHolder] = Modal.useModal();
   const [editRecord, setEditRecord] = useState(null);
 
   //Queries
+  const { data, loading: queryLoading } = useQuery(GET_SALES_PERSONS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+  });
 
   const [createSalesPerson, { loading: createLoading }] = useMutation(
     CREATE_SALES_PERSON,
@@ -44,7 +52,9 @@ const SalesPersons = () => {
             defaultMessage="New Sale Person Created"
           />
         );
+        refetchAllSalesPersons();
       },
+      refetchQueries: [GET_SALES_PERSONS]
     }
   );
 
@@ -59,25 +69,27 @@ const SalesPersons = () => {
             defaultMessage="Sale Person Updated"
           />
         );
+        refetchAllSalesPersons();
       },
-      update(cache, { data }) {
-        const existingSalesPersons = cache.readQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-        });
-        const updatedSuppliers =
-          existingSalesPersons.paginateSalesPerson.edges.filter(
-            ({ node }) => node.id !== data.toggleActiveSalesPerson.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-          data: {
-            paginateSalesPerson: {
-              ...existingSalesPersons.paginateSalesPerson,
-              edges: updatedSuppliers,
-            },
-          },
-        });
-      },
+      refetchQueries: [GET_SALES_PERSONS]
+      // update(cache, { data }) {
+      //   const existingSalesPersons = cache.readQuery({
+      //     query: GET_PAGINATE_SALES_PERSON,
+      //   });
+      //   const updatedSuppliers =
+      //     existingSalesPersons.paginateSalesPerson.edges.filter(
+      //       ({ node }) => node.id !== data.toggleActiveSalesPerson.id
+      //     );
+      //   cache.writeQuery({
+      //     query: GET_PAGINATE_SALES_PERSON,
+      //     data: {
+      //       paginateSalesPerson: {
+      //         ...existingSalesPersons.paginateSalesPerson,
+      //         edges: updatedSuppliers,
+      //       },
+      //     },
+      //   });
+      // },
     }
   );
 
@@ -92,25 +104,27 @@ const SalesPersons = () => {
             defaultMessage="Sale Person Deleted"
           />
         );
+        refetchAllSalesPersons();
       },
-      update(cache, { data }) {
-        const existingSalesPersons = cache.readQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-        });
-        const updatedSuppliers =
-          existingSalesPersons.paginateSalesPerson.edges.filter(
-            ({ node }) => node.id !== data.toggleActiveSalesPerson.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_PERSON,
-          data: {
-            paginateSalesPerson: {
-              ...existingSalesPersons.paginateSalesPerson,
-              edges: updatedSuppliers,
-            },
-          },
-        });
-      },
+      refetchQueries: [GET_SALES_PERSONS]
+      // update(cache, { data }) {
+      //   const existingSalesPersons = cache.readQuery({
+      //     query: GET_PAGINATE_SALES_PERSON,
+      //   });
+      //   const updatedSuppliers =
+      //     existingSalesPersons.paginateSalesPerson.edges.filter(
+      //       ({ node }) => node.id !== data.toggleActiveSalesPerson.id
+      //     );
+      //   cache.writeQuery({
+      //     query: GET_PAGINATE_SALES_PERSON,
+      //     data: {
+      //       paginateSalesPerson: {
+      //         ...existingSalesPersons.paginateSalesPerson,
+      //         edges: updatedSuppliers,
+      //       },
+      //     },
+      //   });
+      // },
     }
   );
 
@@ -124,41 +138,43 @@ const SalesPersons = () => {
             defaultMessage="Sales Person Status Updated"
           />
         );
+        refetchAllSalesPersons();
       },
     });
 
   const loading =
-    createLoading || updateLoading || deleteLoading || toggleActiveLoading;
+    createLoading || updateLoading || deleteLoading || toggleActiveLoading || queryLoading;
 
-  const parseData = (data) => {
-    let salesPerson = [];
-    data?.paginateSalesPerson?.edges.forEach(({ node }) => {
-      if (node != null) {
-        salesPerson.push({
-          key: node.id,
-          ...node,
-        });
-      }
-    });
-    // console.log("Products", products);
-    return salesPerson ? salesPerson : [];
-  };
+  const queryData = useMemo(() => data?.listSalesPerson, [data]);
+  // const parseData = (data) => {
+  //   let salesPerson = [];
+  //   data?.paginateSalesPerson?.edges.forEach(({ node }) => {
+  //     if (node != null) {
+  //       salesPerson.push({
+  //         key: node.id,
+  //         ...node,
+  //       });
+  //     }
+  //   });
+  //   // console.log("Products", products);
+  //   return salesPerson ? salesPerson : [];
+  // };
 
-  const parsePageInfo = (data) => {
-    let pageInfo = {
-      hasPreviousPage: false,
-      hasNextPage: false,
-      endCursor: null,
-    };
-    if (data?.paginateSalesPerson) {
-      pageInfo = {
-        hasNextPage: data.paginateSalesPerson.pageInfo.hasNextPage,
-        endCursor: data.paginateSalesPerson.pageInfo.endCursor,
-      };
-    }
+  // const parsePageInfo = (data) => {
+  //   let pageInfo = {
+  //     hasPreviousPage: false,
+  //     hasNextPage: false,
+  //     endCursor: null,
+  //   };
+  //   if (data?.paginateSalesPerson) {
+  //     pageInfo = {
+  //       hasNextPage: data.paginateSalesPerson.pageInfo.hasNextPage,
+  //       endCursor: data.paginateSalesPerson.pageInfo.endCursor,
+  //     };
+  //   }
 
-    return pageInfo;
-  };
+  //   return pageInfo;
+  // };
 
   const handleCreateModalOk = async () => {
     try {
@@ -226,34 +242,34 @@ const SalesPersons = () => {
       const values = await editFormRef.validateFields();
       await updateSalesPerson({
         variables: { id: editRecord.id, input: values },
-        update(cache, { data: { updateSalesPerson } }) {
-          cache.modify({
-            fields: {
-              paginateSalesPerson(pagination = []) {
-                const index = pagination.edges.findIndex(
-                  (x) => x.node.__ref === "SalesPerson:" + updateSalesPerson.id
-                );
-                if (index >= 0) {
-                  const newSalesPerson = cache.writeFragment({
-                    data: updateSalesPerson,
-                    fragment: gql`
-                      fragment NewSalesPerson on SalesPerson {
-                        id
-                        name
-                        email
-                      }
-                    `,
-                  });
-                  let paginationCopy = JSON.parse(JSON.stringify(pagination));
-                  paginationCopy.edges[index].node = newSalesPerson;
-                  return paginationCopy;
-                } else {
-                  return pagination;
-                }
-              },
-            },
-          });
-        },
+        // update(cache, { data: { updateSalesPerson } }) {
+        //   cache.modify({
+        //     fields: {
+        //       paginateSalesPerson(pagination = []) {
+        //         const index = pagination.edges.findIndex(
+        //           (x) => x.node.__ref === "SalesPerson:" + updateSalesPerson.id
+        //         );
+        //         if (index >= 0) {
+        //           const newSalesPerson = cache.writeFragment({
+        //             data: updateSalesPerson,
+        //             fragment: gql`
+        //               fragment NewSalesPerson on SalesPerson {
+        //                 id
+        //                 name
+        //                 email
+        //               }
+        //             `,
+        //           });
+        //           let paginationCopy = JSON.parse(JSON.stringify(pagination));
+        //           paginationCopy.edges[index].node = newSalesPerson;
+        //           return paginationCopy;
+        //         } else {
+        //           return pagination;
+        //         }
+        //       },
+        //     },
+        //   });
+        // },
       });
 
       setEditModalOpen(false);
@@ -525,7 +541,7 @@ const SalesPersons = () => {
           </Space>
         </Button>
       </div>
-      <div className="page-content">
+      {/* <div className="page-content">
         <PaginatedTable
           loading={loading}
           api={notiApi}
@@ -541,6 +557,23 @@ const SalesPersons = () => {
           // setSearchCriteria={setSearchCriteria}
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
+        />
+      </div> */}
+      <div className="page-content">
+        <Table
+          loading={loading}
+          pagination={false}
+          columns={columns}
+          dataSource={queryData?.map((item) => ({
+            ...item,
+            key: item.id,
+          }))}
+          rowKey={(record) => record.id}
+          onRow={(record) => ({
+            key: record.id,
+            onMouseEnter: () => setHoveredRow(record.id),
+            onMouseLeave: () => setHoveredRow(null),
+          })}
         />
       </div>
     </>

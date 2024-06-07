@@ -455,6 +455,15 @@ const PurchaseOrders = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        POSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const columns = [
@@ -660,6 +669,10 @@ const PurchaseOrders = () => {
                   value: "Closed",
                   label: "Closed",
                 },
+                {
+                  value: "Cancelled",
+                  label: "Cancelled",
+                },
               ]}
             ></Select>
           </Form.Item>
@@ -839,7 +852,9 @@ const PurchaseOrders = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>

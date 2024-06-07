@@ -214,7 +214,7 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Paid Through :</span>
+                            <span>Deposit To :</span>
                           </td>
                           <td
                             className="text-align-right"

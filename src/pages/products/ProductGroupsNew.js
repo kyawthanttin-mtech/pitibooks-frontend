@@ -71,12 +71,11 @@ const ProductGroupsNew = () => {
     allProductUnitsQueryRef,
     business,
   } = useOutletContext();
-  // const [imageList, setImageList] = useState([]);
   const renderCount = useRef(0);
   const [isInventoryTracked, setIsInventoryTracked] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [imageList, setImageList] = useState(null);
+  const [imageList, setImageList] = useState([]);
 
   useEffect(() => {
     renderCount.current += 1;

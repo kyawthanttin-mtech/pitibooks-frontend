@@ -20,7 +20,6 @@ const CREATE_INVOICE = gql`
       shippingCharges
       adjustmentAmount
       isTaxInclusive
-
       invoiceTaxAmount
       currentStatus
       invoiceSubtotal

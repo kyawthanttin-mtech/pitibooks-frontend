@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Modal, Input, InputNumber, Space, Row } from "antd";
 import { CheckCircleFilled, CloseCircleOutlined } from "@ant-design/icons";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 
 const AddPurchaseProductsModal = ({
   isOpen,
@@ -12,6 +12,7 @@ const AddPurchaseProductsModal = ({
   setData,
   setIsOpen,
   // form,
+  account = "inventory",
 }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [selectedItemsBulk, setSelectedItemsBulk] = useState([]);
@@ -30,30 +31,50 @@ const AddPurchaseProductsModal = ({
       (item) => item.id === id
     );
 
-    // If the item is already selected, remove it
     if (existingItemIndex !== -1) {
-      // const updatedItems = [...selectedItemsBulk];
-      // updatedItems.splice(existingItemIndex, 1);
-      // setSelectedItemsBulk(updatedItems);
+      // If the item is already selected, remove it
+      const updatedItems = selectedItemsBulk.filter((item) => item.id !== id);
+      setSelectedItemsBulk(updatedItems);
     } else {
       // If the item is not selected, add it
       const addedItem = products.find((item) => item.id === id);
-      const updatedItems = [
-        ...selectedItemsBulk,
-        {
+
+      if (addedItem) {
+        let newItem = {
           id,
           name: addedItem.name,
           sku: addedItem.sku,
-          stockOnHand: addedItem.stockOnHand,
           quantity: 1,
           rate: addedItem.purchasePrice,
           detailTax: addedItem.purchaseTax?.id,
           taxRate: addedItem.purchaseTax?.rate,
-          account: addedItem.purchaseAccount?.id,
-        },
-      ];
-      setSelectedItemsBulk(updatedItems);
-      console.log("selecteditem", addedItem);
+          unit: addedItem.unit,
+          currentQty: addedItem.currentQty,
+          account: null,
+        };
+
+        if (account === "purchase") {
+          newItem = {
+            ...newItem,
+            account: addedItem.purchaseAccount?.id,
+          };
+        } else if (account === "inventory") {
+          newItem = {
+            ...newItem,
+            account: addedItem.inventoryAccount?.id,
+          };
+        } else if (account === "sales") {
+          newItem = {
+            ...newItem,
+            // detailTax: addedItem.salesTax?.id,
+            // taxRate: addedItem.salesTax?.rate,
+            account: addedItem.salesAccount?.id,
+          };
+        }
+
+        const updatedItems = [...selectedItemsBulk, newItem];
+        setSelectedItemsBulk(updatedItems);
+      }
     }
   };
 
@@ -208,8 +229,23 @@ const AddPurchaseProductsModal = ({
                       <span>Stock on Hand</span>
                     </div>
                     <div className="item-details-select-list">
-                      <span>SKU: {item.sku}</span>
-                      <span className="stock-on-hand">{item.stockOnHand}</span>
+                      {item.sku ? <span>SKU: {item.sku}</span> : <div></div>}
+                      <span
+                        className="stock-on-hand"
+                        style={{
+                          color:
+                            item.currentQty === 0
+                              ? "red"
+                              : "var(--light-green)",
+                        }}
+                      >
+                        <FormattedNumber
+                          value={item.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={item.unit?.precision}
+                        />{" "}
+                        {item.unit && item.unit.abbreviation}
+                      </span>
                     </div>
                   </div>
                   {selectedItemsBulk.some(

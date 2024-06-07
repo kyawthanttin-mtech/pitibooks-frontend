@@ -363,20 +363,6 @@ const App = () => {
                     ),
                   },
                   {
-                    key: "paymentsReceived",
-                    label: (
-                      <MenuItemWithPlus
-                        label={
-                          <FormattedMessage
-                            id="menu.paymentsReceived"
-                            defaultMessage="Payments Received"
-                          />
-                        }
-                        path="/paymentsReceived/new"
-                      />
-                    ),
-                  },
-                  {
                     key: "invoices",
                     label: (
                       <MenuItemWithPlus
@@ -387,6 +373,20 @@ const App = () => {
                           />
                         }
                         path="/invoices/new"
+                      />
+                    ),
+                  },
+                  {
+                    key: "paymentsReceived",
+                    label: (
+                      <MenuItemWithPlus
+                        label={
+                          <FormattedMessage
+                            id="menu.paymentsReceived"
+                            defaultMessage="Payments Received"
+                          />
+                        }
+                        path="/paymentsReceived/new"
                       />
                     ),
                   },

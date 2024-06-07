@@ -4,6 +4,7 @@
 
 .new-manual-journal-table .ant-table-cell {
   padding: 16px 5px 0px 5px !important;
+  vertical-align: top;
 }
 
 .new-manual-journal-table-footer {

@@ -176,6 +176,8 @@
   "label.expenseAccount.required": "Select the Expense Account",
   "label.paidThrough": "Paid Through",
   "label.paidThrough.required": "Select the Paid Through Account",
+  "label.depositTo": "Deposit To",
+  "label.depositTo.required": "Select the Deposit To Account",
   "label.tax": "Tax",
   "label.tax.required": "Select the Tax",
   "label.taxOption": "Tax Option",

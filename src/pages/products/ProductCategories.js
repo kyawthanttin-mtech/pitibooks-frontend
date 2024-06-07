@@ -344,12 +344,7 @@ const ProductCategories = () => {
 
   const columns = [
     {
-      title: (
-        <FormattedMessage
-          id="label.name"
-          defaultMessage="Name"
-        />
-      ),
+      title: <FormattedMessage id="label.name" defaultMessage="Name" />,
       dataIndex: "name",
       key: "name",
       render: (_, record) => {
@@ -360,7 +355,12 @@ const ProductCategories = () => {
               <span style={{ paddingLeft: 15 }}>
                 {record.name}{" "}
                 {!record.isActive ? (
-                  <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
+                  <Tag className="active-status">
+                    <FormattedMessage
+                      id="label.inactive"
+                      defaultMessage="inactive"
+                    />
+                  </Tag>
                 ) : (
                   <></>
                 )}
@@ -372,7 +372,12 @@ const ProductCategories = () => {
             <>
               {record.name}{" "}
               {!record.isActive ? (
-                <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
+                <Tag className="active-status">
+                  <FormattedMessage
+                    id="label.inactive"
+                    defaultMessage="inactive"
+                  />
+                </Tag>
               ) : (
                 <></>
               )}
@@ -466,9 +471,7 @@ const ProductCategories = () => {
       }}
     >
       <Form.Item
-        label={
-          <FormattedMessage id="label.name" defaultMessage="Name" />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
@@ -542,9 +545,7 @@ const ProductCategories = () => {
       }}
     >
       <Form.Item
-        label={
-          <FormattedMessage id="label.name" defaultMessage="Name" />
-        }
+        label={<FormattedMessage id="label.name" defaultMessage="Name" />}
         name="name"
         rules={[
           {
@@ -606,7 +607,12 @@ const ProductCategories = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title={<FormattedMessage id="productCategory.create" defaultMessage="Create Category" />}
+        title={
+          <FormattedMessage
+            id="productCategory.create"
+            defaultMessage="Create Category"
+          />
+        }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -620,7 +626,12 @@ const ProductCategories = () => {
       <Modal
         loading={loading}
         width="40rem"
-        title={<FormattedMessage id="productCategory.edit" defaultMessage="Edit Category" />}
+        title={
+          <FormattedMessage
+            id="productCategory.edit"
+            defaultMessage="Edit Category"
+          />
+        }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -643,10 +654,9 @@ const ProductCategories = () => {
           type="primary"
           onClick={setCreateModalOpen}
         >
-          <FormattedMessage
-            id="productCategory.new"
-            defaultMessage="New Category"
-          />
+          <span>
+            <FormattedMessage id="button.new" defaultMessage="New" />
+          </span>
         </Button>
       </div>
       <div className="page-content">

@@ -268,6 +268,15 @@ const PaymentsReceived = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        customerPaymentSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const findAccountName = (accounts, withdrawAccountId) => {
@@ -342,26 +351,26 @@ const PaymentsReceived = () => {
         </>
       ),
     },
-    {
-      title: (
-        <FormattedMessage
-          id="label.unusedAmount"
-          defaultMessage="Unused Amount"
-        />
-      ),
-      dataIndex: "unusedCreditAmount",
-      key: "unusedCreditAmount",
-      render: (text, record) => (
-        <>
-          {record.currency?.symbol}{" "}
-          <FormattedNumber
-            value={text}
-            style="decimal"
-            minimumFractionDigits={record.currency?.decimalPlaces}
-          />
-        </>
-      ),
-    },
+    // {
+    //   title: (
+    //     <FormattedMessage
+    //       id="label.unusedAmount"
+    //       defaultMessage="Unused Amount"
+    //     />
+    //   ),
+    //   dataIndex: "unusedCreditAmount",
+    //   key: "unusedCreditAmount",
+    //   render: (text, record) => (
+    //     <>
+    //       {record.currency?.symbol}{" "}
+    //       <FormattedNumber
+    //         value={text}
+    //         style="decimal"
+    //         minimumFractionDigits={record.currency?.decimalPlaces}
+    //       />
+    //     </>
+    //   ),
+    // },
     {
       title: (
         <SearchOutlined
@@ -571,7 +580,9 @@ const PaymentsReceived = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>

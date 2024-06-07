@@ -203,6 +203,15 @@ const CreditNotes = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+
+    // clear the state from location.state
+    navigate(location.pathname, {
+      state: {
+        ...location.state,
+        creditNoteSearchCriteria: undefined,
+      },
+      replace: true,
+    });
   };
 
   const columns = [
@@ -540,7 +549,9 @@ const CreditNotes = () => {
                 }
               >
                 {!selectedRecord && (
-                  <FormattedMessage id="button.new" defaultMessage="new" />
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
                 )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>

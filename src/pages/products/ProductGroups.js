@@ -511,7 +511,11 @@ const ProductGroups = () => {
                   })
                 }
               >
-                {!selectedRecord && "New"}
+                {!selectedRecord && (
+                  <span>
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </span>
+                )}
               </Button>
               <Button icon={<MoreOutlined />}></Button>
             </Space>
