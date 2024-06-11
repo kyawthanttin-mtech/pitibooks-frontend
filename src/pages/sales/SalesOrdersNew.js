@@ -34,6 +34,7 @@ import {
 import {
   AddPurchaseProductsModal,
   CustomerSearchModal,
+  UploadAttachment,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
@@ -131,33 +132,60 @@ const SalesOrdersNew = () => {
         ]
   );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-  const [discountPreference, setDiscountPreference] = useState({
-    key: "0",
-    label: "At Transaction Level",
-  });
-  const [taxPreference, setTaxPreference] = useState({
-    key: "0",
-    label: "Tax Exclusive",
-  });
+  const [selectedCustomer, setSelectedCustomer] = useState(
+    record?.customer?.id ? record?.customer : null
+  );
+  const [selectedWarehouse, setSelectedWarehouse] = useState(
+    record?.warehouse?.id > 0 ? record?.warehouse?.id : null
+  );
+  const [discountPreference, setDiscountPreference] = useState(
+    record?.orderDiscount > 0
+      ? {
+          key: "0",
+          label: "At Transaction Level",
+        }
+      : { key: "1", label: "At Line Item Level" }
+  );
+  const [taxPreference, setTaxPreference] = useState(
+    record?.isTaxInclusive
+      ? { key: "1", label: "Tax Inclusive" }
+      : {
+          key: "0",
+          label: "Tax Exclusive",
+        }
+  );
   const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
     useState(false);
-  const [subTotal, setSubTotal] = useState(0);
-  const [totalTaxAmount, setTotalTaxAmount] = useState(0);
-  const [totalDiscountAmount, setTotalDiscountAmount] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [adjustment, setAdjustment] = useState(0);
-  // const [tableKeyCounter, setTableKeyCounter] = useState(1);
+  const [subTotal, setSubTotal] = useState(record?.orderSubtotal || 0);
+  const [totalTaxAmount, setTotalTaxAmount] = useState(
+    record?.orderTotalTaxAmount || 0
+  );
+  const [totalDiscountAmount, setTotalDiscountAmount] = useState(
+    record?.orderTotalDiscountAmount || 0
+  );
+  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount || 0);
+  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
+  const [tableKeyCounter, setTableKeyCounter] = useState(
+    record?.details?.length
+  );
   const [selectedCurrency, setSelectedCurrency] = useState(
-    business.baseCurrency.id
+    record?.currency.id || business.baseCurrency.id
   );
   const [discount, setDiscount] = useState(0);
-  const [selectedDiscountType, setSelectedDiscountType] = useState("P");
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [isTaxInclusive, setIsTaxInclusive] = useState(false);
-  const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(true);
+  const [selectedDiscountType, setSelectedDiscountType] = useState(
+    record?.orderDiscountType || "P"
+  );
+  const [discountAmount, setDiscountAmount] = useState(
+    record?.orderDiscountAmount || 0
+  );
+  const [isTaxInclusive, setIsTaxInclusive] = useState(
+    record?.isTaxInclusive || false
+  );
+  const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
+    discountPreference.key === "0"
+  );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [fileList, setFileList] = useState(null);
 
   const initialValues = {
     currency: business.baseCurrency.id,
@@ -241,7 +269,6 @@ const SalesOrdersNew = () => {
       (s) => s.isActive === true
     );
   }, [deliveryMethodData]);
-  console.log(deliveryMethods);
   const taxes = useMemo(() => {
     return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
   }, [taxData]);
@@ -321,6 +348,46 @@ const SalesOrdersNew = () => {
     },
   ];
 
+  useMemo(() => {
+    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
+    const parsedRecord = record
+      ? {
+          customerName: record?.customerName,
+          branch: record?.branch?.id,
+          referenceNumber: record?.referenceNumber,
+          salesOrderDate: dayjs(record?.orderDate),
+          expectedShipmentDate: dayjs(record?.expectedDeliveryDate),
+          deliveryMethod:
+            record?.deliveryMethod?.id > 0 ? record?.deliveryMethod?.id : null,
+          paymentTerms: record?.orderPaymentTerms,
+          customDays: record?.orderPaymentTermsCustomDays,
+          currency: record?.currency?.id,
+          exchangeRate: record?.exchangeRate,
+          warehouse: record?.warehouse?.id || null,
+          notes: record?.notes,
+          discount: record?.orderDiscount,
+          adjustment: record?.adjustmentAmount || null,
+          // Map transactions to form fields
+          ...record?.details?.reduce((acc, d, index) => {
+            acc[`quantity${index + 1}`] = d.detailQty;
+            acc[`rate${index + 1}`] = d.detailUnitRate;
+            acc[`detailDiscount${index + 1}`] = d.detailDiscount;
+            acc[`detailTax${index + 1}`] =
+              d.detailTax?.id !== "I0" ? d.detailTax?.id : null;
+            acc[`detailDiscountType${index + 1}`] = d.detailDiscountType;
+            return acc;
+          }, {}),
+        }
+      : {
+          currency: business.baseCurrency.id,
+          paymentTerms: "DueOnReceipt",
+          date: dayjs(),
+          branch: business.primaryBranch.id,
+        };
+
+    form.setFieldsValue(parsedRecord);
+  }, [form, record, business]);
+
   const decimalPlaces = currencies.find(
     (c) => c.id === selectedCurrency
   ).decimalPlaces;
@@ -363,6 +430,10 @@ const SalesOrdersNew = () => {
       return;
     }
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl,
+    }));
+
     console.log("details", details);
     const input = {
       branchId: values.branch,
@@ -383,7 +454,7 @@ const SalesOrdersNew = () => {
       orderTaxId: 0,
       orderTaxType: "I",
       currentStatus: saveStatus,
-      // documents:
+      documents: fileUrls,
       warehouseId: values.warehouse,
       details,
     };
@@ -639,6 +710,7 @@ const SalesOrdersNew = () => {
 
   const calculateItemAmount = (item) => {
     let itemDiscount = parseFloat(item.discount) || 0;
+    console.log("item discount", isAtTransactionLevel);
     if (isAtTransactionLevel) {
       itemDiscount = 0;
     }
@@ -1097,12 +1169,15 @@ const SalesOrdersNew = () => {
               handleDetailDiscountChange(e.target.value, record.key)
             }
             addonAfter={
-              <Form.Item noStyle name={`detailDiscountType${record.key}`}>
+              <Form.Item
+                noStyle
+                name={`detailDiscountType${record.key}`}
+                initialValue="P"
+              >
                 <Select
                   onChange={(value) =>
                     handleDetailDiscountTypeChange(value, record.key)
                   }
-                  defaultValue="P"
                 >
                   <Select.Option value="P">%</Select.Option>
                   <Select.Option value="A">
@@ -1772,7 +1847,7 @@ const SalesOrdersNew = () => {
                       style={{ width: "20%" }}
                       colSpan={2}
                     >
-                      {subTotal.toFixed(decimalPlaces)}
+                      {subTotal?.toFixed(decimalPlaces)}
                     </td>
                   </tr>
                   {discountPreference.key === "0" && (
@@ -1898,7 +1973,7 @@ const SalesOrdersNew = () => {
                             Math.sign(adjustment) === -1 ? "var(--red)" : "",
                         }}
                       >
-                        {adjustment.toFixed(decimalPlaces)}
+                        {adjustment?.toFixed(decimalPlaces)}
                       </span>
                     </td>
                   </tr>
@@ -1921,30 +1996,11 @@ const SalesOrdersNew = () => {
               </table>
             </Col>
           </Row>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

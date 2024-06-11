@@ -22,8 +22,11 @@ const GET_PAGINATE_PRODUCT = gql`
           # isActive
           isBatchTracking
           images {
+            id
             imageUrl
             thumbnailUrl
+            referenceType
+            referenceID
           }
           productUnit {
             id

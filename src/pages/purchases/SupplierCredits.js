@@ -200,6 +200,7 @@ const SupplierCredits = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+    setSelectedSupplier(null);
 
     // clear the state from location.state
     navigate(location.pathname, {

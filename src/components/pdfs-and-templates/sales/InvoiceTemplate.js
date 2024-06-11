@@ -74,7 +74,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                       </span>
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
-                        <b>
+                      <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
                             value={
@@ -138,7 +138,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Invoice Date:</span>
+                            <span>Invoice Date :</span>
                           </td>
                           <td style={{ textAlign: "right" }}>
                             <span>
@@ -193,6 +193,24 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                           </td>
                           <td className="text-align-right">
                             <span>{selectedRecord.orderNumber}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Notes :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>{selectedRecord.notes}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -256,6 +274,17 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                   >
                     Rate
                   </td>
+                  {hasDetailDiscount && (
+                    <td
+                      className="text-align-right"
+                      style={{
+                        padding: "5px 10px 5px 5px",
+                        width: "12%",
+                      }}
+                    >
+                      Discount
+                    </td>
+                  )}
                   <td
                     className="text-align-right"
                     style={{

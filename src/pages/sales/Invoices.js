@@ -28,15 +28,14 @@ import {
   PrinterOutlined,
   CaretRightFilled,
 } from "@ant-design/icons";
-// import RecordInvoicePayment from "./RecordInvoicePayment";
+import RecordInvoicePayment from "./RecordInvoicePayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
   InvoiceTemplate,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
-  SupplierSearchModal,
+  CustomerSearchModal,
 } from "../../components";
-import RecordInvoicePayment from "./RecordInvoicePayment";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
@@ -50,7 +49,80 @@ import { useReadQuery, useQuery, useMutation } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { InvoiceMutations, InvoiceQueries } from "../../graphql";
 const { GET_PAGINATE_INVOICE } = InvoiceQueries;
-const { DELETE_INVOICE } = InvoiceMutations;
+const { DELETE_INVOICE, CONFIRM_INVOICE, VOID_INVOICE } = InvoiceMutations;
+
+const draftActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.confirmInvoice"
+        defaultMessage="Confirm Invoice"
+      />
+    ),
+    key: "1",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "5",
+  },
+];
+
+const confirmedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.recordPayment"
+        defaultMessage="Record Payment"
+      />
+    ),
+    key: "2",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.applyCredits"
+        defaultMessage="Apply Credits"
+      />
+    ),
+    key: "3",
+  },
+  {
+    label: (
+      <FormattedMessage id="button.voidInvoice" defaultMessage="Void Invoice" />
+    ),
+    key: "4",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "5",
+  },
+];
+
+const voidActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "5",
+  },
+];
+
+const paidActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+];
 
 const Invoices = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
@@ -74,8 +146,8 @@ const Invoices = () => {
     1
   );
   const [showRecordInvoicePaymentForm, setShowRecordInvoicePaymentForm] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -120,7 +192,7 @@ const Invoices = () => {
         });
         const updatedInvoices =
           existingInvoices.paginateSalesInvoice.edges.filter(
-            ({ node }) => node.id !== data.deleteInvoice.id
+            ({ node }) => node.id !== data.deleteSalesInvoice.id
           );
         cache.writeQuery({
           query: GET_PAGINATE_INVOICE,
@@ -135,7 +207,76 @@ const Invoices = () => {
     }
   );
 
-  const loading = queryLoading || deleteLoading;
+  const [confirmInvoice, { loading: confirmLoading }] = useMutation(
+    CONFIRM_INVOICE,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="invoice.confirmed"
+            defaultMessage="Invoice Confirmed"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingInvoices = cache.readQuery({
+          query: GET_PAGINATE_INVOICE,
+        });
+        const updatedInvoices =
+          existingInvoices.paginateSalesInvoice.edges.filter(
+            ({ node }) => node.id !== data.confirmSalesInvoice.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVOICE,
+          data: {
+            paginateSalesInvoice: {
+              ...existingInvoices.paginateSalesInvoice,
+              edges: updatedInvoices,
+            },
+          },
+        });
+      },
+    }
+  );
+
+  const [voidInvoice, { loading: voidLoading }] = useMutation(VOID_INVOICE, {
+    onCompleted() {
+      openSuccessMessage(
+        msgApi,
+        <FormattedMessage id="invoice.voided" defaultMessage="Invoice Voided" />
+      );
+      setSelectedRecord(null);
+    },
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+    update(cache, { data }) {
+      const existingInvoices = cache.readQuery({
+        query: GET_PAGINATE_INVOICE,
+      });
+      const updatedInvoices =
+        existingInvoices.paginateSalesInvoice.edges.filter(
+          ({ node }) => node.id !== data.voidSalesInvoice.id
+        );
+      cache.writeQuery({
+        query: GET_PAGINATE_INVOICE,
+        data: {
+          paginateSalesInvoice: {
+            ...existingInvoices.paginateSalesInvoice,
+            edges: updatedInvoices,
+          },
+        },
+      });
+    },
+  });
+
+  const loading =
+    queryLoading || deleteLoading || confirmLoading || voidLoading;
 
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
@@ -211,6 +352,51 @@ const Invoices = () => {
     });
   };
 
+  const handleConfirmInvoice = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.confirmBill"
+          defaultMessage="Are you sure to confirm bill?"
+        />
+      ),
+    });
+    console.log(id);
+    if (confirmed) {
+      try {
+        await confirmInvoice({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleVoidInvoice = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.voidBill"
+          defaultMessage="Are you sure to void bill?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await voidInvoice({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
   const handleDelete = async (id) => {
     // console.log(id);
     const confirmed = await deleteModal.confirm({
@@ -239,6 +425,7 @@ const Invoices = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+    setSelectedCustomer(null);
 
     // clear the state from location.state
     navigate(location.pathname, {
@@ -251,7 +438,7 @@ const Invoices = () => {
   };
 
   const handleModalRowSelect = (record) => {
-    setSelectedSupplier(record);
+    setSelectedCustomer(record);
     searchFormRef.setFieldsValue({
       customerId: record.id,
       customerName: record.name,
@@ -368,11 +555,11 @@ const Invoices = () => {
     },
   ];
 
-  const paymentMadeColumns = [
+  const paymentReceivedColumns = [
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "paymentDate",
+      key: "paymentDate",
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
@@ -392,27 +579,27 @@ const Invoices = () => {
     },
     {
       title: "Amount",
-      dataIndex: "Amount",
-      key: "Amount",
+      dataIndex: "amount",
+      key: "amount",
     },
   ];
 
-  const purchaseOrderColumns = [
+  const salesOrderColumns = [
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "orderDate",
+      key: "orderDate",
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
       title: "Payment Order #",
-      dataIndex: "purchaseOrderNumber",
-      key: "purchaseOrderNumber",
+      dataIndex: "orderNumber",
+      key: "orderNumber",
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "currentStatus",
+      key: "currentStatus",
     },
   ];
 
@@ -592,15 +779,15 @@ const Invoices = () => {
           >
             <Input
               readOnly
-              onClick={setSupplierSearchModalOpen}
+              onClick={setCustomerSearchModalOpen}
               className="search-input"
               suffix={
                 <>
-                  {selectedSupplier && (
+                  {selectedCustomer && (
                     <CloseOutlined
                       style={{ height: 11, width: 11, cursor: "pointer" }}
                       onClick={() => {
-                        setSelectedSupplier(null);
+                        setSelectedCustomer(null);
                         searchFormRef.resetFields([
                           "customerName",
                           "customerId",
@@ -614,7 +801,7 @@ const Invoices = () => {
                     type="primary"
                     icon={<SearchOutlined />}
                     className="search-btn"
-                    onClick={setSupplierSearchModalOpen}
+                    onClick={setCustomerSearchModalOpen}
                   />
                 </>
               }
@@ -627,9 +814,9 @@ const Invoices = () => {
 
   return (
     <>
-      <SupplierSearchModal
-        modalOpen={supplierSearchModalOpen}
-        setModalOpen={setSupplierSearchModalOpen}
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
       {contextHolder}
@@ -648,6 +835,8 @@ const Invoices = () => {
                     state: {
                       ...location.state,
                       from: { pathname: location.pathname },
+                      cloneInvoice: null,
+                      convertSO: null,
                     },
                   })
                 }
@@ -902,29 +1091,38 @@ const Invoices = () => {
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
-                    if (key === "0") console.log("clone");
-                    else if (key === "1") handleDelete(selectedRecord.id);
+                    if (key === "0") {
+                      navigate("/invoices/new", {
+                        state: {
+                          ...location.state,
+                          from: { pathname: location.pathname },
+                          cloneInvoice: selectedRecord,
+                          convertSO: null,
+                        },
+                      });
+                    } else if (key === "1") {
+                      // confirm bill
+                      handleConfirmInvoice(selectedRecord.id);
+                    } else if (key === "2") {
+                      // record payment
+                    } else if (key === "3") {
+                      // apply credits
+                    } else if (key === "4") {
+                      // void bill
+                      handleVoidInvoice(selectedRecord.id);
+                    } else if (key === "5") {
+                      // delete bill
+                      handleDelete(selectedRecord.id);
+                    }
                   },
-                  items: [
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.clone"
-                          defaultMessage="Clone"
-                        />
-                      ),
-                      key: "0",
-                    },
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.delete"
-                          defaultMessage="Delete"
-                        />
-                      ),
-                      key: "1",
-                    },
-                  ],
+                  items:
+                    selectedRecord.currentStatus === "Draft"
+                      ? draftActionItems
+                      : selectedRecord.currentStatus === "Confirmed"
+                      ? confirmedActionItems
+                      : selectedRecord.currentStatus === "Void"
+                      ? voidActionItems
+                      : paidActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -950,8 +1148,8 @@ const Invoices = () => {
                           isContentExpanded && event.stopPropagation();
                         }}
                       >
-                        <span>Payments Made</span>
-                        <span className="bill">1</span>
+                        <span>Payments Received</span>
+                        <span className="bill">{selectedRecord.invoicePayment ? selectedRecord.invoicePayment.length : 0}</span>
                       </li>
                       <Divider type="vertical" className="tab-divider" />
                       <li
@@ -965,8 +1163,8 @@ const Invoices = () => {
                           isContentExpanded && event.stopPropagation();
                         }}
                       >
-                        <span>Purchase Orders</span>
-                        <span className="bill">1</span>
+                        <span>Sales Orders</span>
+                        <span className="bill">{selectedRecord.salesOrder && selectedRecord.salesOrder.id > 0 ? 1 : 0}</span>
                       </li>
                     </ul>
                     <CaretRightFilled
@@ -984,20 +1182,21 @@ const Invoices = () => {
                       <div className="bill-tab">
                         <Table
                           className="bill-table"
-                          columns={paymentMadeColumns}
-                          dataSource={[selectedRecord.paymentMade]}
+                          columns={paymentReceivedColumns}
+                          dataSource={selectedRecord.invoicePayment}
                           pagination={false}
                         />
                       </div>
                     )}
                     {activeTab === "receives" && (
                       <div className="bill-tab">
+                        {selectedRecord.salesOrder && selectedRecord.salesOrder.id > 0 ?
                         <Table
                           className="bill-table"
-                          columns={purchaseOrderColumns}
-                          dataSource={[selectedRecord.purchaseOrder]}
+                          columns={salesOrderColumns}
+                          dataSource={[selectedRecord.salesOrder]}
                           pagination={false}
-                        />
+                        /> : null}
                       </div>
                     )}
                   </div>

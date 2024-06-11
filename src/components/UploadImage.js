@@ -25,7 +25,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
   const [customFileList, setCustomFileList] = useState(images ? images : []);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
-
+  console.log("images", customFileList);
   const primaryImageIndex = 0;
 
   const [uploadImage, { loading: uploadLoading }] = useMutation(
@@ -84,7 +84,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
       setCustomFileList(updatedFileList);
       onCustomFileListChange(updatedFileList);
 
-      msgApi.success(`Image uploaded successfully`);
+      msgApi.success(`Image Uploaded`);
       onSuccess(null, file);
     } catch (error) {
       openErrorNotification(notiApi, `Image upload failed: ${error.message}`);
@@ -94,10 +94,6 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
 
   const handleRemoveImage = async (currentIndex) => {
     const imageUrl = customFileList[currentIndex].imageUrl;
-
-    // const imageUrl = fullImageUrl.split(
-    //   "https://mkitchen-testing.sgp1.digitaloceanspaces.com/"
-    // )[1];
 
     const confirmed = await deleteModal.confirm({
       content: (
@@ -109,11 +105,17 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
     });
     if (confirmed) {
       try {
-        customFileList[currentIndex].uid &&
-          (await removeImage({ variables: { imageUrl: imageUrl } }));
-
         const newFileList = [...customFileList];
-        newFileList.splice(currentIndex, 1);
+
+        if (newFileList[currentIndex].id) {
+          newFileList[currentIndex] = {
+            ...newFileList[currentIndex],
+            isDeletedItem: true,
+          };
+        } else {
+          await removeImage({ variables: { imageUrl: imageUrl } });
+          newFileList.splice(currentIndex, 1);
+        }
 
         setCustomFileList(newFileList);
         onCustomFileListChange(newFileList);
@@ -121,7 +123,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
           currentIndex === 0 ? currentIndex : currentIndex - 1
         );
 
-        msgApi.success("Image removed successfully");
+        msgApi.success("Image Removed");
       } catch (error) {
         openErrorNotification(
           notiApi,
@@ -143,17 +145,20 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
     onCustomFileListChange(newFileList);
   };
 
+  // Filter out deleted items
+  const visibleFileList = customFileList.filter((file) => !file.isDeletedItem);
+
   return (
     <>
       {contextHolder}
       <div className="upload-container">
-        {customFileList?.length > 0 ? (
+        {visibleFileList.length > 0 ? (
           <>
             <Flex gap="middle">
               <div className="image-preview-container">
                 <div className="primary-image-container">
                   <Image.PreviewGroup
-                    items={customFileList.map((file) => ({
+                    items={visibleFileList.map((file) => ({
                       src: file.imageUrl,
                       title: file.name,
                     }))}
@@ -167,7 +172,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
                       onClick={() => {
                         setSelectedPreviewIndex(selectedImageIndex);
                       }}
-                      src={customFileList[selectedImageIndex].thumbnailUrl}
+                      src={visibleFileList[selectedImageIndex].thumbnailUrl}
                       alt="product"
                       className="primary-image"
                     />
@@ -198,7 +203,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
               </div>
               <div className="upload-list-container">
                 <div className="file-list">
-                  {customFileList.map((file, index) => (
+                  {visibleFileList.map((file, index) => (
                     <div
                       key={index}
                       className={`file-item ${
@@ -209,7 +214,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
                       <img src={file.thumbnailUrl} alt={`file-${index}`} />
                     </div>
                   ))}
-                  {customFileList.length >= 4 ? null : (
+                  {visibleFileList.length >= 4 ? null : (
                     <Upload
                       className="upload-button"
                       name="product"

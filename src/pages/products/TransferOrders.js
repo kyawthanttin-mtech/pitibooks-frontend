@@ -511,11 +511,11 @@ const TransferOrders = () => {
         return (
           <div>
             <div className="column-list-item">
-              <span>{record.supplierName}</span>
+              <span>{record.sourceWarehouse?.name}</span>
               <span>
                 {record.currency?.symbol}{" "}
                 <FormattedNumber
-                  value={record.orderTotalAmount}
+                  value={record.totalTransferQty}
                   style="decimal"
                   minimumFractionDigits={record.currency?.decimalPlaces}
                 />

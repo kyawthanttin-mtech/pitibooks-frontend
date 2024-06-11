@@ -34,6 +34,7 @@ import {
 import {
   AddPurchaseProductsModal,
   CustomerSearchModal,
+  UploadAttachment,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
@@ -144,33 +145,36 @@ const SalesOrdersEdit = () => {
   );
   const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
     useState(false);
-  const [subTotal, setSubTotal] = useState(record?.orderSubtotal);
+  const [subTotal, setSubTotal] = useState(record?.orderSubtotal || 0);
   const [totalTaxAmount, setTotalTaxAmount] = useState(
-    record?.orderTotalTaxAmount
+    record?.orderTotalTaxAmount || 0
   );
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
-    record?.orderTotalDiscountAmount
+    record?.orderTotalDiscountAmount || 0
   );
-  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount);
-  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
+  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount || 0);
+  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const [tableKeyCounter, setTableKeyCounter] = useState(
     record?.details?.length
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
-    business.baseCurrency.id
+    record?.currency.id || business.baseCurrency.id
   );
   const [discount, setDiscount] = useState(0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
-    record?.orderDiscountType
+    record?.orderDiscountType || "P"
   );
   const [discountAmount, setDiscountAmount] = useState(
     record?.orderDiscountAmount || 0
   );
-  const [isTaxInclusive, setIsTaxInclusive] = useState(record?.isTaxInclusive);
+  const [isTaxInclusive, setIsTaxInclusive] = useState(
+    record?.isTaxInclusive || false
+  );
   const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
     discountPreference.key === "0"
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [fileList, setFileList] = useState(null);
 
   //   const initialValues = {
   //     currency: business.baseCurrency.id,
@@ -407,6 +411,12 @@ const SalesOrdersEdit = () => {
       return;
     }
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+      isDeletedItem: file.isDeletedItem,
+      id: file.id,
+    }));
+
     console.log("details", details);
     const input = {
       branchId: values.branch,
@@ -427,7 +437,7 @@ const SalesOrdersEdit = () => {
       orderTaxId: 0,
       orderTaxType: "I",
       currentStatus: saveStatus,
-      // documents:
+      documents: fileUrls,
       warehouseId: values.warehouse,
       details,
     };
@@ -1999,30 +2009,12 @@ const SalesOrdersEdit = () => {
               </table>
             </Col>
           </Row>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+            files={record?.documents}
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

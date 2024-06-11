@@ -164,10 +164,82 @@ const DELETE_INVOICE = gql`
   }
 `;
 
+const CONFIRM_INVOICE = gql`
+  mutation ConfirmSalesInvoice($id: ID!) {
+    confirmSalesInvoice(id: $id) {
+      id
+      businessId
+      salesOrderId
+      orderNumber
+      invoiceNumber
+      referenceNumber
+      invoiceDate
+      invoiceDueDate
+      invoicePaymentTerms
+      invoiceSubject
+      notes
+      termsAndConditions
+      exchangeRate
+      invoiceDiscount
+      invoiceDiscountType
+      invoiceDiscountAmount
+      shippingCharges
+      adjustmentAmount
+      isTaxInclusive
+      invoiceTaxAmount
+      currentStatus
+      invoiceSubtotal
+      invoiceTotalDiscountAmount
+      invoiceTotalTaxAmount
+      invoiceTotalAmount
+      invoiceTotalPaidAmount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const VOID_INVOICE = gql`
+  mutation VoidSalesInvoice($id: ID!) {
+    voidSalesInvoice(id: $id) {
+      id
+      businessId
+      salesOrderId
+      orderNumber
+      invoiceNumber
+      referenceNumber
+      invoiceDate
+      invoiceDueDate
+      invoicePaymentTerms
+      invoiceSubject
+      notes
+      termsAndConditions
+      exchangeRate
+      invoiceDiscount
+      invoiceDiscountType
+      invoiceDiscountAmount
+      shippingCharges
+      adjustmentAmount
+      isTaxInclusive
+      invoiceTaxAmount
+      currentStatus
+      invoiceSubtotal
+      invoiceTotalDiscountAmount
+      invoiceTotalTaxAmount
+      invoiceTotalAmount
+      invoiceTotalPaidAmount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 const InvoiceMutations = {
   CREATE_INVOICE,
   UPDATE_INVOICE,
   DELETE_INVOICE,
+  CONFIRM_INVOICE,
+  VOID_INVOICE,
 };
 
 export default InvoiceMutations;

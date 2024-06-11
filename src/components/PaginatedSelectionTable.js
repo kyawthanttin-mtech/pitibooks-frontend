@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { LeftOutlined, RightOutlined, SyncOutlined } from "@ant-design/icons";
 import { Button, Row, Space, Table, Modal, Tooltip } from "antd";
 import { useQuery, useLazyQuery } from "@apollo/client";
@@ -132,8 +132,18 @@ const PaginatedSelectionTable = ({
   //       });
   //     }
   //   }, [searchCriteria, searchFormRef, search]);
-  const allData = parseData(data);
-  const searchResults = parseData(searchData);
+
+  const allData = useMemo(() => parseData(data), [data, parseData]);
+  const searchResults = useMemo(
+    () => parseData(searchData),
+    [parseData, searchData]
+  );
+  const pageInfo = useMemo(() => parsePageInfo(data), [data, parsePageInfo]);
+  const searchPageInfo = useMemo(
+    () => parsePageInfo(searchData),
+    [searchData, parsePageInfo]
+  );
+
   const totalPages = searchCriteria
     ? Math.ceil(searchResults.length / QUERY_DATA_LIMIT)
     : Math.ceil(allData.length / QUERY_DATA_LIMIT);
@@ -141,8 +151,6 @@ const PaginatedSelectionTable = ({
   let hasNextPage = false;
   let refetchEnabled = true;
   if (currentPage === totalPages) {
-    const pageInfo = parsePageInfo(data);
-    const searchPageInfo = parsePageInfo(searchData);
     hasNextPage = searchCriteria
       ? searchPageInfo.hasNextPage
       : pageInfo.hasNextPage;
@@ -151,6 +159,9 @@ const PaginatedSelectionTable = ({
   }
 
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
+  console.log("all data", allData);
+  console.log("page data", pageData);
+  console.log("total", totalPages);
 
   const searchPageData = paginateArray(
     searchResults,

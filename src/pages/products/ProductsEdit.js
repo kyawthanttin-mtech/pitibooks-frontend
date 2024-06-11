@@ -196,6 +196,8 @@ const ProductsEdit = () => {
     const imageUrls = imageList.map((img) => ({
       imageUrl: img.imageUrl,
       thumbnailUrl: img.thumbnailUrl,
+      isDeletedItem: img.isDeletedItem,
+      id: img.id,
     }));
 
     console.log(imageUrls);

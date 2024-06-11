@@ -1,0 +1,8 @@
+.ant-popover {
+  width: 19.375rem;
+  padding: 0;
+}
+
+.ant-popover .ant-popover-inner {
+  padding: 0;
+}

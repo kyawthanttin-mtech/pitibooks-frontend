@@ -275,6 +275,7 @@ const PaymentsMade = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+    setSelectedSupplier(null);
 
     // clear the state from location.state
     navigate(location.pathname, {

@@ -256,7 +256,6 @@ const CustomersEdit = () => {
       currencyId: values.currency,
       customerTaxId: taxId,
       customerTaxType: taxType,
-
       openingBalance: values.openingBalance || 0,
       openingBalanceBranchId: values.openingBalanceBranch || 0,
       customerPaymentTerms: values.paymentTerms,
@@ -288,6 +287,16 @@ const CustomersEdit = () => {
                       email
                       phone
                       mobile
+                      currency
+                      customerTax
+                      openingBalance
+                      customerPaymentTerms
+                      customerPaymentTermsCustomDays
+                      contactPersons
+                      billingAddress
+                      shippingAddress
+                      notes
+                      exchangeRate
                     }
                   `,
                 });
@@ -305,7 +314,9 @@ const CustomersEdit = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = data.length + 1;
+    // const newRowKey = data.length + 1;
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([...data, { key: newRowKey }]);
   };
 
@@ -753,7 +764,12 @@ const CustomersEdit = () => {
                           validator(_, value) {
                             if (!value) {
                               return Promise.resolve();
-                            } else if (isNaN(value) || value.length > 3 || !Number.isInteger(Number(value)) || Number(value) < 1) {
+                            } else if (
+                              isNaN(value) ||
+                              value.length > 3 ||
+                              !Number.isInteger(Number(value)) ||
+                              Number(value) < 1
+                            ) {
                               return Promise.reject(
                                 intl.formatMessage({
                                   id: "validation.invalidInput",
@@ -1244,19 +1260,19 @@ const CustomersEdit = () => {
               key="notes"
               style={{ paddingTop: "2rem" }}
             >
-              <Form.Item
-                name="notes"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <div>
-                  <label>
-                    <FormattedMessage id="label.notes" defaultMessage="Notes" />
-                  </label>
+              <div style={{ width: "100%" }}>
+                <label>
+                  <FormattedMessage id="label.notes" defaultMessage="Notes" />
+                </label>
+                <Form.Item
+                  name="notes"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                >
                   <Input.TextArea maxLength={1000} rows={4} />
-                </div>
-              </Form.Item>
+                </Form.Item>
+              </div>
             </Tabs.TabPane>
           </Tabs>
         </Form>

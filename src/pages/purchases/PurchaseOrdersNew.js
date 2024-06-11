@@ -14,6 +14,7 @@ import {
   Dropdown,
   Space,
   AutoComplete,
+  Upload,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -39,6 +40,7 @@ import {
 import {
   SupplierSearchModal,
   AddPurchaseProductsModal,
+  UploadAttachment,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, useIntl, FormattedNumber } from "react-intl";
@@ -199,6 +201,7 @@ const PurchaseOrdersNew = () => {
     discountPreference.key === "0"
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [fileList, setFileList] = useState(null);
 
   // Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -466,6 +469,10 @@ const PurchaseOrdersNew = () => {
         detailDiscountType: item.discountType ? item.discountType : "P",
       };
     });
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl,
+      // thumbnailUrl: file.thumbnailUrl,
+    }));
 
     if (details.length === 0 || foundInvalid) {
       openErrorNotification(
@@ -500,7 +507,7 @@ const PurchaseOrdersNew = () => {
       orderTaxId: 0,
       orderTaxType: "I",
       currentStatus: saveStatus,
-      // documents:
+      documents: fileUrls,
       warehouseId: values.warehouse,
       details,
     };
@@ -997,6 +1004,10 @@ const PurchaseOrdersNew = () => {
 
   const handleSelectWarehouse = async (value) => {
     setSelectedWarehouse(value);
+  };
+
+  const handleCustomFileListChange = (newCustomFileList) => {
+    setFileList(newCustomFileList);
   };
 
   const columns = [
@@ -2180,30 +2191,11 @@ const PurchaseOrdersNew = () => {
               </table>
             </Col>
           </Row>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

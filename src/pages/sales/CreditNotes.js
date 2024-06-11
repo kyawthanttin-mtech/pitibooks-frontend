@@ -29,7 +29,7 @@ import {
   CreditNoteTemplate,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
-  SupplierSearchModal,
+  CustomerSearchModal,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditNoteMutations, CreditNoteQueries } from "../../graphql";
@@ -203,6 +203,7 @@ const CreditNotes = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+    setSelectedCustomer(null);
 
     // clear the state from location.state
     navigate(location.pathname, {
@@ -519,7 +520,7 @@ const CreditNotes = () => {
 
   return (
     <>
-      <SupplierSearchModal
+      <CustomerSearchModal
         modalOpen={customerSearchModalOpen}
         setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}

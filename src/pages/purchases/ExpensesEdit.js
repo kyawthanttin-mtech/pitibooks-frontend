@@ -8,7 +8,11 @@ import {
   Radio,
   Select,
 } from "antd";
-import { CloseOutlined, SearchOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  CloseOutlined,
+  SearchOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import { useReadQuery, useMutation, gql } from "@apollo/client";
@@ -21,7 +25,11 @@ import dayjs from "dayjs";
 import { FormattedMessage } from "react-intl";
 import { ExpenseMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
-import { CustomerSearchModal, SupplierSearchModal } from "../../components";
+import {
+  CustomerSearchModal,
+  SupplierSearchModal,
+  UploadAttachment,
+} from "../../components";
 
 const { UPDATE_EXPENSE } = ExpenseMutations;
 
@@ -45,6 +53,7 @@ const ExpensesEdit = () => {
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [fileList, setFileList] = useState(null);
 
   // Queries
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -175,6 +184,12 @@ const ExpensesEdit = () => {
     const isTaxInclusive =
       values.taxOption && values.taxOption === "I" ? true : false;
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+      isDeletedItem: file.isDeletedItem,
+      id: file.id,
+    }));
+
     const input = {
       expenseAccountId: values.expenseAccount,
       assetAccountId: values.paidThrough,
@@ -190,6 +205,7 @@ const ExpensesEdit = () => {
       expenseTaxId: taxId,
       expenseTaxType: taxType,
       isTaxInclusive,
+      documents: fileUrls,
     };
 
     // console.log("Input", input);
@@ -208,13 +224,13 @@ const ExpensesEdit = () => {
                   fragment: gql`
                     fragment NewExpense on Expense {
                       id
-                      expenseAccount 
-                      assetAccount 
-                      branch 
+                      expenseAccount
+                      assetAccount
+                      branch
                       referenceNumber
                       expenseDate
                       notes
-                      currency 
+                      currency
                       supplier
                       customer
                       amount
@@ -222,7 +238,7 @@ const ExpensesEdit = () => {
                       totalAmount
                       isTaxInclusive
                       exchangeRate
-                      expenseTax 
+                      expenseTax
                     }
                   `,
                 });
@@ -672,30 +688,12 @@ const ExpensesEdit = () => {
             />
           </Form.Item>
 
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+            files={record?.documents}
+          />
         </Form>
       </div>
       <div className="page-actions-bar">

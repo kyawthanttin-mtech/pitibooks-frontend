@@ -187,6 +187,24 @@ const BillTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Notes :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>{selectedRecord.notes}</span>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </td>

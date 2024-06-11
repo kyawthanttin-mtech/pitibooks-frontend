@@ -117,6 +117,13 @@ const GET_PAGINATE_BILL = gql`
             orderDate
             currentStatus
           }
+          billPayment {
+            paymentDate
+            paymentNumber
+            referenceNumber
+            amount
+            paymentMode
+          }
         }
       }
       pageInfo {

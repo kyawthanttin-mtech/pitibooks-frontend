@@ -32,7 +32,7 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { CustomerSearchModal } from "../../components";
+import { CustomerSearchModal, UploadAttachment } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import dayjs from "dayjs";
@@ -64,6 +64,7 @@ const PaymentsReceivedNew = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [bankCharges, setBankCharges] = useState(0);
   const [paidAmountTotal, setPaidAmountTotal] = useState(0);
+  const [fileList, setFileList] = useState(null);
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -194,6 +195,10 @@ const PaymentsReceivedNew = () => {
         return;
       }
 
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl,
+      }));
+
       const input = {
         branchId: values.branch,
         customerId: selectedCustomer.id,
@@ -206,6 +211,7 @@ const PaymentsReceivedNew = () => {
         referenceNumber: values.referenceNumber,
         notes: values.notes,
         paidInvoices,
+        documents: fileUrls,
       };
 
       await createCustomerPayment({ variables: { input: input } });
@@ -905,31 +911,11 @@ const PaymentsReceivedNew = () => {
                 </table>
               </Col>
             </Row>
-            <div className="attachment-upload">
-              <p>
-                <FormattedMessage
-                  id="label.attachments"
-                  defaultMessage="Attachments"
-                />
-              </p>
-              <Button
-                type="dashed"
-                icon={<UploadOutlined />}
-                className="attachment-upload-button"
-              >
-                <FormattedMessage
-                  id="button.uploadFile"
-                  defaultMessage="Upload File"
-                />
-              </Button>
-              <p>
-                <FormattedMessage
-                  id="label.uploadLimit"
-                  defaultMessage="You can upload a maximum of 5 files, 5MB each"
-                />
-              </p>
-            </div>
-
+            <UploadAttachment
+              onCustomFileListChange={(customFileList) =>
+                setFileList(customFileList)
+              }
+            />
             <div className="page-actions-bar page-actions-bar-margin">
               <Button
                 type="primary"

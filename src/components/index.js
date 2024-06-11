@@ -27,6 +27,8 @@ import CreditNoteTemplate from "./pdfs-and-templates/sales/CreditNoteTemplate";
 import CustomerPaymentTemplate from "./pdfs-and-templates/sales/CustomerPaymentTemplate";
 import TransferOrderTemplate from "./pdfs-and-templates/products/TransferOrderTemplate";
 import SalesOrderTemplate from "./pdfs-and-templates/sales/SalesOrderTemplate";
+import UploadAttachment from "./UploadAttachment";
+import AttachFiles from "./AttachFiles";
 
 export {
   ErrorBoundary,
@@ -58,4 +60,6 @@ export {
   CustomerPaymentTemplate,
   TransferOrderTemplate,
   SalesOrderTemplate,
+  UploadAttachment,
+  AttachFiles,
 };

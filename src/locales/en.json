@@ -550,7 +550,7 @@
   "validation.requiredAtLeastOneBranch": "At least one Branch is required",
   "validation.paymentAmountCannotBeNegative": "Payment Amount cannot be negative",
   "validation.enterAtLeastOnePayment": "Enter At Least One Payment",
-  "validation.sameWarehouse": "Transfers cannot be made within the same warehouse. Please select a different one",
+  "validation.sameWarehouse": "Transfers cannot be made within the same warehouse.",
 
   "error.productIsAlreadyAdded": "Product is already added",
   "error.atLeastOneSearchCriteria": "Please fill in at least one search criteria",

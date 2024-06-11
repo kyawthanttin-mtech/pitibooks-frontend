@@ -28,6 +28,7 @@ import {
   CaretRightFilled,
 } from "@ant-design/icons";
 import {
+  AttachFiles,
   PaginatedSelectionTable,
   PurchaseOrderTemplate,
   SearchCriteriaDisplay,
@@ -455,6 +456,7 @@ const PurchaseOrders = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
+    setSelectedSupplier(null);
 
     // clear the state from location.state
     navigate(location.pathname, {
@@ -981,10 +983,8 @@ const PurchaseOrders = () => {
                 <span>{selectedRecord.orderNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles />
+
                 <div>
                   <Button
                     icon={<CloseOutlined />}

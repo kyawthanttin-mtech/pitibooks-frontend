@@ -1,9 +1,11 @@
 /* eslint-disable react/style-prop-object */
 import React from "react";
 import { FormattedNumber } from "react-intl";
+import { useOutletContext } from "react-router-dom";
 
 const JournalTemplate = ({ selectedRecord }) => {
   const data = selectedRecord.transactions;
+  const { business } = useOutletContext();
 
   return (
     <div className="details-page">
@@ -25,7 +27,22 @@ const JournalTemplate = ({ selectedRecord }) => {
             <table className="title-section" id="title-table">
               <tbody>
                 <tr>
-                  <td></td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: "var(--detail-text)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <b>{business.name}</b>
+                    </span>
+                    <br />
+                    <span>{business.country}</span>
+                    <br />
+                    <span>{business.email}</span>
+                    <br />
+                    <br />
+                  </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>Journal</span>
                     <br />
@@ -45,7 +62,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                       wordWrap: "break-word",
                     }}
                   >
-                    {selectedRecord.supplier && (
+                    {selectedRecord.supplier?.name && (
                       <div>
                         <span>Supplier</span>
                         <br />
@@ -55,7 +72,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                       </div>
                     )}
                     <br />
-                    {selectedRecord.customer && (
+                    {selectedRecord.customer?.name && (
                       <div>
                         <span>Customer</span>
                         <br />
@@ -146,7 +163,11 @@ const JournalTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.referenceNumber}</span>
+                            <span>
+                              {selectedRecord.referenceNumber
+                                ? selectedRecord.referenceNumber
+                                : " - "}
+                            </span>
                           </td>
                         </tr>
                       </tbody>

@@ -138,7 +138,8 @@ const Bills = () => {
     null
   );
   const [currentPage, setCurrentPage] = useHistoryState("billCurrentPage", 1);
-  const [showRecordBillPaymentForm, setShowRecordBillPaymentForm] = useState(false);
+  const [showRecordBillPaymentForm, setShowRecordBillPaymentForm] =
+    useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -421,6 +422,7 @@ const Bills = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+    setSelectedSupplier(null);
 
     // clear the state from location.state
     navigate(location.pathname, {
@@ -563,8 +565,8 @@ const Bills = () => {
   const paymentMadeColumns = [
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "paymentDate",
+      key: "paymentDate",
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
@@ -584,16 +586,16 @@ const Bills = () => {
     },
     {
       title: "Amount",
-      dataIndex: "Amount",
-      key: "Amount",
+      dataIndex: "amount",
+      key: "amount",
     },
   ];
 
   const purchaseOrderColumns = [
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "orderDate",
+      key: "orderDate",
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
@@ -603,8 +605,8 @@ const Bills = () => {
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "currentStatus",
+      key: "currentStatus",
     },
   ];
 
@@ -1292,7 +1294,11 @@ const Bills = () => {
                         }}
                       >
                         <span>Payments Made</span>
-                        <span className="bill">1</span>
+                        <span className="bill">
+                          {selectedRecord.billPayment
+                            ? selectedRecord.billPayment.length
+                            : 0}
+                        </span>
                       </li>
                       <Divider type="vertical" className="tab-divider" />
                       <li
@@ -1307,7 +1313,12 @@ const Bills = () => {
                         }}
                       >
                         <span>Purchase Orders</span>
-                        <span className="bill">1</span>
+                        <span className="bill">
+                          {selectedRecord.purchaseOrder &&
+                          selectedRecord.purchaseOrder.id > 0
+                            ? 1
+                            : 0}
+                        </span>
                       </li>
                     </ul>
                     <CaretRightFilled
@@ -1326,19 +1337,22 @@ const Bills = () => {
                         <Table
                           className="bill-table"
                           columns={paymentMadeColumns}
-                          dataSource={[selectedRecord.supplierPayment]}
+                          dataSource={selectedRecord.billPayment}
                           pagination={false}
                         />
                       </div>
                     )}
                     {activeTab === "receives" && (
                       <div className="bill-tab">
-                        <Table
-                          className="bill-table"
-                          columns={purchaseOrderColumns}
-                          dataSource={[selectedRecord.purchaseOrder]}
-                          pagination={false}
-                        />
+                        {selectedRecord.purchaseOrder &&
+                        selectedRecord.purchaseOrder.id > 0 ? (
+                          <Table
+                            className="bill-table"
+                            columns={purchaseOrderColumns}
+                            dataSource={[selectedRecord.purchaseOrder]}
+                            pagination={false}
+                          />
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -1386,7 +1400,10 @@ const Bills = () => {
                       </span>
                     </Flex>
                     <Space>
-                      <Button type="primary" onClick={setShowRecordBillPaymentForm}>
+                      <Button
+                        type="primary"
+                        onClick={setShowRecordBillPaymentForm}
+                      >
                         Record Payment
                       </Button>
                       <Button onClick={setCreditModalOpen}>

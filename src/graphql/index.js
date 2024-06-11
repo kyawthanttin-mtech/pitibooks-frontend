@@ -69,6 +69,7 @@ import TransferOrderQueries from "./queries/TransferOrderQueries";
 import InventoryAdjustmentQueries from "./queries/InventoryAdjustmentQueries";
 import InventoryAdjustmentMutations from "./mutations/InventoryAdjustmentMutations";
 import ImageMutations from "./mutations/ImageMutations";
+import FileMutations from "./mutations/FileMutations";
 
 export {
   BankingQueries,
@@ -141,4 +142,5 @@ export {
   InventoryAdjustmentMutations,
   ImageMutations,
   StockQueries,
+  FileMutations,
 };

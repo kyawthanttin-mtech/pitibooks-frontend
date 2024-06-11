@@ -50,7 +50,10 @@ const AddPurchaseProductsModal = ({
           taxRate: addedItem.purchaseTax?.rate,
           unit: addedItem.unit,
           currentQty: addedItem.currentQty,
+          currentDestQty: addedItem.currentDestQty && addedItem.currentDestQty,
+          destUnit: addedItem.destUnit && addedItem.destUnit,
           account: null,
+          purchasePrice: addedItem.purchasePrice,
         };
 
         if (account === "purchase") {
@@ -234,9 +237,7 @@ const AddPurchaseProductsModal = ({
                         className="stock-on-hand"
                         style={{
                           color:
-                            item.currentQty === 0
-                              ? "red"
-                              : "var(--light-green)",
+                            item.currentQty <= 0 ? "red" : "var(--light-green)",
                         }}
                       >
                         <FormattedNumber

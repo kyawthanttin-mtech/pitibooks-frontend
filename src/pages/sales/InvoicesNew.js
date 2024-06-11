@@ -34,6 +34,7 @@ import {
 import {
   AddPurchaseProductsModal,
   CustomerSearchModal,
+  UploadAttachment,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
@@ -168,7 +169,6 @@ const InvoicesNew = () => {
     record?.orderTotalAmount || record?.invoiceTotalAmount || 0
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
-  const [tableKeyCounter, setTableKeyCounter] = useState(1);
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
@@ -186,6 +186,7 @@ const InvoicesNew = () => {
     discountPreference.key === "0"
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [fileList, setFileList] = useState(null);
 
   // Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -262,7 +263,6 @@ const InvoicesNew = () => {
       (sp) => sp.isActive === true
     );
   }, [salesPersonData]);
-  console.log(salesPersons);
 
   const taxes = useMemo(() => {
     return taxData?.listAllTax?.filter((tax) => tax.isActive === true);
@@ -351,7 +351,7 @@ const InvoicesNew = () => {
     // const taxId = record?.supplierTaxType + record?.supplierTaxId;
     const parsedRecord = record
       ? {
-          supplierName: record?.supplierName,
+          customerName: record?.customer?.name,
           branch: record?.branch?.id,
           salesOrderId: record?.salesOrderId,
           salesOrderNumber: record?.salesOrderNumber || record?.orderNumber,
@@ -430,12 +430,15 @@ const InvoicesNew = () => {
       });
       return;
     }
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl,
+    }));
 
     // console.log("details", details);
     const input = {
       branchId: values.branch,
       customerId: selectedCustomer.id,
-      purchaseOrderNumber: values.purchaseOrderNumber,
+      orderNumber: values.salesOrderNumber,
       referenceNumber: values.referenceNumber,
       salesPersonId: values.salesPerson,
       invoiceDate: values.invoiceDate,
@@ -452,7 +455,7 @@ const InvoicesNew = () => {
       invoiceTaxId: 0,
       invoiceTaxType: "I",
       currentStatus: saveStatus,
-      // documents:
+      documents: fileUrls,
       warehouseId: values.warehouse,
       details,
     };
@@ -1783,10 +1786,12 @@ const InvoicesNew = () => {
                 onClick={handleAddRow}
                 className="add-row-item-btn"
               >
-                <FormattedMessage
-                  id="button.addNewRow"
-                  defaultMessage="Add New Row"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addNewRow"
+                    defaultMessage="Add New Row"
+                  />
+                </span>
               </Button>
               <Divider type="vertical" />
               <Button
@@ -1794,10 +1799,12 @@ const InvoicesNew = () => {
                 className="add-row-item-btn"
                 onClick={() => setAddPurchaseProductsModalOpen(true)}
               >
-                <FormattedMessage
-                  id="button.addProductsInBulk"
-                  defaultMessage="Add Products in Bulk"
-                />
+                <span>
+                  <FormattedMessage
+                    id="button.addProductsInBulk"
+                    defaultMessage="Add Products in Bulk"
+                  />
+                </span>
               </Button>
             </>
           )}
@@ -1993,30 +2000,11 @@ const InvoicesNew = () => {
               </table>
             </Col>
           </Row>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

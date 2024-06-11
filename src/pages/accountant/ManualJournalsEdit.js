@@ -29,7 +29,11 @@ import dayjs from "dayjs";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { JournalMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
-import { CustomerSearchModal, SupplierSearchModal } from "../../components";
+import {
+  CustomerSearchModal,
+  SupplierSearchModal,
+  UploadAttachment,
+} from "../../components";
 
 const { UPDATE_JOURNAL } = JournalMutations;
 
@@ -72,6 +76,7 @@ const ManualJournalsEdit = () => {
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [fileList, setFileList] = useState(null);
 
   console.log("Record", record);
 
@@ -155,6 +160,12 @@ const ManualJournalsEdit = () => {
       description: values[`description${item.key}`],
     }));
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+      isDeletedItem: file.isDeletedItem,
+      id: file.id,
+    }));
+
     const input = {
       referenceNumber: values.referenceNumber,
       journalDate: values.date,
@@ -165,6 +176,7 @@ const ManualJournalsEdit = () => {
       customerId: selectedCustomer.id || 0,
       exchangeRate: values.exchangeRate ? parseFloat(values.exchangeRate) : 0,
       transactions,
+      documents: fileUrls,
     };
     if (difference !== 0) {
       openErrorNotification(
@@ -751,30 +763,12 @@ const ManualJournalsEdit = () => {
               </tbody>
             </table>
           </div>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+            files={record?.documents}
+          />
         </Form>
       </div>
       <div className="page-actions-bar">

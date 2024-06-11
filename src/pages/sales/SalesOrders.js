@@ -44,7 +44,8 @@ import {
 import { useMutation, useReadQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 const { GET_PAGINATE_SALES_ORDER } = SalesOrderQueries;
-const { CONFIRM_SALES_ORDER, CANCEL_SALES_ORDER, DELETE_SALES_ORDER } = SalesOrderMutations;
+const { CONFIRM_SALES_ORDER, CANCEL_SALES_ORDER, DELETE_SALES_ORDER } =
+  SalesOrderMutations;
 
 const draftActionItems = [
   {
@@ -246,7 +247,7 @@ const SalesOrders = () => {
           query: GET_PAGINATE_SALES_ORDER,
         });
         const updatedSalesOrders =
-        existingSalesOrders.paginateSalesOrder.edges.filter(
+          existingSalesOrders.paginateSalesOrder.edges.filter(
             ({ node }) => node.id !== data.confirmSalesOrder.id
           );
         cache.writeQuery({
@@ -300,7 +301,6 @@ const SalesOrders = () => {
   );
 
   const loading = deleteLoading || confirmLoading || cancelLoading;
-
 
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
@@ -447,7 +447,7 @@ const SalesOrders = () => {
     setSearchCriteria(null);
     searchFormRef.resetFields();
     setSearchModalOpen(false);
-
+    setSelectedCustomer(null);
     // clear the state from location.state
     navigate(location.pathname, {
       state: {

@@ -34,6 +34,7 @@ import {
 import {
   SupplierSearchModal,
   AddPurchaseProductsModal,
+  UploadAttachment,
 } from "../../components";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
@@ -174,6 +175,7 @@ const BillsEdit = () => {
     discountPreference.key === "0"
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [fileList, setFileList] = useState(null);
 
   const initialValues = {
     currency: business.baseCurrency.id,
@@ -414,6 +416,12 @@ const BillsEdit = () => {
       return;
     }
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+      isDeletedItem: file.isDeletedItem,
+      id: file.id,
+    }));
+
     console.log("details", details);
     const input = {
       branchId: values.branch,
@@ -434,7 +442,7 @@ const BillsEdit = () => {
       billTaxId: 0,
       billTaxType: "I",
       currentStatus: saveStatus,
-      // documents:
+      documents: fileUrls,
       warehouseId: values.warehouse,
       details,
     };
@@ -2055,30 +2063,12 @@ const BillsEdit = () => {
               </table>
             </Col>
           </Row>
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+            files={record?.documents}
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

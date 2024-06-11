@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from "react";
+import React, { useState, useMemo } from "react";
 
 import {
   Row,
@@ -21,17 +21,20 @@ import {
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
-import {
-  BusinessMutations,
-} from "../../graphql";
+import { BusinessMutations } from "../../graphql";
 
 const { UPDATE_BUSINESS } = BusinessMutations;
 
 const Profile = () => {
   const [formRef] = Form.useForm();
   const {
-    notiApi, msgApi, business, refetchBusiness,
-    allCurrenciesQueryRef, allStatesQueryRef, allTownshipsQueryRef,
+    notiApi,
+    msgApi,
+    business,
+    refetchBusiness,
+    allCurrenciesQueryRef,
+    allStatesQueryRef,
+    allTownshipsQueryRef,
   } = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
 
@@ -65,7 +68,7 @@ const Profile = () => {
         ...values,
         stateId: values.stateId || 0,
         townshipId: values.townshipId || 0,
-      }
+      };
       // console.log("Field values:", values);
       await updateBusiness({
         variables: { input },
@@ -80,20 +83,20 @@ const Profile = () => {
     const profile = business;
     if (profile) {
       formRef.setFieldsValue({
-        "name": profile.name,
-        "country": profile.country,
-        "stateId": profile.state.id || "",
-        "townshipId": profile.township.id || "",
-        "city": profile.city,
-        "address": profile.address,
-        "email": profile.email,
-        "phone": profile.phone,
-        "mobile": profile.mobile,
-        "baseCurrencyId": profile.baseCurrency.id,
-        "fiscalYear": profile.fiscalYear,
-        "reportBasis": profile.reportBasis,
-        "companyId": profile.companyId,
-        "taxId": profile.taxId,
+        name: profile.name,
+        country: profile.country,
+        stateId: profile.state.id || "",
+        townshipId: profile.township.id || "",
+        city: profile.city,
+        address: profile.address,
+        email: profile.email,
+        phone: profile.phone,
+        mobile: profile.mobile,
+        baseCurrencyId: profile.baseCurrency.id,
+        fiscalYear: profile.fiscalYear,
+        reportBasis: profile.reportBasis,
+        companyId: profile.companyId,
+        taxId: profile.taxId,
       });
       if (profile.state.id) {
         setSelectedState(profile.state);
@@ -121,7 +124,10 @@ const Profile = () => {
               <Upload.Dragger className="upload-logo-dragger">
                 <UploadOutlined />
                 <p className="upload-dragger-text">
-                  <FormattedMessage id="profile.logoDescription" defaultMessage="Upload Your Organization Logo" />
+                  <FormattedMessage
+                    id="profile.logoDescription"
+                    defaultMessage="Upload Your Organization Logo"
+                  />
                 </p>
               </Upload.Dragger>
             </div>
@@ -141,11 +147,26 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="label.businessName" defaultMessage="Business Name" />}
+                label={
+                  <FormattedMessage
+                    id="label.businessName"
+                    defaultMessage="Business Name"
+                  />
+                }
                 name="name"
                 labelAlign="left"
                 labelCol={{ span: 7 }}
-                rules={[{ required: true, message: <FormattedMessage id="label.name.required" defaultMessage="Enter the Name" /> }]}
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.name.required"
+                        defaultMessage="Enter the Name"
+                      />
+                    ),
+                  },
+                ]}
               >
                 <Input maxLength={100}></Input>
               </Form.Item>
@@ -154,7 +175,12 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="label.country" defaultMessage="Country" />}
+                label={
+                  <FormattedMessage
+                    id="label.country"
+                    defaultMessage="Country"
+                  />
+                }
                 name="country"
                 labelAlign="left"
                 labelCol={{ span: 7 }}
@@ -165,9 +191,14 @@ const Profile = () => {
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.state" defaultMessage="State" />}
-                name="stateId" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.state" defaultMessage="State" />
+                }
+                name="stateId"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Select
                   loading={loading}
                   allowClear
@@ -175,14 +206,16 @@ const Profile = () => {
                   optionFilterProp="label"
                   onChange={(value) => {
                     setSelectedState(
-                      stateData?.listAllState.find((state) => state.id === value)
+                      stateData?.listAllState?.find(
+                        (state) => state.id === value
+                      )
                     );
                     formRef.setFieldsValue({
-                      "townshipId": null,
+                      townshipId: null,
                     });
                   }}
                 >
-                  {stateData?.listAllState.map((state) => (
+                  {stateData?.listAllState?.map((state) => (
                     <Select.Option
                       key={state.id}
                       value={state.id}
@@ -198,16 +231,29 @@ const Profile = () => {
 
           <Row>
             <Col lg={8}>
-              <Form.Item 
-                label={<FormattedMessage id="label.city" defaultMessage="City" />} 
-                name="city" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.city" defaultMessage="City" />
+                }
+                name="city"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.township" defaultMessage="Township" />}
-                name="townshipId" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.township"
+                    defaultMessage="Township"
+                  />
+                }
+                name="townshipId"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Select
                   loading={loading}
                   allowClear
@@ -215,7 +261,7 @@ const Profile = () => {
                   optionFilterProp="label"
                   disabled={!selectedState}
                 >
-                  {townshipData?.listAllTownship.map((township) => {
+                  {townshipData?.listAllTownship?.map((township) => {
                     if (township.stateCode === selectedState?.code) {
                       return (
                         <Select.Option
@@ -236,16 +282,29 @@ const Profile = () => {
 
           <Row>
             <Col lg={8}>
-              <Form.Item 
-                label={<FormattedMessage id="label.address" defaultMessage="Address" />}
-                name="address" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.address"
+                    defaultMessage="Address"
+                  />
+                }
+                name="address"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <TextArea maxLength={1000} rows="4"></TextArea>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.email" defaultMessage="Email" />}
-                name="email" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.email" defaultMessage="Email" />
+                }
+                name="email"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={255}></Input>
               </Form.Item>
             </Col>
@@ -253,16 +312,26 @@ const Profile = () => {
 
           <Row>
             <Col lg={8}>
-              <Form.Item 
-                label={<FormattedMessage id="label.phone" defaultMessage="Phone" />}
-                name="phone" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.phone" defaultMessage="Phone" />
+                }
+                name="phone"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={20}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.mobile" defaultMessage="Mobile" />}
-                name="mobile" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.mobile" defaultMessage="Mobile" />
+                }
+                name="mobile"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={20}></Input>
               </Form.Item>
             </Col>
@@ -271,8 +340,14 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="label.baseCurrency" defaultMessage="Base Currency" />}
-                name="baseCurrencyId" labelAlign="left"
+                label={
+                  <FormattedMessage
+                    id="label.baseCurrency"
+                    defaultMessage="Base Currency"
+                  />
+                }
+                name="baseCurrencyId"
+                labelAlign="left"
                 labelCol={{ span: 7 }}
               >
                 <Select
@@ -281,7 +356,7 @@ const Profile = () => {
                   showSearch
                   optionFilterProp="label"
                 >
-                  {currencyData?.listAllCurrency.map((currency) => (
+                  {currencyData?.listAllCurrency?.map((currency) => (
                     <Select.Option
                       key={currency.id}
                       value={currency.id}
@@ -294,9 +369,17 @@ const Profile = () => {
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.fiscalYear" defaultMessage="Fiscal Year" />}
-                name="fiscalYear" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.fiscalYear"
+                    defaultMessage="Fiscal Year"
+                  />
+                }
+                name="fiscalYear"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Select showSearch>
                   <Select.Option value="Jan">Jan-Dec</Select.Option>
                   <Select.Option value="Feb">Feb-Jan</Select.Option>
@@ -318,16 +401,28 @@ const Profile = () => {
           <Row>
             <Col lg={8}>
               <Form.Item
-                label={<FormattedMessage id="label.reportBasis" defaultMessage="Report Basis" />}
-                name="reportBasis" labelAlign="left"
+                label={
+                  <FormattedMessage
+                    id="label.reportBasis"
+                    defaultMessage="Report Basis"
+                  />
+                }
+                name="reportBasis"
+                labelAlign="left"
                 labelCol={{ span: 7 }}
               >
                 <Radio.Group>
                   <Radio value="Accrual">
-                    <FormattedMessage id="label.reportBasisAccrual" defaultMessage="Accrual" />
+                    <FormattedMessage
+                      id="label.reportBasisAccrual"
+                      defaultMessage="Accrual"
+                    />
                   </Radio>
                   <Radio value="Cash">
-                    <FormattedMessage id="label.reportBasisCash" defaultMessage="Cash" />
+                    <FormattedMessage
+                      id="label.reportBasisCash"
+                      defaultMessage="Cash"
+                    />
                   </Radio>
                 </Radio.Group>
               </Form.Item>
@@ -336,22 +431,40 @@ const Profile = () => {
 
           <Row>
             <Col lg={8}>
-              <Form.Item 
-                label={<FormattedMessage id="label.companyId" defaultMessage="Company ID" />}
-                name="companyId" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.companyId"
+                    defaultMessage="Company ID"
+                  />
+                }
+                name="companyId"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
             <Col lg={8} offset={1}>
-              <Form.Item 
-                label={<FormattedMessage id="label.taxId" defaultMessage="Tax ID" />}
-                name="taxId" labelAlign="left" labelCol={{ span: 7 }}>
+              <Form.Item
+                label={
+                  <FormattedMessage id="label.taxId" defaultMessage="Tax ID" />
+                }
+                name="taxId"
+                labelAlign="left"
+                labelCol={{ span: 7 }}
+              >
                 <Input maxLength={100}></Input>
               </Form.Item>
             </Col>
           </Row>
           <div className="page-actions-bar page-actions-bar-margin">
-            <Button loading={loading} type="primary" htmlType="submit" className="page-actions-btn">
+            <Button
+              loading={loading}
+              type="primary"
+              htmlType="submit"
+              className="page-actions-btn"
+            >
               <FormattedMessage id="button.save" defaultMessage="Save" />
             </Button>
             {/* <Button loading={loading} className="page-actions-btn">

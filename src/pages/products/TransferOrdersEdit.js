@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Form,
@@ -21,18 +21,19 @@ import {
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { useReadQuery, useMutation, gql } from "@apollo/client";
+import { useReadQuery, useMutation, gql, useQuery } from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { AddPurchaseProductsModal } from "../../components";
+import { AddPurchaseProductsModal, UploadAttachment } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, useIntl } from "react-intl";
-import { TransferOrderMutations } from "../../graphql";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
+import { TransferOrderMutations, StockQueries } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
 const { UPDATE_TRANSFER_ORDER } = TransferOrderMutations;
+const { GET_AVAILABLE_STOCKS } = StockQueries;
 
 const TransferOrdersEdit = () => {
   const intl = useIntl();
@@ -66,10 +67,16 @@ const TransferOrdersEdit = () => {
   );
   const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
     useState(false);
-  const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details?.length || 1
-  );
+  // const [tableKeyCounter, setTableKeyCounter] = useState(
+  //   record?.details?.length || 1
+  // );
   const [saveStatus, setSaveStatus] = useState("Draft");
+  const [selectedSourceWarehouse, setSelectedSourceWarehouse] = useState(
+    record?.sourceWarehouse?.id || null
+  );
+  const [selectedDestinationWarehouse, setSelectedDestinationWarehouse] =
+    useState(record?.destinationWarehouse?.id || null);
+  const [fileList, setFileList] = useState(null);
 
   console.log("record", record);
 
@@ -77,6 +84,34 @@ const TransferOrdersEdit = () => {
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: productData } = useReadQuery(allProductsQueryRef);
   const { data: productVariantData } = useReadQuery(allProductVariantsQueryRef);
+
+  const { loading: stockLoading, data: stockData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedSourceWarehouse,
+      variables: { warehouseId: selectedSourceWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
+
+  const { loading: stockDestLoading, data: stockDestData } = useQuery(
+    GET_AVAILABLE_STOCKS,
+    {
+      skip: !selectedDestinationWarehouse,
+      variables: { warehouseId: selectedDestinationWarehouse },
+      errorPolicy: "all",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    }
+  );
 
   // Mutations
   const [updateTransferOrder, { loading: createLoading }] = useMutation(
@@ -101,17 +136,15 @@ const TransferOrdersEdit = () => {
   const loading = createLoading;
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
+    return warehouseData?.listAllWarehouse;
   }, [warehouseData]);
 
   const products = useMemo(() => {
-    return productData?.listAllProduct?.filter((p) => p.isActive === true);
+    return productData?.listAllProduct;
   }, [productData]);
 
   const productVariants = useMemo(() => {
-    return productVariantData?.listAllProductVariant?.filter(
-      (p) => p.isActive === true
-    );
+    return productVariantData?.listAllProductVariant;
   }, [productVariantData]);
 
   const allProducts = useMemo(() => {
@@ -126,10 +159,63 @@ const TransferOrdersEdit = () => {
     return [...productsWithS, ...productsWithV];
   }, [products, productVariants]);
 
+  const stocks = useMemo(() => {
+    return stockData?.getAvailableStocks;
+  }, [stockData]);
+
+  const destStocks = useMemo(() => {
+    return stockDestData?.getAvailableStocks;
+  }, [stockDestData]);
+
+  const productStocks = useMemo(() => {
+    return allProducts?.map((product) => {
+      const stock = stocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      const destStock = destStocks?.find((stockItem) => {
+        const stockId = stockItem.productType + stockItem.productId;
+        return stockId === product.id;
+      });
+      return {
+        ...product,
+        currentQty: stock ? stock.currentQty : 0,
+        unit: stock?.product?.productUnit || null,
+        currentDestQty: destStock ? destStock.currentQty : 0,
+        destUnit: destStock?.product?.productUnit || null,
+      };
+    });
+  }, [allProducts, stocks, destStocks]);
+
+  useEffect(() => {
+    if (selectedSourceWarehouse && selectedDestinationWarehouse) {
+      setData((prevData) => {
+        return prevData.map((item) => {
+          const matchingProductStock = productStocks.find(
+            (product) => product.id === item.id
+          );
+          return {
+            ...item,
+            currentQty: matchingProductStock
+              ? matchingProductStock.currentQty
+              : 0,
+            unit: matchingProductStock ? matchingProductStock.unit : item.unit,
+            currentDestQty: matchingProductStock
+              ? matchingProductStock.currentDestQty
+              : 0,
+            destUnit: matchingProductStock
+              ? matchingProductStock.destUnit
+              : item.destUnit,
+          };
+        });
+      });
+    }
+  }, [selectedSourceWarehouse, productStocks, selectedDestinationWarehouse]);
+
   useMemo(() => {
     const parsedRecord = record
       ? {
-          orderNumber: record.orderNumber,
+          // orderNumber: record.orderNumber,
           date: dayjs(record?.transferDate),
           reason: record.reason,
           sourceWarehouse: record?.sourceWarehouse?.id || null,
@@ -188,15 +274,33 @@ const TransferOrdersEdit = () => {
       return;
     }
 
+    if (selectedSourceWarehouse === selectedDestinationWarehouse) {
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.sameWarehouse",
+          defaultMessage: "Transfers cannot be made within the same warehouse.",
+        })
+      );
+      return;
+    }
+
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+      isDeletedItem: file.isDeletedItem,
+      id: file.id,
+    }));
+
     console.log("details", details);
     const input = {
-      orderNumber: values.orderNumber,
+      // orderNumber: values.orderNumber,
       transferDate: values.date,
       sourceWarehouseId: values.sourceWarehouse || 0,
       destinationWarehouseId: values.destinationWarehouse || 0,
       reason: values.reason,
       currentStatus: saveStatus,
       details,
+      documents: fileUrls,
     };
     console.log("Input", input);
 
@@ -239,8 +343,8 @@ const TransferOrdersEdit = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter + 1;
-    setTableKeyCounter(tableKeyCounter + 1);
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([
       ...data,
       {
@@ -275,8 +379,11 @@ const TransferOrdersEdit = () => {
       [`quantity${keyToRemove}`]: "",
     });
   };
+
   const handleAddProductsInBulk = (selectedItemsBulk) => {
-    let newData = [];
+    let newData = [...data];
+
+    // Filter existing items from the selected bulk items
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
@@ -292,15 +399,15 @@ const TransferOrdersEdit = () => {
       });
     });
 
+    // Update data with new quantities for existing items
     if (existingItems.length > 0) {
-      const updatedData = data.map((dataItem) => {
+      newData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
 
         if (matchingSelectedItem) {
           const newQuantity = dataItem.quantity + matchingSelectedItem.quantity;
-
           return {
             ...dataItem,
             quantity: newQuantity,
@@ -309,23 +416,23 @@ const TransferOrdersEdit = () => {
 
         return dataItem;
       });
-      newData = updatedData;
     }
 
+    // Filter non-existing items from the selected bulk items
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
     );
-    console.log("non existing items", nonExistingItems);
-    if (nonExistingItems.length > 0) {
-      // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
-      let newRowKey = tableKeyCounter;
 
-      selectedItemsBulk.forEach((selectedItem, index) => {
-        newRowKey++;
+    if (nonExistingItems.length > 0) {
+      const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+
+      nonExistingItems.forEach((selectedItem, index) => {
+        const newRowKey = maxKey + 1 + index;
+
         const newDataItem = {
-          ...selectedItem,
           key: newRowKey,
+          ...selectedItem,
         };
 
         // Add the new data item to the existing data array
@@ -338,10 +445,15 @@ const TransferOrdersEdit = () => {
         });
       });
     }
+
+    // Update state and recalculate total amount if new data is added
+    if (newData.length > 0) {
+      setData(newData);
+    }
   };
 
   const handleSelectItem = (value, rowKey) => {
-    const selectedItem = allProducts?.find((product) => product.id === value);
+    const selectedItem = productStocks?.find((product) => product.id === value);
     const dataIndex = data.findIndex((dataItem) => dataItem.key === rowKey);
     if (dataIndex !== -1) {
       const oldData = data[dataIndex];
@@ -349,6 +461,10 @@ const TransferOrdersEdit = () => {
         key: rowKey,
         name: value,
         quantity: oldData.quantity || 1,
+        currentQty: selectedItem.currentQty,
+        unit: selectedItem.unit,
+        currentDestQty: selectedItem.currentDestQty,
+        destUnit: selectedItem.destUnit,
         ...oldData,
       };
       if (selectedItem && selectedItem.id) {
@@ -369,6 +485,11 @@ const TransferOrdersEdit = () => {
         }
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
+        newData.sku = selectedItem.sku;
+        newData.currentQty = selectedItem.currentQty;
+        newData.unit = selectedItem.unit;
+        newData.currentDestQty = selectedItem.currentDestQty;
+        newData.destUnit = selectedItem.destUnit;
       }
       console.log(newData);
       const updatedData = [...data];
@@ -451,7 +572,14 @@ const TransferOrdersEdit = () => {
       render: (text, record) => (
         <>
           {text && (
-            <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+            <Flex
+              vertical
+              style={{
+                marginBottom: "24px",
+                paddingRight: "0.5rem",
+                minWidth: "240px",
+              }}
+            >
               <Flex justify="space-between">
                 {text}
                 <CloseCircleOutlined
@@ -460,8 +588,37 @@ const TransferOrdersEdit = () => {
                   }
                 />
               </Flex>
-              <div>SKU: {record.sku}</div>
-            </div>
+              <div>
+                {record.sku ? (
+                  <>
+                    <span style={{ fontSize: "var(--small-text)" }}>
+                      SKU: {record.sku}{" "}
+                    </span>
+                    <Divider type="vertical" />
+                  </>
+                ) : (
+                  <div></div>
+                )}
+                {/* {record.currentQty || record.currentQty === 0 ? (
+                  <span
+                    style={{
+                      fontSize: "var(--small-text)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Stock on Hand :{" "}
+                    <FormattedNumber
+                      value={record.currentQty}
+                      style="decimal"
+                      minimumFractionDigits={record.unit?.precision}
+                    />{" "}
+                    {record.unit && record.unit.abbreviation}
+                  </span>
+                ) : (
+                  <div></div>
+                )} */}
+              </div>
+            </Flex>
           )}
           <Form.Item
             hidden={text}
@@ -479,9 +636,10 @@ const TransferOrdersEdit = () => {
             ]}
           >
             <AutoComplete
+              loading={stockLoading}
               className="custom-select"
               style={{
-                width: 200,
+                minWidth: "250px",
               }}
               placeholder="Type or click to select a product."
               optionFilterProp="label"
@@ -491,7 +649,7 @@ const TransferOrdersEdit = () => {
               }
               onSelect={(value) => handleSelectItem(value, record.key)}
             >
-              {allProducts?.map((option) => (
+              {productStocks?.map((option) => (
                 <AutoComplete.Option
                   value={option.id}
                   key={option.id}
@@ -504,8 +662,21 @@ const TransferOrdersEdit = () => {
                     </div>
                     <div className="item-details-select-list">
                       <span>SKU: {option.sku}</span>
-                      <span className="stock-on-hand">
-                        {option.stockOnHand}
+                      <span
+                        className="stock-on-hand"
+                        style={{
+                          color:
+                            option.currentQty === 0
+                              ? "red"
+                              : "var(--light-green)",
+                        }}
+                      >
+                        <FormattedNumber
+                          value={option.currentQty || 0}
+                          style="decimal"
+                          minimumFractionDigits={option.unit?.precision}
+                        />{" "}
+                        {option.unit && option.unit.abbreviation}
                       </span>
                     </div>
                   </div>
@@ -523,21 +694,50 @@ const TransferOrdersEdit = () => {
     },
     {
       title: "Current Availability",
-      dataIndex: "sourceStock",
-      key: "sourceStock",
+      dataIndex: "currentQty",
+      key: "currentQty",
+      width: "10%",
       colSpan: 2,
+      render: (_, record) => (
+        <Flex vertical>
+          <span style={{ opacity: "70%" }}>Source Stock</span>
+          <span>
+            <FormattedNumber
+              value={record.currentQty || 0}
+              style="decimal"
+              minimumFractionDigits={record.unit?.precision}
+            />
+            {record.unit && record.unit.abbreviation}
+          </span>
+        </Flex>
+      ),
     },
     {
       title: "Current Availability",
-      dataIndex: "destStock",
-      key: "destStock",
+      dataIndex: "currentDestQty",
+      key: "currentDestQty",
+      width: "10%",
       colSpan: 0,
+      render: (_, record) => (
+        <Flex vertical>
+          <span style={{ opacity: "70%" }}>Destination Stock</span>
+          <span>
+            <FormattedNumber
+              value={record.currentDestQty || 0}
+              style="decimal"
+              minimumFractionDigits={record.destUnit?.precision}
+            />
+            {record.destUnit && record.destUnit.abbreviation}
+          </span>
+        </Flex>
+      ),
     },
 
     {
       title: "Transfer Quantity",
       dataIndex: "quantity",
       key: "quantity",
+      align: "right",
       width: "15%",
       render: (text, record) => (
         <Form.Item
@@ -584,7 +784,7 @@ const TransferOrdersEdit = () => {
       title: "",
       dataIndex: "actions",
       key: "actions",
-      width: "5%",
+      width: "3%",
       render: (_, record) => (
         <Flex justify="center" align="center" style={{ marginBottom: "24px" }}>
           <CloseCircleOutlined
@@ -599,7 +799,7 @@ const TransferOrdersEdit = () => {
   return (
     <>
       <AddPurchaseProductsModal
-        products={allProducts}
+        products={productStocks}
         data={data}
         setData={handleAddProductsInBulk}
         isOpen={addProductsModalOpen}
@@ -626,7 +826,7 @@ const TransferOrdersEdit = () => {
         <Form form={form} onFinish={onFinish}>
           <Row>
             <Col span={10}>
-              <Form.Item
+              {/* <Form.Item
                 label="Transfer Order"
                 name="orderNumber"
                 labelAlign="left"
@@ -638,7 +838,7 @@ const TransferOrdersEdit = () => {
                 //   <SettingOutlined onClick={() => setSettingModalOpen(true)} />
                 // }
                 />
-              </Form.Item>
+              </Form.Item> */}
             </Col>
           </Row>
 
@@ -704,7 +904,7 @@ const TransferOrdersEdit = () => {
                   allowClear
                   loading={loading}
                   optionFilterProp="label"
-                  onChange={(value) => handleWarehouseChange(value, "source")}
+                  onChange={(value) => setSelectedSourceWarehouse(value)}
                 >
                   {warehouses?.map((w) => (
                     <Select.Option key={w.id} value={w.id} label={w.name}>
@@ -754,9 +954,7 @@ const TransferOrdersEdit = () => {
                   allowClear
                   loading={loading}
                   optionFilterProp="label"
-                  onChange={(value) =>
-                    handleWarehouseChange(value, "destination")
-                  }
+                  onChange={(value) => setSelectedDestinationWarehouse(value)}
                 >
                   {warehouses?.map((w) => (
                     <Select.Option key={w.id} value={w.id} label={w.name}>
@@ -771,6 +969,8 @@ const TransferOrdersEdit = () => {
           <>
             <Divider style={{ margin: 0 }} />
             <Table
+              loading={stockLoading || stockDestLoading}
+              bordered
               columns={columns}
               dataSource={data.filter((item) => !item.isDeletedItem)}
               pagination={false}
@@ -782,10 +982,12 @@ const TransferOrdersEdit = () => {
               onClick={handleAddRow}
               className="add-row-item-btn"
             >
-              <FormattedMessage
-                id="button.addNewRow"
-                defaultMessage="Add New Row"
-              />
+              <span>
+                <FormattedMessage
+                  id="button.addNewRow"
+                  defaultMessage="Add New Row"
+                />
+              </span>
             </Button>
             <Divider type="vertical" />
             <Button
@@ -793,37 +995,21 @@ const TransferOrdersEdit = () => {
               className="add-row-item-btn"
               onClick={() => setAddPurchaseProductsModalOpen(true)}
             >
-              <FormattedMessage
-                id="button.addProductsInBulk"
-                defaultMessage="Add Products in Bulk"
-              />
+              <span>
+                <FormattedMessage
+                  id="button.addProductsInBulk"
+                  defaultMessage="Add Products in Bulk"
+                />
+              </span>
             </Button>
           </>
           <br />
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+            files={record?.documents}
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

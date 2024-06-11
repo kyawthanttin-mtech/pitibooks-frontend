@@ -60,7 +60,7 @@ const SupplierPaymentTemplate = ({ selectedRecord }) => {
                       </span>
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
-                      <b>
+                        <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
                             value={
@@ -194,9 +194,7 @@ const SupplierPaymentTemplate = ({ selectedRecord }) => {
                             <span>
                               {selectedRecord.currency.symbol}{" "}
                               <FormattedNumber
-                                value={
-                                  selectedRecord.bankCharges
-                                }
+                                value={selectedRecord.bankCharges}
                                 style="decimal"
                                 minimumFractionDigits={
                                   selectedRecord.currency.decimalPlaces
@@ -221,6 +219,24 @@ const SupplierPaymentTemplate = ({ selectedRecord }) => {
                             }}
                           >
                             <span>{selectedRecord.withdrawAccount.name}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Notes :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>{selectedRecord.notes}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -320,7 +336,9 @@ const SupplierPaymentTemplate = ({ selectedRecord }) => {
                         wordWrap: "break-word",
                       }}
                     >
-                      <span>{dayjs(detail.bill.billDate).format(REPORT_DATE_FORMAT)}</span>
+                      <span>
+                        {dayjs(detail.bill.billDate).format(REPORT_DATE_FORMAT)}
+                      </span>
                     </td>
                     <td
                       className="text-align-right"

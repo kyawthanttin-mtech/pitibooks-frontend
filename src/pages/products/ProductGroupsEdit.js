@@ -426,6 +426,8 @@ const ProductGroupsEdit = () => {
     const imageUrls = imageList.map((img) => ({
       imageUrl: img.imageUrl,
       thumbnailUrl: img.thumbnailUrl,
+      isDeletedItem: img.isDeletedItem,
+      id: img.id,
     }));
 
     const input = {

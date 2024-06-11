@@ -3,6 +3,7 @@ import { gql } from "@apollo/client";
 const GET_PAGINATE_SUPPLIER = gql`
   query PaginateSupplier(
     $limit: Int = 10
+    $after: String
     $name: String
     $email: String
     $phone: String
@@ -11,6 +12,7 @@ const GET_PAGINATE_SUPPLIER = gql`
   ) {
     paginateSupplier(
       limit: $limit
+      after: $after
       name: $name
       email: $email
       phone: $phone

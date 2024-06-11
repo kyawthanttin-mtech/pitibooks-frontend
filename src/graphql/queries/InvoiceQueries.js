@@ -76,6 +76,19 @@ const GET_PAGINATE_INVOICE = gql`
             name
             decimalPlaces
           }
+          salesOrder {
+            id
+            orderNumber
+            orderDate
+            currentStatus
+          }
+          invoicePayment {
+            paymentDate
+            paymentNumber
+            referenceNumber
+            amount
+            paymentMode
+          }
           createdAt
           updatedAt
         }

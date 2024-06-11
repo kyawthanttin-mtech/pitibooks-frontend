@@ -26,7 +26,11 @@ import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import { ExpenseMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
-import { CustomerSearchModal, SupplierSearchModal } from "../../components";
+import {
+  CustomerSearchModal,
+  SupplierSearchModal,
+  UploadAttachment,
+} from "../../components";
 
 const { CREATE_EXPENSE } = ExpenseMutations;
 
@@ -49,6 +53,7 @@ const ExpensesNew = () => {
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [fileList, setFileList] = useState(null);
 
   // Queries
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -99,6 +104,10 @@ const ExpensesNew = () => {
     const isTaxInclusive =
       values.taxOption && values.taxOption === "I" ? true : false;
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl,
+    }));
+
     const input = {
       expenseAccountId: values.expenseAccount,
       assetAccountId: values.paidThrough,
@@ -114,6 +123,7 @@ const ExpensesNew = () => {
       expenseTaxId: taxId,
       expenseTaxType: taxType,
       isTaxInclusive,
+      documents: fileUrls,
     };
     // console.log("input", input);
 
@@ -616,31 +626,11 @@ const ExpensesNew = () => {
               }
             />
           </Form.Item>
-
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+          />
         </Form>
       </div>
       <div className="page-actions-bar">

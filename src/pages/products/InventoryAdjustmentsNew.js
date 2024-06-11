@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Button,
   Form,
@@ -27,9 +27,9 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { AddPurchaseProductsModal } from "../../components";
+import { AddPurchaseProductsModal, UploadAttachment } from "../../components";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage, useIntl } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { InventoryAdjustmentMutations, StockQueries } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
@@ -69,12 +69,13 @@ const InventoryAdjustmentsNew = () => {
   );
   const [addProductsModalOpen, setAddPurchaseProductsModalOpen] =
     useState(false);
-  const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details?.length || 1
-  );
+  // const [tableKeyCounter, setTableKeyCounter] = useState(
+  //   record?.details?.length || 1
+  // );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [adjustmentType, setAdjustmentType] = useState("q");
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [fileList, setFileList] = useState(null);
 
   // Queries
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -173,6 +174,25 @@ const InventoryAdjustmentsNew = () => {
     });
   }, [allProducts, stocks]);
 
+  useEffect(() => {
+    if (selectedWarehouse) {
+      setData((prevData) => {
+        return prevData.map((item) => {
+          const matchingProductStock = productStocks.find(
+            (product) => product.id === item.id
+          );
+          return {
+            ...item,
+            currentQty: matchingProductStock
+              ? matchingProductStock.currentQty
+              : 0,
+            unit: matchingProductStock ? matchingProductStock.unit : item.unit,
+          };
+        });
+      });
+    }
+  }, [selectedWarehouse, productStocks]);
+
   console.log("all product", allProducts);
 
   useMemo(() => {
@@ -261,6 +281,10 @@ const InventoryAdjustmentsNew = () => {
       return;
     }
 
+    const fileUrls = fileList?.map((file) => ({
+      documentUrl: file.imageUrl || file.documentUrl,
+    }));
+
     console.log("details", details);
     const input = {
       adjustmentType: adjustmentType === "q" ? "Quantity" : "Value",
@@ -273,6 +297,7 @@ const InventoryAdjustmentsNew = () => {
       currentStatus: saveStatus,
       referenceNumber: values.referenceNumber,
       details,
+      documents: fileUrls,
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);
@@ -282,8 +307,10 @@ const InventoryAdjustmentsNew = () => {
   };
 
   const handleAddRow = () => {
-    const newRowKey = tableKeyCounter + 1;
-    setTableKeyCounter(tableKeyCounter + 1);
+    // const newRowKey = tableKeyCounter + 1;
+    // setTableKeyCounter(tableKeyCounter + 1);
+    const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+    const newRowKey = maxKey + 1;
     setData([
       ...data,
       {
@@ -306,7 +333,9 @@ const InventoryAdjustmentsNew = () => {
   );
 
   const handleAddProductsInBulk = (selectedItemsBulk) => {
-    let newData = [];
+    let newData = [...data];
+
+    // Filter existing items from the selected bulk items
     const existingItems = data.filter((dataItem) =>
       selectedItemsBulk.some((selectedItem) => selectedItem.id === dataItem.id)
     );
@@ -322,15 +351,15 @@ const InventoryAdjustmentsNew = () => {
       });
     });
 
+    // Update data with new quantities for existing items
     if (existingItems.length > 0) {
-      const updatedData = data.map((dataItem) => {
+      newData = data.map((dataItem) => {
         const matchingSelectedItem = selectedItemsBulk.find(
           (selectedItem) => selectedItem.id === dataItem.id
         );
 
         if (matchingSelectedItem) {
           const newQuantity = dataItem.quantity + matchingSelectedItem.quantity;
-
           return {
             ...dataItem,
             quantity: newQuantity,
@@ -339,23 +368,23 @@ const InventoryAdjustmentsNew = () => {
 
         return dataItem;
       });
-      newData = updatedData;
     }
 
+    // Filter non-existing items from the selected bulk items
     const nonExistingItems = selectedItemsBulk.filter(
       (selectedItem) =>
         !data.some((dataItem) => dataItem.id === selectedItem.id)
     );
-    console.log("non existing items", nonExistingItems);
-    if (nonExistingItems.length > 0) {
-      // const maxKey = Math.max(...data.map((dataItem) => dataItem.key));
-      let newRowKey = tableKeyCounter;
 
-      selectedItemsBulk.forEach((selectedItem, index) => {
-        newRowKey++;
+    if (nonExistingItems.length > 0) {
+      const maxKey = Math.max(...data.map((dataItem) => dataItem.key), 0);
+
+      nonExistingItems.forEach((selectedItem, index) => {
+        const newRowKey = maxKey + 1 + index;
+
         const newDataItem = {
-          ...selectedItem,
           key: newRowKey,
+          ...selectedItem,
         };
 
         // Add the new data item to the existing data array
@@ -368,7 +397,14 @@ const InventoryAdjustmentsNew = () => {
         });
       });
     }
+
+    // Update state and recalculate total amount if new data is added
+    if (newData.length > 0) {
+      setData(newData);
+    }
   };
+
+  console.log("data", data);
 
   const handleSelectItem = useCallback(
     (value, rowKey) => {
@@ -381,10 +417,6 @@ const InventoryAdjustmentsNew = () => {
         let newData = {
           key: rowKey,
           name: value,
-          currentQty: selectedItem.currentQty,
-          value: selectedItem.purchasePrice * selectedItem.currentQty,
-          purchasePrice: selectedItem.purchasePrice,
-          costPrice: selectedItem.costPrice,
           ...oldData,
         };
         console.log(selectedItem);
@@ -406,6 +438,11 @@ const InventoryAdjustmentsNew = () => {
           }
           newData.id = selectedItem.id;
           newData.name = selectedItem.name;
+          newData.sku = selectedItem.sku;
+          newData.currentQty = selectedItem.currentQty;
+          newData.purchasePrice = selectedItem.purchasePrice;
+          newData.costPrice = selectedItem.costPrice;
+          newData.unit = selectedItem.unit;
         }
         console.log(newData);
         const updatedData = [...data];
@@ -461,18 +498,18 @@ const InventoryAdjustmentsNew = () => {
       const value = parseFloat(e.target.value) || 0;
       const updatedValues = {};
       const recordKey = record.key;
-      const availableQty = record.quantity;
-      const currentValue = record.value;
+      const availableQty = record.currentQty;
+      const currentValue = record.currentQty * record.purchasePrice;
 
       if (e.target.value === "") {
         if (field.includes("quantityNew")) {
-          updatedValues[`quantityAdjusted${recordKey}`] = "";
+          updatedValues[`quantityAdjusted${recordKey}`] = null;
         } else if (field.includes("quantityAdjusted")) {
-          updatedValues[`quantityNew${recordKey}`] = "";
+          updatedValues[`quantityNew${recordKey}`] = null;
         } else if (field.includes("changedValue")) {
-          updatedValues[`adjustedValue${recordKey}`] = "";
+          updatedValues[`adjustedValue${recordKey}`] = null;
         } else if (field.includes("adjustedValue")) {
-          updatedValues[`changedValue${recordKey}`] = "";
+          updatedValues[`changedValue${recordKey}`] = null;
         }
       } else {
         if (field.includes("quantityNew")) {
@@ -510,7 +547,14 @@ const InventoryAdjustmentsNew = () => {
           render: (text, record) => (
             <>
               {text && (
-                <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+                <Flex
+                  vertical
+                  style={{
+                    marginBottom: "24px",
+                    paddingRight: "0.5rem",
+                    minWidth: "240px",
+                  }}
+                >
                   <Flex justify="space-between">
                     {text}
                     <CloseCircleOutlined
@@ -519,8 +563,37 @@ const InventoryAdjustmentsNew = () => {
                       }
                     />
                   </Flex>
-                  <div>SKU: {record.sku}</div>
-                </div>
+                  <div>
+                    {record.sku ? (
+                      <>
+                        <span style={{ fontSize: "var(--small-text)" }}>
+                          SKU: {record.sku}{" "}
+                        </span>
+                        <Divider type="vertical" />
+                      </>
+                    ) : (
+                      <div></div>
+                    )}
+                    {/* {record.currentQty || record.currentQty === 0 ? (
+                      <span
+                        style={{
+                          fontSize: "var(--small-text)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Stock on Hand :{" "}
+                        <FormattedNumber
+                          value={record.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={record.unit?.precision}
+                        />{" "}
+                        {record.unit && record.unit.abbreviation}
+                      </span>
+                    ) : (
+                      <div></div>
+                    )} */}
+                  </div>
+                </Flex>
               )}
               <Form.Item
                 hidden={text}
@@ -538,9 +611,10 @@ const InventoryAdjustmentsNew = () => {
                 ]}
               >
                 <AutoComplete
+                  loading={stockLoading}
                   className="custom-select"
                   style={{
-                    width: 200,
+                    minWidth: "250px",
                   }}
                   placeholder="Type or click to select a product."
                   optionFilterProp="label"
@@ -564,8 +638,21 @@ const InventoryAdjustmentsNew = () => {
                         </div>
                         <div className="item-details-select-list">
                           <span>SKU: {option.sku}</span>
-                          <span className="stock-on-hand">
-                            {option.stocks?.qty}
+                          <span
+                            className="stock-on-hand"
+                            style={{
+                              color:
+                                option.currentQty === 0
+                                  ? "red"
+                                  : "var(--light-green)",
+                            }}
+                          >
+                            <FormattedNumber
+                              value={option.currentQty || 0}
+                              style="decimal"
+                              minimumFractionDigits={option.unit?.precision}
+                            />{" "}
+                            {option.unit && option.unit.abbreviation}
                           </span>
                         </div>
                       </div>
@@ -573,10 +660,10 @@ const InventoryAdjustmentsNew = () => {
                   ))}
                 </AutoComplete>
                 {/* <AutoSuggest
-                items={items}
-                onSelect={handleSelectItem}
-                rowKey={record.key}
-              /> */}
+                  items={items}
+                  onSelect={handleSelectItem}
+                  rowKey={record.key}
+                /> */}
               </Form.Item>
             </>
           ),
@@ -590,7 +677,16 @@ const InventoryAdjustmentsNew = () => {
           width: "15%",
           render: (_, record) => (
             <Flex justify="end" align="start" style={{ height: "3.6rem" }}>
-              {record.currentQty}
+              {record.currentQty && (
+                <>
+                  <FormattedNumber
+                    value={record.currentQty || 0}
+                    style="decimal"
+                    minimumFractionDigits={record.unit?.precision}
+                  />
+                  {record.unit && record.unit.abbreviation}
+                </>
+              )}
             </Flex>
           ),
         },
@@ -729,7 +825,14 @@ const InventoryAdjustmentsNew = () => {
           render: (text, record) => (
             <>
               {text && (
-                <div style={{ marginBottom: "24px", paddingInline: "0.5rem" }}>
+                <Flex
+                  vertical
+                  style={{
+                    marginBottom: "24px",
+                    paddingRight: "0.5rem",
+                    minWidth: "240px",
+                  }}
+                >
                   <Flex justify="space-between">
                     {text}
                     <CloseCircleOutlined
@@ -738,8 +841,37 @@ const InventoryAdjustmentsNew = () => {
                       }
                     />
                   </Flex>
-                  <div>SKU: {record.sku}</div>
-                </div>
+                  <div>
+                    {record.sku ? (
+                      <>
+                        <span style={{ fontSize: "var(--small-text)" }}>
+                          SKU: {record.sku}{" "}
+                        </span>
+                        <Divider type="vertical" />
+                      </>
+                    ) : (
+                      <div></div>
+                    )}
+                    {record.currentQty || record.currentQty === 0 ? (
+                      <span
+                        style={{
+                          fontSize: "var(--small-text)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Stock on Hand :{" "}
+                        <FormattedNumber
+                          value={record.currentQty}
+                          style="decimal"
+                          minimumFractionDigits={record.unit?.precision}
+                        />{" "}
+                        {record.unit && record.unit.abbreviation}
+                      </span>
+                    ) : (
+                      <div></div>
+                    )}
+                  </div>
+                </Flex>
               )}
               <Form.Item
                 hidden={text}
@@ -757,9 +889,10 @@ const InventoryAdjustmentsNew = () => {
                 ]}
               >
                 <AutoComplete
+                  loading={stockLoading}
                   className="custom-select"
                   style={{
-                    width: 200,
+                    minWidth: "250px",
                   }}
                   placeholder="Type or click to select a product."
                   optionFilterProp="label"
@@ -783,8 +916,21 @@ const InventoryAdjustmentsNew = () => {
                         </div>
                         <div className="item-details-select-list">
                           <span>SKU: {option.sku}</span>
-                          <span className="stock-on-hand">
-                            {option.stocks?.qty}
+                          <span
+                            className="stock-on-hand"
+                            style={{
+                              color:
+                                option.currentQty === 0
+                                  ? "red"
+                                  : "var(--light-green)",
+                            }}
+                          >
+                            <FormattedNumber
+                              value={option.currentQty || 0}
+                              style="decimal"
+                              minimumFractionDigits={option.unit?.precision}
+                            />{" "}
+                            {option.unit && option.unit.abbreviation}
                           </span>
                         </div>
                       </div>
@@ -792,10 +938,10 @@ const InventoryAdjustmentsNew = () => {
                   ))}
                 </AutoComplete>
                 {/* <AutoSuggest
-              items={items}
-              onSelect={handleSelectItem}
-              rowKey={record.key}
-            /> */}
+                  items={items}
+                  onSelect={handleSelectItem}
+                  rowKey={record.key}
+                /> */}
               </Form.Item>
             </>
           ),
@@ -808,9 +954,10 @@ const InventoryAdjustmentsNew = () => {
           align: "right",
           render: (_, record) => (
             <Flex justify="end" align="start" style={{ height: "3.6rem" }}>
-              {(record.value || record.value === 0) &&
+              {(record.currentQty * record.purchasePrice ||
+                record.currentQty * record.purchasePrice === 0) &&
                 business.baseCurrency?.symbol}{" "}
-              {record.value}
+              {record.currentQty * record.purchasePrice}
             </Flex>
           ),
         },
@@ -937,7 +1084,7 @@ const InventoryAdjustmentsNew = () => {
     handleRemoveRow,
     business.baseCurrency.symbol,
     productStocks,
-
+    stockLoading,
     handleRemoveSelectedItem,
     handleSelectItem,
     handleBlur,
@@ -1104,44 +1251,6 @@ const InventoryAdjustmentsNew = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.warehouseName"
-                    defaultMessage="Warehouse Name"
-                  />
-                }
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                labelAlign="left"
-                name="warehouse"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.warehouse.required"
-                        defaultMessage="Select the Warehouse"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Select
-                  // placeholder="Select or type to add"
-                  showSearch
-                  allowClear
-                  loading={loading}
-                  optionFilterProp="label"
-                  onChange={(value) => setSelectedWarehouse(value)}
-                >
-                  {warehouses?.map((w) => (
-                    <Select.Option key={w.id} value={w.id} label={w.name}>
-                      {w.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
                 label="Reason"
                 name="reason"
                 labelAlign="left"
@@ -1179,67 +1288,93 @@ const InventoryAdjustmentsNew = () => {
           </Row>
           <br />
           <>
-            <Divider style={{ margin: 0 }} />
-            <Table
-              loading={stockLoading}
-              columns={columns}
-              dataSource={data}
-              pagination={false}
-              bordered
-              // className="item-details-table"
-            />
-            <br />
-            <Button
-              icon={<PlusCircleFilled className="plus-circle-icon" />}
-              onClick={handleAddRow}
-              className="add-row-item-btn"
+            <Divider />
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.warehouseName"
+                  defaultMessage="Warehouse Name"
+                />
+              }
+              labelCol={{ span: 4 }}
+              wrapperCol={{ span: 6 }}
+              labelAlign="left"
+              name="warehouse"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.warehouse.required"
+                      defaultMessage="Select the Warehouse"
+                    />
+                  ),
+                },
+              ]}
             >
-              <FormattedMessage
-                id="button.addNewRow"
-                defaultMessage="Add New Row"
-              />
-            </Button>
-            {adjustmentType === "q" && (
+              <Select
+                // placeholder="Select or type to add"
+                showSearch
+                loading={loading}
+                optionFilterProp="label"
+                onChange={(value) => setSelectedWarehouse(value)}
+              >
+                {warehouses?.map((w) => (
+                  <Select.Option key={w.id} value={w.id} label={w.name}>
+                    {w.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            {selectedWarehouse && (
               <>
-                <Divider type="vertical" />
+                <Table
+                  loading={stockLoading}
+                  columns={columns}
+                  dataSource={data}
+                  pagination={false}
+                  bordered
+                  // className="item-details-table"
+                />
+                <br />
                 <Button
                   icon={<PlusCircleFilled className="plus-circle-icon" />}
+                  onClick={handleAddRow}
                   className="add-row-item-btn"
-                  onClick={() => setAddPurchaseProductsModalOpen(true)}
                 >
-                  <FormattedMessage
-                    id="button.addProductsInBulk"
-                    defaultMessage="Add Products in Bulk"
-                  />
-                </Button>
+                  <span>
+                    <FormattedMessage
+                      id="button.addNewRow"
+                      defaultMessage="Add New Row"
+                    />
+                  </span>
+                </Button>{" "}
+                {adjustmentType === "q" && (
+                  <>
+                    <Divider type="vertical" />
+                    <Button
+                      icon={<PlusCircleFilled className="plus-circle-icon" />}
+                      className="add-row-item-btn"
+                      onClick={() => setAddPurchaseProductsModalOpen(true)}
+                    >
+                      <span>
+                        <FormattedMessage
+                          id="button.addProductsInBulk"
+                          defaultMessage="Add Products in Bulk"
+                        />
+                      </span>
+                    </Button>
+                  </>
+                )}
               </>
             )}
           </>
           <br />
-          <div className="attachment-upload">
-            <p>
-              <FormattedMessage
-                id="label.attachments"
-                defaultMessage="Attachments"
-              />
-            </p>
-            <Button
-              type="dashed"
-              icon={<UploadOutlined />}
-              className="attachment-upload-button"
-            >
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </Button>
-            <p>
-              <FormattedMessage
-                id="label.uploadLimit"
-                defaultMessage="You can upload a maximum of 5 files, 5MB each"
-              />
-            </p>
-          </div>
+          <UploadAttachment
+            onCustomFileListChange={(customFileList) =>
+              setFileList(customFileList)
+            }
+          />
           <div className="page-actions-bar page-actions-bar-margin">
             <Button
               type="primary"

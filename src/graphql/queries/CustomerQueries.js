@@ -2,6 +2,8 @@ import { gql } from "@apollo/client";
 
 const GET_PAGINATE_CUSTOMER = gql`
   query PaginateCustomer(
+    $limit: Int = 10
+    $after: String
     $name: String
     $email: String
     $phone: String
@@ -9,6 +11,8 @@ const GET_PAGINATE_CUSTOMER = gql`
     $isActive: Boolean
   ) {
     paginateCustomer(
+      limit: $limit
+      after: $after
       name: $name
       email: $email
       phone: $phone

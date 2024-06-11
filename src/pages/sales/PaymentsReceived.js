@@ -268,6 +268,7 @@ const PaymentsReceived = () => {
     searchFormRef.resetFields();
     setSearchModalOpen(false);
     setCurrentPage(1);
+    setSelectedCustomer(null);
 
     // clear the state from location.state
     navigate(location.pathname, {
