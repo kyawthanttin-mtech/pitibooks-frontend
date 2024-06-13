@@ -500,6 +500,7 @@
   overflow: hidden;
   background-color: white;
   transition: width 0.2s ease;
+  height: calc(100vh - 5.1925rem);
 }
 
 .column.close {

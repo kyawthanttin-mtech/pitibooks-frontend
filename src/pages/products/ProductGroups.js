@@ -666,7 +666,10 @@ const ProductGroups = () => {
                         </td>
                       </tr>
                       {selectedRecord.options?.map((option) => (
-                        <tr style={{ marginTop: "30px" }}>
+                        <tr
+                          style={{ marginTop: "30px" }}
+                          key={option.optionName}
+                        >
                           <td style={{ paddingTop: "1.875rem" }}>
                             {option.optionName}
                           </td>
@@ -684,6 +687,7 @@ const ProductGroups = () => {
                   <UploadImage
                     images={selectedRecord?.images}
                     key={selectedRecord.id}
+                    editable={false}
                   />
                 </Col>
               </Row>

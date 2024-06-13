@@ -9,55 +9,57 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-
-import { BankingMutations } from "../../graphql";
 import dayjs from "dayjs";
-const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+import { BankingTransactionMutations } from "../../graphql";
+const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  transferDate: dayjs(),
+  transactionDate: dayjs(),
 };
 const TransferToAnotherAccEdit = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  parsedData,
+  bankingAccounts,
   accounts,
   allAccounts,
   selectedRecord,
-  transactionRecord,
+  selectedAcc,
+  setSelectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
 
-  if (form && modalOpen) {
-    form.setFieldsValue({
-      fromAccountId: selectedRecord.id,
-    });
-  }
+  console.log(selectedRecord?.currency);
 
   useMemo(() => {
-    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
     const parsedRecord =
-      form && modalOpen && transactionRecord
+      form && modalOpen && selectedRecord
         ? {
-            branchId: transactionRecord.branch?.id,
-            toAccountId: transactionRecord.account?.id,
+            branchId: selectedRecord.branch?.id,
+            fromAccountId: selectedRecord.fromAccount?.id,
+            toAccountId: selectedRecord.toAccount?.id,
+            currencyId: selectedRecord.currency?.id,
+            amount: selectedRecord.amount,
+            bankCharges: selectedRecord.bankCharges,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            transactionDate: dayjs(selectedRecord.transactionDate),
           }
         : {};
 
     form.setFieldsValue(parsedRecord);
-  }, [form, transactionRecord, modalOpen]);
+  }, [form, selectedRecord, modalOpen]);
 
-  const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_ACCOUNT_TRANSFER,
+  const [updateAccountTransfer, { loading: createLoading }] = useMutation(
+    UPDATE_BANKING_TRANSACTION,
     {
       onCompleted() {
         openSuccessMessage(
@@ -67,7 +69,8 @@ const TransferToAnotherAccEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        refetch();
+        setSelectedRecord(null);
+        // refetch();
       },
     }
   );
@@ -94,7 +97,15 @@ const TransferToAnotherAccEdit = ({
     try {
       const values = await form.validateFields();
 
-      await createAccountTransfer({ variables: { input: values } });
+      const input = {
+        ...values,
+        transactionType: "TransferToAnotherAccount",
+        isMoneyIn: false,
+      };
+
+      await updateAccountTransfer({
+        variables: { id: selectedRecord.id, input: input },
+      });
       setModalOpen(false);
       form.resetFields();
     } catch (err) {
@@ -157,7 +168,7 @@ const TransferToAnotherAccEdit = ({
         ]}
       >
         <Select showSearch optionFilterProp="label" disabled>
-          {parsedData?.map((acc) => (
+          {bankingAccounts?.map((acc) => (
             <Select.Option key={acc.id} value={acc.id} label={acc.name}>
               {acc.name}
             </Select.Option>
@@ -202,7 +213,7 @@ const TransferToAnotherAccEdit = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transferDate"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[

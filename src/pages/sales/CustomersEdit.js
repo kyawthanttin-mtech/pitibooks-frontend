@@ -662,15 +662,6 @@ const CustomersEdit = () => {
                     name="openingBalance"
                     labelAlign="left"
                     rules={[
-                      {
-                        required: true,
-                        message: (
-                          <FormattedMessage
-                            id="label.salesPrice.required"
-                            defaultMessage="Enter the Sales Price"
-                          />
-                        ),
-                      },
                       () => ({
                         validator(_, value) {
                           if (!value) {

@@ -26,6 +26,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import {
+  AttachFiles,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierCreditTemplate,
@@ -658,10 +659,10 @@ const SupplierCredits = () => {
                 <span>{selectedRecord.supplierCreditNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

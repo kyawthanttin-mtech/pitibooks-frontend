@@ -13,10 +13,9 @@ const TxnDetailColumn = ({
   transactionRecord,
   setTransactionRecord,
   setTransactionRowIndex,
-  setTransferToEditModalOpen,
+  setEditModalOpen,
 }) => {
-
-    console.log("transactins", transactionRecord)
+  console.log("transactins", transactionRecord);
 
   return (
     <div className={`txn-detail-column ${transactionRecord ? "open" : ""}`}>
@@ -44,7 +43,7 @@ const TxnDetailColumn = ({
             <Space>
               <Button
                 icon={<EditOutlined />}
-                onClick={setTransferToEditModalOpen}
+                onClick={setEditModalOpen}
               ></Button>
               <Button>
                 <Dropdown
@@ -131,7 +130,7 @@ const TxnDetailColumn = ({
                   },
                   { title: "Payment", dataIndex: "payment", key: "payment" },
                 ]}
-                dataSource={[{key: 1, payment: "00"}]}
+                dataSource={[{ key: 1, payment: "00" }]}
                 pagination={false}
               />
             </div>

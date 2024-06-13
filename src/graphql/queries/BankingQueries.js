@@ -12,55 +12,121 @@ const GET_BANKING_ACCOUNTS = gql`
       systemDefaultCode
       balance
       accountNumber
+      description
       currency {
         id
+        decimalPlaces
+        exchangeRate
         name
         symbol
-        decimalPlaces
+        isActive
       }
-      description
-      branches
       recentTransactions {
         id
+        transactionDate
+        amount
+        referenceNumber
         description
-        transactionDateTime
-        baseDebit
-        baseCredit
-        baseClosingBalance
-        foreignDebit
-        foreignCredit
-        foreignClosingBalance
+        isMoneyIn
+        transactionType
         exchangeRate
-        accountJournal {
+        taxAmount
+        bankCharges
+        branch {
           id
-          businessId
-          transactionDateTime
-          transactionNumber
-          transactionDetails
-          referenceNumber
-          referenceId
-          referenceType
+          name
+          isActive
         }
-        account {
+        fromAccount {
           id
-          businessId
-          accountNumber
-          currencyId
-          branches
-          detailType
-          mainType
           name
           code
-          description
+          detailType
+          mainType
           isActive
-          isSystemDefault
           systemDefaultCode
+          currency {
+            id
+            decimalPlaces
+            exchangeRate
+            name
+            symbol
+          }
         }
-        branch {
-          name
+        toAccount {
           id
+          name
+          code
+          detailType
+          mainType
+          isActive
+          systemDefaultCode
+          currency {
+            id
+            decimalPlaces
+            exchangeRate
+            name
+            symbol
+          }
+        }
+        paymentMode {
+          id
+          name
+        }
+        currency {
+          id
+          decimalPlaces
+          exchangeRate
+          name
+          symbol
+        }
+        supplier {
+          id
+          name
+          supplierPaymentTerms
+          supplierPaymentTermsCustomDays
+          notes
+          exchangeRate
+          openingBalanceBranchId
+          openingBalance
+          prepaidCreditAmount
+          unusedCreditAmount
+          isActive
+          createdAt
+          updatedAt
+        }
+        customer {
+          id
+          name
+          openingBalanceBranchId
+          openingBalance
+          exchangeRate
+          customerPaymentTerms
+          customerPaymentTermsCustomDays
+          notes
+          prepaidCreditAmount
+          unusedCreditAmount
+          creditLimit
+          isActive
+          createdAt
+          updatedAt
+        }
+        documents {
+          id
+          documentUrl
+          referenceType
+          referenceID
+        }
+        details {
+          id
+          invoiceNo
+          bankingTransactionId
+          dueAmount
+          paymentAmount
+          dueDate
         }
       }
+      branches
     }
   }
 `;

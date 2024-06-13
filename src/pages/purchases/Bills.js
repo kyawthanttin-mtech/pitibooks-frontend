@@ -32,6 +32,7 @@ import {
 import RecordBillPayment from "./RecordBillPayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
+  AttachFiles,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierSearchModal,
@@ -1183,10 +1184,10 @@ const Bills = () => {
                 <span>{selectedRecord.billNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

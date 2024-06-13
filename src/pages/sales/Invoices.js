@@ -35,6 +35,7 @@ import {
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   CustomerSearchModal,
+  AttachFiles,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
@@ -145,7 +146,8 @@ const Invoices = () => {
     "invoiceCurrentPage",
     1
   );
-  const [showRecordInvoicePaymentForm, setShowRecordInvoicePaymentForm] = useState(false);
+  const [showRecordInvoicePaymentForm, setShowRecordInvoicePaymentForm] =
+    useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
 
@@ -1039,10 +1041,10 @@ const Invoices = () => {
                 <span>{selectedRecord.invoiceNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -1149,7 +1151,11 @@ const Invoices = () => {
                         }}
                       >
                         <span>Payments Received</span>
-                        <span className="bill">{selectedRecord.invoicePayment ? selectedRecord.invoicePayment.length : 0}</span>
+                        <span className="bill">
+                          {selectedRecord.invoicePayment
+                            ? selectedRecord.invoicePayment.length
+                            : 0}
+                        </span>
                       </li>
                       <Divider type="vertical" className="tab-divider" />
                       <li
@@ -1164,7 +1170,12 @@ const Invoices = () => {
                         }}
                       >
                         <span>Sales Orders</span>
-                        <span className="bill">{selectedRecord.salesOrder && selectedRecord.salesOrder.id > 0 ? 1 : 0}</span>
+                        <span className="bill">
+                          {selectedRecord.salesOrder &&
+                          selectedRecord.salesOrder.id > 0
+                            ? 1
+                            : 0}
+                        </span>
                       </li>
                     </ul>
                     <CaretRightFilled
@@ -1190,13 +1201,15 @@ const Invoices = () => {
                     )}
                     {activeTab === "receives" && (
                       <div className="bill-tab">
-                        {selectedRecord.salesOrder && selectedRecord.salesOrder.id > 0 ?
-                        <Table
-                          className="bill-table"
-                          columns={salesOrderColumns}
-                          dataSource={[selectedRecord.salesOrder]}
-                          pagination={false}
-                        /> : null}
+                        {selectedRecord.salesOrder &&
+                        selectedRecord.salesOrder.id > 0 ? (
+                          <Table
+                            className="bill-table"
+                            columns={salesOrderColumns}
+                            dataSource={[selectedRecord.salesOrder]}
+                            pagination={false}
+                          />
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -1232,7 +1245,10 @@ const Invoices = () => {
                       </span>
                     </Flex>
                     <Space>
-                      <Button type="primary" onClick={setShowRecordInvoicePaymentForm}>
+                      <Button
+                        type="primary"
+                        onClick={setShowRecordInvoicePaymentForm}
+                      >
                         Record Payment
                       </Button>
                       <Button>Apply Credits</Button>

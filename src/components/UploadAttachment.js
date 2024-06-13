@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Button, Upload, Modal } from "antd";
+import { Button, Upload, Modal, Space, Flex, Popover } from "antd";
 import {
   UploadOutlined,
   DeleteOutlined,
   LoadingOutlined,
+  MoreOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import { FormattedMessage } from "react-intl";
 import { openErrorNotification } from "../utils/Notification";
@@ -16,6 +18,8 @@ const { UPLOAD_FILE, REMOVE_FILE } = FileMutations;
 const UploadAttachment = ({ onCustomFileListChange, files }) => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const { notiApi, msgApi } = useOutletContext();
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [open, setOpen] = useState(false);
 
   const extractFilename = (url) => {
     return url?.substring(url?.lastIndexOf("/") + 1);
@@ -48,13 +52,13 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
       "application/pdf",
     ];
 
-    if (!allowedTypes.includes(file.type)) {
-      openErrorNotification(
-        notiApi,
-        "You can only upload MS Word, Excel, or PDF files!"
-      );
-      return false;
-    }
+    // if (!allowedTypes.includes(file.type)) {
+    //   openErrorNotification(
+    //     notiApi,
+    //     "You can only upload MS Word, Excel, or PDF files!"
+    //   );
+    //   return false;
+    // }
 
     console.log("file", file);
 
@@ -136,7 +140,53 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
     }
   };
 
+  const handleOpenChange = (newOpen) => {
+    setOpen(newOpen);
+  };
+
   console.log("File List", customFileList);
+
+  const content = (
+    <>
+      <div className="attachment-container">
+        {!customFileList?.length > 0 ? (
+          <Flex
+            justify="center"
+            align="center"
+            style={{ paddingBlock: "12px" }}
+          >
+            No Files Attached
+          </Flex>
+        ) : (
+          customFileList?.map((file, index) => (
+            <div
+              key={index}
+              className="attachment-li"
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              // onClick={() => handleAttachmentClick(file, index)}
+            >
+              <Flex justify="space-between" align="center" key={index}>
+                <Flex vertical>
+                  <span className="attachment-name">{file.name}</span>
+                  {/* <span className="attachment-size">File Size</span> */}
+                </Flex>
+                {hoveredIndex === index && (
+                  <Space>
+                    <span>
+                      <DeleteOutlined
+                        style={{ color: "red", width: 14, height: 14 }}
+                      />
+                    </span>
+                  </Space>
+                )}
+              </Flex>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
 
   const visibleFileList = customFileList.filter((file) => !file.isDeletedItem);
 
@@ -150,35 +200,58 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
             defaultMessage="Attachments"
           />
         </p>
-        <Upload
-          beforeUpload={beforeUpload}
-          customRequest={handleUpload}
-          onRemove={handleRemove}
-          fileList={visibleFileList}
-          showUploadList={{
-            showRemoveIcon: true,
-            removeIcon: removeLoading ? (
-              <LoadingOutlined />
-            ) : (
-              <DeleteOutlined />
-            ),
-          }}
-        >
-          <Button
-            disabled={customFileList.length >= 5 ? true : false}
-            loading={uploadLoading}
-            type="dashed"
-            icon={<UploadOutlined />}
-            className="attachment-upload-button"
+        <Space>
+          <Upload
+            beforeUpload={beforeUpload}
+            customRequest={handleUpload}
+            onRemove={handleRemove}
+            fileList={visibleFileList}
+            showUploadList={{
+              showRemoveIcon: true,
+              removeIcon: removeLoading ? (
+                <LoadingOutlined />
+              ) : (
+                <DeleteOutlined />
+              ),
+            }}
           >
-            <span>
-              <FormattedMessage
-                id="button.uploadFile"
-                defaultMessage="Upload File"
-              />
-            </span>
-          </Button>
-        </Upload>
+            <Button
+              disabled={visibleFileList.length >= 5 ? true : false}
+              loading={uploadLoading}
+              type="dashed"
+              icon={<UploadOutlined />}
+              className="attachment-upload-button"
+            >
+              <span>
+                <FormattedMessage
+                  id="button.uploadFile"
+                  defaultMessage="Upload File"
+                />
+              </span>
+            </Button>
+          </Upload>
+          {/* <Popover
+            className="attachment-popover"
+            // title={title}
+            content={content}
+            trigger="click"
+            open={open}
+            placement="topLeft"
+            onOpenChange={handleOpenChange}
+          >
+            <Button
+              style={{ fontSize: 13, padding: "4px 9px" }}
+              type="primary"
+              icon={
+                <PaperClipOutlined
+                  style={{ paddingRight: "2px", fontSize: 13 }}
+                />
+              }
+            >
+              {visibleFileList.length > 0 && visibleFileList.length}
+            </Button>
+          </Popover> */}
+        </Space>
         <p>
           <FormattedMessage
             id="label.uploadLimit"

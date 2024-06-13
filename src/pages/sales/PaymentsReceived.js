@@ -27,6 +27,7 @@ import {
 } from "@ant-design/icons";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import {
+  AttachFiles,
   CustomerPaymentTemplate,
   CustomerSearchModal,
   PaginatedSelectionTable,
@@ -691,10 +692,10 @@ const PaymentsReceived = () => {
                 <span>{selectedRecord.paymentNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

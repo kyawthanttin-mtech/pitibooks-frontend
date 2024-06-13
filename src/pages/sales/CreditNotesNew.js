@@ -382,7 +382,7 @@ const CreditNotesNew = () => {
       creditNoteDate: values.creditNoteDate,
       notes: values.notes,
       currencyId: values.currency,
-      creditNoteNumber: 1,
+      exchangeRate: values.exchangeRate,
       creditNoteDiscount: isAtTransactionLevel ? discount : 0,
       creditNoteDiscountType: selectedDiscountType,
       creditNoteSubject: values.subject,
@@ -429,6 +429,7 @@ const CreditNotesNew = () => {
       const nextRowValues = form.getFieldsValue([
         `product${i + 1}`,
         `account${i + 1}`,
+        `detailDiscount${i + 1}`,
         `quantity${i + 1}`,
         `rate${i + 1}`,
         `detailTax${i + 1}`,
@@ -438,6 +439,7 @@ const CreditNotesNew = () => {
       form.setFieldsValue({
         [`product${i}`]: nextRowValues[`product${i + 1}`],
         [`account${i}`]: nextRowValues[`account${i + 1}`],
+        [`detailDiscount${i}`]: nextRowValues[`detailDiscount${i + 1}`],
         [`quantity${i}`]: nextRowValues[`quantity${i + 1}`],
         [`rate${i}`]: nextRowValues[`rate${i + 1}`],
         [`detailTax${i}`]: nextRowValues[`detailTax${i + 1}`],
@@ -448,6 +450,7 @@ const CreditNotesNew = () => {
     form.setFieldsValue({
       [`product${data.length}`]: null,
       [`account${data.length}`]: null,
+      [`detailDiscount${data.length}`]: null,
       [`quantity${data.length}`]: null,
       [`rate${data.length}`]: null,
       [`detailTax${data.length}`]: null,

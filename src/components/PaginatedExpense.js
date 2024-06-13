@@ -30,6 +30,7 @@ import { openErrorNotification } from "../utils/Notification";
 import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import dayjs from "dayjs";
+import AttachFiles from "./AttachFiles";
 const compactColumns = [
   {
     title: "",
@@ -454,10 +455,10 @@ const PaginatedExpense = ({
               <p>Expense Details</p>
             </div>
             <div className="content-column-header-row-actions">
-              <div>
-                <PaperClipOutlined />
-                <span>Expense History</span>
-              </div>
+              <AttachFiles
+                files={selectedRecord?.documents}
+                key={selectedRecord?.key}
+              />
               <div>
                 <Button
                   icon={<CloseOutlined />}

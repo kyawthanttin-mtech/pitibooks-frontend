@@ -235,7 +235,7 @@ const CreditNotesEdit = () => {
           referenceNumber: record?.referenceNumber,
           creditDate: dayjs(record?.creditNoteDate),
           currency: record?.currency?.id,
-          // exchangeRate: record?.currency?.exchangeRate,
+          exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse?.id,
           notes: record?.notes,
           discount: record?.creditNoteDiscount,
@@ -424,7 +424,7 @@ const CreditNotesEdit = () => {
       creditNoteDate: values.creditDate,
       notes: values.notes,
       currencyId: values.currency,
-      creditNoteNumber: 1, //to be removed later
+      exchangeRate: values.exchangeRate,
       creditNoteDiscount: isAtTransactionLevel ? discount : 0,
       creditNoteDiscountType: selectedDiscountType,
       adjustmentAmount: adjustment,
@@ -493,31 +493,34 @@ const CreditNotesEdit = () => {
         // Shift the data of each row
         newData[i] = { ...newData[i + 1], key: i + 1 };
 
-        // Shift the form values to the current row
         const nextRowValues = form.getFieldsValue([
-          `account${i + 2}`,
-          `product${i + 2}`,
-          `quantity${i + 2}`,
-          `rate${i + 2}`,
-          `detailTax${i + 2}`,
+          `product${i + 1}`,
+          `account${i + 1}`,
+          `detailDiscount${i + 1}`,
+          `quantity${i + 1}`,
+          `rate${i + 1}`,
+          `detailTax${i + 1}`,
         ]);
 
+        // shift the form values to the current row
         form.setFieldsValue({
-          [`account${i + 1}`]: nextRowValues[`account${i + 2}`],
-          [`product${i + 1}`]: nextRowValues[`product${i + 2}`],
-          [`quantity${i + 1}`]: nextRowValues[`quantity${i + 2}`],
-          [`rate${i + 1}`]: nextRowValues[`rate${i + 2}`],
-          [`detailTax${i + 1}`]: nextRowValues[`detailTax${i + 2}`],
+          [`product${i}`]: nextRowValues[`product${i + 1}`],
+          [`account${i}`]: nextRowValues[`account${i + 1}`],
+          [`detailDiscount${i}`]: nextRowValues[`detailDiscount${i + 1}`],
+          [`quantity${i}`]: nextRowValues[`quantity${i + 1}`],
+          [`rate${i}`]: nextRowValues[`rate${i + 1}`],
+          [`detailTax${i}`]: nextRowValues[`detailTax${i + 1}`],
         });
       }
 
-      // Clear the form values of the last row
+      // clear the form values of the last row
       form.setFieldsValue({
-        [`account${newData.length}`]: null,
-        [`product${newData.length}`]: null,
-        [`quantity${newData.length}`]: null,
-        [`rate${newData.length}`]: null,
-        [`detailTax${newData.length}`]: null,
+        [`product${data.length}`]: null,
+        [`account${data.length}`]: null,
+        [`detailDiscount${data.length}`]: null,
+        [`quantity${data.length}`]: null,
+        [`rate${data.length}`]: null,
+        [`detailTax${data.length}`]: null,
       });
 
       newData.pop();

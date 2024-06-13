@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  SearchOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -11,13 +15,14 @@ import {
 } from "../../utils/Notification";
 import dayjs from "dayjs";
 import { BankingTransactionMutations } from "../../graphql";
+import { CustomerSearchModal, SupplierSearchModal } from "../../components";
 const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
   transactionDate: dayjs(),
 };
 
-const TransferFromAnotherAccNew = ({
+const ExpenseNew = ({
   refetch,
   modalOpen,
   setModalOpen,
@@ -26,7 +31,12 @@ const TransferFromAnotherAccNew = ({
   accounts,
   allAccounts,
   selectedAcc,
+  allTax,
 }) => {
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
@@ -38,7 +48,7 @@ const TransferFromAnotherAccNew = ({
 
   if (form && modalOpen) {
     form.setFieldsValue({
-      toAccountId: selectedAcc.id,
+      fromAccountId: selectedAcc.id,
     });
   }
 
@@ -58,7 +68,7 @@ const TransferFromAnotherAccNew = ({
     }
   );
 
-  const handleFromAccountChange = (id) => {
+  const handleToAccountChange = (id) => {
     const fromAccountCurrency =
       selectedAcc?.currency?.id > 0
         ? selectedAcc.currency
@@ -82,8 +92,12 @@ const TransferFromAnotherAccNew = ({
 
       const input = {
         ...values,
-        transactionType: "TransferFromAnotherAccounts",
-        isMoneyIn: true,
+        supplierName: undefined,
+        customerName: undefined,
+        supplierId: selectedSupplier.id,
+        customerId: selectedCustomer.id,
+        transactionType: "Expense",
+        isMoneyIn: false,
       };
 
       await createAccountTransfer({ variables: { input } });
@@ -94,8 +108,8 @@ const TransferFromAnotherAccNew = ({
     }
   };
 
-  const transferFromForm = (
-    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
+  const createForm = (
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -128,12 +142,14 @@ const TransferFromAnotherAccNew = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
         }
-        name="toAccountId"
+        name="fromAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
         rules={[
           {
             required: true,
@@ -157,11 +173,11 @@ const TransferFromAnotherAccNew = ({
       <Form.Item
         label={
           <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
+            id="label.expenseAccount"
+            defaultMessage="Expense Account"
           />
         }
-        name="fromAccountId"
+        name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
@@ -180,7 +196,7 @@ const TransferFromAnotherAccNew = ({
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleFromAccountChange}
+          onChange={handleToAccountChange}
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
@@ -236,7 +252,7 @@ const TransferFromAnotherAccNew = ({
           showSearch
           optionFilterProp="label"
         >
-          {currencies.map((currency) => (
+          {currencies?.map((currency) => (
             <Select.Option
               key={currency.id}
               value={currency.id}
@@ -335,37 +351,24 @@ const TransferFromAnotherAccNew = ({
       >
         <Input />
       </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.bankChargesIfAny"
-            defaultMessage="Bank Charges"
-          />
-        }
-        name="bankCharges"
-        labelAlign="left"
+      {/* <Form.Item
+        label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
         labelCol={{ span: 8 }}
-        rules={[
-          () => ({
-            validator(_, value) {
-              if (!value) {
-                return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20) {
-                return Promise.reject(
-                  intl.formatMessage({
-                    id: "validation.invalidInput",
-                    defaultMessage: "Invalid Input",
-                  })
-                );
-              } else {
-                return Promise.resolve();
-              }
-            },
-          }),
-        ]}
+        labelAlign="left"
+        name="tax"
       >
-        <Input />
-      </Form.Item>
+        <Select showSearch allowClear optionFilterProp="label">
+          {allTax?.map((taxGroup) => (
+            <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+              {taxGroup.taxes.map((tax) => (
+                <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                  {tax.name}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+          ))}
+        </Select>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage
@@ -377,7 +380,79 @@ const TransferFromAnotherAccNew = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input></Input>
+        <Input maxLength={255}></Input>
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+        }
+        name="supplierName"
+        shouldUpdate
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+      >
+        <Input
+          readOnly
+          onClick={setSupplierSearchModalOpen}
+          className="search-input"
+          suffix={
+            <>
+              {selectedSupplier && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedSupplier(null);
+                    form.resetFields(["supplierName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setSupplierSearchModalOpen}
+              />
+            </>
+          }
+        />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.customer" defaultMessage="Customer" />
+        }
+        name="customerName"
+        shouldUpdate
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+      >
+        <Input
+          readOnly
+          onClick={setCustomerSearchModalOpen}
+          className="search-input"
+          suffix={
+            <>
+              {selectedCustomer && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedCustomer(null);
+                    form.resetFields(["customerName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setCustomerSearchModalOpen}
+              />
+            </>
+          }
+        />
       </Form.Item>
       <Form.Item
         label={
@@ -390,7 +465,7 @@ const TransferFromAnotherAccNew = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input.TextArea></Input.TextArea>
+        <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
       <div className="attachment-upload">
@@ -419,27 +494,41 @@ const TransferFromAnotherAccNew = ({
       </div>
     </Form>
   );
+
   return (
-    <Modal
-      width="40rem"
-      title={
-        <FormattedMessage
-          id="label.transferFromAnotherAccount"
-          defaultMessage="Transfer From Another Account"
-        />
-      }
-      okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
-      cancelText={
-        <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-      }
-      open={modalOpen}
-      onCancel={() => setModalOpen(false)}
-      onOk={form.submit}
-      confirmLoading={createLoading}
-    >
-      {transferFromForm}
-    </Modal>
+    <>
+      <Modal
+        width="40rem"
+        title={<FormattedMessage id="label.expense" defaultMessage="Expense" />}
+        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
+        cancelText={
+          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+        }
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={form.submit}
+        confirmLoading={createLoading}
+      >
+        {createForm}
+      </Modal>
+      <SupplierSearchModal
+        modalOpen={supplierSearchModalOpen}
+        setModalOpen={setSupplierSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedSupplier(record);
+          form.setFieldsValue({ supplierName: record.name });
+        }}
+      />
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedCustomer(record);
+          form.setFieldsValue({ customerName: record.name });
+        }}
+      />
+    </>
   );
 };
 
-export default TransferFromAnotherAccNew;
+export default ExpenseNew;

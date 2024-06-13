@@ -11,6 +11,7 @@ import {
   Flex,
   Row,
   Col,
+  Space,
   // Dropdown,
   // InputNumber,
   // Space,
@@ -22,6 +23,7 @@ import {
   // PlusCircleFilled,
   UploadOutlined,
   CloseOutlined,
+  PaperClipOutlined,
   // DownOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
@@ -904,11 +906,14 @@ const PaymentsMadeNew = () => {
                 </table>
               </Col>
             </Row>
-            <UploadAttachment
-              onCustomFileListChange={(customFileList) =>
-                setFileList(customFileList)
-              }
-            />
+            <Space>
+              <UploadAttachment
+                onCustomFileListChange={(customFileList) =>
+                  setFileList(customFileList)
+                }
+              />
+              <Button icon={<PaperClipOutlined />}></Button>
+            </Space>
             <div className="page-actions-bar page-actions-bar-margin">
               <Button
                 type="primary"

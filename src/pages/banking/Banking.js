@@ -36,6 +36,7 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 // import { useHistoryState } from "../../utils/HelperFunctions";
 import { BankingQueries, AccountMutations } from "../../graphql";
@@ -217,6 +218,8 @@ const Banking = () => {
     allTaxGroupsQueryRef,
   } = useOutletContext();
   // const [searchFormRef] = Form.useForm();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [createFormRef] = Form.useForm();
   const [editFormRef] = Form.useForm();
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -360,6 +363,7 @@ const Banking = () => {
   const parsedData = useMemo(() => {
     return data?.listBankingAccount?.map((item) => ({
       ...item,
+      key: item.id,
     }));
   }, [data]);
 
@@ -399,6 +403,16 @@ const Banking = () => {
     },
   ];
 
+  // Create filtered array of banking accounts
+  const bankingAccounts = useMemo(() => {
+    return parsedData?.map((account) => ({
+      name: account.name,
+      key: account.id.toString(),
+      id: account.id,
+      currency: account.currency,
+    }));
+  }, [parsedData]);
+
   const queryData = useMemo(() => {
     let queryData = parsedData ? parsedData : [];
     switch (filterAccount.key) {
@@ -414,47 +428,6 @@ const Banking = () => {
     }
     return queryData;
   }, [filterAccount, parsedData]);
-
-  const accounts = useMemo(() => {
-    if (!accountData?.listAllAccount) return [];
-
-    const groupedAccounts = accountData.listAllAccount
-      .filter(
-        (account) =>
-          account.detailType === "Cash" ||
-          account.detailType === "Bank" ||
-          account.detailType === "OtherAsset" ||
-          account.detailType === "OtherCurrentAsset" ||
-          account.detailType === "Equity"
-      )
-      .reduce((acc, account) => {
-        const { detailType } = account;
-        if (!acc[detailType]) {
-          acc[detailType] = { detailType, accounts: [] };
-        }
-        acc[detailType].accounts.push(account);
-        return acc;
-      }, {});
-
-    return Object.values(groupedAccounts);
-  }, [accountData]);
-
-  const equityAccounts = useMemo(() => {
-    if (!accountData?.listAllAccount) return [];
-
-    const groupedAccounts = accountData.listAllAccount
-      .filter((account) => account.detailType === "Equity")
-      .reduce((acc, account) => {
-        const { detailType } = account;
-        if (!acc[detailType]) {
-          acc[detailType] = { detailType, accounts: [] };
-        }
-        acc[detailType].accounts.push(account);
-        return acc;
-      }, {});
-
-    return Object.values(groupedAccounts);
-  }, [accountData]);
 
   const handleDelete = async (record) => {
     const confirmed = await deleteModal.confirm({
@@ -1146,119 +1119,6 @@ const Banking = () => {
       >
         {editForm}
       </Modal>
-      <TransferToAnotherAccNew
-        refetch={refetch}
-        modalOpen={transferToNewModalOpen}
-        setModalOpen={setTransferToNewModalOpen}
-        branches={branches}
-        currencies={currencies}
-        parsedData={parsedData}
-        accounts={accounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-      />
-      <TransferToAnotherAccEdit
-        refetch={refetch}
-        modalOpen={transferToEditModalOpen}
-        setModalOpen={setTransferToEditModalOpen}
-        branches={branches}
-        currencies={currencies}
-        parsedData={parsedData}
-        accounts={accounts}
-        allAccounts={accountData?.listAllAccount}
-        transactionRecord={transactionRecord}
-        selectedRecord={selectedRecord}
-      />
-      <TransferFromAnotherAccNew
-        refetch={refetch}
-        modalOpen={transferFromModalOpen}
-        setModalOpen={setTransferFromModalOpen}
-        branches={branches}
-        currencies={currencies}
-        parsedData={parsedData}
-        accounts={accounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-      />
-      <OwnerDrawingsNew
-        modalOpen={ownerDrawingsModalOpen}
-        setModalOpen={setOwnerDrawingsModalOpen}
-        branches={branches}
-        currencies={currencies}
-        parsedData={parsedData}
-        accounts={equityAccounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-      />
-      <OwnerContribution
-        modalOpen={ownerContributionModalOpen}
-        setModalOpen={setOwnerContributionModalOpen}
-        branches={branches}
-        currencies={currencies}
-        parsedData={parsedData}
-        accounts={equityAccounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-      />
-      <SupplierAdvance
-        refetch={refetch}
-        modalOpen={supplierAdvanceModalOpen}
-        setModalOpen={setSupplierAdvanceModalOpen}
-        branches={branches}
-        currencies={currencies}
-        paymentModes={paymentModes}
-        selectedRecord={selectedRecord}
-      />
-      <CustomerAdvance
-        refetch={refetch}
-        modalOpen={customerAdvanceModalOpen}
-        setModalOpen={setCustomerAdvanceModalOpen}
-        branches={branches}
-        currencies={currencies}
-        paymentModes={paymentModes}
-        selectedRecord={selectedRecord}
-      />
-      <PaymentRefund
-        modalOpen={paymentRefundModalOpen}
-        setModalOpen={setPaymentRefundModalOpen}
-        branches={branches}
-        currencies={currencies}
-        selectedRecord={selectedRecord}
-      />
-      <CreditNoteRefund
-        modalOpen={creditNoteRefundModalOpen}
-        setModalOpen={setCreditNoteRefundModalOpen}
-        paymentModes={paymentModes}
-      />
-      <SupplierCreditRefund
-        modalOpen={supplierCreditRefundModalOpen}
-        setModalOpen={setSupplierCreditRefundModalOpen}
-        paymentModes={paymentModes}
-      />
-      <ExpenseRefund
-        refetch={refetch}
-        modalOpen={expenseRefundModalOpen}
-        setModalOpen={setExpenseRefundModalOpen}
-        branches={branches}
-        parsedData={parsedData}
-        accounts={accounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-        allTax={allTax}
-        paymentModes={paymentModes}
-      />
-      <OtherIncome
-        refetch={refetch}
-        modalOpen={otherIncomeModalOpen}
-        setModalOpen={setOtherIncomeModalOpen}
-        branches={branches}
-        parsedData={parsedData}
-        accounts={accounts}
-        allAccounts={accountData?.listAllAccount}
-        selectedRecord={selectedRecord}
-        paymentModes={paymentModes}
-      />
-
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div
           className={
@@ -1342,45 +1202,6 @@ const Banking = () => {
                 </Col>
               </Row>
             )}
-
-            {!selectedRecord && (
-              <Dropdown
-                // onChange={(value) => console.log("value")}
-                trigger="click"
-                menu={{
-                  items: filterOptions.map((item) => ({
-                    ...item,
-                    onClick: ({ key }) => handleFilterChange(key),
-                  })),
-                  selectable: true,
-                  selectedKeys: [filterAccount.key],
-                }}
-              >
-                <div
-                  className="page-header-text"
-                  style={{
-                    cursor: "pointer",
-                    paddingLeft: "1.5rem",
-                    fontSize: "20px",
-                    fontWeight: "500",
-                    marginBlock: "1.5rem",
-                    maxWidth: "14rem",
-                  }}
-                >
-                  <Space>
-                    {filterAccount.label}
-                    <DownOutlined
-                      style={{
-                        fontSize: "0.9rem",
-                        color: "var(--primary-color)",
-                      }}
-                    />
-                  </Space>
-                </div>
-              </Dropdown>
-            )}
-            <Divider style={{ margin: 0 }} />
-
             <Table
               style={{ paddingBottom: !selectedRecord ? "5rem" : undefined }}
               className={selectedRecord ? "header-less-table" : "main-table"}
@@ -1478,7 +1299,7 @@ const Banking = () => {
               </Row>
               <div className="content-column-full-row page-with-padding">
                 <p style={{ fontSize: "var(--title-text)" }}>
-                  Account Transactions
+                  Recent Transactions
                 </p>
                 <Table
                   className="transaction-table"
@@ -1496,6 +1317,24 @@ const Banking = () => {
                   key="id"
                   pagination={false}
                 />
+                <br></br>
+                <Flex justify="end">
+                  <Button
+                    type="link"
+                    onClick={() => {
+                      navigate("allTransactions", {
+                        state: {
+                          ...location.state,
+                          from: { pathname: location.pathname },
+                          accountId: selectedRecord.id,
+                          bankingAccounts: bankingAccounts,
+                        },
+                      });
+                    }}
+                  >
+                    View all Transactions
+                  </Button>
+                </Flex>
               </div>
             </div>
             <TxnDetailColumn

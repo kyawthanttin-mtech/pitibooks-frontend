@@ -91,6 +91,7 @@ const client = new ApolloClient({
           paginateTransferOrder: relayStylePagination(),
           paginateInventoryAdjustment: relayStylePagination(),
           paginateSalesInvoice: relayStylePagination(),
+          paginateBankingTransaction: relayStylePagination(),
         },
       },
     },

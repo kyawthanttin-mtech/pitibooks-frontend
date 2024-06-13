@@ -19,7 +19,11 @@ import { ReactComponent as ImageOutlined } from "../assets/icons/ImageOutlined.s
 import { useHistoryState } from "../utils/HelperFunctions";
 const { UPLOAD_SINGLE_IMAGE, REMOVE_SINGLE_IMAGE } = ImageMutations;
 
-const UploadImage = ({ onCustomFileListChange, images = [] }) => {
+const UploadImage = ({
+  onCustomFileListChange,
+  images = [],
+  editable = true,
+}) => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const { notiApi, msgApi } = useOutletContext();
   const [customFileList, setCustomFileList] = useState(images ? images : []);
@@ -188,17 +192,23 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
                       </Space>
                     </span>
                   ) : (
-                    <a onClick={() => handleMarkAsPrimary(selectedImageIndex)}>
-                      Mark as primary
-                    </a>
+                    editable && (
+                      <a
+                        onClick={() => handleMarkAsPrimary(selectedImageIndex)}
+                      >
+                        Mark as primary
+                      </a>
+                    )
                   )}
-                  <Space size="small">
-                    {removeLoading && <LoadingOutlined />}
-                    <DeleteOutlined
-                      className="action-icon-delete"
-                      onClick={() => handleRemoveImage(selectedImageIndex)}
-                    />
-                  </Space>
+                  {editable && (
+                    <Space size="small">
+                      {removeLoading && <LoadingOutlined />}
+                      <DeleteOutlined
+                        className="action-icon-delete"
+                        onClick={() => handleRemoveImage(selectedImageIndex)}
+                      />
+                    </Space>
+                  )}
                 </div>
               </div>
               <div className="upload-list-container">
@@ -214,7 +224,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
                       <img src={file.thumbnailUrl} alt={`file-${index}`} />
                     </div>
                   ))}
-                  {visibleFileList.length >= 4 ? null : (
+                  {visibleFileList.length >= 4 || !editable ? null : (
                     <Upload
                       className="upload-button"
                       name="product"
@@ -240,6 +250,7 @@ const UploadImage = ({ onCustomFileListChange, images = [] }) => {
             customRequest={handleUpload}
             beforeUpload={beforeUpload}
             showUploadList={false}
+            disabled={!editable}
           >
             {uploadLoading ? (
               <LoadingOutlined />

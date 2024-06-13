@@ -5,39 +5,62 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
 import dayjs from "dayjs";
+import { useMutation } from "@apollo/client";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
+import { BankingTransactionMutations } from "../../graphql";
+const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  transferDate: dayjs(),
+  transactionDate: dayjs(),
 };
 
 const OwnerDrawingsNew = ({
   modalOpen,
   setModalOpen,
   branches,
-  parsedData,
+  bankingAccounts,
   accounts,
-  selectedRecord,
   allAccounts,
+  selectedAcc,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
 
   if (form && modalOpen) {
     form.setFieldsValue({
-      fromAccountId: selectedRecord.id,
+      fromAccountId: selectedAcc.id,
     });
   }
 
+  const [createAccountTransfer, { loading: createLoading }] = useMutation(
+    CREATE_BANKING_TRANSACTION,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
+          />
+        );
+        // refetch();
+      },
+    }
+  );
+
   const handleToAccountChange = (id) => {
     const fromAccountCurrency =
-      selectedRecord?.currency?.id > 0
-        ? selectedRecord.currency
+      selectedAcc?.currency?.id > 0
+        ? selectedAcc.currency
         : business.baseCurrency;
     let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
     if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
@@ -47,13 +70,30 @@ const OwnerDrawingsNew = ({
     if (fromAccountCurrency.id !== toAccountCurrency.id) {
       newCurrencies.push(toAccountCurrency);
     }
-    console.log(newCurrencies);
     setCurrencies(newCurrencies);
     form.setFieldValue("currency", null);
   };
 
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      const input = {
+        ...values,
+        transactionType: "OwnerDrawings",
+        isMoneyIn: false,
+      };
+
+      await createAccountTransfer({ variables: { input } });
+      setModalOpen(false);
+      form.resetFields();
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
   const ownerDrawingsForm = (
-    <Form form={form} initialValues={initialValues}>
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -107,7 +147,7 @@ const OwnerDrawingsNew = ({
         ]}
       >
         <Select showSearch optionFilterProp="label" disabled>
-          {parsedData?.map((acc) => (
+          {bankingAccounts?.map((acc) => (
             <Select.Option key={acc.id} value={acc.id} label={acc.name}>
               {acc.name}
             </Select.Option>
@@ -152,7 +192,7 @@ const OwnerDrawingsNew = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transferDate"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -391,6 +431,8 @@ const OwnerDrawingsNew = ({
       }
       open={modalOpen}
       onCancel={() => setModalOpen(false)}
+      onOk={form.submit}
+      confirmLoading={createLoading}
     >
       {ownerDrawingsForm}
     </Modal>

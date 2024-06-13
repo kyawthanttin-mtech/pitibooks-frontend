@@ -30,6 +30,7 @@ import {
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   CustomerSearchModal,
+  AttachFiles,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditNoteMutations, CreditNoteQueries } from "../../graphql";
@@ -666,10 +667,10 @@ const CreditNotes = () => {
                 <span>{selectedRecord.creditNoteNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

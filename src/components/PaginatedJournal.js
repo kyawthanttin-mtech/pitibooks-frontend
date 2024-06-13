@@ -31,6 +31,7 @@ import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT } from "../config/Constants";
 import JournalTemplate from "./pdfs-and-templates/accountant/JournalTemplate";
 import moment from "moment";
+import AttachFiles from "./AttachFiles";
 const compactColumns = [
   {
     title: "",
@@ -436,15 +437,10 @@ const PaginatedJournal = ({
           <Row className="content-column-header-row">
             <p className="page-header-text">{selectedRecord.journalNumber}</p>
             <div className="content-column-header-row-actions">
-              <div>
-                <PaperClipOutlined />
-                <span>
-                  <FormattedMessage
-                    id="button.attachment"
-                    defaultMessage="Attachment"
-                  />
-                </span>
-              </div>
+              <AttachFiles
+                files={selectedRecord?.documents}
+                key={selectedRecord?.key}
+              />
               <div>
                 <Button
                   icon={<CloseOutlined />}

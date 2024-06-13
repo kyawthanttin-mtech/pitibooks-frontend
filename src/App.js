@@ -106,6 +106,7 @@ import Banking from "./pages/banking/Banking";
 import PaymentsMadeEdit from "./pages/purchases/PaymentsMadeEdit";
 import PaymentsReceivedNew from "./pages/sales/PaymentsReceivedNew";
 import PaymentsReceivedEdit from "./pages/sales/PaymentsReceivedEdit";
+import { AllTransactions } from "./pages/banking";
 
 if (process.env.NODE_ENV !== "production") {
   // Adds messages only in a dev environment
@@ -198,6 +199,10 @@ const router = createHashRouter([
       {
         path: "banking",
         Component: Banking,
+      },
+      {
+        path: "banking/allTransactions",
+        Component: AllTransactions,
       },
       // Sales
       {

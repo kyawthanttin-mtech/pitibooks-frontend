@@ -29,7 +29,10 @@ import SupplierPaymentMutations from "./mutations/SupplierPaymentMutations";
 import CustomerPaymentMutations from "./mutations/CustomerPaymentMutations";
 import OpeningStockMutations from "./mutations/OpeningStockMutations";
 import TransferOrderMutations from "./mutations/TransferOrderMutations";
-import StockQueries from "./queries/StockQueries";
+import InventoryAdjustmentMutations from "./mutations/InventoryAdjustmentMutations";
+import ImageMutations from "./mutations/ImageMutations";
+import FileMutations from "./mutations/FileMutations";
+import BankingTransactionMutations from "./mutations/BankingTransactionMutations";
 
 import BankingQueries from "./queries/BankingQueries";
 import BranchQueries from "./queries/BranchQueries";
@@ -67,9 +70,8 @@ import CreditNoteQueries from "./queries/CreditNoteQueries";
 import SupplierPaymentQueries from "./queries/SupplierPaymentQueries";
 import TransferOrderQueries from "./queries/TransferOrderQueries";
 import InventoryAdjustmentQueries from "./queries/InventoryAdjustmentQueries";
-import InventoryAdjustmentMutations from "./mutations/InventoryAdjustmentMutations";
-import ImageMutations from "./mutations/ImageMutations";
-import FileMutations from "./mutations/FileMutations";
+import StockQueries from "./queries/StockQueries";
+import BankingTransactionQueries from "./queries/BankingTransationQueries";
 
 export {
   BankingQueries,
@@ -143,4 +145,6 @@ export {
   ImageMutations,
   StockQueries,
   FileMutations,
+  BankingTransactionQueries,
+  BankingTransactionMutations,
 };

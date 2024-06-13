@@ -30,16 +30,17 @@ const SalesByCustomer = () => {
       fromDate: fromDate,
       toDate: toDate,
       reportType: reportBasis,
+      branchId: 1,
     },
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
   });
-  const queryData = useMemo(() => data, [data]);
+  const queryData = useMemo(() => data?.getSalesByCustomerReport, [data]);
 
   // Calculate totals
   const totals = useMemo(() => {
-    return queryData?.getSalesByCustomerReport?.reduce(
+    return queryData?.reduce(
       (acc, curr) => {
         acc.InvoiceCount += curr.InvoiceCount || 0;
         acc.TotalSales += curr.TotalSales || 0;
@@ -48,7 +49,8 @@ const SalesByCustomer = () => {
       },
       { InvoiceCount: 0, TotalSales: 0, TotalSalesWithTax: 0 }
     );
-  }, [queryData?.getSalesByCustomerReport]);
+  }, [queryData]);
+  console.log(data);
 
   return (
     <div className="report">
@@ -98,13 +100,10 @@ const SalesByCustomer = () => {
               </tr>
             </thead>
             <tbody>
-              {queryData.length > 0 ? (
-                queryData.map((data) => {
+              {queryData?.length > 0 ? (
+                queryData?.map((data, index) => {
                   return (
-                    <tr key={data.key}>
-                      <td style={{ verticalAlign: "top" }}>
-                        {moment(data?.date).format(REPORT_DATE_FORMAT)}
-                      </td>
+                    <tr key={index}>
                       <td>{data.CustomerName}</td>
 
                       <td className="text-align-right">{data.InvoiceCount}</td>

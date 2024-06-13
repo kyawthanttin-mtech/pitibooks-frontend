@@ -449,6 +449,27 @@ const GET_SALES_BY_SALES_PERSON_REPORT = gql`
   }
 `;
 
+const GET_SALES_BY_PRODUCT_REPORT = gql`
+  query GetSalesByProductReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $branchId: Int
+  ) {
+    getSalesByProductReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      branchId: $branchId
+    ) {
+      productName
+      productSku
+      soldQty
+      totalAmount
+      totalAmountWithDiscount
+      averagePrice
+    }
+  }
+`;
+
 const GET_INVENTORY_SUMMARY_REPORT = gql`
   query GetInventorySummaryReport($toDate: Time!) {
     getInventorySummaryReport(toDate: $toDate) {
@@ -484,6 +505,7 @@ const ReportQueries = {
   GET_MOVEMENT_OF_EQUITY_REPORT,
   GET_SALES_BY_CUSTOMER_REPORT,
   GET_SALES_BY_SALES_PERSON_REPORT,
+  GET_SALES_BY_PRODUCT_REPORT,
   GET_INVENTORY_SUMMARY_REPORT,
 };
 

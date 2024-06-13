@@ -690,6 +690,7 @@ const Products = () => {
                       <UploadImage
                         images={selectedRecord.images}
                         key={selectedRecord.id}
+                        editable={false}
                       />
                     </Col>
                   </Row>

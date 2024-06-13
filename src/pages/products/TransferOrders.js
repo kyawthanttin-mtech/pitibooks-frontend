@@ -27,6 +27,7 @@ import {
   CaretRightFilled,
 } from "@ant-design/icons";
 import {
+  AttachFiles,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierSearchModal,
@@ -693,10 +694,10 @@ const TransferOrders = () => {
                 <span>{selectedRecord.orderNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
-                  <PaperClipOutlined />
-                  <span>Attachment</span>
-                </div>
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

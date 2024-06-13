@@ -2,23 +2,22 @@ import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
-import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
+import dayjs from "dayjs";
+import { BankingTransactionMutations } from "../../graphql";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import dayjs from "dayjs";
-import { BankingTransactionMutations } from "../../graphql";
+import { useMutation } from "@apollo/client";
 const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
   transactionDate: dayjs(),
 };
 
-const TransferFromAnotherAccNew = ({
-  refetch,
+const OwnerContributionNew = ({
   modalOpen,
   setModalOpen,
   branches,
@@ -59,17 +58,17 @@ const TransferFromAnotherAccNew = ({
   );
 
   const handleFromAccountChange = (id) => {
-    const fromAccountCurrency =
+    const toAccountCurrency =
       selectedAcc?.currency?.id > 0
         ? selectedAcc.currency
         : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-      toAccountCurrency = business.baseCurrency;
+    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+      fromAccountCurrency = business.baseCurrency;
     }
-    let newCurrencies = [fromAccountCurrency];
-    if (fromAccountCurrency.id !== toAccountCurrency.id) {
-      newCurrencies.push(toAccountCurrency);
+    let newCurrencies = [toAccountCurrency];
+    if (toAccountCurrency.id !== fromAccountCurrency.id) {
+      newCurrencies.push(fromAccountCurrency);
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
@@ -82,7 +81,7 @@ const TransferFromAnotherAccNew = ({
 
       const input = {
         ...values,
-        transactionType: "TransferFromAnotherAccounts",
+        transactionType: "OwnerContribution",
         isMoneyIn: true,
       };
 
@@ -94,7 +93,7 @@ const TransferFromAnotherAccNew = ({
     }
   };
 
-  const transferFromForm = (
+  const ownerContributionForm = (
     <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
@@ -338,7 +337,7 @@ const TransferFromAnotherAccNew = ({
       <Form.Item
         label={
           <FormattedMessage
-            id="label.bankChargesIfAny"
+            id="label.bankCharges"
             defaultMessage="Bank Charges"
           />
         }
@@ -424,8 +423,8 @@ const TransferFromAnotherAccNew = ({
       width="40rem"
       title={
         <FormattedMessage
-          id="label.transferFromAnotherAccount"
-          defaultMessage="Transfer From Another Account"
+          id="label.ownerContribution"
+          defaultMessage="Owner Contribution"
         />
       }
       okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -437,9 +436,9 @@ const TransferFromAnotherAccNew = ({
       onOk={form.submit}
       confirmLoading={createLoading}
     >
-      {transferFromForm}
+      {ownerContributionForm}
     </Modal>
   );
 };
 
-export default TransferFromAnotherAccNew;
+export default OwnerContributionNew;

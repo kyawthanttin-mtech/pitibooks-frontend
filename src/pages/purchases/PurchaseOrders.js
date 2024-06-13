@@ -983,8 +983,10 @@ const PurchaseOrders = () => {
                 <span>{selectedRecord.orderNumber}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <AttachFiles />
-
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
                 <div>
                   <Button
                     icon={<CloseOutlined />}

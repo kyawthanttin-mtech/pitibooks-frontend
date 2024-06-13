@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import {
   UploadOutlined,
-  CloseOutlined,
   SearchOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useMutation } from "@apollo/client";
@@ -13,65 +13,83 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-
-import { BankingMutations } from "../../graphql";
 import dayjs from "dayjs";
-import { SupplierSearchModal } from "../../components";
-const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+import { BankingTransactionMutations } from "../../graphql";
+import { CustomerSearchModal, SupplierSearchModal } from "../../components";
+const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  transferDate: dayjs(),
+  transactionDate: dayjs(),
 };
 
-const ExpenseRefund = ({
+const ExpenseEdit = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  parsedData,
+  bankingAccounts,
   accounts,
-  selectedRecord,
   allAccounts,
+  selectedAcc,
   allTax,
-  paymentModes,
+  selectedRecord,
+  setSelectedRecord,
 }) => {
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(null);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
-  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(false);
 
-  if (form && modalOpen) {
-    form.setFieldsValue({
-      toAccountId: selectedRecord.id,
-    });
-  }
+  useMemo(() => {
+    const parsedRecord =
+      form && modalOpen && selectedRecord
+        ? {
+            branchId: selectedRecord.branch?.id,
+            fromAccountId: selectedRecord.fromAccount?.id,
+            toAccountId: selectedRecord.toAccount?.id,
+            currencyId: selectedRecord.currency?.id,
+            amount: selectedRecord.amount,
+            customerName: selectedRecord.customer?.name,
+            supplierName: selectedRecord.supplier?.name,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            transactionDate: dayjs(selectedRecord.transactionDate),
+          }
+        : {};
+    setSelectedCustomer(selectedRecord?.customer || null);
+    setSelectedSupplier(selectedRecord?.supplier || null);
+    form.setFieldsValue(parsedRecord);
+  }, [form, selectedRecord, modalOpen]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_ACCOUNT_TRANSFER,
+    UPDATE_BANKING_TRANSACTION,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="account.created"
-            defaultMessage="New Account Created"
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
           />
         );
-        refetch();
+        setSelectedRecord(null);
+        // refetch();
       },
     }
   );
 
-  const handleFromAccountChange = (id) => {
+  const handleToAccountChange = (id) => {
     const fromAccountCurrency =
-      selectedRecord?.currency?.id > 0
-        ? selectedRecord.currency
+      selectedAcc?.currency?.id > 0
+        ? selectedAcc.currency
         : business.baseCurrency;
     let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
     if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
@@ -90,7 +108,19 @@ const ExpenseRefund = ({
     try {
       const values = await form.validateFields();
 
-      await createAccountTransfer({ variables: { input: values } });
+      const input = {
+        ...values,
+        supplierName: undefined,
+        customerName: undefined,
+        supplierId: selectedSupplier.id,
+        customerId: selectedCustomer.id,
+        transactionType: "Expense",
+        isMoneyIn: false,
+      };
+
+      await createAccountTransfer({
+        variables: { id: selectedRecord.id, input },
+      });
       setModalOpen(false);
       form.resetFields();
     } catch (err) {
@@ -98,8 +128,8 @@ const ExpenseRefund = ({
     }
   };
 
-  const transferFromForm = (
-    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
+  const createForm = (
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -132,12 +162,14 @@ const ExpenseRefund = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
         }
-        name="toAccountId"
+        name="fromAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
         rules={[
           {
             required: true,
@@ -151,7 +183,7 @@ const ExpenseRefund = ({
         ]}
       >
         <Select showSearch optionFilterProp="label" disabled>
-          {parsedData?.map((acc) => (
+          {bankingAccounts?.map((acc) => (
             <Select.Option key={acc.id} value={acc.id} label={acc.name}>
               {acc.name}
             </Select.Option>
@@ -161,11 +193,11 @@ const ExpenseRefund = ({
       <Form.Item
         label={
           <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
+            id="label.expenseAccount"
+            defaultMessage="Expense Account"
           />
         }
-        name="fromAccountId"
+        name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
@@ -184,7 +216,7 @@ const ExpenseRefund = ({
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleFromAccountChange}
+          onChange={handleToAccountChange}
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
@@ -199,7 +231,7 @@ const ExpenseRefund = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transferDate"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -215,24 +247,6 @@ const ExpenseRefund = ({
         ]}
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
-      </Form.Item>
-      <Form.Item
-        label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
-        labelCol={{ span: 8 }}
-        labelAlign="left"
-        name="tax"
-      >
-        <Select showSearch allowClear optionFilterProp="label">
-          {allTax?.map((taxGroup) => (
-            <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
-              {taxGroup.taxes.map((tax) => (
-                <Select.Option key={tax.id} value={tax.id} label={tax.name}>
-                  {tax.name}
-                </Select.Option>
-              ))}
-            </Select.OptGroup>
-          ))}
-        </Select>
       </Form.Item>
       <Form.Item
         label={
@@ -258,7 +272,7 @@ const ExpenseRefund = ({
           showSearch
           optionFilterProp="label"
         >
-          {currencies.map((currency) => (
+          {currencies?.map((currency) => (
             <Select.Option
               key={currency.id}
               value={currency.id}
@@ -357,24 +371,36 @@ const ExpenseRefund = ({
       >
         <Input />
       </Form.Item>
+      {/* <Form.Item
+        label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
+        labelCol={{ span: 8 }}
+        labelAlign="left"
+        name="tax"
+      >
+        <Select showSearch allowClear optionFilterProp="label">
+          {allTax?.map((taxGroup) => (
+            <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+              {taxGroup.taxes.map((tax) => (
+                <Select.Option key={tax.id} value={tax.id} label={tax.name}>
+                  {tax.name}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+          ))}
+        </Select>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage
-            id="label.receivedVia"
-            defaultMessage="Received Via"
+            id="label.referenceNumber"
+            defaultMessage="Reference #"
           />
         }
-        name="receivedVia"
+        name="referenceNumber"
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Select showSearch optionFilterProp="label">
-          {paymentModes?.map((p) => (
-            <Select.Option key={p.id} value={p.id} label={p.name}>
-              {p.name}
-            </Select.Option>
-          ))}
-        </Select>
+        <Input maxLength={255}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -389,7 +415,6 @@ const ExpenseRefund = ({
           readOnly
           onClick={setSupplierSearchModalOpen}
           className="search-input"
-          allowClear
           suffix={
             <>
               {selectedSupplier && (
@@ -415,16 +440,39 @@ const ExpenseRefund = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage
-            id="label.referenceNumber"
-            defaultMessage="Reference #"
-          />
+          <FormattedMessage id="label.customer" defaultMessage="Customer" />
         }
-        name="referenceNumber"
+        name="customerName"
+        shouldUpdate
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input></Input>
+        <Input
+          readOnly
+          onClick={setCustomerSearchModalOpen}
+          className="search-input"
+          suffix={
+            <>
+              {selectedCustomer && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedCustomer(null);
+                    form.resetFields(["customerName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setCustomerSearchModalOpen}
+              />
+            </>
+          }
+        />
       </Form.Item>
       <Form.Item
         label={
@@ -437,7 +485,7 @@ const ExpenseRefund = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input.TextArea></Input.TextArea>
+        <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
       <div className="attachment-upload">
@@ -466,16 +514,12 @@ const ExpenseRefund = ({
       </div>
     </Form>
   );
+
   return (
     <>
       <Modal
         width="40rem"
-        title={
-          <FormattedMessage
-            id="label.expenseRefund"
-            defaultMessage="Expense Refund"
-          />
-        }
+        title={<FormattedMessage id="label.expense" defaultMessage="Expense" />}
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
         cancelText={
           <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
@@ -485,7 +529,7 @@ const ExpenseRefund = ({
         onOk={form.submit}
         confirmLoading={createLoading}
       >
-        {transferFromForm}
+        {createForm}
       </Modal>
       <SupplierSearchModal
         modalOpen={supplierSearchModalOpen}
@@ -495,8 +539,16 @@ const ExpenseRefund = ({
           form.setFieldsValue({ supplierName: record.name });
         }}
       />
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedCustomer(record);
+          form.setFieldsValue({ customerName: record.name });
+        }}
+      />
     </>
   );
 };
 
-export default ExpenseRefund;
+export default ExpenseEdit;

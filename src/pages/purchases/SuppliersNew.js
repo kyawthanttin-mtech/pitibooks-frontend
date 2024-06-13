@@ -559,15 +559,6 @@ const SuppliersNew = () => {
                     labelAlign="left"
                     // labelCol={{ span: 4 }}
                     rules={[
-                      {
-                        required: true,
-                        message: (
-                          <FormattedMessage
-                            id="label.salesPrice.required"
-                            defaultMessage="Enter the Sales Price"
-                          />
-                        ),
-                      },
                       () => ({
                         validator(_, value) {
                           if (!value) {

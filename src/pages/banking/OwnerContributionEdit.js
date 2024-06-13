@@ -1,43 +1,82 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
 import dayjs from "dayjs";
+import { BankingTransactionMutations } from "../../graphql";
+import {
+  openErrorNotification,
+  openSuccessMessage,
+} from "../../utils/Notification";
+import { useMutation } from "@apollo/client";
+const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  transferDate: dayjs(),
+  transactionDate: dayjs(),
 };
 
-const OwnerContribution = ({
+const OwnerContributionEdit = ({
   modalOpen,
   setModalOpen,
   branches,
-  parsedData,
+  bankingAccounts,
   accounts,
-  selectedRecord,
   allAccounts,
+  selectedAcc,
+  selectedRecord,
+  setSelectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
 
-  if (form && modalOpen) {
-    form.setFieldsValue({
-      toAccountId: selectedRecord.id,
-    });
-  }
+  useMemo(() => {
+    const parsedRecord =
+      form && modalOpen && selectedRecord
+        ? {
+            branchId: selectedRecord.branch?.id,
+            fromAccountId: selectedRecord.fromAccount?.id,
+            toAccountId: selectedRecord.toAccount?.id,
+            currencyId: selectedRecord.currency?.id,
+            amount: selectedRecord.amount,
+            bankCharges: selectedRecord.bankCharges,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            transactionDate: dayjs(selectedRecord.transactionDate),
+          }
+        : {};
+
+    form.setFieldsValue(parsedRecord);
+  }, [form, selectedRecord, modalOpen]);
+
+  const [createAccountTransfer, { loading: createLoading }] = useMutation(
+    UPDATE_BANKING_TRANSACTION,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
+          />
+        );
+        setSelectedRecord(null);
+        // refetch();
+      },
+    }
+  );
 
   const handleFromAccountChange = (id) => {
     const toAccountCurrency =
-      selectedRecord?.currency?.id > 0
-        ? selectedRecord.currency
+      selectedAcc?.currency?.id > 0
+        ? selectedAcc.currency
         : business.baseCurrency;
     let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
     if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
@@ -52,8 +91,28 @@ const OwnerContribution = ({
     form.setFieldValue("currency", null);
   };
 
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      const input = {
+        ...values,
+        transactionType: "OwnerContribution",
+        isMoneyIn: true,
+      };
+
+      await createAccountTransfer({
+        variables: { id: selectedRecord.id, input },
+      });
+      setModalOpen(false);
+      form.resetFields();
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
   const ownerContributionForm = (
-    <Form form={form} initialValues={initialValues}>
+    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -105,7 +164,7 @@ const OwnerContribution = ({
         ]}
       >
         <Select showSearch optionFilterProp="label" disabled>
-          {parsedData?.map((acc) => (
+          {bankingAccounts?.map((acc) => (
             <Select.Option key={acc.id} value={acc.id} label={acc.name}>
               {acc.name}
             </Select.Option>
@@ -153,7 +212,7 @@ const OwnerContribution = ({
       </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transferDate"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -392,10 +451,12 @@ const OwnerContribution = ({
       }
       open={modalOpen}
       onCancel={() => setModalOpen(false)}
+      onOk={form.submit}
+      confirmLoading={createLoading}
     >
       {ownerContributionForm}
     </Modal>
   );
 };
 
-export default OwnerContribution;
+export default OwnerContributionEdit;

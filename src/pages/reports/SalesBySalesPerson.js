@@ -30,16 +30,17 @@ const SalesBySalesPerson = () => {
       fromDate: fromDate,
       toDate: toDate,
       reportType: reportBasis,
+      branchId: 1,
     },
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
   });
-  const queryData = useMemo(() => data, [data]);
+  const queryData = useMemo(() => data?.getSalesBySalesPersonReport, [data]);
 
   // Calculate totals
   const totals = useMemo(() => {
-    return queryData?.getSalesBySalesPersonReport?.reduce(
+    return queryData?.reduce(
       (acc, sp) => {
         acc.InvoiceCount += sp.InvoiceCount || 0;
         acc.TotalInvoiceSales += sp.TotalInvoiceSales || 0;
@@ -62,7 +63,7 @@ const SalesBySalesPerson = () => {
         TotalSalesWithTax: 0,
       }
     );
-  }, [queryData?.getSalesBySalesPersonReport]);
+  }, [queryData]);
 
   return (
     <div className="report">
@@ -146,23 +147,14 @@ const SalesBySalesPerson = () => {
             </thead>
             <tbody>
               {queryData && queryData?.length > 0 ? (
-                queryData?.map((data) => {
+                queryData?.map((data, index) => {
                   return (
-                    <tr key={data.salesPersonId}>
+                    <tr key={index}>
                       {/* <td style={{ verticalAlign: "top" }}>
                         {moment(data?.date).format(REPORT_DATE_FORMAT)}
                       </td> */}
                       <td>{data.SalesPersonName}</td>
-                      {/* <td>
-                          <span className="preserve-wrap"></span>
-                        </td> */}
-                      <td>
-                        {/* {data.transactionDetails && (
-                            <Tooltip title={data.transactionDetails}>
-                              <FileTextOutlined />
-                            </Tooltip>
-                          )} */}
-                      </td>
+
                       <td className="text-align-right">{data.InvoiceCount}</td>
                       <td className="text-align-right">
                         <FormattedNumber

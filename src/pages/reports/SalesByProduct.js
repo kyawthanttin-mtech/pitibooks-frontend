@@ -10,7 +10,7 @@ import moment from "moment";
 import ReportHeader from "../../components/ReportHeader";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 
-const { GET_ACCOUNT_TYPE_SUMMARY_REPORT } = ReportQueries;
+const { GET_SALES_BY_PRODUCT_REPORT } = ReportQueries;
 
 const SalesByProduct = () => {
   const { notiApi, business } = useOutletContext();
@@ -22,7 +22,7 @@ const SalesByProduct = () => {
     data,
     loading: queryLoading,
     refetch,
-  } = useQuery(GET_ACCOUNT_TYPE_SUMMARY_REPORT, {
+  } = useQuery(GET_SALES_BY_PRODUCT_REPORT, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
@@ -30,14 +30,33 @@ const SalesByProduct = () => {
       fromDate: fromDate,
       toDate: toDate,
       reportType: reportBasis,
+      branchId: 1,
     },
     onError(err) {
       openErrorNotification(notiApi, err.message);
     },
   });
-  const queryData = useMemo(() => data, [data]);
+  const queryData = useMemo(() => data?.getSalesByProductReport, [data]);
 
-  const pageData = [];
+  // Calculate totals
+  const totals = useMemo(() => {
+    return queryData?.reduce(
+      (acc, curr) => {
+        acc.soldQty += curr.soldQty || 0;
+        acc.totalAmount += curr.totalAmount || 0;
+        acc.totalAmountWithDiscount += curr.totalAmountWithDiscount || 0;
+        acc.averagePrice += curr.averagePrice || 0;
+        return acc;
+      },
+      {
+        soldQty: 0,
+        totalAmount: 0,
+        totalAmountWithDiscount: 0,
+        averagePrice: 0,
+      }
+    );
+  }, [queryData]);
+  console.log(data);
 
   return (
     <div className="report">
@@ -72,7 +91,7 @@ const SalesByProduct = () => {
                     defaultMessage="productName"
                   />
                 </th>
-                <th style={{ width: "150px" }}>
+                <th className="text-align-left" style={{ width: "150px" }}>
                   <FormattedMessage id="label.sku" defaultMessage="SKU" />
                 </th>
                 <th className="text-align-right" style={{ width: "150px" }}>
@@ -86,6 +105,12 @@ const SalesByProduct = () => {
                 </th>
                 <th className="text-align-right" style={{ width: "150px" }}>
                   <FormattedMessage
+                    id="label.amountWithDiscount"
+                    defaultMessage="Amount with discount"
+                  />
+                </th>
+                <th className="text-align-right" style={{ width: "150px" }}>
+                  <FormattedMessage
                     id="label.averagePrice"
                     defaultMessage="Average Price"
                   />
@@ -93,104 +118,112 @@ const SalesByProduct = () => {
               </tr>
             </thead>
             <tbody>
-              {pageData.length > 0 ? (
-                pageData.map((data) => {
+              {queryData?.length > 0 ? (
+                queryData?.map((data, index) => {
                   return (
-                    <tr key={data.key}>
-                      <td style={{ verticalAlign: "top" }}>
-                        {moment(data?.date).format(REPORT_DATE_FORMAT)}
-                      </td>
-                      <td>{data.account}</td>
-                      {/* <td>
-                          <span className="preserve-wrap"></span>
-                        </td> */}
-                      <td>
-                        {/* {data.transactionDetails && (
-                            <Tooltip title={data.transactionDetails}>
-                              <FileTextOutlined />
-                            </Tooltip>
-                          )} */}
-                      </td>
-                      <td>{data.referenceType}</td>
-                      <td>{data.transactionNumber}</td>
-                      <td>{data.referenceNumber}</td>
+                    <tr key={index}>
+                      <td>{data.productName}</td>
+                      <td>{data.productSku}</td>
+                      <td className="text-align-right">{data.soldQty}</td>
                       <td className="text-align-right">
-                        <a href="/">
-                          {data.baseDebit !== 0 && (
-                            <FormattedNumber
-                              value={data.baseDebit}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          )}
-                        </a>
+                        <FormattedNumber
+                          value={data.totalAmount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
                       </td>
                       <td className="text-align-right">
-                        <a href="/">
-                          {data.baseCredit !== 0 && (
-                            <FormattedNumber
-                              value={data.baseCredit}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          )}
-                        </a>
+                        <FormattedNumber
+                          value={data.totalAmountWithDiscount}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
                       </td>
                       <td className="text-align-right">
-                        <a href="/">
-                          {data.baseDebit === 0 ? (
-                            <FormattedNumber
-                              value={data.baseCredit}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          ) : (
-                            <FormattedNumber
-                              value={data.baseDebit}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          )}
-                          {data.baseDebit === 0 ? " Cr" : " Dr"}
-                        </a>
+                        <FormattedNumber
+                          value={data.averagePrice}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr className="empty-row">
-                  <td colSpan={9} style={{ border: "none" }}>
+                  <td colSpan={6} style={{ border: "none" }}>
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </td>
                 </tr>
               )}
               <tr className="mute-hover">
-                <td colSpan="5" style={{ padding: 0 }}>
+                <td colSpan="6" style={{ padding: 0 }}>
                   <Divider style={{ margin: 0 }} />
                 </td>
               </tr>
               <tr>
                 <td>
-                  <FormattedMessage
-                    id="label.total"
-                    defaultMessage="Total"
-                  ></FormattedMessage>
+                  <b>
+                    <FormattedMessage
+                      id="label.total"
+                      defaultMessage="Total"
+                    ></FormattedMessage>
+                  </b>
                 </td>
                 <td></td>
-                <td className="text-align-right">0</td>
-                <td className="text-align-right">0</td>
-                <td className="text-align-right"></td>
+                <td className="text-align-right">
+                  <b>
+                    <FormattedNumber
+                      value={totals?.soldQty || 0}
+                      style="decimal"
+                      // minimumFractionDigits={
+                      //   business.baseCurrency.decimalPlaces
+                      // }
+                    />
+                  </b>
+                </td>
+                <td className="text-align-right">
+                  <b>
+                    <FormattedNumber
+                      value={totals?.totalAmount || 0}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
+                  </b>
+                </td>
+                <td className="text-align-right">
+                  <b>
+                    <FormattedNumber
+                      value={totals?.totalAmountWithDiscount || 0}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
+                  </b>
+                </td>
+                <td className="text-align-right">
+                  {/* <b>
+                    <FormattedNumber
+                      value={totals?.averagePrice || 0}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
+                  </b> */}
+                </td>
               </tr>
               <tr className="mute-hover">
-                <td colSpan="5" style={{ padding: 0 }}>
+                <td colSpan="6" style={{ padding: 0 }}>
                   <Divider style={{ margin: 0 }} />
                 </td>
               </tr>
