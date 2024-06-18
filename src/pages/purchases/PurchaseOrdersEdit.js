@@ -177,7 +177,7 @@ const PurchaseOrdersNew = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.orderDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType
   );
@@ -861,14 +861,24 @@ const PurchaseOrdersNew = () => {
   };
 
   const handleRemoveSelectedItem = (idToRemove, rowKey) => {
-    const updatedData = data.map((dataItem) => {
+    const maxKey = Math.max(...data.map((item) => item.key));
+
+    let newData = data.map((dataItem) => {
       if (dataItem.id === idToRemove) {
-        return { key: dataItem.key, amount: 0 };
+        if (dataItem.detailId) {
+          const newItem = { ...dataItem, key: maxKey + 1, isDeletedItem: true };
+
+          return [newItem, { key: dataItem.key, amount: 0 }];
+        } else {
+          return { key: dataItem.key, amount: 0 };
+        }
       }
       return dataItem;
     });
-    recalculateTotalAmount(updatedData, isTaxInclusive, isAtTransactionLevel);
-    setData(updatedData);
+    newData = newData.flat();
+
+    recalculateTotalAmount(newData, isTaxInclusive, isAtTransactionLevel);
+    setData(newData);
     form.setFieldsValue({
       [`product${rowKey}`]: "",
       [`account${rowKey}`]: "",
@@ -1106,12 +1116,14 @@ const PurchaseOrdersNew = () => {
               }}
             >
               <Flex justify="space-between">
-                {text}
-                <CloseCircleOutlined
-                  onClick={() =>
-                    handleRemoveSelectedItem(record.id, record.key)
-                  }
-                />
+                {text}{" "}
+                {!record.detailId && (
+                  <CloseCircleOutlined
+                    onClick={() =>
+                      handleRemoveSelectedItem(record.id, record.key)
+                    }
+                  />
+                )}
               </Flex>
               <div>
                 {record.sku ? (

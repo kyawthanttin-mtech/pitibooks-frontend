@@ -11,6 +11,7 @@ import {
 } from "../../utils/Notification";
 import dayjs from "dayjs";
 import { BankingTransactionMutations } from "../../graphql";
+import { UploadAttachment } from "../../components";
 const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
@@ -26,11 +27,12 @@ const TransferToAnotherAccEdit = ({
   allAccounts,
   selectedRecord,
   selectedAcc,
-  setSelectedRecord,
+  setSelectedRecord,setSelectedRowIndex
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
+  const [fileList, setFileList] = useState(null);
   const [currencies, setCurrencies] = useState([
     selectedAcc?.currency?.id > 0
       ? selectedAcc.currency
@@ -43,10 +45,10 @@ const TransferToAnotherAccEdit = ({
     const parsedRecord =
       form && modalOpen && selectedRecord
         ? {
-            branchId: selectedRecord.branch?.id,
-            fromAccountId: selectedRecord.fromAccount?.id,
-            toAccountId: selectedRecord.toAccount?.id,
-            currencyId: selectedRecord.currency?.id,
+            branchId: selectedRecord.branch?.id || null,
+            fromAccountId: selectedRecord.fromAccount?.id || null,
+            toAccountId: selectedRecord.toAccount?.id || null,
+            currencyId: selectedRecord.currency?.id || null,
             amount: selectedRecord.amount,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
@@ -69,8 +71,8 @@ const TransferToAnotherAccEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        setSelectedRecord(null);
-        // refetch();
+        setSelectedRecord(null);setSelectedRowIndex(0)
+        refetch();
       },
     }
   );
@@ -96,11 +98,17 @@ const TransferToAnotherAccEdit = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
+      }));
 
       const input = {
         ...values,
         transactionType: "TransferToAnotherAccount",
         isMoneyIn: false,
+        documents: fileUrls,
       };
 
       await updateAccountTransfer({
@@ -411,30 +419,9 @@ const TransferToAnotherAccEdit = ({
         <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+      />
     </Form>
   );
 

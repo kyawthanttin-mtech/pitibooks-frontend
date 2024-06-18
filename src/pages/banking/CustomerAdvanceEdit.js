@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import {
   UploadOutlined,
@@ -14,46 +14,194 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 
-import { BankingMutations } from "../../graphql";
+import { BankingTransactionMutations } from "../../graphql";
 import dayjs from "dayjs";
-import { CustomerSearchModal } from "../../components";
-const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+import { CustomerSearchModal, UploadAttachment } from "../../components";
+const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  date: dayjs(),
+  transactionDate: dayjs(),
 };
-const CustomerAdvance = ({
+const CustomerAdvanceEdit = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  selectedRecord,
+  selectedAcc,
   paymentModes,
+  allAccounts,
+  accounts,
+  bankingAccounts,
+  selectedRecord,
+  setSelectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
+  const [fileList, setFileList] = useState(null);
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(false);
 
+  const handleToAccountChange = useCallback(
+    (id) => {
+      const fromAccountCurrency =
+        selectedAcc?.currency?.id > 0
+          ? selectedAcc.currency
+          : business.baseCurrency;
+      let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
+        toAccountCurrency = business.baseCurrency;
+      }
+      let newCurrencies = [fromAccountCurrency];
+      if (fromAccountCurrency.id !== toAccountCurrency.id) {
+        newCurrencies.push(toAccountCurrency);
+      }
+      console.log(newCurrencies);
+      setCurrencies(newCurrencies);
+      form.setFieldValue("currency", null);
+    },
+    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+  );
+
+  useMemo(() => {
+    const parsedRecord =
+      form && modalOpen && selectedRecord
+        ? {
+            branchId: selectedRecord.branch?.id || null,
+            fromAccountId: selectedRecord.fromAccount?.id || null,
+            toAccountId: selectedRecord.toAccount?.id || null,
+            currencyId: selectedRecord.currency?.id || null,
+            amount: selectedRecord.amount,
+            bankCharges: selectedRecord.bankCharges,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            transactionDate: dayjs(selectedRecord.transactionDate),
+            paymentModeId: selectedRecord.paymentMode?.id || null,
+            customerName: selectedRecord.customer?.name,
+          }
+        : {};
+    setSelectedCustomer(selectedRecord?.customer || null);
+    form.setFieldsValue(parsedRecord);
+    handleToAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleToAccountChange]);
+
+  const [createAccountTransfer, { loading: createLoading }] = useMutation(
+    UPDATE_BANKING_TRANSACTION,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
+          />
+        );
+        refetch();
+      },
+    }
+  );
+
   const handleSubmit = async () => {
-    // try {
-    //   const values = await form.validateFields();
-    //   await createAccountTransfer({ variables: { input: values } });
-    //   setModalOpen(false);
-    //   form.resetFields();
-    // } catch (err) {
-    //   openErrorNotification(notiApi, err.message);
-    // }
+    try {
+      const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
+      }));
+
+      const input = {
+        ...values,
+        customerName: undefined,
+        customerId: selectedCustomer?.id,
+        transactionType: "CustomerAdvance",
+        isMoneyIn: true,
+        documents: fileUrls,
+      };
+
+      await createAccountTransfer({
+        variables: { id: selectedRecord.id, input },
+      });
+      setModalOpen(false);
+      form.resetFields();
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
   };
 
-  const advanceForm = (
+  const transferToForm = (
     <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
+      <Form.Item
+        label={
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
+        }
+        name="fromAccountId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select showSearch optionFilterProp="label" disabled>
+          {bankingAccounts?.map((acc) => (
+            <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+              {acc.name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+        }
+        name="toAccountId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select
+          showSearch
+          optionFilterProp="label"
+          onChange={handleToAccountChange}
+        >
+          {accounts.map((group) => (
+            <Select.OptGroup key={group.detailType} label={group.detailType}>
+              {group.accounts.map((acc) => (
+                <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+                  {acc.name}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+          ))}
+        </Select>
+      </Form.Item>
       <Form.Item
         label={
           <FormattedMessage id="label.customer" defaultMessage="Customer" />
@@ -135,7 +283,7 @@ const CustomerAdvance = ({
 
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="date"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -190,6 +338,41 @@ const CustomerAdvance = ({
       </Form.Item>
       <Form.Item
         label={
+          <FormattedMessage id="label.currency" defaultMessage="Currency" />
+        }
+        name="currencyId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.currency.required"
+                defaultMessage="Select the Currency"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select
+          //   onChange={(value) => setSelectedCurrency(value)}
+          showSearch
+          optionFilterProp="label"
+        >
+          {currencies?.map((currency) => (
+            <Select.Option
+              key={currency.id}
+              value={currency.id}
+              label={currency.name + currency.symbol}
+            >
+              {currency.name} ({currency.symbol})
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
           <FormattedMessage
             id="label.bankCharges"
             defaultMessage="Bank Charges"
@@ -221,12 +404,9 @@ const CustomerAdvance = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage
-            id="label.receivedVia"
-            defaultMessage="Received Via"
-          />
+          <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
         }
-        name="receivedVia"
+        name="paymentModeId"
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
@@ -265,30 +445,9 @@ const CustomerAdvance = ({
         <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+      />
     </Form>
   );
 
@@ -310,9 +469,9 @@ const CustomerAdvance = ({
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={form.submit}
-        // confirmLoading={createLoading}
+        confirmLoading={createLoading}
       >
-        {advanceForm}
+        {transferToForm}
       </Modal>
       <CustomerSearchModal
         modalOpen={customerSearchModalOpen}
@@ -326,4 +485,4 @@ const CustomerAdvance = ({
   );
 };
 
-export default CustomerAdvance;
+export default CustomerAdvanceEdit;

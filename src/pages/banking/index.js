@@ -7,9 +7,10 @@ import OwnerContributionNew from "./OwnerContributionNew";
 import PaymentRefund from "./PaymentRefund";
 import CreditNoteRefund from "./CreditNoteRefund";
 import SupplierCreditRefund from "./SupplierCreditRefund";
-import SupplierAdvance from "./SupplierAdvance";
-import CustomerAdvance from "./CustomerAdvance";
-import OtherIncome from "./OtherIncome";
+import SupplierAdvanceNew from "./SupplierAdvanceNew";
+import CustomerAdvanceNew from "./CustomerAdvanceNew";
+import OtherIncomeNew from "./OtherIncomeNew";
+import OtherIncomeEdit from "./OtherIncomeEdit";
 import ExpenseRefundNew from "./ExpenseRefundNew";
 import TxnDetailColumn from "./TxnDetailColumn";
 import AllTransactions from "./AllTransactions";
@@ -17,6 +18,10 @@ import OwnerContributionEdit from "./OwnerContributionEdit";
 import ExpenseNew from "./ExpenseNew";
 import ExpenseEdit from "./ExpenseEdit";
 import ExpenseRefundEdit from "./ExpenseRefundEdit";
+import SupplierAdvanceEdit from "./SupplierAdvanceEdit";
+import CustomerAdvanceEdit from "./CustomerAdvanceEdit";
+import InterestIncomeNew from "./InterestIncomeNew";
+import InterestIncomeEdit from "./InterestIncomeEdit";
 
 export {
   OwnerDrawingsNew,
@@ -28,9 +33,10 @@ export {
   PaymentRefund,
   CreditNoteRefund,
   SupplierCreditRefund,
-  SupplierAdvance,
-  CustomerAdvance,
-  OtherIncome,
+  SupplierAdvanceNew,
+  CustomerAdvanceNew,
+  OtherIncomeNew,
+  OtherIncomeEdit,
   ExpenseRefundNew,
   TxnDetailColumn,
   AllTransactions,
@@ -38,4 +44,8 @@ export {
   ExpenseNew,
   ExpenseEdit,
   ExpenseRefundEdit,
+  SupplierAdvanceEdit,
+  CustomerAdvanceEdit,
+  InterestIncomeNew,
+  InterestIncomeEdit,
 };

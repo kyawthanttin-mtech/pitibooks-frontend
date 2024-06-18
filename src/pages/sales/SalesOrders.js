@@ -124,41 +124,6 @@ const closedActionItems = [
   },
 ];
 
-const billTableColumns = [
-  {
-    title: "#Bill",
-    dataIndex: "billNumber",
-    key: "billNumber",
-  },
-  {
-    title: "Date",
-    dataIndex: "billDate",
-    key: "billDate",
-    render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
-  },
-  {
-    title: "Status",
-    dataIndex: "currentStatus",
-    key: "currentStatus",
-  },
-  {
-    title: "Due Date",
-    dataIndex: "billDueDate",
-    key: "billDueDate",
-    render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
-  },
-  {
-    title: "Amount",
-    dataIndex: "billTotalAmount",
-    key: "billTotalAmount",
-  },
-  {
-    title: "Balance Due",
-    dataIndex: "balanceDue",
-    key: "balanceDue",
-  },
-];
-
 const SalesOrders = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
@@ -602,6 +567,65 @@ const SalesOrders = () => {
           </div>
         );
       },
+    },
+  ];
+
+  const billTableColumns = [
+    {
+      title: "Invoice#",
+      dataIndex: "billNumber",
+      key: "billNumber",
+    },
+    {
+      title: "Date",
+      dataIndex: "billDate",
+      key: "billDate",
+      render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Status",
+      dataIndex: "currentStatus",
+      key: "currentStatus",
+    },
+    {
+      title: "Due Date",
+      dataIndex: "billDueDate",
+      key: "billDueDate",
+      render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Amount",
+      dataIndex: "invoiceTotalAmount",
+      key: "invoiceTotalAmount",
+      align: "right",
+      render: (_, record) => (
+        <>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record?.invoiceTotalAmount || 0}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      title: "Remaining Balance",
+      dataIndex: "balanceDue",
+      key: "balanceDue",
+      align: "right",
+      render: (_, record) => (
+        <>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={
+              record?.invoiceTotalAmount - record?.invoiceTotalPaidAmount || 0
+            }
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+        </>
+      ),
     },
   ];
 
@@ -1120,7 +1144,7 @@ const SalesOrders = () => {
                       <Table
                         className="bill-table"
                         columns={billTableColumns}
-                        dataSource={[selectedRecord.bill]}
+                        dataSource={[selectedRecord.invoice]}
                         pagination={false}
                       />
                     </div>

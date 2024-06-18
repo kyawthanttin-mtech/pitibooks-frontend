@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  SearchOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -10,50 +14,52 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 
-import { BankingMutations } from "../../graphql";
+import { BankingTransactionMutations } from "../../graphql";
 import dayjs from "dayjs";
-const { CREATE_ACCOUNT_TRANSFER } = BankingMutations;
+import { CustomerSearchModal, UploadAttachment } from "../../components";
+const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
-  transferDate: dayjs(),
+  transactionDate: dayjs(),
 };
-
-const OtherIncome = ({
+const CustomerAdvanceNew = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  parsedData,
-  accounts,
-  selectedRecord,
-  allAccounts,
-  allTax,
+  selectedAcc,
   paymentModes,
+  allAccounts,
+  accounts,
+  bankingAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [currencies, setCurrencies] = useState([
-    selectedRecord?.currency?.id > 0
-      ? selectedRecord.currency
+    selectedAcc?.currency?.id > 0
+      ? selectedAcc.currency
       : business.baseCurrency,
   ]);
+  const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(false);
+  const [fileList, setFileList] = useState(null);
 
   if (form && modalOpen) {
     form.setFieldsValue({
-      toAccountId: selectedRecord.id,
+      fromAccountId: selectedAcc.id,
     });
   }
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_ACCOUNT_TRANSFER,
+    CREATE_BANKING_TRANSACTION,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="account.created"
-            defaultMessage="New Account Created"
+            id="transaction.recorded"
+            defaultMessage="Transaction Recorded"
           />
         );
         refetch();
@@ -61,10 +67,10 @@ const OtherIncome = ({
     }
   );
 
-  const handleFromAccountChange = (id) => {
+  const handleToAccountChange = (id) => {
     const fromAccountCurrency =
-      selectedRecord?.currency?.id > 0
-        ? selectedRecord.currency
+      selectedAcc?.currency?.id > 0
+        ? selectedAcc.currency
         : business.baseCurrency;
     let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
     if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
@@ -82,8 +88,20 @@ const OtherIncome = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+      }));
 
-      await createAccountTransfer({ variables: { input: values } });
+      const input = {
+        ...values,
+        customerName: undefined,
+        customerId: selectedCustomer?.id,
+        transactionType: "CustomerAdvance",
+        isMoneyIn: true,
+        documents: fileUrls,
+      };
+
+      await createAccountTransfer({ variables: { input } });
       setModalOpen(false);
       form.resetFields();
     } catch (err) {
@@ -91,8 +109,122 @@ const OtherIncome = ({
     }
   };
 
-  const transferFromForm = (
-    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
+  const transferToForm = (
+    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
+      <Form.Item
+        label={
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
+        }
+        name="fromAccountId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select showSearch optionFilterProp="label" disabled>
+          {bankingAccounts?.map((acc) => (
+            <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+              {acc.name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+        }
+        name="toAccountId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.account.required"
+                defaultMessage="Select the Account"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select
+          showSearch
+          optionFilterProp="label"
+          onChange={handleToAccountChange}
+        >
+          {accounts.map((group) => (
+            <Select.OptGroup key={group.detailType} label={group.detailType}>
+              {group.accounts.map((acc) => (
+                <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+                  {acc.name}
+                </Select.Option>
+              ))}
+            </Select.OptGroup>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.customer" defaultMessage="Customer" />
+        }
+        name="customerName"
+        shouldUpdate
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.customer.required"
+                defaultMessage="Select the Customer"
+              />
+            ),
+          },
+        ]}
+      >
+        <Input
+          readOnly
+          onClick={setCustomerSearchModalOpen}
+          className="search-input"
+          allowClear
+          suffix={
+            <>
+              {selectedCustomer && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedCustomer(null);
+                    form.resetFields(["customerName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setCustomerSearchModalOpen}
+              />
+            </>
+          }
+        />
+      </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -123,76 +255,10 @@ const OtherIncome = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
-        }
-        name="toAccountId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.account.required"
-                defaultMessage="Select the Account"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select showSearch optionFilterProp="label" disabled>
-          {parsedData?.map((acc) => (
-            <Select.Option key={acc.id} value={acc.id} label={acc.name}>
-              {acc.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
-          />
-        }
-        name="fromAccountId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.account.required"
-                defaultMessage="Select the Account"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select
-          showSearch
-          optionFilterProp="label"
-          onChange={handleFromAccountChange}
-        >
-          {accounts.map((group) => (
-            <Select.OptGroup key={group.detailType} label={group.detailType}>
-              {group.accounts.map((acc) => (
-                <Select.Option key={acc.id} value={acc.id} label={acc.name}>
-                  {acc.name}
-                </Select.Option>
-              ))}
-            </Select.OptGroup>
-          ))}
-        </Select>
-      </Form.Item>
+
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transferDate"
+        name="transactionDate"
         labelAlign="left"
         labelCol={{ span: 8 }}
         rules={[
@@ -210,94 +276,6 @@ const OtherIncome = ({
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
 
-      <Form.Item
-        label={
-          <FormattedMessage id="label.currency" defaultMessage="Currency" />
-        }
-        name="currencyId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.currency.required"
-                defaultMessage="Select the Currency"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select
-          //   onChange={(value) => setSelectedCurrency(value)}
-          showSearch
-          optionFilterProp="label"
-        >
-          {currencies.map((currency) => (
-            <Select.Option
-              key={currency.id}
-              value={currency.id}
-              label={currency.name + currency.symbol}
-            >
-              {currency.name} ({currency.symbol})
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
-                />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
-
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"
@@ -335,12 +313,75 @@ const OtherIncome = ({
       </Form.Item>
       <Form.Item
         label={
+          <FormattedMessage id="label.currency" defaultMessage="Currency" />
+        }
+        name="currencyId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.currency.required"
+                defaultMessage="Select the Currency"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select
+          //   onChange={(value) => setSelectedCurrency(value)}
+          showSearch
+          optionFilterProp="label"
+        >
+          {currencies?.map((currency) => (
+            <Select.Option
+              key={currency.id}
+              value={currency.id}
+              label={currency.name + currency.symbol}
+            >
+              {currency.name} ({currency.symbol})
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
           <FormattedMessage
-            id="label.receivedVia"
-            defaultMessage="Received Via"
+            id="label.bankCharges"
+            defaultMessage="Bank Charges"
           />
         }
-        name="receivedVia"
+        name="bankCharges"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          () => ({
+            validator(_, value) {
+              if (!value) {
+                return Promise.resolve();
+              } else if (isNaN(value) || value.length > 20) {
+                return Promise.reject(
+                  intl.formatMessage({
+                    id: "validation.invalidInput",
+                    defaultMessage: "Invalid Input",
+                  })
+                );
+              } else {
+                return Promise.resolve();
+              }
+            },
+          }),
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
+        }
+        name="paymentModeId"
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
@@ -352,7 +393,6 @@ const OtherIncome = ({
           ))}
         </Select>
       </Form.Item>
-
       <Form.Item
         label={
           <FormattedMessage
@@ -364,7 +404,7 @@ const OtherIncome = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input></Input>
+        <Input maxLength={255}></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -377,43 +417,24 @@ const OtherIncome = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input.TextArea></Input.TextArea>
+        <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+      />
     </Form>
   );
+
   return (
     <>
       <Modal
+        con
         width="40rem"
         title={
           <FormattedMessage
-            id="label.otherIncome"
-            defaultMessage="Other Income"
+            id="label.customerAdvance"
+            defaultMessage="Customer Advance"
           />
         }
         okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -425,10 +446,18 @@ const OtherIncome = ({
         onOk={form.submit}
         confirmLoading={createLoading}
       >
-        {transferFromForm}
+        {transferToForm}
       </Modal>
+      <CustomerSearchModal
+        modalOpen={customerSearchModalOpen}
+        setModalOpen={setCustomerSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedCustomer(record);
+          form.setFieldsValue({ customerName: record.name });
+        }}
+      />
     </>
   );
 };
 
-export default OtherIncome;
+export default CustomerAdvanceNew;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -11,6 +11,7 @@ import {
 } from "../../utils/Notification";
 import dayjs from "dayjs";
 import { BankingTransactionMutations } from "../../graphql";
+import { UploadAttachment } from "../../components";
 const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
@@ -28,24 +29,47 @@ const TransferFromAnotherAccEdit = ({
   selectedAcc,
   selectedRecord,
   setSelectedRecord,
+  setSelectedRowIndex,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
+  const [fileList, setFileList] = useState(null);
   const [currencies, setCurrencies] = useState([
     selectedAcc?.currency?.id > 0
       ? selectedAcc.currency
       : business.baseCurrency,
   ]);
 
+  const handleFromAccountChange = useCallback(
+    (id) => {
+      const toAccountCurrency =
+        selectedAcc?.currency?.id > 0
+          ? selectedAcc.currency
+          : business.baseCurrency;
+      let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+        fromAccountCurrency = business.baseCurrency;
+      }
+      let newCurrencies = [toAccountCurrency];
+      if (toAccountCurrency.id !== fromAccountCurrency.id) {
+        newCurrencies.push(fromAccountCurrency);
+      }
+      console.log(newCurrencies);
+      setCurrencies(newCurrencies);
+      form.setFieldValue("currency", null);
+    },
+    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+  );
+
   useMemo(() => {
     const parsedRecord =
       form && modalOpen && selectedRecord
         ? {
-            branchId: selectedRecord.branch?.id,
-            fromAccountId: selectedRecord.fromAccount?.id,
-            toAccountId: selectedRecord.toAccount?.id,
-            currencyId: selectedRecord.currency?.id,
+            branchId: selectedRecord.branch?.id || null,
+            fromAccountId: selectedRecord.fromAccount?.id || null,
+            toAccountId: selectedRecord.toAccount?.id || null,
+            currencyId: selectedRecord.currency?.id || null,
             amount: selectedRecord.amount,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
@@ -55,7 +79,8 @@ const TransferFromAnotherAccEdit = ({
         : {};
 
     form.setFieldsValue(parsedRecord);
-  }, [form, selectedRecord, modalOpen]);
+    handleFromAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleFromAccountChange]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
     UPDATE_BANKING_TRANSACTION,
@@ -69,37 +94,26 @@ const TransferFromAnotherAccEdit = ({
           />
         );
         setSelectedRecord(null);
-        // refetch();
+        setSelectedRowIndex(0);
+        refetch();
       },
     }
   );
 
-  const handleFromAccountChange = (id) => {
-    const fromAccountCurrency =
-      selectedAcc?.currency?.id > 0
-        ? selectedAcc.currency
-        : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-      toAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [fromAccountCurrency];
-    if (fromAccountCurrency.id !== toAccountCurrency.id) {
-      newCurrencies.push(toAccountCurrency);
-    }
-    console.log(newCurrencies);
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
-  };
-
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
+      }));
 
       const input = {
         ...values,
         transactionType: "TransferFromAnotherAccounts",
         isMoneyIn: true,
+        documents: fileUrls,
       };
 
       await createAccountTransfer({
@@ -411,30 +425,9 @@ const TransferFromAnotherAccEdit = ({
         <Input.TextArea></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+      />
     </Form>
   );
   return (

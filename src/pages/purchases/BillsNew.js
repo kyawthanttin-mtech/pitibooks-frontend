@@ -177,7 +177,7 @@ const BillsNew = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.orderDiscount || record?.billDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType || record?.billDiscountType || "P"
   );

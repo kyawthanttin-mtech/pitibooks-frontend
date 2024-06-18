@@ -123,8 +123,13 @@ const paidActionItems = [
 
 const Bills = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -1016,7 +1021,8 @@ const Bills = () => {
                     <Statistic
                       title="Total Outstanding Payables"
                       value={billTotalSummary?.totalOutstandingPayable}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -1030,8 +1036,8 @@ const Bills = () => {
                     <Statistic
                       title="Due Today"
                       value={billTotalSummary?.dueToday}
-                      precision={1}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -1045,7 +1051,8 @@ const Bills = () => {
                     <Statistic
                       title="Due Within 30 Days"
                       value={billTotalSummary?.dueWithin30Days}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -1059,7 +1066,8 @@ const Bills = () => {
                     <Statistic
                       title="Overdue Bills"
                       value={billTotalSummary?.totalOverdue}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -1429,6 +1437,7 @@ const Bills = () => {
             <RecordBillPayment
               refetch={() => {
                 refetch();
+                setCurrentPage(1);
                 setSelectedRecord(null);
               }}
               branches={branches}

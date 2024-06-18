@@ -127,8 +127,13 @@ const paidActionItems = [
 
 const Invoices = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -358,8 +363,8 @@ const Invoices = () => {
     const confirmed = await deleteModal.confirm({
       content: (
         <FormattedMessage
-          id="confirm.confirmBill"
-          defaultMessage="Are you sure to confirm bill?"
+          id="confirm.confirmInvoice"
+          defaultMessage="Are you sure to confirm invoice?"
         />
       ),
     });
@@ -872,7 +877,8 @@ const Invoices = () => {
                     <Statistic
                       title="Total Outstanding Receivables"
                       value={invoiceTotalSummary?.totalOutstandingReceivable}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -886,7 +892,8 @@ const Invoices = () => {
                     <Statistic
                       title="Due Today"
                       value={invoiceTotalSummary?.dueToday}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -900,7 +907,8 @@ const Invoices = () => {
                     <Statistic
                       title="Due Within 30 Days"
                       value={invoiceTotalSummary?.dueWithin30Days}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -914,7 +922,8 @@ const Invoices = () => {
                     <Statistic
                       title="Total Overdue"
                       value={invoiceTotalSummary?.totalOverdue}
-                      prefix="MMK"
+                      precision={business?.baseCurrency?.decimalPlaces}
+                      prefix={business?.baseCurrency?.symbol}
                     />
                   </Card>
                 </Col>
@@ -1270,7 +1279,11 @@ const Invoices = () => {
               </p>
             </Row>
             <RecordInvoicePayment
-              refetch={refetch}
+              refetch={() => {
+                refetch();
+                setCurrentPage(1);
+                setSelectedRecord(null);
+              }}
               branches={branches}
               selectedRecord={selectedRecord}
               onClose={() => setShowRecordInvoicePaymentForm(false)}

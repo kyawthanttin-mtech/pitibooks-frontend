@@ -1,51 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
-import dayjs from "dayjs";
-import { useMutation } from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
+
 import { BankingTransactionMutations } from "../../graphql";
+import dayjs from "dayjs";
 import { UploadAttachment } from "../../components";
-const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
+const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
   transactionDate: dayjs(),
 };
 
-const OwnerDrawingsNew = ({
+const InterestIncomeEdit = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  bankingAccounts,
   accounts,
+  bankingAccounts,
   allAccounts,
+  paymentModes,
   selectedAcc,
+  selectedRecord,
+  setSelectedRecord, setSelectedRowIndex
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [fileList, setFileList] = useState(null);
+
   const [currencies, setCurrencies] = useState([
     selectedAcc?.currency?.id > 0
       ? selectedAcc.currency
       : business.baseCurrency,
   ]);
 
-  if (form && modalOpen) {
-    form.setFieldsValue({
-      fromAccountId: selectedAcc.id,
-    });
-  }
+  useMemo(() => {
+    const parsedRecord =
+      form && modalOpen && selectedRecord
+        ? {
+            branchId: selectedRecord.branch?.id || null,
+            // fromAccountId: selectedRecord.fromAccount?.id || null,
+            toAccountId: selectedRecord.toAccount?.id || null,
+            currencyId: selectedRecord.currency?.id || null,
+            amount: selectedRecord.amount,
+            bankCharges: selectedRecord.bankCharges,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            transactionDate: dayjs(selectedRecord.transactionDate),
+            paymentModeId: selectedRecord.paymentMode?.id || null,
+          }
+        : {};
+    form.setFieldsValue(parsedRecord);
+  }, [form, selectedRecord, modalOpen]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_BANKING_TRANSACTION,
+    UPDATE_BANKING_TRANSACTION,
     {
       onCompleted() {
         openSuccessMessage(
@@ -55,12 +73,13 @@ const OwnerDrawingsNew = ({
             defaultMessage="Transaction Recorded"
           />
         );
+        setSelectedRecord(null); setSelectedRowIndex(0);
         refetch();
       },
     }
   );
 
-  const handleToAccountChange = (id) => {
+  const handleFromAccountChange = (id) => {
     const fromAccountCurrency =
       selectedAcc?.currency?.id > 0
         ? selectedAcc.currency
@@ -73,6 +92,7 @@ const OwnerDrawingsNew = ({
     if (fromAccountCurrency.id !== toAccountCurrency.id) {
       newCurrencies.push(toAccountCurrency);
     }
+    console.log(newCurrencies);
     setCurrencies(newCurrencies);
     form.setFieldValue("currency", null);
   };
@@ -82,16 +102,20 @@ const OwnerDrawingsNew = ({
       const values = await form.validateFields();
       const fileUrls = fileList?.map((file) => ({
         documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
       }));
 
       const input = {
         ...values,
-        transactionType: "OwnerDrawings",
-        isMoneyIn: false,
+        transactionType: "InterestIncome",
+        isMoneyIn: true,
         documents: fileUrls,
       };
 
-      await createAccountTransfer({ variables: { input } });
+      await createAccountTransfer({
+        variables: { id: selectedRecord.id, input },
+      });
       setModalOpen(false);
       form.resetFields();
     } catch (err) {
@@ -99,8 +123,8 @@ const OwnerDrawingsNew = ({
     }
   };
 
-  const ownerDrawingsForm = (
-    <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
+  const transferFromForm = (
+    <Form form={form} initialValues={initialValues} onFinish={handleSubmit}>
       <Form.Item
         label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
         name="branchId"
@@ -133,14 +157,13 @@ const OwnerDrawingsNew = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
-          />
+          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
         }
-        name="fromAccountId"
+        name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
+        hidden
+        // wrapperCol={{ span: 15 }}
         rules={[
           {
             required: true,
@@ -161,11 +184,14 @@ const OwnerDrawingsNew = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
         }
-        name="toAccountId"
+        name="fromAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
@@ -184,7 +210,7 @@ const OwnerDrawingsNew = ({
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleToAccountChange}
+          onChange={handleFromAccountChange}
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
@@ -196,7 +222,7 @@ const OwnerDrawingsNew = ({
             </Select.OptGroup>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
         name="transactionDate"
@@ -216,6 +242,7 @@ const OwnerDrawingsNew = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
+
       <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
@@ -240,7 +267,7 @@ const OwnerDrawingsNew = ({
           showSearch
           optionFilterProp="label"
         >
-          {currencies?.map((currency) => (
+          {currencies.map((currency) => (
             <Select.Option
               key={currency.id}
               value={currency.id}
@@ -342,34 +369,23 @@ const OwnerDrawingsNew = ({
       <Form.Item
         label={
           <FormattedMessage
-            id="label.bankCharges"
-            defaultMessage="Bank Charges"
+            id="label.receivedVia"
+            defaultMessage="Received Via"
           />
         }
-        name="bankCharges"
+        name="paymentModeId"
         labelAlign="left"
         labelCol={{ span: 8 }}
-        rules={[
-          () => ({
-            validator(_, value) {
-              if (!value) {
-                return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20) {
-                return Promise.reject(
-                  intl.formatMessage({
-                    id: "validation.invalidInput",
-                    defaultMessage: "Invalid Input",
-                  })
-                );
-              } else {
-                return Promise.resolve();
-              }
-            },
-          }),
-        ]}
       >
-        <Input />
+        <Select showSearch optionFilterProp="label">
+          {paymentModes?.map((p) => (
+            <Select.Option key={p.id} value={p.id} label={p.name}>
+              {p.name}
+            </Select.Option>
+          ))}
+        </Select>
       </Form.Item>
+
       <Form.Item
         label={
           <FormattedMessage
@@ -381,7 +397,7 @@ const OwnerDrawingsNew = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input maxLength={255}></Input>
+        <Input></Input>
       </Form.Item>
       <Form.Item
         label={
@@ -394,7 +410,7 @@ const OwnerDrawingsNew = ({
         labelAlign="left"
         labelCol={{ span: 8 }}
       >
-        <Input.TextArea maxLength={1000}></Input.TextArea>
+        <Input.TextArea></Input.TextArea>
       </Form.Item>
       <Divider />
       <UploadAttachment
@@ -403,26 +419,28 @@ const OwnerDrawingsNew = ({
     </Form>
   );
   return (
-    <Modal
-      width="40rem"
-      title={
-        <FormattedMessage
-          id="label.ownerDrawings"
-          defaultMessage="Owner Drawings"
-        />
-      }
-      okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
-      cancelText={
-        <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-      }
-      open={modalOpen}
-      onCancel={() => setModalOpen(false)}
-      onOk={form.submit}
-      confirmLoading={createLoading}
-    >
-      {ownerDrawingsForm}
-    </Modal>
+    <>
+      <Modal
+        width="40rem"
+        title={
+          <FormattedMessage
+            id="label.interestIncome"
+            defaultMessage="Interest Income"
+          />
+        }
+        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
+        cancelText={
+          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+        }
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={form.submit}
+        confirmLoading={createLoading}
+      >
+        {transferFromForm}
+      </Modal>
+    </>
   );
 };
 
-export default OwnerDrawingsNew;
+export default InterestIncomeEdit;

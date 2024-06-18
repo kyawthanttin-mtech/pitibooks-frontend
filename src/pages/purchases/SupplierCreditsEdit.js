@@ -953,11 +953,13 @@ const SupplierCreditsEdit = () => {
             >
               <Flex justify="space-between">
                 {text}
-                <CloseCircleOutlined
-                  onClick={() =>
-                    handleRemoveSelectedItem(record.id, record.key)
-                  }
-                />
+                {!record.detailId && (
+                  <CloseCircleOutlined
+                    onClick={() =>
+                      handleRemoveSelectedItem(record.id, record.key)
+                    }
+                  />
+                )}
               </Flex>
               <div>
                 {record.sku ? (

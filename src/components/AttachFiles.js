@@ -23,7 +23,7 @@ import { FormattedMessage } from "react-intl";
 // import { Document, Page } from "@react-pdf/renderer";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
-const AttachFiles = ({ files }) => {
+const AttachFiles = ({ files, iconButton = false }) => {
   const [open, setOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   // const [openOptionsIndices, setOpenOptionsIndices] = useState([]);
@@ -145,6 +145,27 @@ const AttachFiles = ({ files }) => {
     setZoomLevel((prevZoom) => Math.max(prevZoom - 0.1, 0.1));
   };
 
+  const handleDownloadFile = async (documentUrl, name) => {
+    try {
+      const response = await fetch(documentUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/octet-stream",
+        },
+      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading the file:", error);
+    }
+  };
+
   const title = (
     <>
       <Flex
@@ -212,7 +233,11 @@ const AttachFiles = ({ files }) => {
                     <a
                       href={file.documentUrl}
                       download
-                      // onClick={(e) => e.stopPropagation()}
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadFile(file.documentUrl, file.name);
+                      }}
                     >
                       <FormattedMessage
                         id="button.download"
@@ -358,13 +383,19 @@ const AttachFiles = ({ files }) => {
           placement="bottomLeft"
           onOpenChange={handleOpenChange}
         >
-          <Button type="text" icon={<PaperClipOutlined />}>
-            <span>
-              {files
-                ? `${files.length} File${files.length > 1 ? "s" : ""}`
-                : "Attach Files"}
-            </span>
-          </Button>
+          {iconButton ? (
+            <Button icon={<PaperClipOutlined />}>
+              {files?.length > 0 && files?.length}
+            </Button>
+          ) : (
+            <Button type="text" icon={<PaperClipOutlined />}>
+              <span>
+                {files
+                  ? `${files.length} File${files.length > 1 ? "s" : ""}`
+                  : "Attach Files"}
+              </span>
+            </Button>
+          )}
         </Popover>
       </div>
     </>

@@ -16,7 +16,6 @@ import {
   Input,
   Select,
   Tag,
-  Tabs,
 } from "antd";
 import {
   PlusOutlined,
@@ -26,7 +25,6 @@ import {
   DownCircleFilled,
   BankOutlined,
   DownOutlined,
-  EditOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -41,21 +39,6 @@ import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 // import { useHistoryState } from "../../utils/HelperFunctions";
 import { BankingQueries, AccountMutations } from "../../graphql";
 import { ReactComponent as CashOutlined } from "../../assets/icons/CashOutlined.svg";
-import {
-  OwnerDrawingsNew,
-  TransferFromAnotherAccNew,
-  TransferToAnotherAccNew,
-  OwnerContribution,
-  PaymentRefund,
-  CreditNoteRefund,
-  SupplierAdvance,
-  CustomerAdvance,
-  SupplierCreditRefund,
-  ExpenseRefund,
-  OtherIncome,
-  TransferToAnotherAccEdit,
-  TxnDetailColumn,
-} from "./";
 const { GET_BANKING_ACCOUNTS } = BankingQueries;
 const {
   CREATE_ACCOUNT,
@@ -232,25 +215,9 @@ const Banking = () => {
     key: "1",
     label: "All Accounts",
   });
-  const [transferToNewModalOpen, setTransferToNewModalOpen] = useState(false);
-  const [transferToEditModalOpen, setTransferToEditModalOpen] = useState(false);
-  const [transferFromModalOpen, setTransferFromModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [ownerDrawingsModalOpen, setOwnerDrawingsModalOpen] = useState(false);
-  const [ownerContributionModalOpen, setOwnerContributionModalOpen] =
-    useState(false);
-  const [paymentRefundModalOpen, setPaymentRefundModalOpen] = useState(false);
-  const [creditNoteRefundModalOpen, setCreditNoteRefundModalOpen] =
-    useState(false);
-  const [supplierAdvanceModalOpen, setSupplierAdvanceModalOpen] =
-    useState(false);
-  const [customerAdvanceModalOpen, setCustomerAdvanceModalOpen] =
-    useState(false);
-  const [supplierCreditRefundModalOpen, setSupplierCreditRefundModalOpen] =
-    useState(false);
-  const [otherIncomeModalOpen, setOtherIncomeModalOpen] = useState(false);
-  const [expenseRefundModalOpen, setExpenseRefundModalOpen] = useState(false);
+
   const [transactionRecord, setTransactionRecord] = useState(null);
   const [transactionRowIndex, setTransactionRowIndex] = useState(null);
   //Queries
@@ -748,26 +715,40 @@ const Banking = () => {
       title: <FormattedMessage id="label.branch" defaultMessage="Branch" />,
       key: "branch",
       dataIndex: "branch",
+      render: (_, record) => record.branch?.name,
     },
-    {
-      title: (
-        <FormattedMessage
-          id="label.transactionDetails"
-          defaultMessage="Transaction Details"
-        />
-      ),
-      key: "transactionDetails",
-      dataIndex: "description",
-    },
+    // {
+    //   title: (
+    //     <FormattedMessage
+    //       id="label.transactionDetails"
+    //       defaultMessage="Transaction Details"
+    //     />
+    //   ),
+    //   key: "transactionDetails",
+    //   dataIndex: "description",
+    // },
     {
       title: <FormattedMessage id="label.type" defaultMessage="Type" />,
       key: "type",
       dataIndex: "type",
+      render: (_, record) =>
+        record.transactionType.split(/(?=[A-Z])/).join(" "),
     },
     {
       title: <FormattedMessage id="label.deposits" defaultMessage="Deposits" />,
       key: "deposits",
       dataIndex: "baseDebit",
+      render: (_, record) =>
+        record.isMoneyIn && (
+          <>
+            {record.currency?.symbol}{" "}
+            <FormattedNumber
+              value={record.amount}
+              style="decimal"
+              minimumFractionDigits={record.currency?.decimalPlaces}
+            />
+          </>
+        ),
     },
     {
       title: (
@@ -775,16 +756,17 @@ const Banking = () => {
       ),
       key: "withdrawals",
       dataIndex: "baseCredit",
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="label.runningBalance"
-          defaultMessage="Running Balance"
-        />
-      ),
-      key: "runningBalance",
-      dataIndex: "baseClosingBalance",
+      render: (_, record) =>
+        !record.isMoneyIn && (
+          <>
+            {record.currency?.symbol}{" "}
+            <FormattedNumber
+              value={record.amount}
+              style="decimal"
+              minimumFractionDigits={record.currency?.decimalPlaces}
+            />
+          </>
+        ),
     },
   ];
 
@@ -1120,13 +1102,7 @@ const Banking = () => {
         {editForm}
       </Modal>
       <div className={`${selectedRecord && "page-with-column"}`}>
-        <div
-          className={
-            selectedRecord
-              ? `column ${transactionRecord ? "close" : "open"}`
-              : ""
-          }
-        >
+        <div>
           <div className="page-header" style={{ overflow: "hidden" }}>
             <p className="page-header-text" style={{ overflow: "hidden" }}>
               <FormattedMessage
@@ -1202,6 +1178,44 @@ const Banking = () => {
                 </Col>
               </Row>
             )}
+            {!selectedRecord && (
+              <Dropdown
+                // onChange={(value) => console.log("value")}
+                trigger="click"
+                menu={{
+                  items: filterOptions.map((item) => ({
+                    ...item,
+                    onClick: ({ key }) => handleFilterChange(key),
+                  })),
+                  selectable: true,
+                  selectedKeys: [filterAccount.key],
+                }}
+              >
+                <div
+                  className="page-header-text"
+                  style={{
+                    cursor: "pointer",
+                    paddingLeft: "1.5rem",
+                    fontSize: "20px",
+                    fontWeight: "500",
+                    marginBlock: "1.5rem",
+                    maxWidth: "14rem",
+                  }}
+                >
+                  <Space>
+                    {filterAccount.label}
+                    <DownOutlined
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--primary-color)",
+                      }}
+                    />
+                  </Space>
+                </div>
+              </Dropdown>
+            )}
+            <Divider style={{ margin: 0 }} />
+
             <Table
               style={{ paddingBottom: !selectedRecord ? "5rem" : undefined }}
               className={selectedRecord ? "header-less-table" : "main-table"}
@@ -1230,45 +1244,6 @@ const Banking = () => {
               <Flex className="content-column-header-row product-details-header-row">
                 <p className="page-header-text">{selectedRecord.name}</p>
                 <div>
-                  <Button type="primary">
-                    <Dropdown
-                      trigger="click"
-                      key={selectedRecord.key}
-                      menu={{
-                        onClick: ({ key }) => {
-                          if (key === "1-1") {
-                            setTransferToNewModalOpen(true);
-                          } else if (key === "1-2") {
-                            setOwnerDrawingsModalOpen(true);
-                          } else if (key === "1-3") {
-                            setPaymentRefundModalOpen(true);
-                          } else if (key === "1-4") {
-                            setCreditNoteRefundModalOpen(true);
-                          } else if (key === "1-5") {
-                            setSupplierAdvanceModalOpen(true);
-                          } else if (key === "2-1") {
-                            setTransferFromModalOpen(true);
-                          } else if (key === "2-2") {
-                            setOwnerContributionModalOpen(true);
-                          } else if (key === "2-3") {
-                            setSupplierCreditRefundModalOpen(true);
-                          } else if (key === "2-5") {
-                            setCustomerAdvanceModalOpen(true);
-                          } else if (key === "2-6") {
-                            setOtherIncomeModalOpen(true);
-                          } else if (key === "2-7") {
-                            setExpenseRefundModalOpen(true);
-                          }
-                        },
-                        items: addTransactionItems,
-                      }}
-                    >
-                      <div style={{ height: "2rem" }}>
-                        Add Transaction <CaretDownOutlined />
-                      </div>
-                    </Dropdown>
-                  </Button>
-                  <Divider type="vertical" />
                   <Button
                     icon={<CloseOutlined />}
                     type="text"
@@ -1307,14 +1282,6 @@ const Banking = () => {
                   dataSource={selectedRecord?.recentTransactions || []}
                   rowSelection={{ selectedRowKeys: [transactionRowIndex] }}
                   rowKey={(record) => record.id}
-                  onRow={(record) => ({
-                    key: record.id,
-                    onClick: () => {
-                      setTransactionRecord(record);
-                      setTransactionRowIndex(record.id);
-                    },
-                  })}
-                  key="id"
                   pagination={false}
                 />
                 <br></br>
@@ -1337,12 +1304,6 @@ const Banking = () => {
                 </Flex>
               </div>
             </div>
-            <TxnDetailColumn
-              transactionRecord={transactionRecord}
-              setTransactionRecord={setTransactionRecord}
-              setTransactionRowIndex={setTransactionRowIndex}
-              setTransferToEditModalOpen={setTransferToEditModalOpen}
-            />
           </>
         )}
       </div>

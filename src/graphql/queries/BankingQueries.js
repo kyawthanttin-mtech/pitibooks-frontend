@@ -83,40 +83,17 @@ const GET_BANKING_ACCOUNTS = gql`
         supplier {
           id
           name
-          supplierPaymentTerms
-          supplierPaymentTermsCustomDays
-          notes
-          exchangeRate
-          openingBalanceBranchId
-          openingBalance
-          prepaidCreditAmount
-          unusedCreditAmount
-          isActive
-          createdAt
-          updatedAt
         }
         customer {
           id
           name
-          openingBalanceBranchId
-          openingBalance
-          exchangeRate
-          customerPaymentTerms
-          customerPaymentTermsCustomDays
-          notes
-          prepaidCreditAmount
-          unusedCreditAmount
-          creditLimit
-          isActive
-          createdAt
-          updatedAt
         }
-        documents {
-          id
-          documentUrl
-          referenceType
-          referenceID
-        }
+        # documents {
+        #   id
+        #   documentUrl
+        #   referenceType
+        #   referenceID
+        # }
         details {
           id
           invoiceNo

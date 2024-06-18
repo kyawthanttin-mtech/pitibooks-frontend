@@ -34,6 +34,7 @@ const ExpenseEdit = ({
   allTax,
   selectedRecord,
   setSelectedRecord,
+  setSelectedRowIndex
 }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(null);
@@ -80,7 +81,7 @@ const ExpenseEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        setSelectedRecord(null);
+        setSelectedRecord(null); setSelectedRowIndex(0);
         // refetch();
       },
     }

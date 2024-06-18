@@ -286,7 +286,7 @@ const ExpensesEdit = () => {
             }
             name="branch"
             labelAlign="left"
-            labelCol={{ span: 3 }}
+            labelCol={{ span: 5 }}
             wrapperCol={{ span: 8 }}
             rules={[
               {
@@ -316,7 +316,7 @@ const ExpensesEdit = () => {
             label={<FormattedMessage id="label.date" defaultMessage="Date" />}
             name="date"
             labelAlign="left"
-            labelCol={{ span: 3 }}
+            labelCol={{ span: 5 }}
             wrapperCol={{ span: 8 }}
             rules={[
               {

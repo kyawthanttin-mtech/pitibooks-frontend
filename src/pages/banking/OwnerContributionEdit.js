@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -18,6 +18,7 @@ const initialValues = {
 };
 
 const OwnerContributionEdit = ({
+  refetch,
   modalOpen,
   setModalOpen,
   branches,
@@ -27,6 +28,7 @@ const OwnerContributionEdit = ({
   selectedAcc,
   selectedRecord,
   setSelectedRecord,
+  setSelectedRowIndex,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
@@ -36,6 +38,27 @@ const OwnerContributionEdit = ({
       ? selectedAcc.currency
       : business.baseCurrency,
   ]);
+
+  const handleFromAccountChange = useCallback(
+    (id) => {
+      const toAccountCurrency =
+        selectedAcc?.currency?.id > 0
+          ? selectedAcc.currency
+          : business.baseCurrency;
+      let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+        fromAccountCurrency = business.baseCurrency;
+      }
+      let newCurrencies = [toAccountCurrency];
+      if (toAccountCurrency.id !== fromAccountCurrency.id) {
+        newCurrencies.push(fromAccountCurrency);
+      }
+      console.log(newCurrencies);
+      setCurrencies(newCurrencies);
+      form.setFieldValue("currency", null);
+    },
+    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+  );
 
   useMemo(() => {
     const parsedRecord =
@@ -54,7 +77,8 @@ const OwnerContributionEdit = ({
         : {};
 
     form.setFieldsValue(parsedRecord);
-  }, [form, selectedRecord, modalOpen]);
+    handleFromAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleFromAccountChange]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
     UPDATE_BANKING_TRANSACTION,
@@ -68,28 +92,11 @@ const OwnerContributionEdit = ({
           />
         );
         setSelectedRecord(null);
-        // refetch();
+        setSelectedRowIndex(0);
+        refetch();
       },
     }
   );
-
-  const handleFromAccountChange = (id) => {
-    const toAccountCurrency =
-      selectedAcc?.currency?.id > 0
-        ? selectedAcc.currency
-        : business.baseCurrency;
-    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
-      fromAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [toAccountCurrency];
-    if (toAccountCurrency.id !== fromAccountCurrency.id) {
-      newCurrencies.push(fromAccountCurrency);
-    }
-    console.log(newCurrencies);
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
-  };
 
   const handleSubmit = async () => {
     try {

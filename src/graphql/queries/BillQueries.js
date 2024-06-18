@@ -2,7 +2,7 @@ import { gql } from "@apollo/client";
 
 const GET_PAGINATE_BILL = gql`
   query PaginateBill(
-    $limit: Int
+    $limit: Int = 10
     $after: String
     $billNumber: String
     $referenceNumber: String

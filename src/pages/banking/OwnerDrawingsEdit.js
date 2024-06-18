@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -11,6 +11,7 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { BankingTransactionMutations } from "../../graphql";
+import { UploadAttachment } from "../../components";
 const { UPDATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
@@ -18,6 +19,7 @@ const initialValues = {
 };
 
 const OwnerDrawingsEdit = ({
+  refetch,
   modalOpen,
   setModalOpen,
   branches,
@@ -27,15 +29,38 @@ const OwnerDrawingsEdit = ({
   selectedAcc,
   selectedRecord,
   setSelectedRecord,
+  setSelectedRowIndex,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
+  const [fileList, setFileList] = useState(null);
   const [currencies, setCurrencies] = useState([
     selectedAcc?.currency?.id > 0
       ? selectedAcc.currency
       : business.baseCurrency,
   ]);
+
+  const handleToAccountChange = useCallback(
+    (id) => {
+      const fromAccountCurrency =
+        selectedAcc?.currency?.id > 0
+          ? selectedAcc.currency
+          : business.baseCurrency;
+      let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
+        toAccountCurrency = business.baseCurrency;
+      }
+      let newCurrencies = [fromAccountCurrency];
+      if (fromAccountCurrency.id !== toAccountCurrency.id) {
+        newCurrencies.push(toAccountCurrency);
+      }
+      console.log(newCurrencies);
+      setCurrencies(newCurrencies);
+      form.setFieldValue("currency", null);
+    },
+    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+  );
 
   useMemo(() => {
     const parsedRecord =
@@ -54,7 +79,8 @@ const OwnerDrawingsEdit = ({
         : {};
 
     form.setFieldsValue(parsedRecord);
-  }, [form, selectedRecord, modalOpen]);
+    handleToAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleToAccountChange]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
     UPDATE_BANKING_TRANSACTION,
@@ -68,36 +94,26 @@ const OwnerDrawingsEdit = ({
           />
         );
         setSelectedRecord(null);
-        // refetch();
+        setSelectedRowIndex(0);
+        refetch();
       },
     }
   );
 
-  const handleToAccountChange = (id) => {
-    const fromAccountCurrency =
-      selectedAcc?.currency?.id > 0
-        ? selectedAcc.currency
-        : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-      toAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [fromAccountCurrency];
-    if (fromAccountCurrency.id !== toAccountCurrency.id) {
-      newCurrencies.push(toAccountCurrency);
-    }
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
-  };
-
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
+      }));
 
       const input = {
         ...values,
         transactionType: "OwnerDrawings",
         isMoneyIn: false,
+        documents: fileUrls,
       };
 
       await createAccountTransfer({
@@ -408,30 +424,9 @@ const OwnerDrawingsEdit = ({
         <Input.TextArea maxLength={1000}></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+      />
     </Form>
   );
   return (

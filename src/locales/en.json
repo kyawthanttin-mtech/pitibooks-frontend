@@ -70,6 +70,9 @@
   "confirm.delete": "Are you sure to delete?",
   "confirm.confirmBill": "Are you sure to confirm bill?",
   "confirm.voidBill": "Are you sure to void bill?",
+  "confirm.confirmInvoice": "Are you sure to confirm invoice",
+  "confirm.voidInvoice": "Are you sure to void invoice",
+  "confirm.hasInvalidStock": "One or more products have 0 or less stock on hand. Do you still want to proceed?",
   "confirm.confirmPurchaseOrder": "Are you sure to confirm purchase order?",
   "confirm.cancelPurchaseOrder": "Are you sure to cancel purchase order?",
 

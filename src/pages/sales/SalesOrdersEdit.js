@@ -160,7 +160,7 @@ const SalesOrdersEdit = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.orderDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType || "P"
   );
@@ -955,11 +955,13 @@ const SalesOrdersEdit = () => {
             >
               <Flex justify="space-between">
                 {text}
-                <CloseCircleOutlined
-                  onClick={() =>
-                    handleRemoveSelectedItem(record.id, record.key)
-                  }
-                />
+                {!record.detailId && (
+                  <CloseCircleOutlined
+                    onClick={() =>
+                      handleRemoveSelectedItem(record.id, record.key)
+                    }
+                  />
+                )}
               </Flex>
               <div>
                 {record.sku ? (

@@ -394,6 +394,7 @@ const CreditNotesNew = () => {
       documents: fileUrls,
       warehouseId: values.warehouse,
       details,
+      creditNoteNumber: 2,
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);

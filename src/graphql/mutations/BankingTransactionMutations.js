@@ -104,9 +104,18 @@ const UPDATE_BANKING_TRANSACTION = gql`
   }
 `;
 
+const DELETE_BANKING_TRANSACTION = gql`
+  mutation DeleteBankingTransaction($id: ID!) {
+    deleteBankingTransaction(id: $id) {
+      id
+    }
+  }
+`;
+
 const BankingTransactionMutations = {
   CREATE_BANKING_TRANSACTION,
   UPDATE_BANKING_TRANSACTION,
+  DELETE_BANKING_TRANSACTION,
 };
 
 export default BankingTransactionMutations;

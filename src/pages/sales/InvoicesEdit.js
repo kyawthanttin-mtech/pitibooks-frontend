@@ -14,6 +14,7 @@ import {
   Dropdown,
   Space,
   AutoComplete,
+  Modal,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -90,6 +91,7 @@ const InvoicesEdit = () => {
   const [form] = Form.useForm();
   const from = location.state?.from?.pathname || "/";
   const record = location.state?.record;
+  const [alertModal, contextHolder] = Modal.useModal();
   const [data, setData] = useState(
     record?.details?.map((detail, index) => ({
       key: index + 1,
@@ -129,7 +131,7 @@ const InvoicesEdit = () => {
     record?.warehouse?.id > 0 ? record?.warehouse?.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
-    record?.orderDiscount > 0
+    record?.invoiceDiscount > 0
       ? {
           key: "0",
           label: "At Transaction Level",
@@ -161,14 +163,16 @@ const InvoicesEdit = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.invoiceDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
-    record?.invoiceDiscountType
+    record?.invoiceDiscountType || "P"
   );
   const [discountAmount, setDiscountAmount] = useState(
     record?.invoiceDiscountAmount || 0
   );
-  const [isTaxInclusive, setIsTaxInclusive] = useState(record?.isTaxInclusive);
+  const [isTaxInclusive, setIsTaxInclusive] = useState(
+    record?.isTaxInclusive || false
+  );
   const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
     discountPreference.key === "0"
   );
@@ -235,7 +239,7 @@ const InvoicesEdit = () => {
           customerName: record?.customerName,
           branch: record?.branch?.id,
           salesOrderId: record?.salesOrderId,
-          // salesOrderNumber: record?.salesOrderNumber,
+          salesOrderNumber: record?.salesOrderNumber,
           salesPerson: record?.salesPerson?.id || null,
           invoiceDate: dayjs(record?.invoiceDate),
           invoiceDueDate: dayjs(record?.invoiceDueDate),
@@ -376,9 +380,14 @@ const InvoicesEdit = () => {
   const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
+    let hasInvalidStock = false;
+
     const details = data.map((item) => {
       if ((!item.name || item.amount === 0) && !item.isDeletedItem) {
         foundInvalid = true;
+      }
+      if (item.currentQty <= 0) {
+        hasInvalidStock = true;
       }
       const taxId = values[`detailTax${item.key}`];
       const tax = allTax.find((taxGroup) =>
@@ -416,6 +425,21 @@ const InvoicesEdit = () => {
       return;
     }
 
+    if (hasInvalidStock) {
+      const confirmed = await alertModal.confirm({
+        content: (
+          <FormattedMessage
+            id="confirm.invalidStock"
+            defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
+          />
+        ),
+      });
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
     const fileUrls = fileList?.map((file) => ({
       documentUrl: file.imageUrl || file.documentUrl,
       isDeletedItem: file.isDeletedItem,
@@ -427,10 +451,9 @@ const InvoicesEdit = () => {
       branchId: values.branch,
       customerId: selectedCustomer.id,
       invoiceDate: values.invoiceDate,
-      invoiceDueDate: values.invoiceDueDate,
       notes: values.notes,
       currencyId: values.currency,
-      salesPersonId: values.salesPerson,
+      salesPersonId: values.salesPerson || 0,
       exchangeRate: values.exchangeRate ? parseFloat(values.exchangeRate) : 0,
       invoicePaymentTerms: values.paymentTerms,
       invoicePaymentTermsCustomDays: values.customDays ? values.customDays : 0,
@@ -990,11 +1013,13 @@ const InvoicesEdit = () => {
             >
               <Flex justify="space-between">
                 {text}
-                <CloseCircleOutlined
-                  onClick={() =>
-                    handleRemoveSelectedItem(record.id, record.key)
-                  }
-                />
+                {!record.detailId && (
+                  <CloseCircleOutlined
+                    onClick={() =>
+                      handleRemoveSelectedItem(record.id, record.key)
+                    }
+                  />
+                )}
               </Flex>
               <div>
                 {record.sku ? (
@@ -1307,6 +1332,7 @@ const InvoicesEdit = () => {
 
   return (
     <>
+      {contextHolder}
       <CustomerSearchModal
         modalOpen={searchModalOpen}
         setModalOpen={setSearchModalOpen}
@@ -1424,6 +1450,10 @@ const InvoicesEdit = () => {
                   ))}
                 </Select>
               </Form.Item>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={12}>
               <Form.Item
                 label={
                   <FormattedMessage
@@ -1438,7 +1468,6 @@ const InvoicesEdit = () => {
               >
                 <Input disabled></Input>
               </Form.Item>
-
               <Form.Item
                 label={
                   <FormattedMessage
@@ -1466,75 +1495,6 @@ const InvoicesEdit = () => {
                   onChange={(date, dateString) => console.log(date, dateString)}
                   format={REPORT_DATE_FORMAT}
                 ></DatePicker>
-              </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.invoiceDueDate"
-                    defaultMessage="Invoice Due Date"
-                  />
-                }
-                name="invoiceDueDate"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.date.required"
-                        defaultMessage="Select the Date"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <DatePicker
-                  onChange={(date, dateString) => console.log(date, dateString)}
-                  format={REPORT_DATE_FORMAT}
-                ></DatePicker>
-              </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.paymentTerms"
-                    defaultMessage="Payment Terms"
-                  />
-                }
-                name="paymentTerms"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Select
-                  // placeholder="Select or type to add"
-                  showSearch
-                  loading={loading}
-                  optionFilterProp="label"
-                >
-                  {paymentTerms?.map((p) => (
-                    <Select.Option key={p} value={p} label={p}>
-                      {p.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.referenceNumber"
-                    defaultMessage="Reference #"
-                  />
-                }
-                name="referenceNumber"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Input></Input>
               </Form.Item>
               <Form.Item
                 label={
@@ -1571,6 +1531,22 @@ const InvoicesEdit = () => {
                   ))}
                 </Select>
               </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.referenceNumber"
+                    defaultMessage="Reference #"
+                  />
+                }
+                name="referenceNumber"
+                labelAlign="left"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+              >
+                <Input></Input>
+              </Form.Item>
               <Form.Item
                 label={
                   <FormattedMessage
@@ -1585,6 +1561,37 @@ const InvoicesEdit = () => {
               >
                 <TextArea rows={4} maxLength={250}></TextArea>
               </Form.Item>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.paymentTerms"
+                    defaultMessage="Payment Terms"
+                  />
+                }
+                name="paymentTerms"
+                labelAlign="left"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 12 }}
+              >
+                <Select
+                  // placeholder="Select or type to add"
+                  showSearch
+                  loading={loading}
+                  optionFilterProp="label"
+                >
+                  {paymentTerms?.map((p) => (
+                    <Select.Option key={p} value={p} label={p}>
+                      {p.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
               <Form.Item
                 noStyle
                 shouldUpdate={(prevValues, currentValues) =>
@@ -1624,7 +1631,6 @@ const InvoicesEdit = () => {
               </Form.Item>
             </Col>
           </Row>
-
           <Row>
             <Col span={12}>
               <Form.Item
@@ -1698,7 +1704,6 @@ const InvoicesEdit = () => {
                             />
                           ),
                         },
-
                         () => ({
                           validator(_, value) {
                             if (!value) {

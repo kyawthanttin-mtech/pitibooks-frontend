@@ -14,6 +14,7 @@ import {
   Dropdown,
   Space,
   AutoComplete,
+  Modal,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -90,6 +91,7 @@ const InvoicesNew = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
   const record = location.state?.cloneInvoice || location.state?.convertSO;
+  const [alertModal, contextHolder] = Modal.useModal();
   const {
     notiApi,
     msgApi,
@@ -139,7 +141,7 @@ const InvoicesNew = () => {
     record?.warehouse?.id > 0 ? record.warehouse.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
-    record?.orderDiscount > 0
+    record?.orderDiscount > 0 || record?.invoiceDiscount > 0
       ? {
           key: "0",
           label: "At Transaction Level",
@@ -147,7 +149,7 @@ const InvoicesNew = () => {
       : { key: "1", label: "At Line Item Level" }
   );
   const [taxPreference, setTaxPreference] = useState(
-    record?.isDetailTaxInclusive
+    record?.isDetailTaxInclusive || record?.isTaxInclusive
       ? { key: "1", label: "Tax Inclusive" }
       : {
           key: "0",
@@ -172,7 +174,9 @@ const InvoicesNew = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(
+    record?.orderDiscount || record?.invoiceDiscount || 0
+  );
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType || record?.invoiceDiscountType || "P"
   );
@@ -286,6 +290,8 @@ const InvoicesNew = () => {
     return [...productsWithS, ...productsWithV];
   }, [products, productVariants]);
 
+  console.log("data", data);
+
   const stocks = useMemo(() => {
     return stockData?.getAvailableStocks;
   }, [stockData]);
@@ -390,12 +396,17 @@ const InvoicesNew = () => {
     form.setFieldsValue(parsedRecord);
   }, [form, record, business]);
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("values", values);
     let foundInvalid = false;
+    let hasInvalidStock = false;
+
     const details = data.map((item) => {
       if (!item.name || item.amount === 0) {
         foundInvalid = true;
+      }
+      if (item.currentQty <= 0) {
+        hasInvalidStock = true;
       }
       const taxId = values[`detailTax${item.key}`];
       const tax = allTax.find((taxGroup) =>
@@ -412,7 +423,6 @@ const InvoicesNew = () => {
       return {
         productId: detailProductId,
         productType: detailProductType,
-        // batchNumber
         name: item.name || values[`product${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
@@ -430,17 +440,32 @@ const InvoicesNew = () => {
       });
       return;
     }
+
+    if (hasInvalidStock) {
+      const confirmed = await alertModal.confirm({
+        content: (
+          <FormattedMessage
+            id="confirm.invalidStock"
+            defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
+          />
+        ),
+      });
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
     const fileUrls = fileList?.map((file) => ({
       documentUrl: file.imageUrl,
     }));
 
-    // console.log("details", details);
     const input = {
       branchId: values.branch,
       customerId: selectedCustomer.id,
       orderNumber: values.salesOrderNumber,
       referenceNumber: values.referenceNumber,
-      salesPersonId: values.salesPerson,
+      salesPersonId: values.salesPerson || 0,
       invoiceDate: values.invoiceDate,
       notes: values.notes,
       currencyId: values.currency,
@@ -459,7 +484,7 @@ const InvoicesNew = () => {
       warehouseId: values.warehouse,
       details,
     };
-    // console.log("Transactions", transactions);
+
     console.log("Input", input);
     createInvoice({
       variables: { input },
@@ -1249,6 +1274,7 @@ const InvoicesNew = () => {
 
   return (
     <>
+      {contextHolder}
       <CustomerSearchModal
         modalOpen={searchModalOpen}
         setModalOpen={setSearchModalOpen}

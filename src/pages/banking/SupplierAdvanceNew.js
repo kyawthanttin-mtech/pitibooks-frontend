@@ -1,32 +1,37 @@
 import React, { useState } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  SearchOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
-import dayjs from "dayjs";
-import { useMutation } from "@apollo/client";
 import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
+
 import { BankingTransactionMutations } from "../../graphql";
-import { UploadAttachment } from "../../components";
+import dayjs from "dayjs";
+import { SupplierSearchModal, UploadAttachment } from "../../components";
 const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
   transactionDate: dayjs(),
 };
-
-const OwnerDrawingsNew = ({
+const SupplierAdvanceNew = ({
   refetch,
   modalOpen,
   setModalOpen,
   branches,
-  bankingAccounts,
-  accounts,
-  allAccounts,
   selectedAcc,
+  paymentModes,
+  allAccounts,
+  accounts,
+  bankingAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
@@ -37,6 +42,8 @@ const OwnerDrawingsNew = ({
       ? selectedAcc.currency
       : business.baseCurrency,
   ]);
+  const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(false);
 
   if (form && modalOpen) {
     form.setFieldsValue({
@@ -73,6 +80,7 @@ const OwnerDrawingsNew = ({
     if (fromAccountCurrency.id !== toAccountCurrency.id) {
       newCurrencies.push(toAccountCurrency);
     }
+    console.log(newCurrencies);
     setCurrencies(newCurrencies);
     form.setFieldValue("currency", null);
   };
@@ -86,7 +94,9 @@ const OwnerDrawingsNew = ({
 
       const input = {
         ...values,
-        transactionType: "OwnerDrawings",
+        supplierName: undefined,
+        supplierId: selectedSupplier?.id,
+        transactionType: "SupplierAdvance",
         isMoneyIn: false,
         documents: fileUrls,
       };
@@ -99,38 +109,8 @@ const OwnerDrawingsNew = ({
     }
   };
 
-  const ownerDrawingsForm = (
+  const transferToForm = (
     <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
-      <Form.Item
-        label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
-        name="branchId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.branch.required"
-                defaultMessage="Select the Branch"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select showSearch optionFilterProp="label">
-          {branches?.map((branch) => (
-            <Select.Option
-              key={branch.id}
-              value={branch.id}
-              label={branch.name}
-            >
-              {branch.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
       <Form.Item
         label={
           <FormattedMessage
@@ -198,6 +178,85 @@ const OwnerDrawingsNew = ({
         </Select>
       </Form.Item>
       <Form.Item
+        label={
+          <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
+        }
+        name="supplierName"
+        shouldUpdate
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.supplier.required"
+                defaultMessage="Select the Supplier"
+              />
+            ),
+          },
+        ]}
+      >
+        <Input
+          readOnly
+          onClick={setSupplierSearchModalOpen}
+          className="search-input"
+          allowClear
+          suffix={
+            <>
+              {selectedSupplier && (
+                <CloseOutlined
+                  style={{ height: 11, width: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    setSelectedSupplier(null);
+                    form.resetFields(["supplierName"]);
+                  }}
+                />
+              )}
+
+              <Button
+                style={{ width: "2.5rem" }}
+                type="primary"
+                icon={<SearchOutlined />}
+                className="search-btn"
+                onClick={setSupplierSearchModalOpen}
+              />
+            </>
+          }
+        />
+      </Form.Item>
+      <Form.Item
+        label={<FormattedMessage id="label.branch" defaultMessage="Branch" />}
+        name="branchId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        // wrapperCol={{ span: 15 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.branch.required"
+                defaultMessage="Select the Branch"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select showSearch optionFilterProp="label">
+          {branches?.map((branch) => (
+            <Select.Option
+              key={branch.id}
+              value={branch.id}
+              label={branch.name}
+            >
+              {branch.name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
         label={<FormattedMessage id="label.date" defaultMessage="date" />}
         name="transactionDate"
         labelAlign="left"
@@ -216,94 +275,7 @@ const OwnerDrawingsNew = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage id="label.currency" defaultMessage="Currency" />
-        }
-        name="currencyId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.currency.required"
-                defaultMessage="Select the Currency"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select
-          //   onChange={(value) => setSelectedCurrency(value)}
-          showSearch
-          optionFilterProp="label"
-        >
-          {currencies?.map((currency) => (
-            <Select.Option
-              key={currency.id}
-              value={currency.id}
-              label={currency.name + currency.symbol}
-            >
-              {currency.name} ({currency.symbol})
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
-                />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
 
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"
@@ -341,6 +313,41 @@ const OwnerDrawingsNew = ({
       </Form.Item>
       <Form.Item
         label={
+          <FormattedMessage id="label.currency" defaultMessage="Currency" />
+        }
+        name="currencyId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="label.currency.required"
+                defaultMessage="Select the Currency"
+              />
+            ),
+          },
+        ]}
+      >
+        <Select
+          //   onChange={(value) => setSelectedCurrency(value)}
+          showSearch
+          optionFilterProp="label"
+        >
+          {currencies?.map((currency) => (
+            <Select.Option
+              key={currency.id}
+              value={currency.id}
+              label={currency.name + currency.symbol}
+            >
+              {currency.name} ({currency.symbol})
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={
           <FormattedMessage
             id="label.bankCharges"
             defaultMessage="Bank Charges"
@@ -369,6 +376,22 @@ const OwnerDrawingsNew = ({
         ]}
       >
         <Input />
+      </Form.Item>
+      <Form.Item
+        label={
+          <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
+        }
+        name="paymentModeId"
+        labelAlign="left"
+        labelCol={{ span: 8 }}
+      >
+        <Select showSearch optionFilterProp="label">
+          {paymentModes?.map((p) => (
+            <Select.Option key={p.id} value={p.id} label={p.name}>
+              {p.name}
+            </Select.Option>
+          ))}
+        </Select>
       </Form.Item>
       <Form.Item
         label={
@@ -402,27 +425,39 @@ const OwnerDrawingsNew = ({
       />
     </Form>
   );
+
   return (
-    <Modal
-      width="40rem"
-      title={
-        <FormattedMessage
-          id="label.ownerDrawings"
-          defaultMessage="Owner Drawings"
-        />
-      }
-      okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
-      cancelText={
-        <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-      }
-      open={modalOpen}
-      onCancel={() => setModalOpen(false)}
-      onOk={form.submit}
-      confirmLoading={createLoading}
-    >
-      {ownerDrawingsForm}
-    </Modal>
+    <>
+      <Modal
+        con
+        width="40rem"
+        title={
+          <FormattedMessage
+            id="label.supplierAdvance"
+            defaultMessage="Supplier Advance"
+          />
+        }
+        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
+        cancelText={
+          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+        }
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={form.submit}
+        confirmLoading={createLoading}
+      >
+        {transferToForm}
+      </Modal>
+      <SupplierSearchModal
+        modalOpen={supplierSearchModalOpen}
+        setModalOpen={setSupplierSearchModalOpen}
+        onRowSelect={(record) => {
+          setSelectedSupplier(record);
+          form.setFieldsValue({ supplierName: record.name });
+        }}
+      />
+    </>
   );
 };
 
-export default OwnerDrawingsNew;
+export default SupplierAdvanceNew;

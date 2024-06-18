@@ -41,11 +41,43 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import dayjs from "dayjs";
-import { useMutation, useReadQuery } from "@apollo/client";
+import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useHistoryState } from "../../utils/HelperFunctions";
+import SupplierCreditRefund from "./SupplierCreditRefund";
 const { GET_PAGINATE_SUPPLIER_CREDIT } = SupplierCreditQueries;
 const { DELETE_SUPPLIER_CREDIT } = SupplierCreditMutations;
+
+const draftActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "2",
+  },
+];
+
+const confirmedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.refundSupplierCredit"
+        defaultMessage="Refund Supplier Credit"
+      />
+    ),
+    key: "1",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "2",
+  },
+];
 
 const SupplierCredits = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
@@ -67,10 +99,20 @@ const SupplierCredits = () => {
   const [caretRotation, setCaretRotation] = useState(0);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
+  const [showRefundForm, setShowRefundForm] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
+
+  const { refetch } = useQuery(GET_PAGINATE_SUPPLIER_CREDIT, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    onError(err) {
+      openErrorNotification(notiApi, err.message);
+    },
+  });
 
   //Mutations
   const [deleteSupplierCredit, { loading: deleteLoading }] = useMutation(
@@ -207,7 +249,7 @@ const SupplierCredits = () => {
     navigate(location.pathname, {
       state: {
         ...location.state,
-        supplierCreditSearchCriteria: undefined,
+        creditSearchCriteria: undefined,
       },
       replace: true,
     });
@@ -651,7 +693,7 @@ const SupplierCredits = () => {
             />
           </div>
         </div>
-        {selectedRecord && (
+        {selectedRecord && !showRefundForm && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
@@ -712,28 +754,15 @@ const SupplierCredits = () => {
                 menu={{
                   onClick: ({ key }) => {
                     if (key === "0") console.log("clone");
-                    else if (key === "1") handleDelete(selectedRecord.id);
+                    else if (key === "1") setShowRefundForm(true);
+                    else if (key === "2") handleDelete(selectedRecord.id);
                   },
-                  items: [
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.clone"
-                          defaultMessage="Clone"
-                        />
-                      ),
-                      key: "0",
-                    },
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.delete"
-                          defaultMessage="Delete"
-                        />
-                      ),
-                      key: "1",
-                    },
-                  ],
+                  items:
+                    selectedRecord.currentStatus === "Draft"
+                      ? draftActionItems
+                      : selectedRecord.currentStatus === "Confirmed"
+                      ? confirmedActionItems
+                      : draftActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -797,6 +826,27 @@ const SupplierCredits = () => {
               </div>
               <SupplierCreditTemplate selectedRecord={selectedRecord} />
             </div>
+          </div>
+        )}
+        {showRefundForm && (
+          <div className="content-column">
+            <Row className="content-column-header-row">
+              <p className="page-header-text">
+                Credit Note Refund For
+                {selectedRecord.supplierCreditNumber &&
+                  ` - ${selectedRecord.supplierCreditNumber}`}
+              </p>
+            </Row>
+            <SupplierCreditRefund
+              refetch={() => {
+                refetch();
+                setCurrentPage(1);
+                setSelectedRecord(null);
+              }}
+              branches={branches}
+              selectedRecord={selectedRecord}
+              onClose={() => setShowRefundForm(false)}
+            />
           </div>
         )}
       </div>

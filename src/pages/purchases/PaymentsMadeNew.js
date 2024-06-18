@@ -912,7 +912,7 @@ const PaymentsMadeNew = () => {
                   setFileList(customFileList)
                 }
               />
-              <Button icon={<PaperClipOutlined />}></Button>
+              {/* <Button icon={<PaperClipOutlined />}></Button> */}
             </Space>
             <div className="page-actions-bar page-actions-bar-margin">
               <Button

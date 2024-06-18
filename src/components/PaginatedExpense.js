@@ -31,6 +31,7 @@ import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import dayjs from "dayjs";
 import AttachFiles from "./AttachFiles";
+import ExpenseRefund from "../pages/purchases/ExpenseRefund";
 const compactColumns = [
   {
     title: "",
@@ -58,6 +59,26 @@ const compactColumns = [
         </div>
       );
     },
+  },
+];
+
+const actionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.refundExpense"
+        defaultMessage="Refund Expense"
+      />
+    ),
+    key: "1",
+  },
+  {
+    label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
+    key: "2",
   },
 ];
 
@@ -92,6 +113,7 @@ const PaginatedExpense = ({
   );
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+  const [showRefundForm, setShowRefundForm] = useState(false);
 
   const handleRefetch = async () => {
     try {
@@ -448,7 +470,7 @@ const PaginatedExpense = ({
         </div>
       </div>
 
-      {selectedRecord && (
+      {selectedRecord && !showRefundForm && (
         <div className="content-column">
           <Row className="content-column-header-row">
             <div className="content-column-header-row-text content-column-header-row-text">
@@ -533,26 +555,13 @@ const PaginatedExpense = ({
                 // key={record.key}
                 menu={{
                   onClick: ({ key }) => {
-                    if (key === "1") console.log("Clone");
+                    if (key === "0") console.log("Clone");
+                    else if (key === "1") setShowRefundForm(true);
                     else if (key === "2") {
                       if (onDelete(selectedRecord.id)) setSelectedRecord(null);
                     }
                   },
-                  items: [
-                    {
-                      label: "Clone",
-                      key: "1",
-                    },
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.delete"
-                          defaultMessage="Delete"
-                        />
-                      ),
-                      key: "2",
-                    },
-                  ],
+                  items: actionItems,
                 }}
               >
                 <MoreOutlined />
@@ -763,6 +772,23 @@ const PaginatedExpense = ({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {showRefundForm && (
+        <div className="content-column">
+          <Row className="content-column-header-row">
+            <p className="page-header-text">Expense Refund</p>
+          </Row>
+          <ExpenseRefund
+            refetch={() => {
+              refetch();
+              setCurrentPage(1);
+              setSelectedRecord(null);
+            }}
+            // branches={branches}
+            selectedRecord={selectedRecord}
+            onClose={() => setShowRefundForm(false)}
+          />
         </div>
       )}
     </div>

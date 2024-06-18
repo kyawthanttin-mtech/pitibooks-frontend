@@ -18,6 +18,7 @@ const initialValues = {
 };
 
 const OwnerContributionNew = ({
+  refetch,
   modalOpen,
   setModalOpen,
   branches,
@@ -52,7 +53,7 @@ const OwnerContributionNew = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        // refetch();
+        refetch();
       },
     }
   );
