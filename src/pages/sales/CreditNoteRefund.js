@@ -63,7 +63,7 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
         referenceNumber: values.referenceNumber,
         description: values.description,
         transactionType: "CreditNoteRefund",
-        isMoneyIn: false,
+        // isMoneyIn: false,
         documents: fileUrls,
         // paidBills: [
         //   {

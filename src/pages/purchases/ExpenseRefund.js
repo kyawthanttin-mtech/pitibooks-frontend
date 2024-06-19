@@ -101,7 +101,7 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
         referenceNumber: values.referenceNumber,
         description: values.description,
         transactionType: "ExpenseRefund",
-        isMoneyIn: true,
+        // isMoneyIn: true,
         documents: fileUrls,
         // paidBills: [
         //   {

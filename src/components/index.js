@@ -30,6 +30,7 @@ import SalesOrderTemplate from "./pdfs-and-templates/sales/SalesOrderTemplate";
 import UploadAttachment from "./UploadAttachment";
 import AttachFiles from "./AttachFiles";
 import PaginatedBankingTransactionTable from "./PaginatedBankingTransactionTable";
+import ReportFilterBar from "./ReportFilterBar";
 
 export {
   ErrorBoundary,
@@ -64,4 +65,5 @@ export {
   UploadAttachment,
   AttachFiles,
   PaginatedBankingTransactionTable,
+  ReportFilterBar,
 };

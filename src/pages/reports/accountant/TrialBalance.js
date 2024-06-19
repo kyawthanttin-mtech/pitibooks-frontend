@@ -2,18 +2,18 @@
 import React, { useMemo, useState } from "react";
 import { Spin, Flex } from "antd";
 import { useQuery } from "@apollo/client";
-import { openErrorNotification } from "../../utils/Notification";
+import { openErrorNotification } from "../../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import moment from "moment";
-import { ReportQueries } from "../../graphql";
-import ReportHeader from "../../components/ReportHeader";
-import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { ReportQueries } from "../../../graphql";
+import ReportHeader from "../../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 
 const { GET_TRIAL_BALANCE_REPORT } = ReportQueries;
 
 const TrialBalance = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
 
@@ -57,8 +57,10 @@ const TrialBalance = () => {
 
   return (
     <div className="report">
-      <ReportHeader 
-        refetch={refetch} isPaginated={false} hasFromDate={false} 
+      <ReportHeader
+        refetch={refetch}
+        isPaginated={false}
+        hasFromDate={false}
         setToDate={setToDate}
         setReportBasis={setReportBasis}
       />
@@ -80,22 +82,36 @@ const TrialBalance = () => {
               <thead>
                 <tr>
                   <th className="text-align-left" style={{ width: "420px" }}>
-                    <span><FormattedMessage id="report.account" defaultMessage="Account" /></span>
+                    <span>
+                      <FormattedMessage
+                        id="report.account"
+                        defaultMessage="Account"
+                      />
+                    </span>
                   </th>
                   <th
                     className="text-align-left new-section"
                     style={{ width: "176px" }}
                   >
-                    <FormattedMessage id="report.accountCode" defaultMessage="Account Code" />
+                    <FormattedMessage
+                      id="report.accountCode"
+                      defaultMessage="Account Code"
+                    />
                   </th>
                   <th
                     className="text-align-right new-section"
                     style={{ width: "176px" }}
                   >
-                    <FormattedMessage id="report.netDebit" defaultMessage="Net Debit" />
+                    <FormattedMessage
+                      id="report.netDebit"
+                      defaultMessage="Net Debit"
+                    />
                   </th>
                   <th className="text-align-right" style={{ width: "176px" }}>
-                    <FormattedMessage id="report.netCredit" defaultMessage="Net Credit" />
+                    <FormattedMessage
+                      id="report.netCredit"
+                      defaultMessage="Net Credit"
+                    />
                   </th>
                 </tr>
               </thead>
@@ -113,12 +129,24 @@ const TrialBalance = () => {
                       {/* <td className="new-section">7474</td> */}
                       <td className="text-align-right new-section">
                         <a href="/">
-                          <FormattedNumber value={acc.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                          <FormattedNumber
+                            value={acc.debit}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </a>
                       </td>
                       <td className="text-align-right">
                         <a href="/">
-                          <FormattedNumber value={acc.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                          <FormattedNumber
+                            value={acc.credit}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </a>
                       </td>
                     </tr>
@@ -129,7 +157,11 @@ const TrialBalance = () => {
           </div>
         )}
         <div style={{ paddingLeft: "1.5rem" }}>
-          <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+          <FormattedMessage
+            values={{ currency: business.baseCurrency.symbol }}
+            id="label.displayedBaseCurrency"
+            defaultMessage="**Amount is displayed in {currency}"
+          />
         </div>
       </div>
     </div>

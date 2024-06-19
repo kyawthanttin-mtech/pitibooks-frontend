@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React from "react";
 import { Tabs, Button, Flex, Space, Dropdown, Table, Modal } from "antd";
 import {
@@ -13,6 +14,8 @@ import dayjs from "dayjs";
 import { AttachFiles } from "../../components";
 
 const TxnDetailColumn = ({
+  business,
+  selectedAccount,
   transactionRecord,
   setTransactionRecord,
   setTransactionRowIndex,
@@ -34,6 +37,7 @@ const TxnDetailColumn = ({
     transactionRecord?.transactionType
   );
 
+  console.log(transactionRecord);
   return (
     <>
       <div className={`txn-detail-column ${transactionRecord ? "open" : ""}`}>
@@ -117,19 +121,37 @@ const TxnDetailColumn = ({
                   <span
                     className="page-header-text"
                     style={{
-                      color: transactionRecord?.isMoneyIn
+                      color: transactionRecord?.toAccount?.id === selectedAccount?.id 
                         ? "var(--light-green)"
                         : "var(--red)",
                     }}
                   >
-                    {transactionRecord?.currency?.symbol}{" "}
-                    <FormattedNumber
-                      value={transactionRecord?.amount || 0}
-                      style="decimal"
-                      minimumFractionDigits={
-                        transactionRecord?.currency?.decimalPlaces
-                      }
-                    />
+                    {selectedAccount?.currency?.symbol}{" "}
+                    {transactionRecord?.toAccount?.id === selectedAccount?.id ?
+                      <FormattedNumber
+                        value={
+                          transactionRecord?.toAccount?.currency?.id !== transactionRecord?.currency?.id 
+                            ? transactionRecord?.toAccount?.currency?.id === business.baseCurrency.id
+                              ? (transactionRecord?.exchangeRate !== 0 ? transactionRecord?.amount * transactionRecord?.exchangeRate : 0)
+                              : (transactionRecord?.exchangeRate !== 0 ? transactionRecord?.amount / transactionRecord?.exchangeRate : 0)
+                            : transactionRecord?.amount
+                        }
+                        style="decimal"
+                        minimumFractionDigits={transactionRecord?.currency?.decimalPlaces ?? 2}
+                      />
+                      :
+                      <FormattedNumber
+                        value={
+                          transactionRecord?.fromAccount?.currency?.id !== transactionRecord?.currency?.id 
+                            ? transactionRecord?.fromAccount?.currency?.id === business.baseCurrency.id 
+                              ? (transactionRecord?.exchangeRate !== 0 ? (transactionRecord?.amount + transactionRecord?.bankCharges) * transactionRecord?.exchangeRate : 0)
+                              : (transactionRecord?.exchangeRate !== 0 ? (transactionRecord?.amount + transactionRecord?.bankCharges) / transactionRecord?.exchangeRate : 0)
+                            : transactionRecord?.amount + transactionRecord?.bankCharges
+                        }
+                        style="decimal"
+                        minimumFractionDigits={transactionRecord?.currency?.decimalPlaces ?? 2}
+                      />
+                    }
                   </span>
                   <span>
                     {dayjs(transactionRecord?.transactionDate).format(
@@ -152,9 +174,7 @@ const TxnDetailColumn = ({
                     />
                   </div>
                   <p style={{ margin: 0, marginBottom: "1rem" }}>
-                    {transactionRecord?.isMoneyIn
-                      ? transactionRecord?.fromAccount?.name
-                      : transactionRecord?.toAccount?.name}
+                    {selectedAccount?.name}
                   </p>
                 </div>
                 {transactionRecord?.creditNoteNumber && (

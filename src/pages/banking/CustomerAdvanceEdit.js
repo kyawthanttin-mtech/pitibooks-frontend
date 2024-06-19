@@ -120,7 +120,7 @@ const CustomerAdvanceEdit = ({
         customerName: undefined,
         customerId: selectedCustomer?.id,
         transactionType: "CustomerAdvance",
-        isMoneyIn: true,
+        // isMoneyIn: true,
         documents: fileUrls,
       };
 

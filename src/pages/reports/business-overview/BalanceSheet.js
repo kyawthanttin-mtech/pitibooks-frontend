@@ -2,21 +2,21 @@
 import React, { useMemo, useState } from "react";
 import { Spin, Flex, Divider } from "antd";
 import { useQuery } from "@apollo/client";
-import { openErrorNotification } from "../../utils/Notification";
+import { openErrorNotification } from "../../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import moment from "moment";
-import { ReportQueries } from "../../graphql";
-import ReportHeader from "../../components/ReportHeader";
-import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { ReportQueries } from "../../../graphql";
+import ReportHeader from "../../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 
 const { GET_BALANCE_SHEET_REPORT } = ReportQueries;
 
 const BalanceSheet = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
-  
+
   const {
     data,
     loading: queryLoading,
@@ -40,8 +40,10 @@ const BalanceSheet = () => {
 
   return (
     <div className="report">
-      <ReportHeader 
-        refetch={refetch} isPaginated={false} hasFromDate={false} 
+      <ReportHeader
+        refetch={refetch}
+        isPaginated={false}
+        hasFromDate={false}
         setToDate={setToDate}
         setReportBasis={setReportBasis}
       />
@@ -64,7 +66,12 @@ const BalanceSheet = () => {
             <thead>
               <tr>
                 <th className="text-align-left" style={{ width: "420px" }}>
-                  <span><FormattedMessage id="report.account" defaultMessage="Account" /></span>
+                  <span>
+                    <FormattedMessage
+                      id="report.account"
+                      defaultMessage="Account"
+                    />
+                  </span>
                 </th>
                 <th className="text-align-right" style={{ width: "176px" }}>
                   <FormattedMessage id="report.total" defaultMessage="Total" />
@@ -99,9 +106,15 @@ const BalanceSheet = () => {
                                 <a href="/">{acc.accountName}</a>
                               </td>
                               <td className="text-align-right">
-                              <a href="/">
-                                <FormattedNumber value={acc.amount} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
-                              </a>
+                                <a href="/">
+                                  <FormattedNumber
+                                    value={acc.amount}
+                                    style="decimal"
+                                    minimumFractionDigits={
+                                      business.baseCurrency.decimalPlaces
+                                    }
+                                  />
+                                </a>
                               </td>
                             </tr>
                           </React.Fragment>
@@ -111,7 +124,13 @@ const BalanceSheet = () => {
                             <b>Total for {subAcc.subType}</b>
                           </td>
                           <td className="text-align-right">
-                            <FormattedNumber value={subAcc.total} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                            <FormattedNumber
+                              value={subAcc.total}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
                           </td>
                         </tr>
                         <tr className="mute-hover">
@@ -126,7 +145,13 @@ const BalanceSheet = () => {
                         <b>Total for {groupAcc.groupType}</b>
                       </td>
                       <td className="text-align-right">
-                        <FormattedNumber value={groupAcc.total} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        <FormattedNumber
+                          value={groupAcc.total}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
                       </td>
                     </tr>
                     <tr className="mute-hover">
@@ -141,7 +166,13 @@ const BalanceSheet = () => {
                     <b>Total for {data.mainType}</b>
                   </td>
                   <td className="text-align-right">
-                    <FormattedNumber value={data.total} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                    <FormattedNumber
+                      value={data.total}
+                      style="decimal"
+                      minimumFractionDigits={
+                        business.baseCurrency.decimalPlaces
+                      }
+                    />
                   </td>
                 </tr>
                 <tr className="mute-hover">
@@ -155,7 +186,11 @@ const BalanceSheet = () => {
         </div>
       )}
       <div style={{ paddingLeft: "1.5rem" }}>
-        <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+        <FormattedMessage
+          values={{ currency: business.baseCurrency.symbol }}
+          id="label.displayedBaseCurrency"
+          defaultMessage="**Amount is displayed in {currency}"
+        />
       </div>
     </div>
   );

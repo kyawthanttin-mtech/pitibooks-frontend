@@ -1,13 +1,13 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { PaginatedAccountTransactionReport } from "../../components";
-import { ReportQueries } from "../../graphql";
-import {convertTransactionType} from "../../utils/HelperFunctions";
+import { PaginatedAccountTransactionReport } from "../../../components";
+import { ReportQueries } from "../../../graphql";
+import { convertTransactionType } from "../../../utils/HelperFunctions";
 
 const { GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT } = ReportQueries;
 
 const AccountTransactions = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
   const parseData = (data) => {
     let reports = [];
     data?.paginateAccountTransactionReport?.edges.forEach(({ node }) => {
@@ -21,7 +21,9 @@ const AccountTransactions = () => {
           transactionNumber: node.accountJournal.transactionNumber,
           transactionDetails: node.accountJournal.transactionDetails,
           referenceNumber: node.accountJournal.referenceNumber,
-          referenceType: convertTransactionType(node.accountJournal.referenceType),
+          referenceType: convertTransactionType(
+            node.accountJournal.referenceType
+          ),
         });
       }
     });

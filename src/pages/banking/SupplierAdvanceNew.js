@@ -97,7 +97,7 @@ const SupplierAdvanceNew = ({
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         transactionType: "SupplierAdvance",
-        isMoneyIn: false,
+        // isMoneyIn: false,
         documents: fileUrls,
       };
 

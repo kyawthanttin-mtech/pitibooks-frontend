@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -27,7 +27,8 @@ const TransferToAnotherAccEdit = ({
   allAccounts,
   selectedRecord,
   selectedAcc,
-  setSelectedRecord,setSelectedRowIndex
+  setSelectedRecord,
+  setSelectedRowIndex,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
@@ -40,6 +41,27 @@ const TransferToAnotherAccEdit = ({
   ]);
 
   console.log(selectedRecord?.currency);
+
+  const handleToAccountChange = useCallback(
+    (id) => {
+      const fromAccountCurrency =
+        selectedAcc?.currency?.id > 0
+          ? selectedAcc.currency
+          : business.baseCurrency;
+      let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
+        toAccountCurrency = business.baseCurrency;
+      }
+      let newCurrencies = [fromAccountCurrency];
+      if (fromAccountCurrency.id !== toAccountCurrency.id) {
+        newCurrencies.push(toAccountCurrency);
+      }
+      console.log(newCurrencies);
+      setCurrencies(newCurrencies);
+      form.setFieldValue("currency", null);
+    },
+    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+  );
 
   useMemo(() => {
     const parsedRecord =
@@ -58,7 +80,8 @@ const TransferToAnotherAccEdit = ({
         : {};
 
     form.setFieldsValue(parsedRecord);
-  }, [form, selectedRecord, modalOpen]);
+    handleToAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleToAccountChange]);
 
   const [updateAccountTransfer, { loading: createLoading }] = useMutation(
     UPDATE_BANKING_TRANSACTION,
@@ -71,29 +94,12 @@ const TransferToAnotherAccEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        setSelectedRecord(null);setSelectedRowIndex(0)
+        setSelectedRecord(null);
+        setSelectedRowIndex(0);
         refetch();
       },
     }
   );
-
-  const handleToAccountChange = (id) => {
-    const fromAccountCurrency =
-      selectedRecord?.currency?.id > 0
-        ? selectedRecord.currency
-        : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-      toAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [fromAccountCurrency];
-    if (fromAccountCurrency.id !== toAccountCurrency.id) {
-      newCurrencies.push(toAccountCurrency);
-    }
-    console.log(newCurrencies);
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
-  };
 
   const handleSubmit = async () => {
     try {
@@ -107,7 +113,7 @@ const TransferToAnotherAccEdit = ({
       const input = {
         ...values,
         transactionType: "TransferToAnotherAccount",
-        isMoneyIn: false,
+        // isMoneyIn: false,
         documents: fileUrls,
       };
 
@@ -273,59 +279,49 @@ const TransferToAnotherAccEdit = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
+      {currencies.length > 1 &&
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.exchangeRate"
+              defaultMessage="Exchange Rate"
+            />
+          }
+          name="exchangeRate"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          rules={[
+            {
+              required: true,
+              message: (
                 <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
+                  id="label.exchangeRate.required"
+                  defaultMessage="Enter the Exchange Rate"
                 />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
+              ),
+            },
 
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      }
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

@@ -1,19 +1,19 @@
 /* eslint-disable react/style-prop-object */
 import React, { useMemo, useState } from "react";
 import { Spin, Flex, Empty } from "antd";
-import { ReportQueries } from "../../graphql";
+import { ReportQueries } from "../../../graphql";
 import { useQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
-import { openErrorNotification } from "../../utils/Notification";
+import { openErrorNotification } from "../../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import moment from "moment";
-import ReportHeader from "../../components/ReportHeader";
-import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import ReportHeader from "../../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 
 const { GET_ACCOUNT_TYPE_SUMMARY_REPORT } = ReportQueries;
 
 const AccountTypeSummary = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
   const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
   const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
   const [reportBasis, setReportBasis] = useState("Accrual");
@@ -43,8 +43,9 @@ const AccountTypeSummary = () => {
 
   return (
     <div className="report">
-      <ReportHeader 
-        refetch={refetch} isPaginated={false} 
+      <ReportHeader
+        refetch={refetch}
+        isPaginated={false}
         setFromDate={setFromDate}
         setToDate={setToDate}
         setReportBasis={setReportBasis}
@@ -53,7 +54,10 @@ const AccountTypeSummary = () => {
         <h4>{business.name}</h4>
         <h3 style={{ marginTop: "-5px" }}>Account Type Summary</h3>
         <span>Basis: {reportBasis}</span>
-        <h5>From {fromDate.format(REPORT_DATE_FORMAT)} To {toDate.format(REPORT_DATE_FORMAT)}</h5>
+        <h5>
+          From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+          {toDate.format(REPORT_DATE_FORMAT)}
+        </h5>
       </div>
       {queryLoading ? (
         <Flex justify="center" align="center" style={{ height: "40vh" }}>
@@ -65,13 +69,21 @@ const AccountTypeSummary = () => {
             <thead>
               <tr>
                 <th style={{ width: "400px", textAlign: "left" }}>
-                  <span><FormattedMessage id="report.accountType" defaultMessage="Account Type" /></span>
+                  <span>
+                    <FormattedMessage
+                      id="report.accountType"
+                      defaultMessage="Account Type"
+                    />
+                  </span>
                 </th>
                 <th className="text-align-right" style={{ width: "210px" }}>
                   <FormattedMessage id="report.debit" defaultMessage="Debit" />
                 </th>
                 <th className="text-align-right" style={{ width: "210px" }}>
-                  <FormattedMessage id="report.credit" defaultMessage="Credit" />
+                  <FormattedMessage
+                    id="report.credit"
+                    defaultMessage="Credit"
+                  />
                 </th>
               </tr>
             </thead>
@@ -90,12 +102,24 @@ const AccountTypeSummary = () => {
                       <td>{acc.accountName}</td>
                       <td className="text-align-right">
                         <a href="/">
-                          <FormattedNumber value={acc.debit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                          <FormattedNumber
+                            value={acc.debit}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </a>
                       </td>
                       <td className="text-align-right">
-                      <a href="/">
-                          <FormattedNumber value={acc.credit} style="decimal" minimumFractionDigits={business.baseCurrency.decimalPlaces} />
+                        <a href="/">
+                          <FormattedNumber
+                            value={acc.credit}
+                            style="decimal"
+                            minimumFractionDigits={
+                              business.baseCurrency.decimalPlaces
+                            }
+                          />
                         </a>
                       </td>
                     </tr>
@@ -115,7 +139,11 @@ const AccountTypeSummary = () => {
         </div>
       )}
       <div style={{ paddingLeft: "1.5rem" }}>
-        <FormattedMessage values={{"currency": business.baseCurrency.symbol}} id="label.displayedBaseCurrency" defaultMessage="**Amount is displayed in {currency}" />
+        <FormattedMessage
+          values={{ currency: business.baseCurrency.symbol }}
+          id="label.displayedBaseCurrency"
+          defaultMessage="**Amount is displayed in {currency}"
+        />
       </div>
     </div>
   );

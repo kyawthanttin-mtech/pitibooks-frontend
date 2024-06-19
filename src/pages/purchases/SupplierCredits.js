@@ -832,7 +832,7 @@ const SupplierCredits = () => {
           <div className="content-column">
             <Row className="content-column-header-row">
               <p className="page-header-text">
-                Credit Note Refund For
+                Credit Refund For
                 {selectedRecord.supplierCreditNumber &&
                   ` - ${selectedRecord.supplierCreditNumber}`}
               </p>

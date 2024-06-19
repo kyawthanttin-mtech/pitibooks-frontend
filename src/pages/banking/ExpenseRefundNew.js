@@ -94,7 +94,7 @@ const ExpenseRefundNew = ({
         supplierName: undefined,
         supplierId: selectedSupplier.id,
         transactionType: "ExpenseRefund",
-        isMoneyIn: true,
+        // isMoneyIn: true,
       };
       await createAccountTransfer({ variables: { input: input } });
       setModalOpen(false);

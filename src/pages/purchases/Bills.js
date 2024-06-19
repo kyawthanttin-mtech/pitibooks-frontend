@@ -594,6 +594,16 @@ const Bills = () => {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      render: (_, record) => (
+        <>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount || 0}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+        </>
+      ),
     },
   ];
 
@@ -606,8 +616,8 @@ const Bills = () => {
     },
     {
       title: "Payment Order #",
-      dataIndex: "purchaseOrderNumber",
-      key: "purchaseOrderNumber",
+      dataIndex: "orderNumber",
+      key: "orderNumber",
     },
     {
       title: "Status",

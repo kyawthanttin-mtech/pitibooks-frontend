@@ -8,7 +8,6 @@ const CREATE_BANKING_TRANSACTION = gql`
       amount
       referenceNumber
       description
-      isMoneyIn
       transactionType
       exchangeRate
       taxAmount
@@ -60,7 +59,6 @@ const UPDATE_BANKING_TRANSACTION = gql`
       amount
       referenceNumber
       description
-      isMoneyIn
       transactionType
       exchangeRate
       taxAmount

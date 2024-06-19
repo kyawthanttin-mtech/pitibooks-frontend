@@ -88,7 +88,7 @@ const TransferToAnotherAccNew = ({
       const input = {
         ...values,
         transactionType: "TransferToAnotherAccount",
-        isMoneyIn: false,
+        // isMoneyIn: false,
         documents: fileUrls,
       };
 
@@ -252,59 +252,49 @@ const TransferToAnotherAccNew = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
+      {currencies.length > 1 &&
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.exchangeRate"
+              defaultMessage="Exchange Rate"
+            />
+          }
+          name="exchangeRate"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          rules={[
+            {
+              required: true,
+              message: (
                 <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
+                  id="label.exchangeRate.required"
+                  defaultMessage="Enter the Exchange Rate"
                 />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
+              ),
+            },
 
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      }
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

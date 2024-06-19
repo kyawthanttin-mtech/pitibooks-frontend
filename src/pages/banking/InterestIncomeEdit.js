@@ -109,7 +109,7 @@ const InterestIncomeEdit = ({
       const input = {
         ...values,
         transactionType: "InterestIncome",
-        isMoneyIn: true,
+        // isMoneyIn: true,
         documents: fileUrls,
       };
 

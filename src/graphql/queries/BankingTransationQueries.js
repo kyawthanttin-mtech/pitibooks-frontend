@@ -31,11 +31,23 @@ const GET_PAGINATE_BANKING_TRANSACTION = gql`
             id
             name
             code
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
           }
           toAccount {
             id
             name
             code
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
           }
           supplier {
             id
@@ -49,7 +61,6 @@ const GET_PAGINATE_BANKING_TRANSACTION = gql`
             id
             name
           }
-          isMoneyIn
           paymentMode {
             id
             name

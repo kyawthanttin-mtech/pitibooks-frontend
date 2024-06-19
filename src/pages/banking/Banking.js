@@ -739,13 +739,19 @@ const Banking = () => {
       key: "deposits",
       dataIndex: "baseDebit",
       render: (_, record) =>
-        record.isMoneyIn && (
+        record.toAccount?.id === selectedRecord.id && (
           <>
-            {record.currency?.symbol}{" "}
+            {record.toAccount?.currency?.symbol}{" "}
             <FormattedNumber
-              value={record.amount}
+              value={
+                record.toAccount?.currency?.id !== record.currency?.id 
+                  ? record.toAccount?.currency?.id === business.baseCurrency.id 
+                    ? (record.exchangeRate !== 0 ? record.amount * record.exchangeRate : 0)
+                    : (record.exchangeRate !== 0 ? record.amount / record.exchangeRate : 0)
+                  : record.amount
+              }
               style="decimal"
-              minimumFractionDigits={record.currency?.decimalPlaces}
+              minimumFractionDigits={record.currency?.decimalPlaces ?? 2}
             />
           </>
         ),
@@ -757,13 +763,19 @@ const Banking = () => {
       key: "withdrawals",
       dataIndex: "baseCredit",
       render: (_, record) =>
-        !record.isMoneyIn && (
+        record.fromAccount?.id === selectedRecord.id && (
           <>
-            {record.currency?.symbol}{" "}
+            {record.fromAccount?.currency?.symbol}{" "}
             <FormattedNumber
-              value={record.amount}
+              value={
+                record.fromAccount?.currency?.id !== record.currency?.id 
+                  ? record.fromAccount?.currency?.id === business.baseCurrency.id 
+                    ? (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) * record.exchangeRate : 0)
+                    : (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) / record.exchangeRate : 0)
+                  : record.amount + record.bankCharges
+              }
               style="decimal"
-              minimumFractionDigits={record.currency?.decimalPlaces}
+              minimumFractionDigits={record.currency?.decimalPlaces ?? 2}
             />
           </>
         ),

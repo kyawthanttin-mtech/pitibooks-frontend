@@ -1,14 +1,14 @@
 /* eslint-disable react/style-prop-object */
 import React, { useMemo, useState } from "react";
 import { Spin, Flex, Empty, Divider } from "antd";
-import { ReportQueries } from "../../graphql";
+import { ReportQueries } from "../../../graphql";
 import { useQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
-import { openErrorNotification } from "../../utils/Notification";
+import { openErrorNotification } from "../../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import moment from "moment";
-import ReportHeader from "../../components/ReportHeader";
-import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import ReportHeader from "../../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 
 const { GET_INVENTORY_SUMMARY_REPORT } = ReportQueries;
 
@@ -60,16 +60,14 @@ const InventorySummary = () => {
         setFromDate={setFromDate}
         setToDate={setToDate}
         setReportBasis={setReportBasis}
+        hasFromDate={false}
       />
       <div className="rep-container">
         <div className="report-header">
           <h4>{business.name}</h4>
           <h3 style={{ marginTop: "-5px" }}>Inventory Summary</h3>
           <span>Basis: {reportBasis}</span>
-          <h5>
-            From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
-            {toDate.format(REPORT_DATE_FORMAT)}
-          </h5>
+          <h5>As of {toDate.format(REPORT_DATE_FORMAT)}</h5>
         </div>
         {queryLoading ? (
           <Flex justify="center" align="center" style={{ height: "40vh" }}>

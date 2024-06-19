@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import {
   CloseOutlined,
@@ -171,6 +172,7 @@ const AllTransactions = () => {
   const {
     notiApi,
     msgApi,
+    business,
     allBranchesQueryRef,
     allCurrenciesQueryRef,
     allAccountsQueryRef,
@@ -516,6 +518,7 @@ const AllTransactions = () => {
   const handleAccountChange = (key) => {
     const selectedFilter = bankingAccounts.find((acc) => acc.key === key);
     setSelectedAcc(selectedFilter);
+    console.log(selectedFilter)
     setSelectedRecord(null);
     setSelectedRowIndex(0);
   };
@@ -611,7 +614,7 @@ const AllTransactions = () => {
               fontSize: "var(--small-text)",
             }}
           >
-            {record?.isMoneyIn
+            {record?.fromAccount?.id !== selectedAcc?.id
               ? `From Account: ${record.fromAccount?.name}`
               : `To Account: ${record.toAccount?.name}`}
           </div>
@@ -622,14 +625,20 @@ const AllTransactions = () => {
       title: <FormattedMessage id="label.deposits" defaultMessage="Deposits" />,
       key: "deposits",
       dataIndex: "baseDebit",
-      render: (_, record) =>
-        record.isMoneyIn && (
+      render: (_, record) => 
+        record.toAccount?.id === selectedAcc?.id && (
           <>
-            {record.currency?.symbol}{" "}
+            {record.toAccount?.currency?.symbol}{" "}
             <FormattedNumber
-              value={record.amount}
+              value={
+                record.toAccount?.currency?.id !== record.currency?.id 
+                  ? record.toAccount?.currency?.id === business.baseCurrency.id 
+                    ? (record.exchangeRate !== 0 ? record.amount * record.exchangeRate : 0)
+                    : (record.exchangeRate !== 0 ? record.amount / record.exchangeRate : 0)
+                  : record.amount
+              }
               style="decimal"
-              minimumFractionDigits={record.currency?.decimalPlaces}
+              minimumFractionDigits={record.currency?.decimalPlaces ?? 2}
             />
           </>
         ),
@@ -641,13 +650,19 @@ const AllTransactions = () => {
       key: "withdrawals",
       dataIndex: "baseCredit",
       render: (_, record) =>
-        !record.isMoneyIn && (
+        record.fromAccount?.id === selectedAcc?.id && (
           <>
-            {record.currency?.symbol}{" "}
+            {record.fromAccount?.currency?.symbol}{" "}
             <FormattedNumber
-              value={record.amount}
+              value={
+                record.fromAccount?.currency?.id !== record.currency?.id 
+                  ? record.fromAccount?.currency?.id === business.baseCurrency.id 
+                    ? (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) * record.exchangeRate : 0)
+                    : (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) / record.exchangeRate : 0)
+                  : record.amount + record.bankCharges
+              }
               style="decimal"
-              minimumFractionDigits={record.currency?.decimalPlaces}
+              minimumFractionDigits={record.currency?.decimalPlaces ?? 2}
             />
           </>
         ),
@@ -1086,6 +1101,8 @@ const AllTransactions = () => {
           </div>
         </Flex>
         <TxnDetailColumn
+          business={business}
+          selectedAccount={selectedAcc}
           transactionRecord={selectedRecord}
           setTransactionRecord={setSelectedRecord}
           setTransactionRowIndex={setSelectedRowIndex}

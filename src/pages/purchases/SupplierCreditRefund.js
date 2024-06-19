@@ -68,7 +68,7 @@ const SupplierCreditRefund = ({
         referenceNumber: values.referenceNumber,
         description: values.description,
         transactionType: "SupplierCreditRefund",
-        isMoneyIn: true,
+        // isMoneyIn: true,
         documents: fileUrls,
         // paidBills: [
         //   {

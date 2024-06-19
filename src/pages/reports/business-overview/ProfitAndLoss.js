@@ -2,13 +2,13 @@
 import React, { useMemo, useState } from "react";
 import { Spin, Flex, Divider } from "antd";
 import { useQuery } from "@apollo/client";
-import { openErrorNotification } from "../../utils/Notification";
+import { openErrorNotification } from "../../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import moment from "moment";
-import { ReportQueries } from "../../graphql";
-import ReportHeader from "../../components/ReportHeader";
-import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { ReportQueries } from "../../../graphql";
+import ReportHeader from "../../../components/ReportHeader";
+import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 
 const { GET_PROFIT_AND_LOSS_REPORT } = ReportQueries;
 

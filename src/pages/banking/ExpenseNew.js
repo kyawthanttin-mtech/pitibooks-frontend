@@ -97,7 +97,7 @@ const ExpenseNew = ({
         supplierId: selectedSupplier.id,
         customerId: selectedCustomer.id,
         transactionType: "Expense",
-        isMoneyIn: false,
+        // isMoneyIn: false,
       };
 
       await createAccountTransfer({ variables: { input } });

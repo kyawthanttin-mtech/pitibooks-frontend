@@ -1,11 +1,11 @@
 import React from "react";
-import { ReportQueries } from "../../graphql";
+import { ReportQueries } from "../../../graphql";
 import { useOutletContext } from "react-router-dom";
-import { PaginatedDetailedGeneralLedgerReport } from "../../components";
+import { PaginatedDetailedGeneralLedgerReport } from "../../../components";
 const { GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT } = ReportQueries;
 
 const DetailedGeneralLedger = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
 
   const parseData = (data) => {
     let reports = [];

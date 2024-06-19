@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Dropdown, Space } from "antd";
+import { Button, Dropdown, Flex, Space } from "antd";
 import {
   CaretDownFilled,
   PrinterOutlined,
@@ -23,6 +23,8 @@ const ReportHeader = ({
   setFromDate,
   setToDate,
   setReportBasis,
+  title,
+  label,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,6 +46,10 @@ const ReportHeader = ({
           setFromDate={setFromDate}
           setToDate={setToDate}
         />
+        <Flex vertical>
+          <span style={{ fontSize: "0.8rem" }}>{title}</span>
+          <span>{label}</span>
+        </Flex>
       </Space>
       <div>
         <Space>
@@ -71,7 +77,10 @@ const ReportHeader = ({
               }}
               onClick={onExportAsClick}
             >
-              <FormattedMessage id="button.exportAs" defaultMessage="Export As" />
+              <FormattedMessage
+                id="button.exportAs"
+                defaultMessage="Export As"
+              />
               <CaretDownFilled style={{ width: "0.6rem", height: "0.6rem" }} />
             </div>
           </Dropdown>

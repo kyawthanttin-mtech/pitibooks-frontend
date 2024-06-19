@@ -86,7 +86,7 @@ const OtherIncomeNew = ({
       const input = {
         ...values,
         transactionType: "OtherIncome",
-        isMoneyIn: true,
+        // isMoneyIn: true,
       };
 
       await createAccountTransfer({ variables: { input } });

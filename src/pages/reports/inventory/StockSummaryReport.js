@@ -1,12 +1,12 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { PaginatedAccountTransactionReport } from "../../components";
-import { ReportQueries } from "../../graphql";
-import { convertTransactionType } from "../../utils/HelperFunctions";
+import { PaginatedAccountTransactionReport } from "../../../components";
+import { ReportQueries } from "../../../graphql";
+import { convertTransactionType } from "../../../utils/HelperFunctions";
 
 const { GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT } = ReportQueries;
 
-const InventoryValuationSummary = () => {
+const StockSummaryReport = () => {
   const { notiApi, business } = useOutletContext();
   const parseData = (data) => {
     let reports = [];
@@ -73,4 +73,4 @@ const InventoryValuationSummary = () => {
   );
 };
 
-export default InventoryValuationSummary;
+export default StockSummaryReport;

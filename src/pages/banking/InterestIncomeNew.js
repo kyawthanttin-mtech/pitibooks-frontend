@@ -91,7 +91,7 @@ const InterestIncomeNew = ({
       const input = {
         ...values,
         transactionType: "InterestIncome",
-        isMoneyIn: true,
+        // isMoneyIn: true,
         documents: fileUrls,
       };
 

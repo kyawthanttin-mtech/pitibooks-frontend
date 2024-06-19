@@ -1,12 +1,12 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { PaginatedJournalReport } from "../../components";
-import { ReportQueries } from "../../graphql";
+import { PaginatedJournalReport } from "../../../components";
+import { ReportQueries } from "../../../graphql";
 
 const { GET_PAGINATED_JOURNAL_REPORTS } = ReportQueries;
 
 const JournalReport = () => {
-  const {notiApi, business} = useOutletContext();
+  const { notiApi, business } = useOutletContext();
 
   const parseData = (data) => {
     let reports = [];

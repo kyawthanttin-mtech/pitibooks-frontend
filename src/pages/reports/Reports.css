@@ -12,6 +12,10 @@
   border: none;
 }
 
+.menu-row {
+  margin-bottom: 1.5rem;
+}
+
 /*Report Styles*/
 
 .report {
@@ -244,4 +248,20 @@ table .row-header td {
 
 .report-datepicker .ant-picker-outlined {
   height: 2.1rem;
+}
+
+.report-filter-bar {
+  height: 3rem;
+  padding-inline: 1.5rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  transition: height 0.2s linear;
+  opacity: 1;
+}
+
+.report-filter-bar.hidden {
+  height: 0;
+  opacity: 0;
 }

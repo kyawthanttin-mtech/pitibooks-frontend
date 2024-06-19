@@ -116,7 +116,7 @@ const ExpenseEdit = ({
         supplierId: selectedSupplier.id,
         customerId: selectedCustomer.id,
         transactionType: "Expense",
-        isMoneyIn: false,
+        // isMoneyIn: false,
       };
 
       await createAccountTransfer({

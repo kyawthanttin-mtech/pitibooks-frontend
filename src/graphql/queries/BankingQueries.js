@@ -16,7 +16,6 @@ const GET_BANKING_ACCOUNTS = gql`
       currency {
         id
         decimalPlaces
-        exchangeRate
         name
         symbol
         isActive
@@ -27,7 +26,6 @@ const GET_BANKING_ACCOUNTS = gql`
         amount
         referenceNumber
         description
-        isMoneyIn
         transactionType
         exchangeRate
         taxAmount
@@ -48,7 +46,6 @@ const GET_BANKING_ACCOUNTS = gql`
           currency {
             id
             decimalPlaces
-            exchangeRate
             name
             symbol
           }
@@ -64,7 +61,6 @@ const GET_BANKING_ACCOUNTS = gql`
           currency {
             id
             decimalPlaces
-            exchangeRate
             name
             symbol
           }
@@ -76,7 +72,6 @@ const GET_BANKING_ACCOUNTS = gql`
         currency {
           id
           decimalPlaces
-          exchangeRate
           name
           symbol
         }

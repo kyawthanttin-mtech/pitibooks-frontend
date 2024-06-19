@@ -66,6 +66,15 @@ import {
   CashFlowReport,
   MovementOfEquity,
   InventorySummary,
+  APAgingSummary,
+  PayableSummary,
+  PayableDetails,
+  PurchaseOrderDetails,
+  SupplierBalanceSummary,
+  InvoiceDetails,
+  SalesOrderDetails,
+  CustomerBalances,
+  CustomerBalanceSummary,
 } from "./pages/reports";
 import {
   Profile,
@@ -427,6 +436,42 @@ const router = createHashRouter([
       {
         path: "reports/movementOfEquity",
         Component: MovementOfEquity,
+      },
+      {
+        path: "reports/apAgingSummary",
+        Component: APAgingSummary,
+      },
+      {
+        path: "reports/payableSummary",
+        Component: PayableSummary,
+      },
+      {
+        path: "reports/payableDetails",
+        Component: PayableDetails,
+      },
+      {
+        path: "reports/purchaseOrderDetails",
+        Component: PurchaseOrderDetails,
+      },
+      {
+        path: "reports/supplierBalanceSummary",
+        Component: SupplierBalanceSummary,
+      },
+      {
+        path: "reports/invoiceDetails",
+        Component: InvoiceDetails,
+      },
+      {
+        path: "reports/salesOrderDetails",
+        Component: SalesOrderDetails,
+      },
+      {
+        path: "reports/customerBalances",
+        Component: CustomerBalances,
+      },
+      {
+        path: "reports/customerBalanceSummary",
+        Component: CustomerBalanceSummary,
       },
       //Settings
       {

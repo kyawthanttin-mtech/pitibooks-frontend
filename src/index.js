@@ -17,13 +17,13 @@ import reportWebVitals from "./reportWebVitals";
 import Wrapper from "./localeWrapper";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-// const httpLink = new HttpLink({ uri: "http://139.59.236.210:3000/query" });
+const httpLink = new HttpLink({ uri: "http://139.59.236.210:3000/query" });
 // const httpLink = new HttpLink({ uri: "http://192.168.88.119:8081/query" });
 // const httpLink = new HttpLink({ uri: "http://192.168.88.46:8081/query" });
-const httpLink = new HttpLink({ uri: "http://localhost:8081/query" });
+// const httpLink = new HttpLink({ uri: "http://localhost:8081/query" });
 
 const uploadLink = createUploadLink({
-  uri: "http://192.168.88.119:8081/query",
+  uri: "http://139.59.236.210:3000/query",
 });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
