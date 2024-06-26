@@ -230,7 +230,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
                 {/* {openOptionsIndices.includes(index) && hoveredIndex === index && ( */}
                 <div className="attachment-options">
                   <span>
-                    <a
+                    {/* <a
                       href={file.documentUrl}
                       download
                       rel="noopener noreferrer"
@@ -243,9 +243,20 @@ const AttachFiles = ({ files, iconButton = false }) => {
                         id="button.download"
                         defaultMessage="Download"
                       />
+                    </a> */}
+                    <a
+                      href={file.documentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FormattedMessage
+                        id="button.download"
+                        defaultMessage="Download"
+                      />
                     </a>
                   </span>
-                  <Divider type="vertical" />
+                  {/* <Divider type="vertical" />
                   <span>
                     <a
                       href={file.documentUrl}
@@ -255,7 +266,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
                     >
                       <ExportOutlined />
                     </a>
-                  </span>
+                  </span> */}
                 </div>
                 {/* )} */}
               </div>

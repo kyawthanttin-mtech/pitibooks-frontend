@@ -96,7 +96,7 @@ const ProductUnits = () => {
     TOGGLE_ACTIVE_PRODUCT_UNIT,
     {
       onCompleted() {
-        openSuccessNotification(
+        openSuccessMessage(
           msgApi,
           <FormattedMessage
             id="productUnit.updated.status"

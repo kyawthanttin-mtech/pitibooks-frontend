@@ -394,7 +394,6 @@ const CreditNotesNew = () => {
       documents: fileUrls,
       warehouseId: values.warehouse,
       details,
-      creditNoteNumber: 2,
     };
     // console.log("Transactions", transactions);
     console.log("Input", input);
@@ -1903,12 +1902,12 @@ const CreditNotesNew = () => {
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus("Open")}
+              onClick={() => setSaveStatus("Confirmed")}
             >
               {
                 <FormattedMessage
-                  id="button.saveAsOpen"
-                  defaultMessage="Save As Open"
+                  id="button.saveAndConfirm"
+                  defaultMessage="Save And Confirm"
                 />
               }
             </Button>

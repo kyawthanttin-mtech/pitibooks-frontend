@@ -83,7 +83,7 @@ const ExpenseRefundNew = ({
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {

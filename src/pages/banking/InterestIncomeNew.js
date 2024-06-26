@@ -78,7 +78,7 @@ const InterestIncomeNew = ({
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {
@@ -90,6 +90,7 @@ const InterestIncomeNew = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         transactionType: "InterestIncome",
         // isMoneyIn: true,
         documents: fileUrls,
@@ -223,7 +224,7 @@ const InterestIncomeNew = ({
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
 
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -257,60 +258,50 @@ const InterestIncomeNew = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.currency !== currentValues.currency
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue("currency") &&
-          getFieldValue("currency") !== business.baseCurrency.id ? (
-            <Form.Item
-              label={
+      </Form.Item> */}
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.exchangeRate"
+              defaultMessage="Exchange Rate"
+            />
+          }
+          name="exchangeRate"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          rules={[
+            {
+              required: true,
+              message: (
                 <FormattedMessage
-                  id="label.exchangeRate"
-                  defaultMessage="Exchange Rate"
+                  id="label.exchangeRate.required"
+                  defaultMessage="Enter the Exchange Rate"
                 />
-              }
-              name="exchangeRate"
-              labelAlign="left"
-              labelCol={{ span: 8 }}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.exchangeRate.required"
-                      defaultMessage="Enter the Exchange Rate"
-                    />
-                  ),
-                },
+              ),
+            },
 
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          ) : null
-        }
-      </Form.Item>
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

@@ -64,6 +64,14 @@ export function convertTransactionType(type) {
       return "OpeningBalance";
     case "SC":
       return "SupplierCredit";
+    case "AC":
+      return "TransferFund";
+    case "OD":
+      return "OwnerDrawing";
+    case "OC":
+      return "OwnerContribution";
+    case "OI":
+      return "Income";
     default:
       return "";
   }

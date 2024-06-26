@@ -32,6 +32,7 @@ import {
 import RecordBillPayment from "./RecordBillPayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
+  AccordionTabs,
   AttachFiles,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
@@ -50,6 +51,7 @@ import { BillTemplate } from "../../components";
 import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { BillQueries, BillMutations } from "../../graphql";
+import ApplyCreditModal from "./ApplyCreditModal";
 const { GET_PAGINATE_BILL } = BillQueries;
 const { CONFIRM_BILL, DELETE_BILL, VOID_BILL } = BillMutations;
 
@@ -626,6 +628,35 @@ const Bills = () => {
     },
   ];
 
+  const appliedCreditColumns = [
+    {
+      title: "Date",
+      dataIndex: "creditDate",
+      key: "creditDate",
+      render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Supplier Credit#",
+      dataIndex: "supplierCreditNumber",
+      key: "supplierCreditNumber",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amountCredited",
+      key: "amountCredited",
+      render: (_, record) => (
+        <>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amountCredited || 0}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+  ];
+
   const searchForm = (
     <Form form={searchFormRef}>
       <Row>
@@ -839,153 +870,11 @@ const Bills = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
-      <Modal
-        width="65rem"
-        title={
-          <FormattedMessage
-            id="label.applyCredits"
-            defaultMessage="Apply credits for"
-          />
-        }
-        okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
-        cancelText={
-          <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-        }
-        open={creditModalOpen}
-        onCancel={() => setCreditModalOpen(false)}
-      >
-        <Flex justify="end" style={{ marginBottom: "2rem" }}>
-          <span>
-            Remaining Bill Balance:{" "}
-            <b>
-              {selectedRecord?.currency?.symbol}{" "}
-              <FormattedNumber
-                value={
-                  selectedRecord?.billTotalAmount -
-                  selectedRecord?.billTotalPaidAmount
-                }
-                style="decimal"
-                minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
-              />
-            </b>
-          </span>
-        </Flex>
-        <Form>
-          <Table
-            pagination={false}
-            dataSource={[{ key: 1 }]}
-            columns={[
-              {
-                title: (
-                  <FormattedMessage
-                    id="label.creditDetails"
-                    defaultMessage="Credit Details"
-                  />
-                ),
-                dataIndex: "creditDetails",
-                key: "creditDetails",
-              },
-              {
-                title: (
-                  <FormattedMessage id="label.branch" defaultMessage="Branch" />
-                ),
-                dataIndex: "branchName",
-                key: "branchName",
-              },
-              {
-                title: (
-                  <FormattedMessage id="label.amount" defaultMessage="Amount" />
-                ),
-                dataIndex: "amount",
-                key: "amount",
-              },
-              {
-                title: (
-                  <FormattedMessage
-                    id="label.availableBalance"
-                    defaultMessage="Available Balance"
-                  />
-                ),
-                dataIndex: "availableBalance",
-                key: "availableBalance",
-              },
-              {
-                title: (
-                  <FormattedMessage
-                    id="label.amountApplied"
-                    defaultMessage="Amount Applied"
-                  />
-                ),
-                dataIndex: "amountApplied",
-                key: "amountApplied",
-                render: (_, record) => (
-                  <>
-                    <Form.Item noStyle name="amountApplied">
-                      <Input />
-                    </Form.Item>
-                  </>
-                ),
-              },
-            ]}
-          />
-        </Form>
-        <Flex justify="end">
-          <div style={{ width: "50%" }}>
-            <table cellSpacing="0" border="0" width="100%" id="balance-table">
-              <tbody>
-                <tr className="text-align-right">
-                  <td
-                    style={{
-                      padding: "20px 10px 5px 0",
-                      verticalAlign: "middle",
-                    }}
-                  >
-                    <b>Total Amount Applied:</b>
-                  </td>
-                  <td
-                    style={{
-                      width: "160px",
-                      verticalAlign: "middle",
-                      padding: "20px 10px 10px 5px",
-                    }}
-                  >
-                    <span>0</span>
-                  </td>
-                </tr>
-
-                <tr className="text-align-right">
-                  <td
-                    style={{
-                      padding: "5px 10px 5px 0",
-                      verticalAlign: "middle",
-                      background: "var(--main-bg-color)",
-                    }}
-                  >
-                    Final Bill Balance:
-                  </td>
-                  <td
-                    style={{
-                      width: "120px",
-                      verticalAlign: "middle",
-                      padding: "10px 10px 10px 5px",
-                      background: "var(--main-bg-color)",
-                    }}
-                  >
-                    0{/* {selectedRecord.currency.symbol} fdafa */}
-                    {/* <FormattedNumber
-                      value={selectedRecord.orderTotalAmount}
-                      style="decimal"
-                      minimumFractionDigits={
-                        selectedRecord.currency.decimalPlaces
-                      }
-                    /> */}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </Flex>
-      </Modal>
+      <ApplyCreditModal
+        modalOpen={creditModalOpen}
+        setModalOpen={setCreditModalOpen}
+        selectedRecord={selectedRecord}
+      />
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -1267,9 +1156,9 @@ const Bills = () => {
                       // confirm bill
                       handleConfirmBill(selectedRecord.id);
                     } else if (key === "2") {
-                      // record payment
+                      setShowRecordBillPaymentForm(true);
                     } else if (key === "3") {
-                      // apply credits
+                      setCreditModalOpen(true);
                     } else if (key === "4") {
                       // void bill
                       handleVoidBill(selectedRecord.id);
@@ -1295,88 +1184,6 @@ const Bills = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              {(selectedRecord.status === "Paid" ||
-                selectedRecord.status === "Partial Paid") && (
-                <div className="bill-receives-container">
-                  <div
-                    className={`nav-bar ${!isContentExpanded && "collapsed"}`}
-                    onClick={toggleContent}
-                  >
-                    <ul className="nav-tabs">
-                      <li
-                        className={`nav-link ${
-                          activeTab === "bill" && isContentExpanded && "active"
-                        }`}
-                        onClick={(event) => {
-                          setActiveTab("bill");
-                          isContentExpanded && event.stopPropagation();
-                        }}
-                      >
-                        <span>Payments Made</span>
-                        <span className="bill">
-                          {selectedRecord.billPayment
-                            ? selectedRecord.billPayment.length
-                            : 0}
-                        </span>
-                      </li>
-                      <Divider type="vertical" className="tab-divider" />
-                      <li
-                        className={`nav-link ${
-                          activeTab === "receives" &&
-                          isContentExpanded &&
-                          "active"
-                        }`}
-                        onClick={(event) => {
-                          setActiveTab("receives");
-                          isContentExpanded && event.stopPropagation();
-                        }}
-                      >
-                        <span>Purchase Orders</span>
-                        <span className="bill">
-                          {selectedRecord.purchaseOrder &&
-                          selectedRecord.purchaseOrder.id > 0
-                            ? 1
-                            : 0}
-                        </span>
-                      </li>
-                    </ul>
-                    <CaretRightFilled
-                      style={{
-                        transform: `rotate(${caretRotation}deg)`,
-                        transition: "0.4s",
-                      }}
-                    />
-                  </div>
-
-                  <div
-                    className={`content-wrapper ${isContentExpanded && "show"}`}
-                  >
-                    {activeTab === "bill" && (
-                      <div className="bill-tab">
-                        <Table
-                          className="bill-table"
-                          columns={paymentMadeColumns}
-                          dataSource={selectedRecord.billPayment}
-                          pagination={false}
-                        />
-                      </div>
-                    )}
-                    {activeTab === "receives" && (
-                      <div className="bill-tab">
-                        {selectedRecord.purchaseOrder &&
-                        selectedRecord.purchaseOrder.id > 0 ? (
-                          <Table
-                            className="bill-table"
-                            columns={purchaseOrderColumns}
-                            dataSource={[selectedRecord.purchaseOrder]}
-                            pagination={false}
-                          />
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
               {(selectedRecord.status === "Confirmed" ||
                 selectedRecord.status === "Partial Paid") && (
                 <div
@@ -1399,7 +1206,7 @@ const Bills = () => {
                       />
                     </b>
                   </span>
-                  <Button
+                  {/* <Button
                     type="link"
                     noStyle
                     onClick={() => setCreditModalOpen(true)}
@@ -1408,14 +1215,14 @@ const Bills = () => {
                       id="button.apply"
                       defaultMessage="Apply"
                     />
-                  </Button>
+                  </Button> */}
                   <Divider style={{ marginBlock: "1rem" }} />
                   <Flex justify="space-between" align="center">
                     <Flex vertical gap="0.5rem">
                       <b>Record Payment</b>
                       <span style={{ fontSize: "var(--small-text)" }}>
-                        Payment for this bill is overdue. Apply available
-                        credits or record the payment for bill if paid already.
+                        Apply available credits or record the payment for bill
+                        if paid already.
                       </span>
                     </Flex>
                     <Space>
@@ -1431,6 +1238,53 @@ const Bills = () => {
                     </Space>
                   </Flex>
                 </div>
+              )}
+              <br />
+              {(selectedRecord.status === "Paid" ||
+                selectedRecord.status === "Partial Paid") && (
+                <AccordionTabs
+                  tabs={[
+                    {
+                      key: "bill",
+                      title: "Payments Made",
+                      data: selectedRecord?.billPayment,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={paymentMadeColumns}
+                          dataSource={selectedRecord?.billPayment}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                    {
+                      key: "purchaseOrders",
+                      title: "Purchase Orders",
+                      data: selectedRecord?.purchaseOrder,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={purchaseOrderColumns}
+                          dataSource={selectedRecord?.purchaseOrder}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                    {
+                      key: "creditsApplied",
+                      title: "Credits Applied",
+                      data: selectedRecord?.appliedSupplierCredits,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={appliedCreditColumns}
+                          dataSource={selectedRecord?.appliedSupplierCredits}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                  ]}
+                />
               )}
               <BillTemplate selectedRecord={selectedRecord} />
             </div>

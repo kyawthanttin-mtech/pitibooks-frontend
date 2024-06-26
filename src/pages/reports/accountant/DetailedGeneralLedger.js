@@ -40,17 +40,15 @@ const DetailedGeneralLedger = () => {
   };
 
   return (
-    <div className="report">
-      <PaginatedDetailedGeneralLedgerReport
-        business={business}
-        api={notiApi}
-        gqlQuery={GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT}
-        showSearch={false}
-        parseData={parseData}
-        parsePageInfo={parsePageInfo}
-        showAddNew={false}
-      />
-    </div>
+    <PaginatedDetailedGeneralLedgerReport
+      business={business}
+      api={notiApi}
+      gqlQuery={GET_PAGINATED_DETAILED_GENERAL_LEDGER_REPORT}
+      showSearch={false}
+      parseData={parseData}
+      parsePageInfo={parsePageInfo}
+      showAddNew={false}
+    />
   );
 };
 

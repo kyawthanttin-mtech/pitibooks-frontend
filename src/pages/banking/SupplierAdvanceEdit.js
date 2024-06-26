@@ -120,6 +120,7 @@ const SupplierAdvanceEdit = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         transactionType: "SupplierAdvance",

@@ -15,6 +15,7 @@ import SupplierCreditsNew from "./SupplierCreditsNew";
 import SupplierCreditsEdit from "./SupplierCreditsEdit";
 import PurchaseOrdersEdit from "./PurchaseOrdersEdit";
 import PaymentsMadeNew from "./PaymentsMadeNew";
+import ApplyCreditModal from "./ApplyCreditModal";
 
 export {
   Bills,
@@ -34,4 +35,5 @@ export {
   SupplierCreditsEdit,
   PurchaseOrdersEdit,
   PaymentsMadeNew,
+  ApplyCreditModal,
 };

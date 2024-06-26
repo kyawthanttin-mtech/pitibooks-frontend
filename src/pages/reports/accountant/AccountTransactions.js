@@ -51,25 +51,23 @@ const AccountTransactions = () => {
   const handleDelete = () => {};
 
   return (
-    <div className="report">
-      <PaginatedAccountTransactionReport
-        // dataLoading={loading}
-        business={business}
-        api={notiApi}
-        gqlQuery={GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT}
-        showSearch={false}
-        // searchForm={searchJournalForm}
-        // searchFormRef={searchJournalFormRef}
-        // searchQqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
-        parseData={parseData}
-        parsePageInfo={parsePageInfo}
-        showAddNew={false}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        // setSearchModalOpen={setSearchModalOpen}
-        // modalOpen={searchModalOpen}
-      />
-    </div>
+    <PaginatedAccountTransactionReport
+      // dataLoading={loading}
+      business={business}
+      api={notiApi}
+      gqlQuery={GET_PAGINATED_ACCOUNT_TRANSACTION_REPORT}
+      showSearch={false}
+      // searchForm={searchJournalForm}
+      // searchFormRef={searchJournalFormRef}
+      // searchQqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
+      parseData={parseData}
+      parsePageInfo={parsePageInfo}
+      showAddNew={false}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      // setSearchModalOpen={setSearchModalOpen}
+      // modalOpen={searchModalOpen}
+    />
   );
 };
 

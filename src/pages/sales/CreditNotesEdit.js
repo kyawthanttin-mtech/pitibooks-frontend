@@ -1967,12 +1967,13 @@ const CreditNotesEdit = () => {
             files={record?.documents}
           />
           <div className="page-actions-bar page-actions-bar-margin">
-            <Button
+          <Button
               type="primary"
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
               onClick={() => setSaveStatus("Draft")}
+              disabled={record?.currentStatus !== "Draft"}
             >
               {
                 <FormattedMessage
@@ -1986,7 +1987,11 @@ const CreditNotesEdit = () => {
               htmlType="submit"
               className="page-actions-btn"
               loading={loading}
-              onClick={() => setSaveStatus("Open")}
+              onClick={() => setSaveStatus("Confirmed")}
+              disabled={
+                record?.currentStatus !== "Draft" &&
+                record?.currentStatus !== "Confirmed"
+              }
             >
               {
                 <FormattedMessage

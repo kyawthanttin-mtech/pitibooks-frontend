@@ -34,19 +34,20 @@ const TransferToAnotherAccEdit = ({
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [fileList, setFileList] = useState(null);
-  const [currencies, setCurrencies] = useState([
-    selectedAcc?.currency?.id > 0
-      ? selectedAcc.currency
-      : business.baseCurrency,
-  ]);
-
-  console.log(selectedRecord?.currency);
+  const [currencies, setCurrencies] = useState(
+    selectedRecord?.id > 0
+      ? [
+          selectedRecord?.fromAccount?.currency?.id,
+          selectedRecord?.toAccount?.currency?.id,
+        ]
+      : []
+  );
 
   const handleToAccountChange = useCallback(
     (id) => {
       const fromAccountCurrency =
-        selectedAcc?.currency?.id > 0
-          ? selectedAcc.currency
+        selectedRecord?.fromAccount?.currency?.id > 0
+          ? selectedRecord?.fromAccount?.currency
           : business.baseCurrency;
       let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
       if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
@@ -56,11 +57,15 @@ const TransferToAnotherAccEdit = ({
       if (fromAccountCurrency.id !== toAccountCurrency.id) {
         newCurrencies.push(toAccountCurrency);
       }
-      console.log(newCurrencies);
       setCurrencies(newCurrencies);
-      form.setFieldValue("currency", null);
+      form.setFieldValue("currencyId", null);
     },
-    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+    [
+      allAccounts,
+      business.baseCurrency,
+      form,
+      selectedRecord?.fromAccount?.currency,
+    ]
   );
 
   useMemo(() => {
@@ -72,6 +77,7 @@ const TransferToAnotherAccEdit = ({
             toAccountId: selectedRecord.toAccount?.id || null,
             currencyId: selectedRecord.currency?.id || null,
             amount: selectedRecord.amount,
+            exchangeRate: selectedRecord.exchangeRate,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
             description: selectedRecord.description,
@@ -279,7 +285,7 @@ const TransferToAnotherAccEdit = ({
           ))}
         </Select>
       </Form.Item>
-      {currencies.length > 1 &&
+      {currencies.length > 1 && (
         <Form.Item
           label={
             <FormattedMessage
@@ -321,7 +327,7 @@ const TransferToAnotherAccEdit = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

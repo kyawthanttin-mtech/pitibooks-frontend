@@ -491,6 +491,27 @@ const GET_INVENTORY_SUMMARY_REPORT = gql`
   }
 `;
 
+const GET_PRODUCT_SALES_REPORT = gql`
+  query GetProductSalesReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $branchId: Int
+  ) {
+    getProductSalesReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      branchId: $branchId
+    ) {
+      productName
+      productSku
+      soldQty
+      totalAmount
+      totalAmountWithTax
+      margin
+    }
+  }
+`;
+
 const ReportQueries = {
   GET_PAGINATED_JOURNAL_REPORTS,
   GET_ACCOUNT_TYPE_SUMMARY_REPORT,
@@ -507,6 +528,7 @@ const ReportQueries = {
   GET_SALES_BY_SALES_PERSON_REPORT,
   GET_SALES_BY_PRODUCT_REPORT,
   GET_INVENTORY_SUMMARY_REPORT,
+  GET_PRODUCT_SALES_REPORT,
 };
 
 export default ReportQueries;

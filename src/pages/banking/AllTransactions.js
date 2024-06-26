@@ -63,6 +63,10 @@ import {
   CustomerAdvanceEdit,
   InterestIncomeNew,
   InterestIncomeEdit,
+  SupplierAdvanceRefundNew,
+  SupplierAdvanceRefundEdit,
+  CustomerAdvanceRefundNew,
+  CustomerAdvanceRefundEdit,
 } from ".";
 import OwnerDrawingsEdit from "./OwnerDrawingsEdit";
 const { GET_PAGINATE_BANKING_TRANSACTION } = BankingTransactionQueries;
@@ -101,10 +105,15 @@ const addTransactionItems = [
           />
         ),
       },
-      // {
-      //   key: "1-4",
-      //   label: <FormattedMessage id="label.expense" defaultMessage="Expense" />,
-      // },
+      {
+        key: "1-4",
+        label: (
+          <FormattedMessage
+            id="label.customerAdvanceRefund"
+            defaultMessage="Customer Advance Refund"
+          />
+        ),
+      },
     ],
   },
   {
@@ -154,6 +163,15 @@ const addTransactionItems = [
           <FormattedMessage
             id="label.interestIncome"
             defaultMessage="Interest Income"
+          />
+        ),
+      },
+      {
+        key: "2-6",
+        label: (
+          <FormattedMessage
+            id="label.supplierAdvanceRefund"
+            defaultMessage="Supplier Advance Refund"
           />
         ),
       },
@@ -230,6 +248,22 @@ const AllTransactions = () => {
     useState(false);
   const [expenseNewModalOpen, setExpenseNewModalOpen] = useState(false);
   const [expenseEditModalOpen, setExpenseEditModalOpen] = useState(false);
+  const [
+    supplierAdvanceRefundNewModalOpen,
+    setSupplierAdvanceRefundNewModalOpen,
+  ] = useState(false);
+  const [
+    customerAdvanceRefundNewModalOpen,
+    setCustomerAdvanceRefundNewModalOpen,
+  ] = useState(false);
+  const [
+    supplierAdvanceRefundEditModalOpen,
+    setSupplierAdvanceRefundEditModalOpen,
+  ] = useState(false);
+  const [
+    customerAdvanceRefundEditModalOpen,
+    setCustomerAdvanceRefundEditModalOpen,
+  ] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -315,6 +349,44 @@ const AllTransactions = () => {
           account.detailType === "OtherAsset" ||
           account.detailType === "OtherCurrentAsset" ||
           account.detailType === "Equity"
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
+  }, [accountData]);
+
+  const otherCurrentAssetAccounts = useMemo(() => {
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter((account) => account.detailType === "OtherCurrentAsset")
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
+  }, [accountData]);
+
+  const incomeAccounts = useMemo(() => {
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (account) =>
+          account.detailType === "Income" ||
+          account.detailType === "OtherIncome"
       )
       .reduce((acc, account) => {
         const { detailType } = account;
@@ -518,7 +590,7 @@ const AllTransactions = () => {
   const handleAccountChange = (key) => {
     const selectedFilter = bankingAccounts.find((acc) => acc.key === key);
     setSelectedAcc(selectedFilter);
-    console.log(selectedFilter)
+    console.log(selectedFilter);
     setSelectedRecord(null);
     setSelectedRowIndex(0);
   };
@@ -568,12 +640,16 @@ const AllTransactions = () => {
         return setCustomerAdvanceEditModalOpen;
       case "OtherIncome":
         return setOtherIncomeEditModalOpen;
-      case "InterestIncome":
-        return setInterestIncomeEditModalOpen;
+      // case "InterestIncome":
+      //   return setInterestIncomeEditModalOpen;
       case "ExpenseRefund":
         return setExpenseRefundEditModalOpen;
       case "Expense":
         return setExpenseEditModalOpen;
+      case "SupplierAdvanceRefund":
+        return setSupplierAdvanceRefundEditModalOpen;
+      case "CustomerAdvanceRefund":
+        return setCustomerAdvanceRefundEditModalOpen;
       default:
         return () => {};
     }
@@ -608,7 +684,12 @@ const AllTransactions = () => {
       dataIndex: "transactionType",
       render: (_, record) => (
         <>
-          <div>{record.transactionType.split(/(?=[A-Z])/).join(" ")}</div>
+          <div>
+            {record?.transactionType === "TransferToAnotherAccount" ||
+            record?.transactionType === "TransferFromAnotherAccount"
+              ? "Transfer Fund"
+              : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
+          </div>
           <div
             style={{
               fontSize: "var(--small-text)",
@@ -625,16 +706,21 @@ const AllTransactions = () => {
       title: <FormattedMessage id="label.deposits" defaultMessage="Deposits" />,
       key: "deposits",
       dataIndex: "baseDebit",
-      render: (_, record) => 
+      render: (_, record) =>
         record.toAccount?.id === selectedAcc?.id && (
           <>
             {record.toAccount?.currency?.symbol}{" "}
             <FormattedNumber
               value={
-                record.toAccount?.currency?.id !== record.currency?.id 
-                  ? record.toAccount?.currency?.id === business.baseCurrency.id 
-                    ? (record.exchangeRate !== 0 ? record.amount * record.exchangeRate : 0)
-                    : (record.exchangeRate !== 0 ? record.amount / record.exchangeRate : 0)
+                record.toAccount?.currency?.id !== record.currency?.id
+                  ? record.toAccount?.currency?.id === 0 ||
+                    record.toAccount?.currency?.id === business.baseCurrency.id
+                    ? record.exchangeRate !== 0
+                      ? record.amount * record.exchangeRate
+                      : 0
+                    : record.exchangeRate !== 0
+                    ? record.amount / record.exchangeRate
+                    : 0
                   : record.amount
               }
               style="decimal"
@@ -655,10 +741,17 @@ const AllTransactions = () => {
             {record.fromAccount?.currency?.symbol}{" "}
             <FormattedNumber
               value={
-                record.fromAccount?.currency?.id !== record.currency?.id 
-                  ? record.fromAccount?.currency?.id === business.baseCurrency.id 
-                    ? (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) * record.exchangeRate : 0)
-                    : (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) / record.exchangeRate : 0)
+                record.fromAccount?.currency?.id !== record.currency?.id
+                  ? record.fromAccount?.currency?.id === 0 ||
+                    record.fromAccount?.currency?.id ===
+                      business.baseCurrency.id
+                    ? record.exchangeRate !== 0
+                      ? (record.amount + record.bankCharges) *
+                        record.exchangeRate
+                      : 0
+                    : record.exchangeRate !== 0
+                    ? (record.amount + record.bankCharges) / record.exchangeRate
+                    : 0
                   : record.amount + record.bankCharges
               }
               style="decimal"
@@ -818,7 +911,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={accounts}
+        accounts={otherCurrentAssetAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         refetch={refetch}
@@ -830,7 +923,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={accounts}
+        accounts={otherCurrentAssetAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedRecord={selectedRecord}
@@ -870,7 +963,7 @@ const AllTransactions = () => {
         setModalOpen={setOtherIncomeNewModalOpen}
         branches={branches}
         parsedData={bankingAccounts}
-        accounts={accounts}
+        accounts={incomeAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedAcc={selectedAcc}
@@ -882,7 +975,7 @@ const AllTransactions = () => {
         setModalOpen={setOtherIncomeEditModalOpen}
         branches={branches}
         parsedData={bankingAccounts}
-        accounts={accounts}
+        accounts={incomeAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedAcc={selectedAcc}
@@ -914,6 +1007,60 @@ const AllTransactions = () => {
         bankingAccounts={bankingAccounts}
         selectedAcc={selectedAcc}
         paymentModes={paymentModes}
+        selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        setSelectedRowIndex={setSelectedRowIndex}
+        refetch={refetch}
+      />
+      <SupplierAdvanceRefundNew
+        modalOpen={supplierAdvanceRefundNewModalOpen}
+        setModalOpen={setSupplierAdvanceRefundNewModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
+        selectedAcc={selectedAcc}
+        accounts={otherCurrentAssetAccounts}
+        allAccounts={accountData?.listAllAccount}
+        bankingAccounts={bankingAccounts}
+        refetch={refetch}
+      />
+      <SupplierAdvanceRefundEdit
+        modalOpen={supplierAdvanceRefundEditModalOpen}
+        setModalOpen={setSupplierAdvanceRefundEditModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
+        selectedAcc={selectedAcc}
+        accounts={otherCurrentAssetAccounts}
+        allAccounts={accountData?.listAllAccount}
+        bankingAccounts={bankingAccounts}
+        selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        setSelectedRowIndex={setSelectedRowIndex}
+        refetch={refetch}
+      />
+      <CustomerAdvanceRefundNew
+        modalOpen={customerAdvanceRefundNewModalOpen}
+        setModalOpen={setCustomerAdvanceRefundNewModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
+        selectedAcc={selectedAcc}
+        accounts={otherCurrentAssetAccounts}
+        allAccounts={accountData?.listAllAccount}
+        bankingAccounts={bankingAccounts}
+        refetch={refetch}
+      />
+      <CustomerAdvanceRefundEdit
+        modalOpen={customerAdvanceRefundEditModalOpen}
+        setModalOpen={setCustomerAdvanceRefundEditModalOpen}
+        branches={branches}
+        currencies={currencies}
+        paymentModes={paymentModes}
+        selectedAcc={selectedAcc}
+        accounts={otherCurrentAssetAccounts}
+        allAccounts={accountData?.listAllAccount}
+        bankingAccounts={bankingAccounts}
         selectedRecord={selectedRecord}
         setSelectedRecord={setSelectedRecord}
         setSelectedRowIndex={setSelectedRowIndex}
@@ -974,7 +1121,7 @@ const AllTransactions = () => {
                       } else if (key === "1-3") {
                         setSupplierAdvanceNewModalOpen(true);
                       } else if (key === "1-4") {
-                        setExpenseNewModalOpen(true);
+                        setCustomerAdvanceRefundNewModalOpen(true);
                       } else if (key === "2-1") {
                         setTransferFromNewModalOpen(true);
                       } else if (key === "2-2") {
@@ -985,6 +1132,8 @@ const AllTransactions = () => {
                         setOtherIncomeNewModalOpen(true);
                       } else if (key === "2-5") {
                         setInterestIncomeNewModalOpen(true);
+                      } else if (key === "2-6") {
+                        setSupplierAdvanceRefundNewModalOpen(true);
                       }
                     },
                     items: addTransactionItems,

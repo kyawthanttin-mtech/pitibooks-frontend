@@ -15,6 +15,8 @@ import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import { useHistoryState } from "../utils/HelperFunctions";
 import moment from "moment";
 import ReportHeader from "./ReportHeader";
+import ReportFilterBar from "./ReportFilterBar";
+import { ReportLayout } from "../pages/reports";
 
 const PaginatedAccountTransactionReport = ({
   business,
@@ -31,8 +33,10 @@ const PaginatedAccountTransactionReport = ({
     "accountTransactionCurrentPage",
     1
   );
-  const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
-  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [filteredDate, setFilteredDate] = useState({
+    fromDate: moment().startOf("month").utc(true),
+    toDate: moment().endOf("month").utc(true),
+  });
   const [reportBasis, setReportBasis] = useState("Accrual");
 
   const {
@@ -46,8 +50,9 @@ const PaginatedAccountTransactionReport = ({
     notifyOnNetworkStatusChange: true,
     variables: {
       limit: QUERY_DATA_LIMIT,
-      fromDate: fromDate,
-      toDate: toDate,
+      fromDate: moment().startOf("month").utc(true),
+      toDate: moment().endOf("month").utc(true),
+      branchId: business?.primaryBranch?.id,
       reportType: reportBasis,
     },
     onError(err) {
@@ -75,8 +80,8 @@ const PaginatedAccountTransactionReport = ({
           variables: {
             limit: QUERY_DATA_LIMIT,
             after: parsePageInfo(data).endCursor,
-            fromDate: fromDate,
-            toDate: toDate,
+            fromDate: filteredDate.fromDate,
+            toDate: filteredDate.toDate,
             reportType: reportBasis,
           },
         });
@@ -107,253 +112,259 @@ const PaginatedAccountTransactionReport = ({
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
   const loading = queryLoading;
 
-  console.log("page data", allData);
-  console.log("cur", currentPage);
   return (
-    <div className="report">
-      <ReportHeader
-        refetch={refetch}
-        isPaginated={true}
-        setCurrentPage={setCurrentPage}
-        setFromDate={setFromDate}
-        setToDate={setToDate}
-        setReportBasis={setReportBasis}
-      />
-
-      <div className="rep-container">
-        <div className="report-header">
-          <h4>{business.name}</h4>
-          <h3 style={{ marginTop: "-5px" }}>Account Transactions</h3>
-          <span>Basis: {reportBasis}</span>
-          <h5>
-            From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
-            {toDate.format(REPORT_DATE_FORMAT)}
-          </h5>
-        </div>
-        {loading ? (
-          <Flex justify="center" align="center" style={{ height: "40vh" }}>
-            <Spin size="large" />
-          </Flex>
-        ) : (
-          <div className="fill-container table-container">
-            <table className="rep-table">
-              <thead>
-                <tr>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="report.date" defaultMessage="Date" />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.account"
-                      defaultMessage="Account"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.transactionDetails"
-                      defaultMessage="Transaction Details"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.transactionType"
-                      defaultMessage="Transaction Type"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.transactionNumber"
-                      defaultMessage="Transaction #"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.referenceNumber"
-                      defaultMessage="Reference #"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.debit"
-                      defaultMessage="Debit"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.credit"
-                      defaultMessage="Credit"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="report.amount"
-                      defaultMessage="Amount"
-                    />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageData.length > 0 ? (
-                  pageData.map((data) => {
-                    return (
-                      <tr key={data.key}>
-                        <td style={{ verticalAlign: "top" }}>
-                          {moment(data?.date).format(REPORT_DATE_FORMAT)}
-                        </td>
-                        <td>{data.account}</td>
-                        {/* <td>
+    <ReportLayout>
+      <div className="report">
+        <ReportFilterBar
+          refetch={refetch}
+          isPaginated={true}
+          setCurrentPage={setCurrentPage}
+          setReportBasis={setReportBasis}
+          setFilteredDate={setFilteredDate}
+        />
+        <div className="rep-container">
+          <div className="report-header">
+            <h4>{business.name}</h4>
+            <h3 style={{ marginTop: "-5px" }}>Account Transactions</h3>
+            <span>Basis: {reportBasis}</span>
+            <h5>
+              From {filteredDate?.fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+              {filteredDate?.toDate.format(REPORT_DATE_FORMAT)}
+            </h5>
+          </div>
+          {loading ? (
+            <Flex justify="center" align="center" style={{ height: "40vh" }}>
+              <Spin size="large" />
+            </Flex>
+          ) : (
+            <div className="fill-container table-container">
+              <table className="rep-table">
+                <thead>
+                  <tr>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.date"
+                        defaultMessage="Date"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.account"
+                        defaultMessage="Account"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.transactionDetails"
+                        defaultMessage="Transaction Details"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.transactionType"
+                        defaultMessage="Transaction Type"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.transactionNumber"
+                        defaultMessage="Transaction #"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.referenceNumber"
+                        defaultMessage="Reference #"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.debit"
+                        defaultMessage="Debit"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.credit"
+                        defaultMessage="Credit"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="report.amount"
+                        defaultMessage="Amount"
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageData.length > 0 ? (
+                    pageData.map((data) => {
+                      return (
+                        <tr key={data.key}>
+                          <td style={{ verticalAlign: "top" }}>
+                            {moment(data?.date).format(REPORT_DATE_FORMAT)}
+                          </td>
+                          <td>{data.account}</td>
+                          {/* <td>
                           <span className="preserve-wrap"></span>
                         </td> */}
-                        <td>
-                          {data.transactionDetails && (
-                            <Tooltip title={data.transactionDetails}>
-                              <FileTextOutlined />
-                            </Tooltip>
-                          )}
-                        </td>
-                        <td>{data.referenceType}</td>
-                        <td>{data.transactionNumber}</td>
-                        <td>{data.referenceNumber}</td>
-                        <td className="text-align-right">
-                          <a href="/">
-                            {data.baseDebit !== 0 && (
-                              <FormattedNumber
-                                value={data.baseDebit}
-                                style="decimal"
-                                minimumFractionDigits={
-                                  business.baseCurrency.decimalPlaces
-                                }
-                              />
+                          <td>
+                            {data.transactionDetails && (
+                              <Tooltip title={data.transactionDetails}>
+                                <FileTextOutlined />
+                              </Tooltip>
                             )}
-                          </a>
-                        </td>
-                        <td className="text-align-right">
-                          <a href="/">
-                            {data.baseCredit !== 0 && (
-                              <FormattedNumber
-                                value={data.baseCredit}
-                                style="decimal"
-                                minimumFractionDigits={
-                                  business.baseCurrency.decimalPlaces
-                                }
-                              />
-                            )}
-                          </a>
-                        </td>
-                        <td className="text-align-right">
-                          <a href="/">
-                            {data.baseDebit === 0 ? (
-                              <FormattedNumber
-                                value={data.baseCredit}
-                                style="decimal"
-                                minimumFractionDigits={
-                                  business.baseCurrency.decimalPlaces
-                                }
-                              />
-                            ) : (
-                              <FormattedNumber
-                                value={data.baseDebit}
-                                style="decimal"
-                                minimumFractionDigits={
-                                  business.baseCurrency.decimalPlaces
-                                }
-                              />
-                            )}
-                            {data.baseDebit === 0 ? " Cr" : " Dr"}
-                          </a>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr className="empty-row">
-                    <td colSpan={9} style={{ border: "none" }}>
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                          </td>
+                          <td>{data.referenceType}</td>
+                          <td>{data.transactionNumber}</td>
+                          <td>{data.referenceNumber}</td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              {data.baseDebit !== 0 && (
+                                <FormattedNumber
+                                  value={data.baseDebit}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              )}
+                            </a>
+                          </td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              {data.baseCredit !== 0 && (
+                                <FormattedNumber
+                                  value={data.baseCredit}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              )}
+                            </a>
+                          </td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              {data.baseDebit === 0 ? (
+                                <FormattedNumber
+                                  value={data.baseCredit}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              ) : (
+                                <FormattedNumber
+                                  value={data.baseDebit}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              )}
+                              {data.baseDebit === 0 ? " Cr" : " Dr"}
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr className="empty-row">
+                      <td colSpan={9} style={{ border: "none" }}>
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
-      {showSearch && (
-        <Modal
-          className="search-journal-modal"
-          width="65.5rem"
-          title={
-            <FormattedMessage
-              id="journal.search"
-              defaultMessage="Search Journal"
-            />
-          }
-          okText={
-            <FormattedMessage id="button.search" defaultMessage="Search" />
-          }
-          cancelText={
-            <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-          }
-          open={modalOpen}
-          // onOk={handleModalSearch}
-          onCancel={() => setSearchModalOpen(false)}
-          okButtonProps={loading}
-        >
-          {searchForm}
-        </Modal>
-      )}
-      <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
-        <div style={{ paddingLeft: "1.5rem" }}></div>
-        <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
-          <Tooltip
-            title={
-              <FormattedMessage id="button.refetch" defaultMessage="Refetch" />
-            }
-          >
-            <Button
-              icon={<SyncOutlined />}
-              loading={loading}
-              disabled={!refetchEnabled}
-              onClick={handleRefetch}
-            />
-          </Tooltip>
-          <Tooltip
+        {showSearch && (
+          <Modal
+            className="search-journal-modal"
+            width="65.5rem"
             title={
               <FormattedMessage
-                id="button.previous"
-                defaultMessage="Previous"
+                id="journal.search"
+                defaultMessage="Search Journal"
               />
             }
+            okText={
+              <FormattedMessage id="button.search" defaultMessage="Search" />
+            }
+            cancelText={
+              <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
+            }
+            open={modalOpen}
+            // onOk={handleModalSearch}
+            onCancel={() => setSearchModalOpen(false)}
+            okButtonProps={loading}
           >
-            <Button
-              icon={<LeftOutlined />}
-              loading={loading}
-              disabled={!hasPreviousPage}
-              onClick={handlePrevious}
+            {searchForm}
+          </Modal>
+        )}
+        <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
+          <div style={{ paddingLeft: "1.5rem" }}></div>
+          <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
+            <Tooltip
+              title={
+                <FormattedMessage
+                  id="button.refetch"
+                  defaultMessage="Refetch"
+                />
+              }
+            >
+              <Button
+                icon={<SyncOutlined />}
+                loading={loading}
+                disabled={!refetchEnabled}
+                onClick={handleRefetch}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                <FormattedMessage
+                  id="button.previous"
+                  defaultMessage="Previous"
+                />
+              }
+            >
+              <Button
+                icon={<LeftOutlined />}
+                loading={loading}
+                disabled={!hasPreviousPage}
+                onClick={handlePrevious}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                <FormattedMessage id="button.next" defaultMessage="Next" />
+              }
+            >
+              <Button
+                icon={<RightOutlined />}
+                loading={loading}
+                disabled={!hasNextPage}
+                onClick={handleNext}
+              />
+            </Tooltip>
+          </Space>
+        </Row>
+        <Row>
+          <div style={{ paddingLeft: "1.5rem" }}>
+            <FormattedMessage
+              values={{ currency: business.baseCurrency.symbol }}
+              id="label.displayedBaseCurrency"
+              defaultMessage="**Amount is displayed in {currency}"
             />
-          </Tooltip>
-          <Tooltip
-            title={<FormattedMessage id="button.next" defaultMessage="Next" />}
-          >
-            <Button
-              icon={<RightOutlined />}
-              loading={loading}
-              disabled={!hasNextPage}
-              onClick={handleNext}
-            />
-          </Tooltip>
-        </Space>
-      </Row>
-      <Row>
-        <div style={{ paddingLeft: "1.5rem" }}>
-          <FormattedMessage
-            values={{ currency: business.baseCurrency.symbol }}
-            id="label.displayedBaseCurrency"
-            defaultMessage="**Amount is displayed in {currency}"
-          />
-        </div>
-      </Row>
-    </div>
+          </div>
+        </Row>
+      </div>
+    </ReportLayout>
   );
 };
 

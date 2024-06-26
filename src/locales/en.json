@@ -283,6 +283,8 @@
   "label.PONUmber": "PO#",
   "label.billedAmount": "Billed Amount",
   "label.amountPaid": "Amount Paid",
+  "label.fromAccount": "From Account",
+  "label.toAccount": "To Account",
 
   "menu.home": "Home",
   "menu.branches": "Branches",

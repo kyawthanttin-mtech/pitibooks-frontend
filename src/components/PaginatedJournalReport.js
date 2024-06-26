@@ -13,6 +13,8 @@ import {
 import { QUERY_DATA_LIMIT, REPORT_DATE_FORMAT } from "../config/Constants";
 import moment from "moment";
 import ReportHeader from "./ReportHeader";
+import ReportFilterBar from "./ReportFilterBar";
+import { ReportLayout } from "../pages/reports";
 
 const PaginatedJournalReport = ({
   business,
@@ -32,8 +34,10 @@ const PaginatedJournalReport = ({
   modalOpen,
 }) => {
   const [currentPage, setCurrentPage] = useHistoryState("currentPage", 1);
-  const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
-  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [filteredDate, setFilteredDate] = useState({
+    fromDate: moment().startOf("month").utc(true),
+    toDate: moment().endOf("month").utc(true),
+  });
   const [reportBasis, setReportBasis] = useState("Accrual");
 
   const {
@@ -47,8 +51,9 @@ const PaginatedJournalReport = ({
     notifyOnNetworkStatusChange: true,
     variables: {
       limit: QUERY_DATA_LIMIT,
-      fromDate: fromDate,
-      toDate: toDate,
+      fromDate: moment().startOf("month").utc(true),
+      toDate: moment().endOf("month").utc(true),
+      branchId: business?.primaryBranch?.id,
       reportType: reportBasis,
     },
     onError(err) {
@@ -76,8 +81,8 @@ const PaginatedJournalReport = ({
           variables: {
             limit: QUERY_DATA_LIMIT,
             after: parsePageInfo(data).endCursor,
-            fromDate: fromDate,
-            toDate: toDate,
+            fromDate: filteredDate.fromDate,
+            toDate: filteredDate.toDate,
             reportType: reportBasis,
           },
         });
@@ -107,14 +112,13 @@ const PaginatedJournalReport = ({
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
 
   return (
-    <div>
-      <div>
-        <ReportHeader
+    <ReportLayout>
+      <div className="report">
+        <ReportFilterBar
           refetch={refetch}
           isPaginated={true}
           setCurrentPage={setCurrentPage}
-          setFromDate={setFromDate}
-          setToDate={setToDate}
+          setFilteredDate={setFilteredDate}
           setReportBasis={setReportBasis}
         />
 
@@ -124,8 +128,8 @@ const PaginatedJournalReport = ({
             <h3 style={{ marginTop: "-5px" }}>Journal Report</h3>
             <span>Basis: {reportBasis}</span>
             <h5>
-              From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
-              {toDate.format(REPORT_DATE_FORMAT)}
+              From {filteredDate?.fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+              {filteredDate?.toDate.format(REPORT_DATE_FORMAT)}
             </h5>
           </div>
           {loading ? (
@@ -370,7 +374,7 @@ const PaginatedJournalReport = ({
           </div>
         </Row>
       </div>
-    </div>
+    </ReportLayout>
   );
 };
 

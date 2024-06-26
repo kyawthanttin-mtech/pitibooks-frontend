@@ -243,8 +243,8 @@ const DELETE_SALES_ORDER = gql`
 `;
 
 const CONFIRM_SALES_ORDER = gql`
-  mutation ConfirmSalesOrder($input: NewSalesOrder!) {
-    confirmSalesOrder(input: $input) {
+  mutation ConfirmSalesOrder($id: ID!) {
+    confirmSalesOrder(id: $id) {
       id
       customer {
         id
@@ -324,8 +324,8 @@ const CONFIRM_SALES_ORDER = gql`
 `;
 
 const CANCEL_SALES_ORDER = gql`
-  mutation CancelSalesOrder($input: NewSalesOrder!) {
-    cancelSalesOrder(input: $input) {
+  mutation CancelSalesOrder($id: ID!) {
+    cancelSalesOrder(id: $id) {
       id
       customer {
         id

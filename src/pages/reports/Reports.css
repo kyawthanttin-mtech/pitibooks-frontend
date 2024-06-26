@@ -82,7 +82,7 @@
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
   position: sticky;
-  top: 5rem;
+  top: 0;
   z-index: 1;
   background-color: #fff;
   background-clip: padding-box;
@@ -264,4 +264,17 @@ table .row-header td {
 .report-filter-bar.hidden {
   height: 0;
   opacity: 0;
+}
+
+/*Report layout*/
+.report-menu .ant-menu-inline .ant-menu-item,
+.report-menu .ant-menu-vertical .ant-menu-item,
+.report-menu .ant-menu-submenu-title,
+.report-menu .ant-menu-submenu-title {
+  color: var(--text-color);
+}
+
+.report-menu .ant-menu-item-active {
+  color: black !important;
+  box-shadow: 0px 0.5px 1px 0px rgba(0, 0, 0, 0.1);
 }

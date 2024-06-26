@@ -164,7 +164,6 @@ const SalesOrders = () => {
             defaultMessage="Sales Order Deleted"
           />
         );
-
         setSelectedRecord(null);
       },
       onError(err) {
@@ -192,7 +191,7 @@ const SalesOrders = () => {
     }
   );
 
-  const [confirmSO, { loading: confirmLoading }] = useMutation(
+  const [confirmSalesOrder, { loading: confirmLoading }] = useMutation(
     CONFIRM_SALES_ORDER,
     {
       onCompleted() {
@@ -208,28 +207,28 @@ const SalesOrders = () => {
       onError(err) {
         openErrorNotification(notiApi, err.message);
       },
-      update(cache, { data }) {
-        const existingSalesOrders = cache.readQuery({
-          query: GET_PAGINATE_SALES_ORDER,
-        });
-        const updatedSalesOrders =
-          existingSalesOrders.paginateSalesOrder.edges.filter(
-            ({ node }) => node.id !== data.confirmSalesOrder.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_ORDER,
-          data: {
-            paginateSalesOrder: {
-              ...existingSalesOrders.paginateSalesOrder,
-              edges: updatedSalesOrders,
-            },
-          },
-        });
-      },
+      // update(cache, { data }) {
+      //   const existingSalesOrders = cache.readQuery({
+      //     query: GET_PAGINATE_SALES_ORDER,
+      //   });
+      //   const updatedSalesOrders =
+      //     existingSalesOrders.paginateSalesOrder?.edges?.filter(
+      //       ({ node }) => node.id !== data.confirmSalesOrder.id
+      //     );
+      //   cache.writeQuery({
+      //     query: GET_PAGINATE_SALES_ORDER,
+      //     data: {
+      //       paginateSalesOrder: {
+      //         ...existingSalesOrders.paginateSalesOrder,
+      //         edges: updatedSalesOrders,
+      //       },
+      //     },
+      //   });
+      // },
     }
   );
 
-  const [cancelSO, { loading: cancelLoading }] = useMutation(
+  const [cancelSalesOrder, { loading: cancelLoading }] = useMutation(
     CANCEL_SALES_ORDER,
     {
       onCompleted() {
@@ -245,24 +244,24 @@ const SalesOrders = () => {
       onError(err) {
         openErrorNotification(notiApi, err.message);
       },
-      update(cache, { data }) {
-        const existingSalesOrders = cache.readQuery({
-          query: GET_PAGINATE_SALES_ORDER,
-        });
-        const updatedSalesOrders =
-          existingSalesOrders.paginateSalesOrder.edges.filter(
-            ({ node }) => node.id !== data.cancelSalesOrder.id
-          );
-        cache.writeQuery({
-          query: GET_PAGINATE_SALES_ORDER,
-          data: {
-            paginateSalesOrder: {
-              ...existingSalesOrders.paginateSalesOrder,
-              edges: updatedSalesOrders,
-            },
-          },
-        });
-      },
+      // update(cache, { data }) {
+      //   const existingSalesOrders = cache.readQuery({
+      //     query: GET_PAGINATE_SALES_ORDER,
+      //   });
+      //   const updatedSalesOrders =
+      //     existingSalesOrders.paginateSalesOrder.edges.filter(
+      //       ({ node }) => node.id !== data.cancelSalesOrder.id
+      //     );
+      //   cache.writeQuery({
+      //     query: GET_PAGINATE_SALES_ORDER,
+      //     data: {
+      //       paginateSalesOrder: {
+      //         ...existingSalesOrders.paginateSalesOrder,
+      //         edges: updatedSalesOrders,
+      //       },
+      //     },
+      //   });
+      // },
     }
   );
 
@@ -352,7 +351,7 @@ const SalesOrders = () => {
     });
     if (confirmed) {
       try {
-        await confirmSO({
+        await confirmSalesOrder({
           variables: {
             id: id,
           },
@@ -375,7 +374,7 @@ const SalesOrders = () => {
     });
     if (confirmed) {
       try {
-        await cancelSO({
+        await cancelSalesOrder({
           variables: {
             id: id,
           },

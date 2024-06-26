@@ -74,7 +74,7 @@ const OwnerDrawingsNew = ({
       newCurrencies.push(toAccountCurrency);
     }
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {
@@ -86,6 +86,7 @@ const OwnerDrawingsNew = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         transactionType: "OwnerDrawings",
         // isMoneyIn: false,
         documents: fileUrls,
@@ -216,7 +217,7 @@ const OwnerDrawingsNew = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -250,8 +251,8 @@ const OwnerDrawingsNew = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
-      {currencies.length > 1 &&
+      </Form.Item> */}
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
         <Form.Item
           label={
             <FormattedMessage
@@ -293,7 +294,7 @@ const OwnerDrawingsNew = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

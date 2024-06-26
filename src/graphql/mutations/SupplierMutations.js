@@ -304,11 +304,30 @@ const TOGGLE_ACTIVE_SUPPLIER = gql`
   }
 `;
 
+const CREATE_SUPPLIER_APPLY_CREDIT = gql`
+  mutation CreateSupplierApplyCredit($input: NewBillApplyToSupplierCredit!) {
+    createSupplierApplyCredit(input: $input) {
+      id
+      businessId
+      referenceId
+      referenceType
+      supplierCreditNumber
+      billId
+      billNumber
+      creditDate
+      amount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 const SupplierMutations = {
   CREATE_SUPPLIER,
   UPDATE_SUPPLIER,
   DELETE_SUPPLIER,
   TOGGLE_ACTIVE_SUPPLIER,
+  CREATE_SUPPLIER_APPLY_CREDIT,
 };
 
 export default SupplierMutations;

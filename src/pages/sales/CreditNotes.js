@@ -302,7 +302,7 @@ const CreditNotes = () => {
       render: (text) => (
         <span
           style={{
-            color: text === "Open" ? "var(--blue)" : "var(--primary-color)",
+            color: text === "Confirmed" ? "var(--blue)" : "var(--primary-color)",
           }}
         >
           {text}
@@ -360,7 +360,7 @@ const CreditNotes = () => {
               <span
                 style={{
                   color:
-                    record.currentStatus === "Open"
+                    record.currentStatus === "Confirmed"
                       ? "var(--blue)"
                       : "var(--primary-color)",
                 }}
@@ -450,8 +450,8 @@ const CreditNotes = () => {
             <Select
               options={[
                 {
-                  value: "Open",
-                  label: "Open",
+                  value: "Confirmed",
+                  label: "Confirmed",
                 },
                 {
                   value: "Closed",
@@ -768,7 +768,7 @@ const CreditNotes = () => {
                   items:
                     selectedRecord.currentStatus === "Draft"
                       ? draftActionItems
-                      : selectedRecord.currentStatus === "Open"
+                      : selectedRecord.currentStatus === "Confirmed"
                       ? openActionItems
                       : draftActionItems,
                 }}

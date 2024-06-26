@@ -75,7 +75,7 @@ const TransferFromAnotherAccNew = ({
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {
@@ -253,7 +253,7 @@ const TransferFromAnotherAccNew = ({
           ))}
         </Select>
       </Form.Item>
-      {currencies.length > 1 &&
+      {currencies.length > 1 && (
         <Form.Item
           label={
             <FormattedMessage
@@ -295,7 +295,7 @@ const TransferFromAnotherAccNew = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

@@ -34,6 +34,7 @@ const CustomerAdvanceEdit = ({
   bankingAccounts,
   selectedRecord,
   setSelectedRecord,
+  setSelectedRowIndex,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
@@ -47,23 +48,23 @@ const CustomerAdvanceEdit = ({
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(false);
 
-  const handleToAccountChange = useCallback(
+  const handleFromAccountChange = useCallback(
     (id) => {
-      const fromAccountCurrency =
+      const toAccountCurrency =
         selectedAcc?.currency?.id > 0
           ? selectedAcc.currency
           : business.baseCurrency;
-      let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-      if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-        toAccountCurrency = business.baseCurrency;
+      let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+      if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+        fromAccountCurrency = business.baseCurrency;
       }
-      let newCurrencies = [fromAccountCurrency];
-      if (fromAccountCurrency.id !== toAccountCurrency.id) {
-        newCurrencies.push(toAccountCurrency);
+      let newCurrencies = [toAccountCurrency];
+      if (toAccountCurrency.id !== fromAccountCurrency.id) {
+        newCurrencies.push(fromAccountCurrency);
       }
       console.log(newCurrencies);
       setCurrencies(newCurrencies);
-      form.setFieldValue("currency", null);
+      form.setFieldValue("currencyId", null);
     },
     [allAccounts, business.baseCurrency, form, selectedAcc.currency]
   );
@@ -87,8 +88,8 @@ const CustomerAdvanceEdit = ({
         : {};
     setSelectedCustomer(selectedRecord?.customer || null);
     form.setFieldsValue(parsedRecord);
-    handleToAccountChange(selectedRecord?.toAccount?.id);
-  }, [form, selectedRecord, modalOpen, handleToAccountChange]);
+    handleFromAccountChange(selectedRecord?.toAccount?.id);
+  }, [form, selectedRecord, modalOpen, handleFromAccountChange]);
 
   const [createAccountTransfer, { loading: createLoading }] = useMutation(
     UPDATE_BANKING_TRANSACTION,
@@ -101,6 +102,8 @@ const CustomerAdvanceEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
+        setSelectedRecord(null);
+        setSelectedRowIndex(0);
         refetch();
       },
     }
@@ -117,6 +120,7 @@ const CustomerAdvanceEdit = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         customerName: undefined,
         customerId: selectedCustomer?.id,
         transactionType: "CustomerAdvance",
@@ -138,14 +142,12 @@ const CustomerAdvanceEdit = ({
     <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={
-          <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
-          />
+          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
         }
-        name="fromAccountId"
+        name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
+        // wrapperCol={{ span: 15 }}
         rules={[
           {
             required: true,
@@ -168,9 +170,12 @@ const CustomerAdvanceEdit = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
         }
-        name="toAccountId"
+        name="fromAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
@@ -189,7 +194,7 @@ const CustomerAdvanceEdit = ({
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleToAccountChange}
+          onChange={handleFromAccountChange}
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>

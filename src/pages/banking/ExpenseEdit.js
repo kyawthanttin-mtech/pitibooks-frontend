@@ -34,7 +34,7 @@ const ExpenseEdit = ({
   allTax,
   selectedRecord,
   setSelectedRecord,
-  setSelectedRowIndex
+  setSelectedRowIndex,
 }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(null);
@@ -81,7 +81,8 @@ const ExpenseEdit = ({
             defaultMessage="Transaction Recorded"
           />
         );
-        setSelectedRecord(null); setSelectedRowIndex(0);
+        setSelectedRecord(null);
+        setSelectedRowIndex(0);
         // refetch();
       },
     }
@@ -102,7 +103,7 @@ const ExpenseEdit = ({
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {

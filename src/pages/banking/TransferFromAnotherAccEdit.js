@@ -35,17 +35,21 @@ const TransferFromAnotherAccEdit = ({
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
   const [fileList, setFileList] = useState(null);
-  const [currencies, setCurrencies] = useState([
-    selectedAcc?.currency?.id > 0
-      ? selectedAcc.currency
-      : business.baseCurrency,
-  ]);
+  const [currencies, setCurrencies] = useState(
+    selectedRecord?.id > 0
+      ? [
+          selectedRecord?.fromAccount?.currency?.id,
+          selectedRecord?.toAccount?.currency?.id,
+        ]
+      : []
+  );
 
+  console.log(currencies);
   const handleFromAccountChange = useCallback(
     (id) => {
       const toAccountCurrency =
-        selectedAcc?.currency?.id > 0
-          ? selectedAcc.currency
+        selectedRecord?.toAccount?.currency?.id > 0
+          ? selectedRecord?.toAccount?.currency
           : business.baseCurrency;
       let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
       if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
@@ -55,11 +59,15 @@ const TransferFromAnotherAccEdit = ({
       if (toAccountCurrency.id !== fromAccountCurrency.id) {
         newCurrencies.push(fromAccountCurrency);
       }
-      console.log(newCurrencies);
       setCurrencies(newCurrencies);
-      form.setFieldValue("currency", null);
+      form.setFieldValue("currencyId", null);
     },
-    [allAccounts, business.baseCurrency, form, selectedAcc.currency]
+    [
+      allAccounts,
+      business.baseCurrency,
+      form,
+      selectedRecord?.toAccount?.currency,
+    ]
   );
 
   useMemo(() => {
@@ -71,6 +79,7 @@ const TransferFromAnotherAccEdit = ({
             toAccountId: selectedRecord.toAccount?.id || null,
             currencyId: selectedRecord.currency?.id || null,
             amount: selectedRecord.amount,
+            exchangeRate: selectedRecord.exchangeRate,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
             description: selectedRecord.description,
@@ -268,7 +277,7 @@ const TransferFromAnotherAccEdit = ({
           showSearch
           optionFilterProp="label"
         >
-          {currencies.map((currency) => (
+          {currencies?.map((currency) => (
             <Select.Option
               key={currency.id}
               value={currency.id}
@@ -279,7 +288,7 @@ const TransferFromAnotherAccEdit = ({
           ))}
         </Select>
       </Form.Item>
-      {currencies.length > 1 &&
+      {currencies?.length > 1 && (
         <Form.Item
           label={
             <FormattedMessage
@@ -321,7 +330,7 @@ const TransferFromAnotherAccEdit = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

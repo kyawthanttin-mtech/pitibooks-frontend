@@ -560,6 +560,102 @@ const BillTemplate = ({ selectedRecord }) => {
                         </b>
                       </td>
                     </tr>
+                    {selectedRecord.billTotalPaidAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Payments Made</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.billTotalPaidAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.billTotalCreditUsedAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Credits Applied</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.billTotalCreditUsedAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.billTotalAdvanceUsedAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Advance Used</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.billTotalAdvanceUsedAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
                     <tr className="text-align-right">
                       <td
                         style={{

@@ -12,6 +12,7 @@ import PaymentModes from "./PaymentModes";
 import Reasons from "./Reasons";
 import ShipmentPreferences from "./ShipmentPreferences";
 import SalesPersons from "./SalesPersons";
+import OpeningBalancesEdit from "./OpeningBalancesEdit";
 export {
   Profile,
   Warehouses,
@@ -27,4 +28,5 @@ export {
   Reasons,
   ShipmentPreferences,
   SalesPersons,
+  OpeningBalancesEdit,
 };

@@ -9,13 +9,17 @@ import { useOutletContext } from "react-router-dom";
 import moment from "moment";
 import ReportHeader from "../../../components/ReportHeader";
 import { REPORT_DATE_FORMAT } from "../../../config/Constants";
+import { ReportFilterBar } from "../../../components";
+import ReportLayout from "../ReportLayout";
 
 const { GET_SALES_BY_PRODUCT_REPORT } = ReportQueries;
 
 const PayableDetails = () => {
   const { notiApi, business } = useOutletContext();
-  const [fromDate, setFromDate] = useState(moment().startOf("month").utc(true));
-  const [toDate, setToDate] = useState(moment().endOf("month").utc(true));
+  const [filteredDate, setFilteredDate] = useState({
+    fromDate: moment().startOf("month").utc(true),
+    toDate: moment().endOf("month").utc(true),
+  });
   const [reportBasis, setReportBasis] = useState("Accrual");
 
   const {
@@ -27,10 +31,10 @@ const PayableDetails = () => {
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
-      fromDate: fromDate,
-      toDate: toDate,
+      fromDate: moment().startOf("month").utc(true),
+      toDate: moment().endOf("month").utc(true),
+      branchId: business?.primaryBranch?.id,
       reportType: reportBasis,
-      branchId: 1,
     },
     onError(err) {
       openErrorNotification(notiApi, err.message);
@@ -58,214 +62,221 @@ const PayableDetails = () => {
   }, [queryData]);
 
   return (
-    <div className="report">
-      <ReportHeader
-        refetch={refetch}
-        isPaginated={false}
-        setFromDate={setFromDate}
-        setToDate={setToDate}
-        setReportBasis={setReportBasis}
-      />
-      <div className="rep-container">
-        <div className="report-header">
-          <h4>{business.name}</h4>
-          <h3 style={{ marginTop: "-5px" }}>
-            <FormattedMessage
-              id="report.payableDetails"
-              defaultMessage="Payable Details"
-            />
-          </h3>
-          <span>Basis: {reportBasis}</span>
-          <h5>
-            From {fromDate.format(REPORT_DATE_FORMAT)} To{" "}
-            {toDate.format(REPORT_DATE_FORMAT)}
-          </h5>
-        </div>
-        {queryLoading ? (
-          <Flex justify="center" align="center" style={{ height: "40vh" }}>
-            <Spin size="large" />
-          </Flex>
-        ) : (
-          <div className="fill-container table-container">
-            <table className="rep-table">
-              <thead>
-                <tr>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.status"
-                      defaultMessage="Status"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="label.date" defaultMessage="Date" />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.transactionNumber"
-                      defaultMessage="Transaction #"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.supplierName"
-                      defaultMessage="Supplier Name"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.transactionType"
-                      defaultMessage="Transaction Type"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.productName"
-                      defaultMessage="Product Name"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.quantityOrdered"
-                      defaultMessage="Quantity Ordered"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.productPrice"
-                      defaultMessage="Product Price"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.productAmount"
-                      defaultMessage="Product Amount"
-                    />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {queryData?.length > 0 ? (
-                  queryData?.map((data, index) => {
-                    return (
-                      <tr key={index}>
-                        <td>{data.productName}</td>
-                        <td>{data.productSku}</td>
-                        <td>{data.soldQty}</td>
-                        <td>
-                          <FormattedNumber
-                            value={data.totalAmount}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                        <td>
-                          <FormattedNumber
-                            value={data.totalAmountWithDiscount}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                        <td>
-                          <FormattedNumber
-                            value={data.averagePrice}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                        <td className="text-align-right">
-                          <FormattedNumber
-                            value={data.averagePrice}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                        <td className="text-align-right">
-                          <FormattedNumber
-                            value={data.averagePrice}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                        <td className="text-align-right">
-                          <FormattedNumber
-                            value={data.averagePrice}
-                            style="decimal"
-                            minimumFractionDigits={
-                              business.baseCurrency.decimalPlaces
-                            }
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr className="empty-row">
-                    <td colSpan={6} style={{ border: "none" }}>
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <ReportLayout>
+      <div className="report">
+        <ReportFilterBar
+          refetch={refetch}
+          isPaginated={false}
+          setFilteredDate={setFilteredDate}
+          setReportBasis={setReportBasis}
+        />
+        <div className="rep-container">
+          <div className="report-header">
+            <h4>{business.name}</h4>
+            <h3 style={{ marginTop: "-5px" }}>
+              <FormattedMessage
+                id="report.payableDetails"
+                defaultMessage="Payable Details"
+              />
+            </h3>
+            <span>Basis: {reportBasis}</span>
+            <h5>
+              From {filteredDate?.fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+              {filteredDate?.toDate.format(REPORT_DATE_FORMAT)}
+            </h5>
+          </div>
+          {queryLoading ? (
+            <Flex justify="center" align="center" style={{ height: "40vh" }}>
+              <Spin size="large" />
+            </Flex>
+          ) : (
+            <div className="fill-container table-container">
+              <table className="rep-table">
+                <thead>
+                  <tr>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.status"
+                        defaultMessage="Status"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage id="label.date" defaultMessage="Date" />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.transactionNumber"
+                        defaultMessage="Transaction #"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.supplierName"
+                        defaultMessage="Supplier Name"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.transactionType"
+                        defaultMessage="Transaction Type"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.productName"
+                        defaultMessage="Product Name"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.quantityOrdered"
+                        defaultMessage="Quantity Ordered"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.productPrice"
+                        defaultMessage="Product Price"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.productAmount"
+                        defaultMessage="Product Amount"
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {queryData?.length > 0 ? (
+                    queryData?.map((data, index) => {
+                      return (
+                        <tr key={index}>
+                          <td>{data.productName}</td>
+                          <td>{data.productSku}</td>
+                          <td>{data.soldQty}</td>
+                          <td>
+                            <FormattedNumber
+                              value={data.totalAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                          <td>
+                            <FormattedNumber
+                              value={data.totalAmountWithDiscount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                          <td>
+                            <FormattedNumber
+                              value={data.averagePrice}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                          <td className="text-align-right">
+                            <FormattedNumber
+                              value={data.averagePrice}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                          <td className="text-align-right">
+                            <FormattedNumber
+                              value={data.averagePrice}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                          <td className="text-align-right">
+                            <FormattedNumber
+                              value={data.averagePrice}
+                              style="decimal"
+                              minimumFractionDigits={
+                                business.baseCurrency.decimalPlaces
+                              }
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr className="empty-row">
+                      <td
+                        colSpan={6}
+                        style={{
+                          border: "none",
+                          borderBottom: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      </td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>
+                      <b>
+                        <FormattedMessage
+                          id="label.total"
+                          defaultMessage="Total"
+                        ></FormattedMessage>
+                      </b>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.averagePrice || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
+                    </td>
+                    <td></td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.averagePrice || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
                     </td>
                   </tr>
-                )}
-                <tr>
-                  <td>
-                    <b>
-                      <FormattedMessage
-                        id="label.total"
-                        defaultMessage="Total"
-                      ></FormattedMessage>
-                    </b>
-                  </td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td className="text-align-right">
-                    <b>
-                      <FormattedNumber
-                        value={totals?.averagePrice || 0}
-                        style="decimal"
-                        minimumFractionDigits={
-                          business.baseCurrency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </td>
-                  <td></td>
-                  <td className="text-align-right">
-                    <b>
-                      <FormattedNumber
-                        value={totals?.averagePrice || 0}
-                        style="decimal"
-                        minimumFractionDigits={
-                          business.baseCurrency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div style={{ paddingLeft: "1.5rem" }}>
+          <FormattedMessage
+            values={{ currency: business.baseCurrency.symbol }}
+            id="label.displayedBaseCurrency"
+            defaultMessage="**Amount is displayed in {currency}"
+          />
+        </div>
       </div>
-      <div style={{ paddingLeft: "1.5rem" }}>
-        <FormattedMessage
-          values={{ currency: business.baseCurrency.symbol }}
-          id="label.displayedBaseCurrency"
-          defaultMessage="**Amount is displayed in {currency}"
-        />
-      </div>
-    </div>
+    </ReportLayout>
   );
 };
 

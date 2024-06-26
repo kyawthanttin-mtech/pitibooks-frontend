@@ -198,10 +198,83 @@ const GET_SUPPLIER_UNPAID_BILLS = gql`
   }
 `;
 
+const GET_UNUSED_SUPPLIER_CREDITS = gql`
+  query GetUnusedSupplierCredits($branchId: Int!, $supplierId: Int!) {
+    getUnusedSupplierCredits(branchId: $branchId, supplierId: $supplierId) {
+      id
+      businessId
+      supplierCreditNumber
+      referenceNumber
+      supplierCreditDate
+      supplierCreditSubject
+      notes
+      exchangeRate
+      supplierCreditDiscount
+      supplierCreditDiscountType
+      supplierCreditDiscountAmount
+      adjustmentAmount
+      isTaxInclusive
+      supplierCreditTaxAmount
+      currentStatus
+      supplierCreditSubtotal
+      supplierCreditTotalDiscountAmount
+      supplierCreditTotalTaxAmount
+      supplierCreditTotalAmount
+      supplierCreditTotalUsedAmount
+      supplier {
+        id
+        name
+        isActive
+      }
+      branch {
+        id
+        name
+        isActive
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const GET_UNUSED_SUPPLIER_CREDIT_ADVANCES = gql`
+  query GetUnusedSupplierCreditAdvances($branchId: Int!, $supplierId: Int!) {
+    getUnusedSupplierCreditAdvances(
+      branchId: $branchId
+      supplierId: $supplierId
+    ) {
+      id
+      date
+      branch {
+        id
+        name
+      }
+      supplier {
+        id
+        name
+      }
+      amount
+      usedAmount
+      currency {
+        id
+        name
+        symbol
+        decimalPlaces
+      }
+      exchangeRate
+      currentStatus
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 const SupplierQueries = {
   GET_PAGINATE_SUPPLIER,
   GET_SUPPLIER,
   GET_SUPPLIER_UNPAID_BILLS,
+  GET_UNUSED_SUPPLIER_CREDITS,
+  GET_UNUSED_SUPPLIER_CREDIT_ADVANCES,
 };
 
 export default SupplierQueries;

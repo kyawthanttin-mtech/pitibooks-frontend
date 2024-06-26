@@ -40,7 +40,8 @@ const {
 
 const TaxRates = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
-  const {notiApi, msgApi, refetchAllTaxes, refetchAllTaxGroups} = useOutletContext();
+  const { notiApi, msgApi, refetchAllTaxes, refetchAllTaxGroups } =
+    useOutletContext();
   const [createTaxModalOpen, setCreateTaxModalOpen] = useState(false);
   const [editTaxModalOpen, setEditTaxModalOpen] = useState(false);
   const [createTaxGroupModalOpen, setCreateTaxGroupModalOpen] = useState(false);
@@ -748,7 +749,9 @@ const TaxRates = () => {
         <>
           {text}
           {!record.isActive ? (
-            <Tag className="active-status"><FormattedMessage id="label.inactive" defaultMessage="inactive" /></Tag>
+            <Tag className="active-status">
+              <FormattedMessage id="label.inactive" defaultMessage="inactive" />
+            </Tag>
           ) : (
             <></>
           )}
@@ -878,7 +881,7 @@ const TaxRates = () => {
       >
         {editTaxGroupForm}
       </Modal>
-      <div className="content-header page-header page-header-with-button">
+      <div className="page-header page-header-with-button">
         <p className="page-header-text">Tax Rates</p>
         <div className="header-buttons">
           <Button
@@ -896,7 +899,7 @@ const TaxRates = () => {
           </Button>
         </div>
       </div>
-      <div className="content-body page-content">
+      <div className="page-content">
         <Table
           loading={loading}
           className="main-table"

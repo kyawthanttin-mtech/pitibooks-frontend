@@ -16,6 +16,7 @@ import {
   Input,
   Select,
   Tag,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
@@ -25,6 +26,7 @@ import {
   DownCircleFilled,
   BankOutlined,
   DownOutlined,
+  SyncOutlined,LeftOutlined, RightOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -731,8 +733,14 @@ const Banking = () => {
       title: <FormattedMessage id="label.type" defaultMessage="Type" />,
       key: "type",
       dataIndex: "type",
-      render: (_, record) =>
-        record.transactionType.split(/(?=[A-Z])/).join(" "),
+      render: (_, record) => (
+        <>
+          {record?.transactionType === "TransferToAnotherAccount" ||
+          record?.transactionType === "TransferFromAnotherAccount"
+            ? "Transfer Fund"
+            : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
+        </>
+      ),
     },
     {
       title: <FormattedMessage id="label.deposits" defaultMessage="Deposits" />,
@@ -744,10 +752,15 @@ const Banking = () => {
             {record.toAccount?.currency?.symbol}{" "}
             <FormattedNumber
               value={
-                record.toAccount?.currency?.id !== record.currency?.id 
-                  ? record.toAccount?.currency?.id === business.baseCurrency.id 
-                    ? (record.exchangeRate !== 0 ? record.amount * record.exchangeRate : 0)
-                    : (record.exchangeRate !== 0 ? record.amount / record.exchangeRate : 0)
+                record.toAccount?.currency?.id !== record.currency?.id
+                  ? record.toAccount?.currency?.id === 0 ||
+                    record.toAccount?.currency?.id === business.baseCurrency.id
+                    ? record.exchangeRate !== 0
+                      ? record.amount * record.exchangeRate
+                      : 0
+                    : record.exchangeRate !== 0
+                    ? record.amount / record.exchangeRate
+                    : 0
                   : record.amount
               }
               style="decimal"
@@ -768,10 +781,17 @@ const Banking = () => {
             {record.fromAccount?.currency?.symbol}{" "}
             <FormattedNumber
               value={
-                record.fromAccount?.currency?.id !== record.currency?.id 
-                  ? record.fromAccount?.currency?.id === business.baseCurrency.id 
-                    ? (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) * record.exchangeRate : 0)
-                    : (record.exchangeRate !== 0 ? (record.amount + record.bankCharges) / record.exchangeRate : 0)
+                record.fromAccount?.currency?.id !== record.currency?.id
+                  ? record.fromAccount?.currency?.id === 0 ||
+                    record.fromAccount?.currency?.id ===
+                      business.baseCurrency.id
+                    ? record.exchangeRate !== 0
+                      ? (record.amount + record.bankCharges) *
+                        record.exchangeRate
+                      : 0
+                    : record.exchangeRate !== 0
+                    ? (record.amount + record.bankCharges) / record.exchangeRate
+                    : 0
                   : record.amount + record.bankCharges
               }
               style="decimal"
@@ -781,7 +801,6 @@ const Banking = () => {
         ),
     },
   ];
-
   const createForm = (
     <Form form={createFormRef} onFinish={handleCreateModalOk}>
       <Form.Item
@@ -1229,7 +1248,7 @@ const Banking = () => {
             <Divider style={{ margin: 0 }} />
 
             <Table
-              style={{ paddingBottom: !selectedRecord ? "5rem" : undefined }}
+              style={{ paddingBottom: !selectedRecord ? "1rem" : undefined }}
               className={selectedRecord ? "header-less-table" : "main-table"}
               loading={loading}
               columns={selectedRecord ? compactColumns : columns}
@@ -1247,6 +1266,50 @@ const Banking = () => {
                 onMouseLeave: () => setHoveredRow(null),
               })}
             />
+            <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
+          <div style={{ paddingLeft: "1.5rem" }}></div>
+          <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
+            <Tooltip
+              title={
+                <FormattedMessage
+                  id="button.refetch"
+                  defaultMessage="Refetch"
+                />
+              }
+            >
+              <Button
+                icon={<SyncOutlined />}
+                loading={loading}
+                onClick={() => refetch()}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                <FormattedMessage
+                  id="button.previous"
+                  defaultMessage="Previous"
+                />
+              }
+            >
+              <Button
+                icon={<LeftOutlined />}
+                loading={loading}
+                disabled
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                <FormattedMessage id="button.next" defaultMessage="Next" />
+              }
+            >
+              <Button
+                icon={<RightOutlined />}
+                loading={loading}
+                disabled
+              />
+            </Tooltip>
+          </Space>
+        </Row>
           </div>
         </div>
 

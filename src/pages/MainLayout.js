@@ -79,7 +79,6 @@ const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const currentMenuItem = location.pathname ? location.pathname : "main";
   const [notiApi, notiCtxHolder] = notification.useNotification();
   const [msgApi, msgCtxHolder] = message.useMessage();
   const name = localStorage.getItem("name");
@@ -90,10 +89,6 @@ const App = () => {
 
   const onOpenChange = (keys) => {
     setOpenKeys(keys.slice(-1)); // Keep only the last key opened
-  };
-
-  const isActiveRoute = (routePath) => {
-    return location.pathname === routePath;
   };
 
   const {
@@ -208,9 +203,8 @@ const App = () => {
               backgroundColor: Theme.colorPrimary,
             }}
             // theme="dark"
-            // color={Theme.bgColorPrimary}
+            color={Theme.bgColorPrimary}
             defaultSelectedKeys={"Home"}
-            selectedKeys={[currentMenuItem]}
             openKeys={openKeys}
             onOpenChange={onOpenChange}
             onClick={(item) =>

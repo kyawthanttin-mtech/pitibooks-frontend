@@ -91,6 +91,7 @@ import {
   DeliveryMethods,
   Reasons,
   SalesPersons,
+  OpeningBalancesEdit,
 } from "./pages/settings";
 import {
   CreditNotes,
@@ -493,6 +494,10 @@ const router = createHashRouter([
       {
         path: "openingBalances",
         Component: OpeningBalances,
+      },
+      {
+        path: "openingBalances/edit",
+        Component: OpeningBalancesEdit,
       },
       {
         path: "transactionNumberSeries",

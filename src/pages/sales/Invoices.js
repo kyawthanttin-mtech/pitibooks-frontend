@@ -1116,6 +1116,7 @@ const Invoices = () => {
                       handleConfirmInvoice(selectedRecord.id);
                     } else if (key === "2") {
                       // record payment
+                      setShowRecordInvoicePaymentForm(true);
                     } else if (key === "3") {
                       // apply credits
                     } else if (key === "4") {

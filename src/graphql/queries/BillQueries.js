@@ -62,6 +62,21 @@ const GET_PAGINATE_BILL = gql`
           billDiscountAmount
           adjustmentAmount
           isTaxInclusive
+          billTotalAdvanceUsedAmount
+          billTotalCreditUsedAmount
+          appliedSupplierCredits {
+            id
+            businessId
+            referenceId
+            referenceType
+            supplierCreditNumber
+            billId
+            billNumber
+            creditDate
+            amount
+            createdAt
+            updatedAt
+          }
           billTax {
             id
             name

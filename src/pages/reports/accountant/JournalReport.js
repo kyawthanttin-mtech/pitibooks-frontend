@@ -55,30 +55,28 @@ const JournalReport = () => {
 
   return (
     <>
-      <div className="report">
-        {/* <div className="reconciliation-summary-table text-align-right">
+      {/* <div className="reconciliation-summary-table text-align-right">
           <Button type="link" icon={<PlusOutlined />}>
             Add Temporary Note
           </Button>
         </div> */}
-        <PaginatedJournalReport
-          // dataLoading={loading}
-          business={business}
-          api={notiApi}
-          gqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
-          showSearch={false}
-          // searchForm={searchJournalForm}
-          // searchFormRef={searchJournalFormRef}
-          // searchQqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
-          parseData={parseData}
-          parsePageInfo={parsePageInfo}
-          showAddNew={false}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          // setSearchModalOpen={setSearchModalOpen}
-          // modalOpen={searchModalOpen}
-        />
-      </div>
+      <PaginatedJournalReport
+        // dataLoading={loading}
+        business={business}
+        api={notiApi}
+        gqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
+        showSearch={false}
+        // searchForm={searchJournalForm}
+        // searchFormRef={searchJournalFormRef}
+        // searchQqlQuery={GET_PAGINATED_JOURNAL_REPORTS}
+        parseData={parseData}
+        parsePageInfo={parsePageInfo}
+        showAddNew={false}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        // setSearchModalOpen={setSearchModalOpen}
+        // modalOpen={searchModalOpen}
+      />
     </>
   );
 };

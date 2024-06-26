@@ -31,6 +31,7 @@ import UploadAttachment from "./UploadAttachment";
 import AttachFiles from "./AttachFiles";
 import PaginatedBankingTransactionTable from "./PaginatedBankingTransactionTable";
 import ReportFilterBar from "./ReportFilterBar";
+import AccordionTabs from "./AccordionTabs";
 
 export {
   ErrorBoundary,
@@ -66,4 +67,5 @@ export {
   AttachFiles,
   PaginatedBankingTransactionTable,
   ReportFilterBar,
+  AccordionTabs,
 };

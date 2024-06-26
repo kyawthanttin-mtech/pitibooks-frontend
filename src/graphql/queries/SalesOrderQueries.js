@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 const GET_PAGINATE_SALES_ORDER = gql`
-  query PaginateSalesOrder($after: String, $limit: Int, $name: String) {
-    paginateSalesOrder(after: $after, limit: $limit, name: $name) {
+  query PaginateSalesOrder($after: String, $limit: Int) {
+    paginateSalesOrder(after: $after, limit: $limit) {
       edges {
         cursor
         node {

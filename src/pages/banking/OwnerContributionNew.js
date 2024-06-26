@@ -73,7 +73,7 @@ const OwnerContributionNew = ({
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
+    form.setFieldValue("currencyId", null);
   };
 
   const handleSubmit = async () => {
@@ -82,6 +82,7 @@ const OwnerContributionNew = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         transactionType: "OwnerContribution",
         // isMoneyIn: true,
       };
@@ -212,7 +213,7 @@ const OwnerContributionNew = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -246,8 +247,8 @@ const OwnerContributionNew = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
-      {currencies.length > 1 &&
+      </Form.Item> */}
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
         <Form.Item
           label={
             <FormattedMessage
@@ -289,7 +290,7 @@ const OwnerContributionNew = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

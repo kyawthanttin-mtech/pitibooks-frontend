@@ -121,37 +121,66 @@ const TxnDetailColumn = ({
                   <span
                     className="page-header-text"
                     style={{
-                      color: transactionRecord?.toAccount?.id === selectedAccount?.id 
-                        ? "var(--light-green)"
-                        : "var(--red)",
+                      color:
+                        transactionRecord?.toAccount?.id === selectedAccount?.id
+                          ? "var(--light-green)"
+                          : "var(--red)",
                     }}
                   >
                     {selectedAccount?.currency?.symbol}{" "}
-                    {transactionRecord?.toAccount?.id === selectedAccount?.id ?
+                    {transactionRecord?.toAccount?.id ===
+                    selectedAccount?.id ? (
                       <FormattedNumber
                         value={
-                          transactionRecord?.toAccount?.currency?.id !== transactionRecord?.currency?.id 
-                            ? transactionRecord?.toAccount?.currency?.id === business.baseCurrency.id
-                              ? (transactionRecord?.exchangeRate !== 0 ? transactionRecord?.amount * transactionRecord?.exchangeRate : 0)
-                              : (transactionRecord?.exchangeRate !== 0 ? transactionRecord?.amount / transactionRecord?.exchangeRate : 0)
+                          transactionRecord?.toAccount?.currency?.id !==
+                          transactionRecord?.currency?.id
+                            ? transactionRecord?.toAccount?.currency?.id ===
+                                0 ||
+                              transactionRecord?.toAccount?.currency?.id ===
+                                business.baseCurrency.id
+                              ? transactionRecord?.exchangeRate !== 0
+                                ? transactionRecord?.amount *
+                                  transactionRecord?.exchangeRate
+                                : 0
+                              : transactionRecord?.exchangeRate !== 0
+                              ? transactionRecord?.amount /
+                                transactionRecord?.exchangeRate
+                              : 0
                             : transactionRecord?.amount
                         }
                         style="decimal"
-                        minimumFractionDigits={transactionRecord?.currency?.decimalPlaces ?? 2}
+                        minimumFractionDigits={
+                          transactionRecord?.currency?.decimalPlaces ?? 2
+                        }
                       />
-                      :
+                    ) : (
                       <FormattedNumber
                         value={
-                          transactionRecord?.fromAccount?.currency?.id !== transactionRecord?.currency?.id 
-                            ? transactionRecord?.fromAccount?.currency?.id === business.baseCurrency.id 
-                              ? (transactionRecord?.exchangeRate !== 0 ? (transactionRecord?.amount + transactionRecord?.bankCharges) * transactionRecord?.exchangeRate : 0)
-                              : (transactionRecord?.exchangeRate !== 0 ? (transactionRecord?.amount + transactionRecord?.bankCharges) / transactionRecord?.exchangeRate : 0)
-                            : transactionRecord?.amount + transactionRecord?.bankCharges
+                          transactionRecord?.fromAccount?.currency?.id !==
+                          transactionRecord?.currency?.id
+                            ? transactionRecord?.fromAccount?.currency?.id ===
+                                0 ||
+                              transactionRecord?.fromAccount?.currency?.id ===
+                                business.baseCurrency.id
+                              ? transactionRecord?.exchangeRate !== 0
+                                ? (transactionRecord?.amount +
+                                    transactionRecord?.bankCharges) *
+                                  transactionRecord?.exchangeRate
+                                : 0
+                              : transactionRecord?.exchangeRate !== 0
+                              ? (transactionRecord?.amount +
+                                  transactionRecord?.bankCharges) /
+                                transactionRecord?.exchangeRate
+                              : 0
+                            : transactionRecord?.amount +
+                              transactionRecord?.bankCharges
                         }
                         style="decimal"
-                        minimumFractionDigits={transactionRecord?.currency?.decimalPlaces ?? 2}
+                        minimumFractionDigits={
+                          transactionRecord?.currency?.decimalPlaces ?? 2
+                        }
                       />
-                    }
+                    )}
                   </span>
                   <span>
                     {dayjs(transactionRecord?.transactionDate).format(
@@ -160,9 +189,14 @@ const TxnDetailColumn = ({
                   </span>
                 </Flex>
                 <span className="badge-pill">
-                  {transactionRecord?.transactionType
-                    .split(/(?=[A-Z])/)
-                    .join(" ")}
+                  {transactionRecord?.transactionType ===
+                    "TransferToAnotherAccount" ||
+                  transactionRecord?.transactionType ===
+                    "TransferFromAnotherAccount"
+                    ? "Transfer Fund"
+                    : transactionRecord?.transactionType
+                        .split(/(?=[A-Z])/)
+                        .join(" ")}
                 </span>
               </Flex>
               <div className="txn-details-body">

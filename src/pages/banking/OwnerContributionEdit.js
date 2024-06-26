@@ -55,7 +55,7 @@ const OwnerContributionEdit = ({
       }
       console.log(newCurrencies);
       setCurrencies(newCurrencies);
-      form.setFieldValue("currency", null);
+      form.setFieldValue("currencyId", null);
     },
     [allAccounts, business.baseCurrency, form, selectedAcc.currency]
   );
@@ -69,6 +69,7 @@ const OwnerContributionEdit = ({
             toAccountId: selectedRecord.toAccount?.id,
             currencyId: selectedRecord.currency?.id,
             amount: selectedRecord.amount,
+            exchangeRate: selectedRecord.exchangeRate,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
             description: selectedRecord.description,
@@ -104,6 +105,7 @@ const OwnerContributionEdit = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         transactionType: "OwnerContribution",
         // isMoneyIn: true,
       };
@@ -236,7 +238,7 @@ const OwnerContributionEdit = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -270,8 +272,8 @@ const OwnerContributionEdit = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
-      {currencies.length > 1 &&
+      </Form.Item> */}
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
         <Form.Item
           label={
             <FormattedMessage
@@ -313,7 +315,7 @@ const OwnerContributionEdit = ({
         >
           <Input />
         </Form.Item>
-      }
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"

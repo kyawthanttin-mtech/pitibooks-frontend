@@ -47,7 +47,7 @@ const CustomerAdvanceNew = ({
 
   if (form && modalOpen) {
     form.setFieldsValue({
-      fromAccountId: selectedAcc.id,
+      toAccountId: selectedAcc.id,
     });
   }
 
@@ -67,18 +67,18 @@ const CustomerAdvanceNew = ({
     }
   );
 
-  const handleToAccountChange = (id) => {
-    const fromAccountCurrency =
+  const handleFromAccountChange = (id) => {
+    const toAccountCurrency =
       selectedAcc?.currency?.id > 0
         ? selectedAcc.currency
         : business.baseCurrency;
-    let toAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!toAccountCurrency?.id || toAccountCurrency?.id <= 0) {
-      toAccountCurrency = business.baseCurrency;
+    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+      fromAccountCurrency = business.baseCurrency;
     }
-    let newCurrencies = [fromAccountCurrency];
-    if (fromAccountCurrency.id !== toAccountCurrency.id) {
-      newCurrencies.push(toAccountCurrency);
+    let newCurrencies = [toAccountCurrency];
+    if (toAccountCurrency.id !== fromAccountCurrency.id) {
+      newCurrencies.push(fromAccountCurrency);
     }
     console.log(newCurrencies);
     setCurrencies(newCurrencies);
@@ -94,6 +94,7 @@ const CustomerAdvanceNew = ({
 
       const input = {
         ...values,
+        currencyId: selectedAcc?.currency.id,
         customerName: undefined,
         customerId: selectedCustomer?.id,
         transactionType: "CustomerAdvance",
@@ -113,14 +114,12 @@ const CustomerAdvanceNew = ({
     <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
       <Form.Item
         label={
-          <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
-          />
+          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
         }
-        name="fromAccountId"
+        name="toAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
+        // wrapperCol={{ span: 15 }}
         rules={[
           {
             required: true,
@@ -143,9 +142,12 @@ const CustomerAdvanceNew = ({
       </Form.Item>
       <Form.Item
         label={
-          <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
+          <FormattedMessage
+            id="label.fromAccount"
+            defaultMessage="From Account"
+          />
         }
-        name="toAccountId"
+        name="fromAccountId"
         labelAlign="left"
         labelCol={{ span: 8 }}
         // wrapperCol={{ span: 15 }}
@@ -164,7 +166,7 @@ const CustomerAdvanceNew = ({
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleToAccountChange}
+          onChange={handleFromAccountChange}
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>

@@ -12,6 +12,7 @@ const PeriodDropdown = ({
   setFromDate,
   setToDate,
   fiscalYear,
+  onGenerateReport,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -104,7 +105,7 @@ const PeriodDropdown = ({
   const handlePeriodChange = (key) => {
     const selectedFilter = items.find((option) => option.key === key);
     setSelectedPeriod(selectedFilter);
-    isPaginated && key !== "11" && setCurrentPage(1);
+
     if (key !== "11") {
       setDropdownOpen(true);
     }
@@ -117,25 +118,30 @@ const PeriodDropdown = ({
         const [fromDate, toDate] = dateRange;
         setFromDate(fromDate);
         setToDate(toDate);
-        refetch({
-          fromDate: fromDate,
-          toDate: toDate,
-        });
-        isPaginated && setCurrentPage(1);
+        // refetch({
+        //   fromDate: fromDate,
+        //   toDate: toDate,
+        // });
+        // isPaginated && setCurrentPage(1);
         setDropdownOpen(false);
       }
     } else {
       const toDate = form.getFieldValue("endDate");
       if (toDate) {
         setToDate(toDate);
-        refetch({
-          toDate: toDate,
-        });
-        isPaginated && setCurrentPage(1);
+        // refetch({
+        //   toDate: toDate,
+        // });
+        // isPaginated && setCurrentPage(1);
         setDropdownOpen(false);
       }
     }
   };
+
+  // const handleGenerateReport = () => {
+  //   onGenerateReport(selectedPeriod);
+  //   setDropdownOpen(false);
+  // };
 
   useEffect(() => {
     const updateDates = () => {
@@ -247,10 +253,6 @@ const PeriodDropdown = ({
               .utc(true);
           }
           break;
-        // case "11":
-        //   setShowDateRange(true);
-        //   setDropdownOpen(true);
-        //   return;
         default:
           fromDate = moment().startOf("month").utc(true);
           toDate = moment().endOf("month").utc(true);
@@ -259,15 +261,15 @@ const PeriodDropdown = ({
       if (hasFromDate) {
         setFromDate(fromDate);
         setToDate(toDate);
-        refetch({
-          fromDate: fromDate,
-          toDate: toDate,
-        });
+        // refetch({
+        //   fromDate: fromDate,
+        //   toDate: toDate,
+        // });
       } else {
         setToDate(toDate);
-        refetch({
-          toDate: toDate,
-        });
+        // refetch({
+        //   toDate: toDate,
+        // });
       }
     };
     if (selectedPeriod.key === "11") {

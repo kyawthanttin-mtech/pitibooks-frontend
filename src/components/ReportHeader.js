@@ -23,32 +23,38 @@ const ReportHeader = ({
   setFromDate,
   setToDate,
   setReportBasis,
-  title,
-  label,
+  currentReport,
+  setCollapsed,
+  collapsed,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
   const handleNavigate = () => {
-    navigate(from, { state: location.state, replace: true });
+    navigate("/reports");
   };
 
   return (
     <div className="page-header">
       <Space size="large">
-        <Button icon={<CollapseOutlined />} onClick={onCollapseClick} />
-        <PeriodDropdown
+        <Button
+          icon={<CollapseOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
+        />
+        {/* <PeriodDropdown
           refetch={refetch}
           isPaginated={isPaginated}
           hasFromDate={hasFromDate}
           setCurrentPage={setCurrentPage}
           setFromDate={setFromDate}
           setToDate={setToDate}
-        />
-        <Flex vertical>
-          <span style={{ fontSize: "0.8rem" }}>{title}</span>
-          <span>{label}</span>
+        /> */}
+        <Flex vertical justify="center" gap="1.1rem">
+          {/* <div style={{ fontSize: "0.8rem", opacity: "90%" }}>
+            {currentReport.title}
+          </div> */}
+          <div style={{ fontSize: "1.1rem" }}>{currentReport.title}</div>
         </Flex>
       </Space>
       <div>
@@ -62,7 +68,13 @@ const ReportHeader = ({
             type="primary"
             onClick={onPrinterClick}
           />
-          <Dropdown trigger="click">
+          <Dropdown
+            trigger="click"
+            menu={{
+              items: [{ key: "1", label: "PDF" }],
+              selectable: true,
+            }}
+          >
             <div
               style={{
                 display: "flex",
