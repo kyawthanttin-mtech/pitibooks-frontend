@@ -12,8 +12,6 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
             email
             phone
             mobile
-            prepaidCreditAmount
-            unusedCreditAmount
             customerTax {
               id
               name
@@ -92,7 +90,6 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
               currency {
                 id
                 decimalPlaces
-                exchangeRate
                 name
                 symbol
               }

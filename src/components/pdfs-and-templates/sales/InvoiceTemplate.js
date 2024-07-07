@@ -1,7 +1,6 @@
 /* eslint-disable react/style-prop-object */
 import React, { useEffect } from "react";
 import "../Template.css";
-import { data } from "./InvoiceData";
 import { useOutletContext } from "react-router-dom";
 import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 import dayjs from "dayjs";
@@ -27,9 +26,6 @@ const InvoiceTemplate = ({ selectedRecord }) => {
       console.log("Expended width:", expendedWidth, "px");
     }
   }, []);
-  const total = data
-    .reduce((acc, item) => acc + parseFloat(item.amount), 0)
-    .toFixed(2);
   return (
     <div className="details-page">
       <div className="details-container">
@@ -51,6 +47,15 @@ const InvoiceTemplate = ({ selectedRecord }) => {
               <tbody>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -74,7 +79,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                       </span>
                       <br />
                       <span style={{ fontSize: "1.1rem" }}>
-                      <b>
+                        <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
                             value={
@@ -161,7 +166,12 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                             <span>
                               {selectedRecord.invoicePaymentTerms
                                 .split(/(?=[A-Z])/)
-                                .join(" ")}
+                                .join(" ") === "Custom"
+                                ? `${selectedRecord.invoicePaymentTerms} - Due in ${selectedRecord.invoicePaymentTerms}day(s)`
+                                : selectedRecord.invoicePaymentTerms
+                                    .split(/(?=[A-Z])/)
+                                    .join(" ")}
+                              {"\n"}
                             </span>
                           </td>
                         </tr>
@@ -193,24 +203,6 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                           </td>
                           <td className="text-align-right">
                             <span>{selectedRecord.orderNumber}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Notes :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.notes}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -572,6 +564,106 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         </b>
                       </td>
                     </tr>
+                    {selectedRecord.invoiceTotalPaidAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Payments Made</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.invoiceTotalPaidAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.invoiceTotalCreditUsedAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Credits Applied</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={
+                                selectedRecord.invoiceTotalCreditUsedAmount
+                              }
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.invoiceTotalAdvanceUsedAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Advance Used</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={
+                                selectedRecord.invoiceTotalAdvanceUsedAmount
+                              }
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
                     <tr className="text-align-right">
                       <td
                         style={{
@@ -591,10 +683,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
-                            value={
-                              selectedRecord.invoiceTotalAmount -
-                              selectedRecord.invoiceTotalPaidAmount
-                            }
+                            value={selectedRecord.remainingBalance}
                             style="decimal"
                             minimumFractionDigits={
                               selectedRecord.currency.decimalPlaces
@@ -608,26 +697,28 @@ const InvoiceTemplate = ({ selectedRecord }) => {
               </div>
             </div>
             <div style={{ clear: "both" }}></div>
-            <div
-              style={{
-                clear: "both",
-                marginTop: "50px",
-                width: "100%",
-              }}
-            >
-              <label>Notes</label>
-              <br />
-              <p
+            {selectedRecord?.notes && (
+              <div
                 style={{
-                  marginTop: "7px",
-                  whiteSpace: "pre-wrap",
-                  wordWrap: "break-word",
-                  fontSize: "0.8rem",
+                  clear: "both",
+                  paddingLeft: "3.3rem",
+                  width: "100%",
                 }}
               >
-                Thanks for your business
-              </p>
-            </div>
+                <label>Notes</label>
+                <br />
+                <p
+                  style={{
+                    marginTop: "7px",
+                    whiteSpace: "pre-wrap",
+                    wordWrap: "break-word",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {selectedRecord?.notes}
+                </p>
+              </div>
+            )}
           </div>
           <div
             className="template-footer"

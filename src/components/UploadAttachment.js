@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button, Upload, Modal, Space, Flex, Popover } from "antd";
 import {
   UploadOutlined,
@@ -25,12 +25,16 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
     return url?.substring(url?.lastIndexOf("/") + 1);
   };
 
-  const initializeFileList = (files) => {
+  const initializeFileList = useCallback((files) => {
     return files?.map((file) => ({
       ...file,
       name: extractFilename(file?.documentUrl),
     }));
-  };
+  }, []);
+
+  useEffect(() => {
+    setCustomFileList(files ? initializeFileList(files) : []);
+  }, [files, initializeFileList]);
 
   const [customFileList, setCustomFileList] = useState(
     files ? initializeFileList(files) : []

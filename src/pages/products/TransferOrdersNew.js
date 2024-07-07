@@ -793,10 +793,11 @@ const TransferOrdersNew = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish}>
-          <Row>
-            <Col span={10}>
-              {/* <Form.Item
+        <div className="page-form-wrapper">
+          <Form form={form} onFinish={onFinish}>
+            <Row>
+              <Col span={10}>
+                {/* <Form.Item
                 label="Transfer Order"
                 name="orderNumber"
                 labelAlign="left"
@@ -809,217 +810,226 @@ const TransferOrdersNew = () => {
                 // }
                 />
               </Form.Item> */}
-            </Col>
-          </Row>
+              </Col>
+            </Row>
 
-          <Row>
-            <Col span={10}>
-              <Form.Item
-                label={
-                  <FormattedMessage id="label.date" defaultMessage="Date" />
-                }
-                name="date"
-                labelAlign="left"
-                labelCol={{ span: 10 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <DatePicker />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row>
-            <Col span={10}>
-              <Form.Item
-                label={
-                  <FormattedMessage id="label.reason" defaultMessage="Reason" />
-                }
-                name="reason"
-                labelAlign="left"
-                labelCol={{ span: 10 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Input.TextArea rows="4" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row>
+              <Col span={10}>
+                <Form.Item
+                  label={
+                    <FormattedMessage id="label.date" defaultMessage="Date" />
+                  }
+                  name="date"
+                  labelAlign="left"
+                  labelCol={{ span: 10 }}
+                  wrapperCol={{ span: 12 }}
+                >
+                  <DatePicker />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col span={10}>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.reason"
+                      defaultMessage="Reason"
+                    />
+                  }
+                  name="reason"
+                  labelAlign="left"
+                  labelCol={{ span: 10 }}
+                  wrapperCol={{ span: 12 }}
+                >
+                  <Input.TextArea rows="4" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Divider />
-          <Row>
-            <Col span={10} className="warehouse-input-col">
-              <Form.Item
-                label={
+            <Divider />
+            <Row>
+              <Col span={10} className="warehouse-input-col">
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.sourceWarehouse"
+                      defaultMessage="Source Warehouse"
+                    />
+                  }
+                  name="sourceWarehouse"
+                  labelAlign="left"
+                  labelCol={{ span: 10 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.warehouse.required"
+                          defaultMessage="Select the Warehouse"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select
+                    showSearch
+                    loading={loading}
+                    optionFilterProp="label"
+                    onChange={(value) => setSelectedSourceWarehouse(value)}
+                  >
+                    {warehouses?.map((w) => (
+                      <Select.Option key={w.id} value={w.id} label={w.name}>
+                        {w.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col
+                span={1}
+                className="swap-icon-container"
+                style={{
+                  textAlign: "center",
+                  paddingTop: "0.6rem",
+                  verticalAlign: "middle",
+                }}
+              >
+                <SwapOutlined />
+              </Col>
+              <Col span={10} offset={1}>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.destinationWarehouse"
+                      defaultMessage="Destination Warehouse"
+                    />
+                  }
+                  name="destinationWarehouse"
+                  labelAlign="left"
+                  labelCol={{ span: 10 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.warehouse.required"
+                          defaultMessage="Select the Warehouse"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select
+                    showSearch
+                    loading={loading}
+                    optionFilterProp="label"
+                    onChange={(value) => setSelectedDestinationWarehouse(value)}
+                  >
+                    {warehouses?.map((w) => (
+                      <Select.Option key={w.id} value={w.id} label={w.name}>
+                        {w.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <br />
+            <>
+              {selectedSourceWarehouse && selectedDestinationWarehouse && (
+                <>
+                  <Table
+                    bordered
+                    loading={stockLoading || stockDestLoading}
+                    columns={columns}
+                    dataSource={data}
+                    pagination={false}
+                    className="item-details-table"
+                  />
+                  <br />
+                  <Button
+                    icon={<PlusCircleFilled className="plus-circle-icon" />}
+                    onClick={handleAddRow}
+                    className="add-row-item-btn"
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.addNewRow"
+                        defaultMessage="Add New Row"
+                      />
+                    </span>
+                  </Button>
+                  <Divider type="vertical" />
+                  <Button
+                    icon={<PlusCircleFilled className="plus-circle-icon" />}
+                    className="add-row-item-btn"
+                    onClick={() => setAddPurchaseProductsModalOpen(true)}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.addProductsInBulk"
+                        defaultMessage="Add Products in Bulk"
+                      />
+                    </span>
+                  </Button>
+                </>
+              )}
+            </>
+            <br />
+            <UploadAttachment
+              onCustomFileListChange={(customFileList) =>
+                setFileList(customFileList)
+              }
+            />
+            <div className="page-actions-bar page-actions-bar-margin">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="page-actions-btn"
+                loading={loading}
+                onClick={() => setSaveStatus("Draft")}
+              >
+                {
                   <FormattedMessage
-                    id="label.sourceWarehouse"
-                    defaultMessage="Source Warehouse"
+                    id="button.saveAsDraft"
+                    defaultMessage="Save As Draft"
                   />
                 }
-                name="sourceWarehouse"
-                labelAlign="left"
-                labelCol={{ span: 10 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.warehouse.required"
-                        defaultMessage="Select the Warehouse"
-                      />
-                    ),
-                  },
-                ]}
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="page-actions-btn"
+                loading={loading}
+                onClick={() => setSaveStatus("Confirmed")}
               >
-                <Select
-                  showSearch
-                  loading={loading}
-                  optionFilterProp="label"
-                  onChange={(value) => setSelectedSourceWarehouse(value)}
-                >
-                  {warehouses?.map((w) => (
-                    <Select.Option key={w.id} value={w.id} label={w.name}>
-                      {w.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col
-              span={1}
-              className="swap-icon-container"
-              style={{
-                textAlign: "center",
-                paddingTop: "0.6rem",
-                verticalAlign: "middle",
-              }}
-            >
-              <SwapOutlined />
-            </Col>
-            <Col span={10} offset={1}>
-              <Form.Item
-                label={
+                {
                   <FormattedMessage
-                    id="label.destinationWarehouse"
-                    defaultMessage="Destination Warehouse"
+                    id="button.saveAndConfirm"
+                    defaultMessage="Save And Confirm"
                   />
                 }
-                name="destinationWarehouse"
-                labelAlign="left"
-                labelCol={{ span: 10 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.warehouse.required"
-                        defaultMessage="Select the Warehouse"
-                      />
-                    ),
-                  },
-                ]}
+              </Button>
+              <Button
+                className="page-actions-btn"
+                loading={loading}
+                onClick={() =>
+                  navigate(from, { state: location.state, replace: true })
+                }
               >
-                <Select
-                  showSearch
-                  loading={loading}
-                  optionFilterProp="label"
-                  onChange={(value) => setSelectedDestinationWarehouse(value)}
-                >
-                  {warehouses?.map((w) => (
-                    <Select.Option key={w.id} value={w.id} label={w.name}>
-                      {w.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <br />
-          <>
-            {selectedSourceWarehouse && selectedDestinationWarehouse && (
-              <>
-                <Table
-                  bordered
-                  loading={stockLoading || stockDestLoading}
-                  columns={columns}
-                  dataSource={data}
-                  pagination={false}
-                  className="item-details-table"
-                />
-                <br />
-                <Button
-                  icon={<PlusCircleFilled className="plus-circle-icon" />}
-                  onClick={handleAddRow}
-                  className="add-row-item-btn"
-                >
-                  <span>
-                    <FormattedMessage
-                      id="button.addNewRow"
-                      defaultMessage="Add New Row"
-                    />
-                  </span>
-                </Button>
-                <Divider type="vertical" />
-                <Button
-                  icon={<PlusCircleFilled className="plus-circle-icon" />}
-                  className="add-row-item-btn"
-                  onClick={() => setAddPurchaseProductsModalOpen(true)}
-                >
-                  <span>
-                    <FormattedMessage
-                      id="button.addProductsInBulk"
-                      defaultMessage="Add Products in Bulk"
-                    />
-                  </span>
-                </Button>
-              </>
-            )}
-          </>
-          <br />
-          <UploadAttachment
-            onCustomFileListChange={(customFileList) =>
-              setFileList(customFileList)
-            }
-          />
-          <div className="page-actions-bar page-actions-bar-margin">
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="page-actions-btn"
-              loading={loading}
-              onClick={() => setSaveStatus("Draft")}
-            >
-              {
-                <FormattedMessage
-                  id="button.saveAsDraft"
-                  defaultMessage="Save As Draft"
-                />
-              }
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="page-actions-btn"
-              loading={loading}
-              onClick={() => setSaveStatus("Confirmed")}
-            >
-              {
-                <FormattedMessage
-                  id="button.saveAndConfirm"
-                  defaultMessage="Save And Confirm"
-                />
-              }
-            </Button>
-            <Button
-              className="page-actions-btn"
-              loading={loading}
-              onClick={() =>
-                navigate(from, { state: location.state, replace: true })
-              }
-            >
-              {<FormattedMessage id="button.cancel" defaultMessage="Cancel" />}
-            </Button>
-          </div>
-        </Form>
+                {
+                  <FormattedMessage
+                    id="button.cancel"
+                    defaultMessage="Cancel"
+                  />
+                }
+              </Button>
+            </div>
+          </Form>
+        </div>
       </div>
     </>
   );

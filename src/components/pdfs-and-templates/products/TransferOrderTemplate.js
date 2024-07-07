@@ -28,6 +28,15 @@ const TransferOrdersTemplate = ({ selectedRecord }) => {
               <tbody>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -44,7 +53,7 @@ const TransferOrdersTemplate = ({ selectedRecord }) => {
                     <br />
                   </td>
                   <td className="text-align-right">
-                    <span style={{ fontSize: "2.2rem" }}>TRANSFER ORDER</span>
+                    <span style={{ fontSize: "2.2rem" }}>TRANSFER ORDERS</span>
                     <br />
                     <span># {selectedRecord.orderNumber}</span>
                   </td>
@@ -225,7 +234,7 @@ const TransferOrdersTemplate = ({ selectedRecord }) => {
                       textAlign: "left",
                     }}
                   >
-                    Product & Description
+                    Products & Description
                   </td>
                   <td
                     className="text-align-right"

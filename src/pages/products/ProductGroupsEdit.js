@@ -1338,23 +1338,24 @@ const ProductGroupsEdit = () => {
             </span> */}
           </Space>
         </Row>
-        {editProductForm}
-        <br />
-        <div className="product-variants-container">
-          <p>Variants</p>
-          <Flex gap="1rem">
-            {productVariations.map((variant, index) => (
-              <div
-                className="product-variants"
-                key={variant.id}
-                style={{
-                  cursor: "not-allowed",
-                }}
-                // onClick={() => handleEditClick(variant, index)}
-              >
-                <div className="product-variant-header">
-                  <div className="product-variant-name">{variant.name}</div>
-                  {/* <DeleteOutlined
+        <div className="page-form-wrapper">
+          {editProductForm}
+          <br />
+          <div className="product-variants-container">
+            <p>Variants</p>
+            <Flex gap="1rem">
+              {productVariations.map((variant, index) => (
+                <div
+                  className="product-variants"
+                  key={variant.id}
+                  style={{
+                    cursor: "not-allowed",
+                  }}
+                  // onClick={() => handleEditClick(variant, index)}
+                >
+                  <div className="product-variant-header">
+                    <div className="product-variant-name">{variant.name}</div>
+                    {/* <DeleteOutlined
                     className="product-variant-delete-icon"
                     style={{
                       fontSize: "1rem",
@@ -1366,39 +1367,40 @@ const ProductGroupsEdit = () => {
                     //   handleRemoveVariation(index);
                     // }}
                   /> */}
+                  </div>
+                  <div className="product-variant-values-container">
+                    {variant.values.map((values) => (
+                      <Tag key={values.id}>{values.value}</Tag>
+                    ))}
+                  </div>
                 </div>
-                <div className="product-variant-values-container">
-                  {variant.values.map((values) => (
-                    <Tag key={values.id}>{values.value}</Tag>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </Flex>
-          <div>
-            <Button
-              icon={<PlusCircleFilled />}
-              disabled
-              style={{ padding: 0 }}
-              type="link"
-              // onClick={(event) => {
-              //   setCreateModalOpen(true);
-              // }}
-              className="add-variant"
-            >
-              Add Variants
-            </Button>
+              ))}
+            </Flex>
+            <div>
+              <Button
+                icon={<PlusCircleFilled />}
+                disabled
+                style={{ padding: 0 }}
+                type="link"
+                // onClick={(event) => {
+                //   setCreateModalOpen(true);
+                // }}
+                className="add-variant"
+              >
+                Add Variants
+              </Button>
+            </div>
           </div>
+          <Form form={editProductFormRef} onFinish={onFinish}>
+            <Table
+              dataSource={combinationPairs}
+              columns={columns}
+              pagination={false}
+              rowKey={(record) => record.id}
+              className="product-variant-table"
+            />
+          </Form>
         </div>
-        <Form form={editProductFormRef} onFinish={onFinish}>
-          <Table
-            dataSource={combinationPairs}
-            columns={columns}
-            pagination={false}
-            rowKey={(record) => record.id}
-            className="product-variant-table"
-          />
-        </Form>
       </div>
     </>
   );

@@ -30,7 +30,6 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
           supplier {
             id
             name
-            unusedCreditAmount
             paidBills {
               id
               businessId
@@ -66,7 +65,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               currency {
                 id
                 decimalPlaces
-                exchangeRate
+                # exchangeRate
                 name
                 symbol
               }
@@ -106,7 +105,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               currency {
                 id
                 decimalPlaces
-                exchangeRate
+                # exchangeRate
                 name
                 symbol
               }
@@ -178,7 +177,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               currency {
                 id
                 decimalPlaces
-                exchangeRate
+                # exchangeRate
                 name
                 symbol
               }

@@ -110,6 +110,7 @@ const ManualJournals = () => {
           transactions: node.transactions,
           supplier: node.supplier,
           customer: node.customer,
+          exchangeRate: node.exchangeRate,
         });
       }
     });

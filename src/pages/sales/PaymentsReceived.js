@@ -17,12 +17,10 @@ import {
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
-  PaperClipOutlined,
   CloseOutlined,
   EditOutlined,
   FilePdfOutlined,
-  CaretDownFilled,
-  PrinterOutlined,
+  HistoryOutlined,
   // CaretRightFilled,
 } from "@ant-design/icons";
 import { useHistoryState } from "../../utils/HelperFunctions";
@@ -30,6 +28,8 @@ import {
   AttachFiles,
   CustomerPaymentTemplate,
   CustomerSearchModal,
+  HistoryColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
 } from "../../components";
@@ -46,6 +46,7 @@ import {
 import { useMutation, useReadQuery } from "@apollo/client";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { PaymentReceivedPDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_CUSTOMER_PAYMENT } = CustomerPaymentQueries;
 const { DELETE_CUSTOMER_PAYMENT } = CustomerPaymentMutations;
 
@@ -104,8 +105,13 @@ const PaymentsReceived = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi, msgApi, allBranchesQueryRef, allAccountsQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allAccountsQueryRef,
+    business,
+  } = useOutletContext();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
     "customerPaymentSearchCriteria",
     null
@@ -114,6 +120,8 @@ const PaymentsReceived = () => {
     "customerPaymentCurrentPage",
     1
   );
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [hisColumnOpen, setHisColumnOpen] = useState(false);
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
 
@@ -558,6 +566,12 @@ const PaymentsReceived = () => {
         setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <PaymentReceivedPDF
+          selectedRecord={selectedRecord}
+          business={business}
+        />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -696,6 +710,20 @@ const PaymentsReceived = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<HistoryOutlined />}
+                    onClick={setHisColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.paymentHistory"
+                        defaultMessage="Payment History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -716,26 +744,13 @@ const PaymentsReceived = () => {
                 <EditOutlined />
                 Edit
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  PDF/Print <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
@@ -761,6 +776,13 @@ const PaymentsReceived = () => {
             <div className="content-column-full-row">
               <CustomerPaymentTemplate selectedRecord={selectedRecord} />
             </div>
+            <HistoryColumn
+              open={hisColumnOpen}
+              setOpen={setHisColumnOpen}
+              referenceType="customer_payments"
+              referenceId={selectedRecord?.id}
+              name="Payment"
+            />
           </div>
         )}
       </div>

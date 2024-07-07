@@ -1,4 +1,4 @@
-import React, { useState, useContext, Suspense } from "react";
+import React, { useState, useContext, Suspense, useEffect } from "react";
 import {
   BellOutlined,
   HomeOutlined,
@@ -86,6 +86,7 @@ const App = () => {
 
   // Extracting submenu keys
   const [openKeys, setOpenKeys] = useState([]);
+  const [selectedKeys, setSelectedKeys] = useState([]);
 
   const onOpenChange = (keys) => {
     setOpenKeys(keys.slice(-1)); // Keep only the last key opened
@@ -160,6 +161,19 @@ const App = () => {
     return location.pathname === key;
   };
 
+  const transformPathnameToKey = (pathname) => {
+    const parts = pathname.substring(1).split("/");
+
+    let key = parts.length > 1 ? parts[0] : pathname.substring(1);
+
+    if (key === "") {
+      key = "home";
+    }
+
+    return key;
+  };
+  const selectedKey = transformPathnameToKey(location.pathname);
+
   return (
     <ConfigProvider
       theme={{
@@ -204,8 +218,9 @@ const App = () => {
             }}
             // theme="dark"
             color={Theme.bgColorPrimary}
-            defaultSelectedKeys={"Home"}
+            // defaultSelectedKeys={"Home"}
             openKeys={openKeys}
+            selectedKeys={[selectedKey]}
             onOpenChange={onOpenChange}
             onClick={(item) =>
               navigate(item.key === "home" ? "/" : item.key, {
@@ -509,6 +524,15 @@ const App = () => {
                 icon: <AccountantOutlined width={20} height={20} />,
                 children: [
                   {
+                    key: "chartOfAccounts",
+                    label: (
+                      <FormattedMessage
+                        id="menu.chartOfAccounts"
+                        defaultMessage="Chart of Accounts"
+                      />
+                    ),
+                  },
+                  {
                     key: "manualJournals",
                     label: (
                       <MenuItemWithPlus
@@ -522,13 +546,12 @@ const App = () => {
                       />
                     ),
                   },
-
                   {
-                    key: "chartOfAccounts",
+                    key: "transactionLocking",
                     label: (
                       <FormattedMessage
-                        id="menu.chartOfAccounts"
-                        defaultMessage="Chart of Accounts"
+                        id="menu.transactionLocking"
+                        defaultMessage="Transaction Locking"
                       />
                     ),
                   },
@@ -774,9 +797,10 @@ const App = () => {
             </Row>
           </Header>
           <Content
-          // style={{
-          //   margin: '24px 16px 0',
-          // }}
+            // style={{
+            //   margin: '24px 16px 0',
+            // }}
+            collapsed={collapsed}
           >
             <div
               style={{

@@ -33,6 +33,7 @@ import InventoryAdjustmentMutations from "./mutations/InventoryAdjustmentMutatio
 import ImageMutations from "./mutations/ImageMutations";
 import FileMutations from "./mutations/FileMutations";
 import BankingTransactionMutations from "./mutations/BankingTransactionMutations";
+import CommentMutations from "./mutations/CommentMutations";
 
 import BankingQueries from "./queries/BankingQueries";
 import BranchQueries from "./queries/BranchQueries";
@@ -72,6 +73,8 @@ import TransferOrderQueries from "./queries/TransferOrderQueries";
 import InventoryAdjustmentQueries from "./queries/InventoryAdjustmentQueries";
 import StockQueries from "./queries/StockQueries";
 import BankingTransactionQueries from "./queries/BankingTransationQueries";
+import CommentQueries from "./queries/CommentQueries";
+import HistoryQueries from "./queries/HistoryQueries";
 
 export {
   BankingQueries,
@@ -147,4 +150,7 @@ export {
   FileMutations,
   BankingTransactionQueries,
   BankingTransactionMutations,
+  CommentQueries,
+  CommentMutations,
+  HistoryQueries,
 };

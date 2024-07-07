@@ -408,6 +408,7 @@ const InterestIncomeEdit = ({
       <Divider />
       <UploadAttachment
         onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+        files={selectedRecord?.documents}
       />
     </Form>
   );

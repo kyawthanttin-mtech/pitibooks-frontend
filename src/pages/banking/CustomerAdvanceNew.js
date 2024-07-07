@@ -36,11 +36,11 @@ const CustomerAdvanceNew = ({
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
-  const [currencies, setCurrencies] = useState([
-    selectedAcc?.currency?.id > 0
-      ? selectedAcc.currency
-      : business.baseCurrency,
-  ]);
+  // const [currencies, setCurrencies] = useState([
+  //   selectedAcc?.currency?.id > 0
+  //     ? selectedAcc.currency
+  //     : business.baseCurrency,
+  // ]);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(false);
   const [fileList, setFileList] = useState(null);
@@ -67,23 +67,23 @@ const CustomerAdvanceNew = ({
     }
   );
 
-  const handleFromAccountChange = (id) => {
-    const toAccountCurrency =
-      selectedAcc?.currency?.id > 0
-        ? selectedAcc.currency
-        : business.baseCurrency;
-    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
-      fromAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [toAccountCurrency];
-    if (toAccountCurrency.id !== fromAccountCurrency.id) {
-      newCurrencies.push(fromAccountCurrency);
-    }
-    console.log(newCurrencies);
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currency", null);
-  };
+  // const handleFromAccountChange = (id) => {
+  //   const toAccountCurrency =
+  //     selectedAcc?.currency?.id > 0
+  //       ? selectedAcc.currency
+  //       : business.baseCurrency;
+  //   let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
+  //   if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
+  //     fromAccountCurrency = business.baseCurrency;
+  //   }
+  //   let newCurrencies = [toAccountCurrency];
+  //   if (toAccountCurrency.id !== fromAccountCurrency.id) {
+  //     newCurrencies.push(fromAccountCurrency);
+  //   }
+  //   console.log(newCurrencies);
+  //   setCurrencies(newCurrencies);
+  //   form.setFieldValue("currency", null);
+  // };
 
   const handleSubmit = async () => {
     try {
@@ -98,6 +98,7 @@ const CustomerAdvanceNew = ({
         customerName: undefined,
         customerId: selectedCustomer?.id,
         transactionType: "CustomerAdvance",
+        paymentModeId: values.paymentModeId || 0,
         // isMoneyIn: true,
         documents: fileUrls,
       };
@@ -140,7 +141,7 @@ const CustomerAdvanceNew = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage
             id="label.fromAccount"
@@ -178,7 +179,7 @@ const CustomerAdvanceNew = ({
             </Select.OptGroup>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage id="label.customer" defaultMessage="Customer" />
@@ -277,7 +278,49 @@ const CustomerAdvanceNew = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.exchangeRate"
+              defaultMessage="Exchange Rate"
+            />
+          }
+          name="exchangeRate"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.exchangeRate.required"
+                  defaultMessage="Enter the Exchange Rate"
+                />
+              ),
+            },
 
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"
@@ -313,7 +356,7 @@ const CustomerAdvanceNew = ({
       >
         <Input />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -347,7 +390,7 @@ const CustomerAdvanceNew = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage

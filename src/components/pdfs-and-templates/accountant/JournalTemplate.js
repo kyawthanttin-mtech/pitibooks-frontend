@@ -28,6 +28,15 @@ const JournalTemplate = ({ selectedRecord }) => {
               <tbody>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -44,7 +53,7 @@ const JournalTemplate = ({ selectedRecord }) => {
                     <br />
                   </td>
                   <td className="text-align-right">
-                    <span style={{ fontSize: "2.2rem" }}>Journal</span>
+                    <span style={{ fontSize: "2.2rem" }}>JOURNAL</span>
                     <br />
                     <span># {selectedRecord.journalNumber}</span>
                   </td>

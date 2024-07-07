@@ -10,8 +10,14 @@ import {
   Radio,
   Button,
   Flex,
+  Modal,
+  Space,
 } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  DeleteOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
 import "./Profile.css";
 import TextArea from "antd/es/input/TextArea";
 import { useMutation, useReadQuery } from "@apollo/client";
@@ -22,7 +28,8 @@ import {
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import { BusinessMutations } from "../../graphql";
-
+import { ImageMutations } from "../../graphql";
+const { UPLOAD_SINGLE_IMAGE, REMOVE_SINGLE_IMAGE } = ImageMutations;
 const { UPDATE_BUSINESS } = BusinessMutations;
 
 const Profile = () => {
@@ -37,6 +44,8 @@ const Profile = () => {
     allTownshipsQueryRef,
   } = useOutletContext();
   const [selectedState, setSelectedState] = useState(null);
+  const [image, setImage] = useState({ logoUrl: business?.logoUrl });
+  const [deleteModal, contextHolder] = Modal.useModal();
 
   // Queries and mutations
   const { data: stateData } = useReadQuery(allStatesQueryRef);
@@ -59,13 +68,28 @@ const Profile = () => {
     }
   );
 
-  const loading = updateLoading;
+  const [uploadImage, { loading: uploadLoading }] = useMutation(
+    UPLOAD_SINGLE_IMAGE,
+    {
+      onCompleted() {},
+    }
+  );
+
+  const [removeImage, { loading: removeLoading }] = useMutation(
+    REMOVE_SINGLE_IMAGE,
+    {
+      onCompleted() {},
+    }
+  );
+
+  const loading = updateLoading || uploadLoading || removeLoading;
 
   const handleSave = async () => {
     try {
       const values = await formRef.validateFields();
       const input = {
         ...values,
+        logo_url: image?.logoUrl,
         stateId: values.stateId || 0,
         townshipId: values.townshipId || 0,
       };
@@ -104,8 +128,76 @@ const Profile = () => {
     }
   }, [formRef, business]);
 
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
+    if (!isJpgOrPng) {
+      openErrorNotification(notiApi, "You can only upload JPG/PNG file!");
+      return false;
+    }
+
+    const isLt5M = file.size / 1024 / 1024 < 1;
+    if (!isLt5M) {
+      openErrorNotification(notiApi, "Image must be smaller than 1MB!");
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpload = async (options) => {
+    const { file, onSuccess, onError } = options;
+    console.log("sdfj", onSuccess, onError);
+    try {
+      const { data } = await uploadImage({
+        variables: { file },
+      });
+      console.log("data", file);
+
+      const newFile = {
+        uid: file.uid,
+        name: file.name,
+        status: "done",
+        logoUrl: data?.uploadSingleImage?.image_url,
+      };
+
+      setImage(newFile);
+      msgApi.success(`Image Uploaded`);
+      onSuccess(null, file);
+    } catch (error) {
+      openErrorNotification(notiApi, `Image upload failed: ${error.message}`);
+      onError(error);
+    }
+  };
+
+  const handleRemove = async () => {
+    const imageUrl = image?.logoUrl;
+
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await removeImage({ variables: { imageUrl: imageUrl } });
+        setImage(null);
+        msgApi.success("Image Removed");
+      } catch (error) {
+        openErrorNotification(
+          notiApi,
+          `Failed to remove image: ${error.message}`
+        );
+      }
+    }
+  };
+
+  console.log(image);
+
   return (
     <>
+      {contextHolder}
       <div className="page-header">
         <Flex align="center" gap={"1rem"}>
           <p className="page-header-text">
@@ -120,17 +212,67 @@ const Profile = () => {
             <FormattedMessage id="profile.logo" defaultMessage="Logo" />
           </p> */}
           <div className="upload-logo-container">
-            <div className="upload-logo">
-              <Upload.Dragger className="upload-logo-dragger">
-                <UploadOutlined />
-                <p className="upload-dragger-text">
-                  <FormattedMessage
-                    id="profile.logoDescription"
-                    defaultMessage="Upload Your Organization Logo"
-                  />
-                </p>
-              </Upload.Dragger>
-            </div>
+            {image && image?.logoUrl ? (
+              <div
+                className="upload-logo"
+                style={{
+                  height: "120px",
+                  width: "250px",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "0.3rem",
+                }}
+              >
+                <Flex
+                  align="center"
+                  justify="center"
+                  style={{
+                    height: "75%",
+                    width: "100%",
+                    borderBottom: "1px solid var(--border-color)",
+                    padding: "5px",
+                  }}
+                >
+                  <img
+                    src={image?.logoUrl}
+                    alt="Logo"
+                    style={{
+                      maxHeight: "100%",
+                      maxWidth: "100%",
+                      background: "white",
+                    }}
+                  ></img>
+                </Flex>
+                <div style={{ textAlign: "right", padding: "5px 10px" }}>
+                  <Space size="small">
+                    {removeLoading && <LoadingOutlined />}
+                    <DeleteOutlined
+                      style={{ cursor: "pointer" }}
+                      onClick={handleRemove}
+                    />
+                  </Space>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{ height: "80px", width: "250px", borderRadius: "6px" }}
+              >
+                <Upload.Dragger
+                  className="upload-logo-dragger"
+                  beforeUpload={beforeUpload}
+                  customRequest={handleUpload}
+                  showUploadList={false}
+                >
+                  {removeLoading ? <LoadingOutlined /> : <UploadOutlined />}
+                  <p className="upload-dragger-text">
+                    <FormattedMessage
+                      id="profile.logoDescription"
+                      defaultMessage="Upload Your Organization Logo"
+                    />
+                  </p>
+                </Upload.Dragger>
+              </div>
+            )}
+
             <div className="upload-logo-information">
               {/* <span className="logo-information">
                 This logo will be displayed in transaction PDFs and email

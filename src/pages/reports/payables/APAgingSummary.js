@@ -12,9 +12,9 @@ import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 import { ReportFilterBar } from "../../../components";
 import ReportLayout from "../ReportLayout";
 
-const { GET_SALES_BY_PRODUCT_REPORT } = ReportQueries;
+const { GET_AP_AGING_SUMMARY_REPORT } = ReportQueries;
 
-const APAgingSummary = () => {
+const ARAgingSummary = () => {
   const { notiApi, business } = useOutletContext();
   const [filteredDate, setFilteredDate] = useState({
     toDate: moment().endOf("month").utc(true),
@@ -25,12 +25,12 @@ const APAgingSummary = () => {
     data,
     loading: queryLoading,
     refetch,
-  } = useQuery(GET_SALES_BY_PRODUCT_REPORT, {
+  } = useQuery(GET_AP_AGING_SUMMARY_REPORT, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
     variables: {
-      toDate: moment().endOf("month").utc(true),
+      currentDate: moment().endOf("month").utc(true),
       branchId: business?.primaryBranch?.id,
       reportType: reportBasis,
     },
@@ -38,27 +38,30 @@ const APAgingSummary = () => {
       openErrorNotification(notiApi, err.message);
     },
   });
-  const queryData = useMemo(() => data?.getSalesByProductReport, [data]);
+  const queryData = useMemo(() => data?.getAPAgingSummaryReport, [data]);
 
   // Calculate totals
   const totals = useMemo(() => {
     return queryData?.reduce(
       (acc, curr) => {
-        acc.soldQty += curr.soldQty || 0;
-        acc.totalAmount += curr.totalAmount || 0;
-        acc.totalAmountWithDiscount += curr.totalAmountWithDiscount || 0;
-        acc.averagePrice += curr.averagePrice || 0;
+        acc.current += curr.current || 0;
+        acc.int1to15 += curr.int1to15 || 0;
+        acc.int16to30 += curr.int16to30 || 0;
+        acc.int31to45 += curr.int31to45 || 0;
+        acc.int46plus += curr.int46plus || 0;
+        acc.total += curr.total || 0;
         return acc;
       },
       {
-        soldQty: 0,
-        totalAmount: 0,
-        totalAmountWithDiscount: 0,
-        averagePrice: 0,
+        current: 0,
+        int1to15: 0,
+        int16to30: 0,
+        int31to45: 0,
+        int46plus: 0,
+        total: 0,
       }
     );
   }, [queryData]);
-  console.log(data);
 
   return (
     <ReportLayout>
@@ -69,6 +72,7 @@ const APAgingSummary = () => {
           setFilteredDate={setFilteredDate}
           setReportBasis={setReportBasis}
           hasFromDate={false}
+          loading={queryLoading}
         />
         <div className="rep-container">
           <div className="report-header">
@@ -99,8 +103,8 @@ const APAgingSummary = () => {
                     </th>
                     <th className="text-align-right" style={{ width: "150px" }}>
                       <FormattedMessage
-                        id="label.total"
-                        defaultMessage="Total"
+                        id="label.totalFcy"
+                        defaultMessage="Total (FCY)"
                       />
                     </th>
                     <th className="text-align-right" style={{ width: "150px" }}>
@@ -127,9 +131,6 @@ const APAgingSummary = () => {
                         defaultMessage="Total"
                       />
                     </th>
-                    <th className="text-align-right" style={{ width: "150px" }}>
-                      <FormattedMessage id="label.fcy" defaultMessage="Fcy" />
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -137,14 +138,20 @@ const APAgingSummary = () => {
                     queryData?.map((data, index) => {
                       return (
                         <tr key={index}>
-                          <td>{data.productName}</td>
+                          <td>{data.supplierName}</td>
                           <td className="text-align-right">
-                            {data.productSku}
+                            {data.currencySymbol}{" "}
+                            <FormattedNumber
+                              value={data.totalFcy}
+                              style="decimal"
+                              //   minimumFractionDigits={
+                              //     business.baseCurrency.decimalPlaces
+                              //   }
+                            />
                           </td>
-                          <td className="text-align-right">{data.soldQty}</td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.totalAmount}
+                              value={data.current}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -153,7 +160,7 @@ const APAgingSummary = () => {
                           </td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.totalAmountWithDiscount}
+                              value={data.int1to15}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -162,7 +169,7 @@ const APAgingSummary = () => {
                           </td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.averagePrice}
+                              value={data.int16to30}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -171,7 +178,7 @@ const APAgingSummary = () => {
                           </td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.averagePrice}
+                              value={data.int31to45}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -180,7 +187,7 @@ const APAgingSummary = () => {
                           </td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.averagePrice}
+                              value={data.int46plus}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -189,7 +196,7 @@ const APAgingSummary = () => {
                           </td>
                           <td className="text-align-right">
                             <FormattedNumber
-                              value={data.averagePrice}
+                              value={data.total}
                               style="decimal"
                               minimumFractionDigits={
                                 business.baseCurrency.decimalPlaces
@@ -202,7 +209,7 @@ const APAgingSummary = () => {
                   ) : (
                     <tr className="empty-row">
                       <td
-                        colSpan={6}
+                        colSpan={8}
                         style={{
                           border: "none",
                           borderBottom: "1px solid var(--border-color)",
@@ -225,18 +232,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.soldQty || 0}
-                          style="decimal"
-                          // minimumFractionDigits={
-                          //   business.baseCurrency.decimalPlaces
-                          // }
-                        />
-                      </b>
-                    </td>
-                    <td className="text-align-right">
-                      <b>
-                        <FormattedNumber
-                          value={totals?.totalAmount || 0}
+                          value={totals?.current || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -247,7 +243,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.totalAmountWithDiscount || 0}
+                          value={totals?.int1to15 || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -258,7 +254,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.averagePrice || 0}
+                          value={totals?.int16to30 || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -269,7 +265,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.averagePrice || 0}
+                          value={totals?.int31to45 || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -280,7 +276,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.averagePrice || 0}
+                          value={totals?.int46plus || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -291,7 +287,7 @@ const APAgingSummary = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.averagePrice || 0}
+                          value={totals?.total || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -317,4 +313,4 @@ const APAgingSummary = () => {
   );
 };
 
-export default APAgingSummary;
+export default ARAgingSummary;

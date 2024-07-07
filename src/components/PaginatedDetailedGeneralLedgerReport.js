@@ -43,6 +43,10 @@ const PaginatedDetailedGeneralLedgerReport = ({
     fromDate: moment().startOf("month").utc(true),
     toDate: moment().endOf("month").utc(true),
   });
+  const [filteredBranch, setFilteredBranch] = useState(
+    business?.primaryBranch?.id
+  );
+
   const [reportBasis, setReportBasis] = useState("Accrual");
 
   const {
@@ -89,6 +93,7 @@ const PaginatedDetailedGeneralLedgerReport = ({
             fromDate: filteredDate.fromDate,
             toDate: filteredDate.toDate,
             reportType: reportBasis,
+            branchId: filteredBranch,
           },
         });
         setCurrentPage(currentPage + 1);
@@ -133,6 +138,7 @@ const PaginatedDetailedGeneralLedgerReport = ({
           setCurrentPage={setCurrentPage}
           setFilteredDate={setFilteredDate}
           setReportBasis={setReportBasis}
+          setFilteredBranch={setFilteredBranch}
         />
         <div className="rep-container">
           <div className="report-header">

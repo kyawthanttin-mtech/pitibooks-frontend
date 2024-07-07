@@ -32,6 +32,15 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
               <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -144,42 +153,27 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Reference Number :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.referenceNumber}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Payment Mode :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.paymentMode?.name}</span>
-                          </td>
-                        </tr>
+                        {selectedRecord.paymentMode?.name && (
+                          <tr>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>Payment Mode :</span>
+                            </td>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>{selectedRecord.paymentMode?.name}</span>
+                            </td>
+                          </tr>
+                        )}
+
                         <tr>
                           <td
                             className="text-align-right"
@@ -207,6 +201,7 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
+
                         <tr>
                           <td
                             className="text-align-right"
@@ -223,24 +218,6 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
                             }}
                           >
                             <span>{selectedRecord.depositAccount?.name}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Notes :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.notes}</span>
                           </td>
                         </tr>
                       </tbody>

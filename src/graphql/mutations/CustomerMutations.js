@@ -27,8 +27,6 @@ const CREATE_CUSTOMER = gql`
       customerPaymentTerms
       customerPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       creditLimit
       billingAddress {
         id
@@ -104,8 +102,6 @@ const UPDATE_CUSTOMER = gql`
       customerPaymentTerms
       customerPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       creditLimit
       billingAddress {
         id
@@ -180,8 +176,6 @@ const DELETE_CUSTOMER = gql`
       customerPaymentTerms
       customerPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       creditLimit
       billingAddress {
         id
@@ -257,8 +251,6 @@ const TOGGLE_ACTIVE_CUSTOMER = gql`
       customerPaymentTerms
       customerPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       creditLimit
       billingAddress {
         id

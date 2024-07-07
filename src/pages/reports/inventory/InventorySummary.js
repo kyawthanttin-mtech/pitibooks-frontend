@@ -269,7 +269,13 @@ const InventorySummary = () => {
                     })
                   ) : (
                     <tr className="empty-row">
-                      <td colSpan={9} style={{ border: "none" }}>
+                      <td
+                        colSpan={9}
+                        style={{
+                          border: "none",
+                          borderBottom: "1px solid var(--border-color)",
+                        }}
+                      >
                         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                       </td>
                     </tr>

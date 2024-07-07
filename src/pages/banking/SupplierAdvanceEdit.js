@@ -124,10 +124,10 @@ const SupplierAdvanceEdit = ({
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         transactionType: "SupplierAdvance",
+        paymentModeId: values.paymentModeId || 0,
         // isMoneyIn: false,
         documents: fileUrls,
       };
-
       await createAccountTransfer({
         variables: { id: selectedRecord.id, input },
       });
@@ -170,7 +170,7 @@ const SupplierAdvanceEdit = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.toAccount" defaultMessage="To Account" />
         }
@@ -205,7 +205,7 @@ const SupplierAdvanceEdit = ({
             </Select.OptGroup>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
@@ -304,7 +304,49 @@ const SupplierAdvanceEdit = ({
       >
         <DatePicker format={REPORT_DATE_FORMAT} />
       </Form.Item>
+      {selectedAcc?.currency.id !== business.baseCurrency.id && (
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.exchangeRate"
+              defaultMessage="Exchange Rate"
+            />
+          }
+          name="exchangeRate"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="label.exchangeRate.required"
+                  defaultMessage="Enter the Exchange Rate"
+                />
+              ),
+            },
 
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      )}
       <Form.Item
         label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
         name="amount"
@@ -340,7 +382,7 @@ const SupplierAdvanceEdit = ({
       >
         <Input />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.currency" defaultMessage="Currency" />
         }
@@ -374,7 +416,7 @@ const SupplierAdvanceEdit = ({
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage
@@ -451,6 +493,7 @@ const SupplierAdvanceEdit = ({
       <Divider />
       <UploadAttachment
         onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+        files={selectedRecord?.documents}
       />
     </Form>
   );

@@ -18,15 +18,15 @@ import {
   MoreOutlined,
   CaretRightFilled,
   FilePdfOutlined,
-  CaretDownFilled,
-  PaperClipOutlined,
   CloseOutlined,
   EditOutlined,
-  PrinterOutlined,
+  CommentOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import {
   AttachFiles,
+  CommentColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierCreditTemplate,
@@ -45,6 +45,7 @@ import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import SupplierCreditRefund from "./SupplierCreditRefund";
+import { SupplierCreditPDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_SUPPLIER_CREDIT } = SupplierCreditQueries;
 const { DELETE_SUPPLIER_CREDIT } = SupplierCreditMutations;
 
@@ -81,8 +82,13 @@ const confirmedActionItems = [
 
 const SupplierCredits = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -100,6 +106,8 @@ const SupplierCredits = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const [showRefundForm, setShowRefundForm] = useState(false);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -565,6 +573,12 @@ const SupplierCredits = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <SupplierCreditPDF
+          selectedRecord={selectedRecord}
+          business={business}
+        />
+      </PDFPreviewModal>
       {contextHolder}
 
       <div className={`${selectedRecord && "page-with-column"}`}>
@@ -705,6 +719,20 @@ const SupplierCredits = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -725,30 +753,13 @@ const SupplierCredits = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -826,6 +837,12 @@ const SupplierCredits = () => {
               </div>
               <SupplierCreditTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="supplier_credits"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
         {showRefundForm && (

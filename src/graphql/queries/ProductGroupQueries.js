@@ -92,8 +92,6 @@ const GET_PAGINATED_PRODUCT_GROUPS = gql`
             exchangeRate
             openingBalanceBranchId
             openingBalance
-            prepaidCreditAmount
-            unusedCreditAmount
             isActive
             createdAt
             updatedAt
@@ -175,8 +173,6 @@ const GET_PRODUCT = gql`
         supplierPaymentTerms
         supplierPaymentTermsCustomDays
         notes
-        prepaidCreditAmount
-        unusedCreditAmount
         isActive
         createdAt
         updatedAt

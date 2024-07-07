@@ -63,163 +63,162 @@ const ProductSalesReport = () => {
           setFilteredDate={setFilteredDate}
           setReportBasis={setReportBasis}
         />
-        <div className="report-header">
-          <h4>{business.name}</h4>
-          <h3 style={{ marginTop: "-5px" }}>Product Sales Report</h3>
-          <span>Basis: {reportBasis}</span>
-          <h5>
-            From {filteredDate?.fromDate.format(REPORT_DATE_FORMAT)} To{" "}
-            {filteredDate?.toDate.format(REPORT_DATE_FORMAT)}
-          </h5>
-        </div>
-        {queryLoading ? (
-          <Flex justify="center" align="center" style={{ height: "40vh" }}>
-            <Spin size="large" />
-          </Flex>
-        ) : (
-          <div className="fill-container table-container">
-            <table className="rep-table ">
-              <thead>
-                <tr>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.productName"
-                      defaultMessage="productName"
-                    />
-                  </th>
-                  <th className="text-align-left" style={{ width: "150px" }}>
-                    <FormattedMessage id="label.sku" defaultMessage="SKU" />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.margin"
-                      defaultMessage="Margin"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.quantitySold"
-                      defaultMessage="Quantity Sold"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.salesPrice"
-                      defaultMessage="Sales Price"
-                    />
-                  </th>
-                  <th className="text-align-right" style={{ width: "150px" }}>
-                    <FormattedMessage
-                      id="label.salesWithTax"
-                      defaultMessage="Sales With Tax"
-                    />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {queryData?.length > 0 ? (
-                  queryData?.map((data, index) => {
-                    return (
-                      <tr key={index}>
-                        <td>{data.productName}</td>
-                        <td>{data.productSku}</td>
-                        <td className="text-align-right">{data.margin}</td>
-                        <td className="text-align-right">{data.soldQty}</td>
-                        <td className="text-align-right">
-                          <a href="/">
-                            <FormattedNumber
-                              value={data.totalAmount || 0}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </a>
-                        </td>
-                        <td className="text-align-right">
-                          <a href="/">
-                            <FormattedNumber
-                              value={data.totalAmountWithTax || 0}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </a>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr className="empty-row">
-                    <td colSpan={9} style={{ border: "none" }}>
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <div className="rep-container">
+          <div className="report-header">
+            <h4>{business.name}</h4>
+            <h3 style={{ marginTop: "-5px" }}>Product Sales Report</h3>
+            <span>Basis: {reportBasis}</span>
+            <h5>
+              From {filteredDate?.fromDate.format(REPORT_DATE_FORMAT)} To{" "}
+              {filteredDate?.toDate.format(REPORT_DATE_FORMAT)}
+            </h5>
+          </div>
+          {queryLoading ? (
+            <Flex justify="center" align="center" style={{ height: "40vh" }}>
+              <Spin size="large" />
+            </Flex>
+          ) : (
+            <div className="fill-container table-container">
+              <table className="rep-table ">
+                <thead>
+                  <tr>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.productName"
+                        defaultMessage="productName"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage id="label.sku" defaultMessage="SKU" />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.margin"
+                        defaultMessage="Margin"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.quantitySold"
+                        defaultMessage="Quantity Sold"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.salesPrice"
+                        defaultMessage="Sales Price"
+                      />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.salesWithTax"
+                        defaultMessage="Sales With Tax"
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {queryData?.length > 0 ? (
+                    queryData?.map((data, index) => {
+                      return (
+                        <tr key={index}>
+                          <td>{data.productName}</td>
+                          <td>{data.productSku}</td>
+                          <td className="text-align-right">{data.margin}</td>
+                          <td className="text-align-right">{data.soldQty}</td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              <FormattedNumber
+                                value={data.totalAmount || 0}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            </a>
+                          </td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              <FormattedNumber
+                                value={data.totalAmountWithTax || 0}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr className="empty-row">
+                      <td
+                        colSpan={9}
+                        style={{
+                          border: "none",
+                          borderBottom: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      </td>
+                    </tr>
+                  )}
+
+                  <tr>
+                    <td>
+                      <FormattedMessage
+                        id="label.total"
+                        defaultMessage="Total"
+                      ></FormattedMessage>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.soldQty || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
+                    </td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.totalAmount || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
+                    </td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.totalAmountWithTax || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
                     </td>
                   </tr>
-                )}
-                <tr className="mute-hover">
-                  <td colSpan="6" style={{ padding: 0 }}>
-                    <Divider style={{ margin: 0 }} />
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <FormattedMessage
-                      id="label.total"
-                      defaultMessage="Total"
-                    ></FormattedMessage>
-                  </td>
-                  <td></td>
-                  <td></td>
-                  <td className="text-align-right">
-                    <b>
-                      <FormattedNumber
-                        value={totals?.soldQty || 0}
-                        style="decimal"
-                        minimumFractionDigits={
-                          business.baseCurrency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </td>
-                  <td className="text-align-right">
-                    <b>
-                      <FormattedNumber
-                        value={totals?.totalAmount || 0}
-                        style="decimal"
-                        minimumFractionDigits={
-                          business.baseCurrency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </td>
-                  <td className="text-align-right">
-                    <b>
-                      <FormattedNumber
-                        value={totals?.totalAmountWithTax || 0}
-                        style="decimal"
-                        minimumFractionDigits={
-                          business.baseCurrency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </td>
-                </tr>
-                <tr className="mute-hover">
-                  <td colSpan="6" style={{ padding: 0 }}>
-                    <Divider style={{ margin: 0 }} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div style={{ paddingLeft: "1.5rem" }}>
+            <FormattedMessage
+              values={{ currency: business.baseCurrency.symbol }}
+              id="label.displayedBaseCurrency"
+              defaultMessage="**Amount is displayed in {currency}"
+            />
           </div>
-        )}
-        <div style={{ paddingLeft: "1.5rem" }}>
-          <FormattedMessage
-            values={{ currency: business.baseCurrency.symbol }}
-            id="label.displayedBaseCurrency"
-            defaultMessage="**Amount is displayed in {currency}"
-          />
         </div>
       </div>
     </ReportLayout>

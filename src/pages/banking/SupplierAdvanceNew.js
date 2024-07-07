@@ -98,6 +98,7 @@ const SupplierAdvanceNew = ({
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         transactionType: "SupplierAdvance",
+        paymentModeId: values.paymentModeId || 0,
         // isMoneyIn: false,
         documents: fileUrls,
       };
@@ -142,7 +143,7 @@ const SupplierAdvanceNew = ({
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label={
           <FormattedMessage id="label.depositTo" defaultMessage="Deposit To" />
         }
@@ -177,7 +178,7 @@ const SupplierAdvanceNew = ({
             </Select.OptGroup>
           ))}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item
         label={
           <FormattedMessage id="label.supplier" defaultMessage="Supplier" />

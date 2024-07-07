@@ -27,7 +27,7 @@ export function paginateArray(array, page_size, page_number) {
 }
 
 export function convertTransactionType(type) {
-  switch(type) {
+  switch (type) {
     case "JN":
       return "Journal";
     case "IV":
@@ -65,7 +65,9 @@ export function convertTransactionType(type) {
     case "SC":
       return "SupplierCredit";
     case "AC":
-      return "TransferFund";
+      return "AccountTransfer";
+    case "AD":
+      return "AccountDeposit";
     case "OD":
       return "OwnerDrawing";
     case "OC":
@@ -77,20 +79,30 @@ export function convertTransactionType(type) {
   }
 }
 
-export function calculateTaxAmount(subTotal, taxRate, isTaxInclusive, decimalPlaces=2) {
+export function calculateTaxAmount(
+  subTotal,
+  taxRate,
+  isTaxInclusive,
+  decimalPlaces = 2
+) {
   let taxAmount = 0;
   if (isTaxInclusive) {
-    taxAmount = (subTotal / (taxRate+100)) * taxRate;
+    taxAmount = (subTotal / (taxRate + 100)) * taxRate;
   } else {
     taxAmount = (subTotal / 100) * taxRate;
   }
   return parseFloat(taxAmount.toFixed(decimalPlaces));
 }
 
-export function calculateDiscountAmount(subTotal, discount, discountType, decimalPlaces=2) {
+export function calculateDiscountAmount(
+  subTotal,
+  discount,
+  discountType,
+  decimalPlaces = 2
+) {
   let discountAmount = 0;
   if (discount > 0 && discountType != null) {
-    if (discountType === 'P') {
+    if (discountType === "P") {
       discountAmount = (subTotal / 100) * discount;
     } else {
       discountAmount = discount || 0;
@@ -99,20 +111,42 @@ export function calculateDiscountAmount(subTotal, discount, discountType, decima
   return parseFloat(discountAmount.toFixed(decimalPlaces));
 }
 
-export function calculateItemDiscountAndTax(qty, unitRate, discount, discountType, taxRate, isTaxInclusive, decimalPlaces=2) {
+export function calculateItemDiscountAndTax(
+  qty,
+  unitRate,
+  discount,
+  discountType,
+  taxRate,
+  isTaxInclusive,
+  decimalPlaces = 2
+) {
   // calculate detail subtotal
   let detailAmount = qty * unitRate;
   // calculate discount amount
   let discountAmount = 0;
   if (discount > 0 && discountType != null) {
-    discountAmount = calculateDiscountAmount(detailAmount, discount, discountType, decimalPlaces);
+    discountAmount = calculateDiscountAmount(
+      detailAmount,
+      discount,
+      discountType,
+      decimalPlaces
+    );
   }
   // calculate subtotal amount
-  let totalAmount = (qty * unitRate) - discountAmount
+  let totalAmount = qty * unitRate - discountAmount;
   // calculate tax amount
   let taxAmount = 0;
   if (taxRate > 0) {
-    taxAmount = calculateTaxAmount(totalAmount, taxRate, isTaxInclusive, decimalPlaces);
+    taxAmount = calculateTaxAmount(
+      totalAmount,
+      taxRate,
+      isTaxInclusive,
+      decimalPlaces
+    );
   }
-  return [parseFloat(totalAmount.toFixed(decimalPlaces)), discountAmount, taxAmount];
+  return [
+    parseFloat(totalAmount.toFixed(decimalPlaces)),
+    discountAmount,
+    taxAmount,
+  ];
 }

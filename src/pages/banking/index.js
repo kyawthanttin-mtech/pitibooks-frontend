@@ -23,6 +23,10 @@ import SupplierAdvanceRefundNew from "./SupplierAdvanceRefundNew";
 import CustomerAdvanceRefundNew from "./CustomerAdvanceRefundNew";
 import SupplierAdvanceRefundEdit from "./SupplierAdvanceRefundEdit";
 import CustomerAdvanceRefundEdit from "./CustomerAdvanceRefundEdit";
+import DepositToAnotherAccEdit from "./DepositToAnotherAccountEdit";
+import DepositToAnotherAccNew from "./DepositToAnotherAccountNew";
+import DepositFromAnotherAccNew from "./DepositFromAnotherAccountNew";
+import DepositFromAnotherAccEdit from "./DepositFromAnotherAccountEdit";
 
 export {
   OwnerDrawingsNew,
@@ -50,4 +54,8 @@ export {
   CustomerAdvanceRefundNew,
   SupplierAdvanceRefundEdit,
   CustomerAdvanceRefundEdit,
+  DepositToAnotherAccNew,
+  DepositToAnotherAccEdit,
+  DepositFromAnotherAccNew,
+  DepositFromAnotherAccEdit,
 };

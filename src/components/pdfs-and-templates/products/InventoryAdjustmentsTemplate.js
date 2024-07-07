@@ -28,6 +28,15 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
               <tbody>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -45,7 +54,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                   </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>
-                      Inventory Adjustments
+                      INVENTORY ADJUSTMENTS
                     </span>
                   </td>
                 </tr>
@@ -104,7 +113,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Ref# :</span>
+                            <span>Reference Number :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -228,7 +237,7 @@ const InventoryAdjustmentsTemplate = ({ selectedRecord }) => {
                       textAlign: "left",
                     }}
                   >
-                    Item & Description
+                    Products & Description
                   </td>
                   <td
                     className="text-align-right"

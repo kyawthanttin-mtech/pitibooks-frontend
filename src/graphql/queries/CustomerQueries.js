@@ -46,8 +46,6 @@ const GET_PAGINATE_CUSTOMER = gql`
           customerPaymentTerms
           customerPaymentTermsCustomDays
           notes
-          prepaidCreditAmount
-          unusedCreditAmount
           creditLimit
           billingAddress {
             id
@@ -128,7 +126,6 @@ const GET_PAGINATE_CUSTOMER = gql`
           #   currency {
           #     id
           #     decimalPlaces
-          #     exchangeRate
           #     name
           #     symbol
           #   }

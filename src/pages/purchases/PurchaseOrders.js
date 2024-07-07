@@ -26,9 +26,12 @@ import {
   CaretDownFilled,
   PrinterOutlined,
   CaretRightFilled,
+  CommentOutlined,
 } from "@ant-design/icons";
 import {
   AttachFiles,
+  CommentColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   PurchaseOrderTemplate,
   SearchCriteriaDisplay,
@@ -46,6 +49,7 @@ import {
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { PurchaseOrderPDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_PURCHASE_ORDER } = PurchaseOrderQueries;
 const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER, DELETE_PURCHASE_ORDER } =
   PurchaseOrderMutations;
@@ -135,8 +139,13 @@ const PurchaseOrders = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const [deleteModal, contextHolder] = Modal.useModal();
   const [searchFormRef] = Form.useForm();
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
@@ -146,6 +155,8 @@ const PurchaseOrders = () => {
     null
   );
   const [currentPage, setCurrentPage] = useHistoryState("POCurrentPage", 1);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -851,6 +862,9 @@ const PurchaseOrders = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <PurchaseOrderPDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -1009,6 +1023,20 @@ const PurchaseOrders = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -1029,30 +1057,13 @@ const PurchaseOrders = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -1182,6 +1193,12 @@ const PurchaseOrders = () => {
               </div>
               <PurchaseOrderTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="purchase_orders"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
       </div>

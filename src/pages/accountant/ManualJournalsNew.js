@@ -378,63 +378,64 @@ const ManualJournalsNew = () => {
         </p>
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish}>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.branch" defaultMessage="Branch" />
-            }
-            name="branch"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.branch.required"
-                    defaultMessage="Select the Branch"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Select allowClear showSearch optionFilterProp="label">
-              {branches?.map((branch) => (
-                <Select.Option
-                  key={branch.id}
-                  value={branch.id}
-                  label={branch.name}
-                >
-                  {branch.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.date" defaultMessage="Date" />}
-            name="date"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.date.required"
-                    defaultMessage="Select the Date"
-                  />
-                ),
-              },
-            ]}
-          >
-            <DatePicker
-              format={REPORT_DATE_FORMAT}
-              onChange={(date, dateString) => console.log(date, dateString)}
-            ></DatePicker>
-          </Form.Item>
-          {/* <Form.Item
+        <div className="page-form-wrapper">
+          <Form form={form} onFinish={onFinish}>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.branch" defaultMessage="Branch" />
+              }
+              name="branch"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.branch.required"
+                      defaultMessage="Select the Branch"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select allowClear showSearch optionFilterProp="label">
+                {branches?.map((branch) => (
+                  <Select.Option
+                    key={branch.id}
+                    value={branch.id}
+                    label={branch.name}
+                  >
+                    {branch.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={<FormattedMessage id="label.date" defaultMessage="Date" />}
+              name="date"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.date.required"
+                      defaultMessage="Select the Date"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <DatePicker
+                format={REPORT_DATE_FORMAT}
+                onChange={(date, dateString) => console.log(date, dateString)}
+              ></DatePicker>
+            </Form.Item>
+            {/* <Form.Item
             label="Journal#"
             name=""
             labelAlign="left"
@@ -446,266 +447,278 @@ const ManualJournalsNew = () => {
               <Radio value="manual">Manual</Radio>
             </Radio.Group>
           </Form.Item> */}
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.referenceNumber"
-                defaultMessage="Reference #"
-              />
-            }
-            name="referenceNumber"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input maxLength={255}></Input>
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
-            name="notes"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.notes.required"
-                    defaultMessage="Enter the Notes"
-                  />
-                ),
-              },
-            ]}
-          >
-            <TextArea maxLength={1000}></TextArea>
-          </Form.Item>
-
-          <Form.Item
-            label={
-              <FormattedMessage id="label.currency" defaultMessage="Currency" />
-            }
-            name="currency"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.currency.required"
-                    defaultMessage="Select the Currency"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Select allowClear showSearch optionFilterProp="label">
-              {currencies?.map((currency) => (
-                <Select.Option
-                  key={currency.id}
-                  value={currency.id}
-                  label={currency.name}
-                >
-                  {currency.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.currency !== currentValues.currency
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue("currency") &&
-              getFieldValue("currency") !== business.baseCurrency.id ? (
-                <Form.Item
-                  label={
-                    <FormattedMessage
-                      id="label.exchangeRate"
-                      defaultMessage="Exchange Rate"
-                    />
-                  }
-                  name="exchangeRate"
-                  labelAlign="left"
-                  labelCol={{ span: 5 }}
-                  wrapperCol={{ span: 8 }}
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="label.exchangeRate.required"
-                          defaultMessage="Enter the Exchange Rate"
-                        />
-                      ),
-                    },
-                  ]}
-                >
-                  <InputNumber />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
-            }
-            name="supplierName"
-            shouldUpdate
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input
-              readOnly
-              onClick={setSupplierSearchModalOpen}
-              className="search-input"
-              allowClear
-              suffix={
-                <>
-                  {selectedSupplier && (
-                    <CloseOutlined
-                      style={{ height: 11, width: 11, cursor: "pointer" }}
-                      onClick={() => {
-                        setSelectedSupplier(null);
-                        form.resetFields(["supplierName"]);
-                      }}
-                    />
-                  )}
-
-                  <Button
-                    style={{ width: "2.5rem" }}
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    className="search-btn"
-                    onClick={setSupplierSearchModalOpen}
-                  />
-                </>
-              }
-            />
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.customer" defaultMessage="Customer" />
-            }
-            name="customerName"
-            shouldUpdate
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input
-              readOnly
-              onClick={setCustomerSearchModalOpen}
-              className="search-input"
-              suffix={
-                <>
-                  {selectedCustomer && (
-                    <CloseOutlined
-                      style={{ height: 11, width: 11, cursor: "pointer" }}
-                      onClick={() => {
-                        setSelectedCustomer(null);
-                        form.resetFields(["customerName"]);
-                      }}
-                    />
-                  )}
-                  <Button
-                    style={{ width: "2.5rem" }}
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    className="search-btn"
-                    onClick={setCustomerSearchModalOpen}
-                  />
-                </>
-              }
-            />
-          </Form.Item>
-
-          <Table
-            loading={loading}
-            rowKey={(record) => record.key}
-            columns={columns}
-            dataSource={data}
-            className="new-manual-journal-table"
-            pagination={false}
-            bordered={false}
-          ></Table>
-
-          <div className="new-manual-journal-table-footer">
-            <Button
-              icon={<PlusCircleFilled className="add-row-icon" />}
-              onClick={handleAddRow}
-              className="add-row-button"
-            >
-              <span>
+            <Form.Item
+              label={
                 <FormattedMessage
-                  id="button.addNewRow"
-                  defaultMessage="Add New Row"
+                  id="label.referenceNumber"
+                  defaultMessage="Reference #"
                 />
-              </span>
-            </Button>
-
-            <table cellSpacing="0" border="0" width="100%" id="balance-table">
-              <tbody>
-                <tr>
-                  <td style={{ verticalAlign: "middle" }}>
-                    <b>
-                      <FormattedMessage
-                        id="label.total"
-                        defaultMessage="Total"
-                      />
-                    </b>
-                  </td>
-                  <td className="text-align-right">
-                    <FormattedNumber
-                      value={totalDebits}
-                      style="decimal"
-                      minimumFractionDigits={
-                        business.baseCurrency.decimalPlaces
-                      }
-                    />
-                  </td>
-                  <td className="text-align-right">
-                    <FormattedNumber
-                      value={totalCredits}
-                      style="decimal"
-                      minimumFractionDigits={
-                        business.baseCurrency.decimalPlaces
-                      }
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ verticalAlign: "middle", color: "red" }}>
+              }
+              name="referenceNumber"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input maxLength={255}></Input>
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.notes" defaultMessage="Notes" />
+              }
+              name="notes"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
                     <FormattedMessage
-                      id="label.difference"
-                      defaultMessage="Difference"
+                      id="label.notes.required"
+                      defaultMessage="Enter the Notes"
                     />
-                  </td>
-                  <td className="text-align-right" colSpan="2">
-                    <FormattedNumber
-                      value={difference}
-                      style="decimal"
-                      minimumFractionDigits={
-                        business.baseCurrency.decimalPlaces
-                      }
+                  ),
+                },
+              ]}
+            >
+              <TextArea maxLength={1000}></TextArea>
+            </Form.Item>
+
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.currency"
+                  defaultMessage="Currency"
+                />
+              }
+              name="currency"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.currency.required"
+                      defaultMessage="Select the Currency"
                     />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <UploadAttachment
-            onCustomFileListChange={(customFileList) =>
-              setFileList(customFileList)
-            }
-          />
-        </Form>
+                  ),
+                },
+              ]}
+            >
+              <Select allowClear showSearch optionFilterProp="label">
+                {currencies?.map((currency) => (
+                  <Select.Option
+                    key={currency.id}
+                    value={currency.id}
+                    label={currency.name}
+                  >
+                    {currency.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              noStyle
+              shouldUpdate={(prevValues, currentValues) =>
+                prevValues.currency !== currentValues.currency
+              }
+            >
+              {({ getFieldValue }) =>
+                getFieldValue("currency") &&
+                getFieldValue("currency") !== business.baseCurrency.id ? (
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.exchangeRate"
+                        defaultMessage="Exchange Rate"
+                      />
+                    }
+                    name="exchangeRate"
+                    labelAlign="left"
+                    labelCol={{ span: 5 }}
+                    wrapperCol={{ span: 8 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.exchangeRate.required"
+                            defaultMessage="Enter the Exchange Rate"
+                          />
+                        ),
+                      },
+                    ]}
+                  >
+                    <InputNumber />
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.supplier"
+                  defaultMessage="Supplier"
+                />
+              }
+              name="supplierName"
+              shouldUpdate
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input
+                readOnly
+                onClick={setSupplierSearchModalOpen}
+                className="search-input"
+                allowClear
+                suffix={
+                  <>
+                    {selectedSupplier && (
+                      <CloseOutlined
+                        style={{ height: 11, width: 11, cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedSupplier(null);
+                          form.resetFields(["supplierName"]);
+                        }}
+                      />
+                    )}
+
+                    <Button
+                      style={{ width: "2.5rem" }}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                      className="search-btn"
+                      onClick={setSupplierSearchModalOpen}
+                    />
+                  </>
+                }
+              />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.customer"
+                  defaultMessage="Customer"
+                />
+              }
+              name="customerName"
+              shouldUpdate
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input
+                readOnly
+                onClick={setCustomerSearchModalOpen}
+                className="search-input"
+                suffix={
+                  <>
+                    {selectedCustomer && (
+                      <CloseOutlined
+                        style={{ height: 11, width: 11, cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedCustomer(null);
+                          form.resetFields(["customerName"]);
+                        }}
+                      />
+                    )}
+                    <Button
+                      style={{ width: "2.5rem" }}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                      className="search-btn"
+                      onClick={setCustomerSearchModalOpen}
+                    />
+                  </>
+                }
+              />
+            </Form.Item>
+
+            <Table
+              loading={loading}
+              rowKey={(record) => record.key}
+              columns={columns}
+              dataSource={data}
+              className="new-manual-journal-table"
+              pagination={false}
+              bordered={false}
+            ></Table>
+
+            <div className="new-manual-journal-table-footer">
+              <Button
+                icon={<PlusCircleFilled className="add-row-icon" />}
+                onClick={handleAddRow}
+                className="add-row-button"
+              >
+                <span>
+                  <FormattedMessage
+                    id="button.addNewRow"
+                    defaultMessage="Add New Row"
+                  />
+                </span>
+              </Button>
+
+              <table cellSpacing="0" border="0" width="100%" id="balance-table">
+                <tbody>
+                  <tr>
+                    <td style={{ verticalAlign: "middle" }}>
+                      <b>
+                        <FormattedMessage
+                          id="label.total"
+                          defaultMessage="Total"
+                        />
+                      </b>
+                    </td>
+                    <td className="text-align-right">
+                      <FormattedNumber
+                        value={totalDebits}
+                        style="decimal"
+                        minimumFractionDigits={
+                          business.baseCurrency.decimalPlaces
+                        }
+                      />
+                    </td>
+                    <td className="text-align-right">
+                      <FormattedNumber
+                        value={totalCredits}
+                        style="decimal"
+                        minimumFractionDigits={
+                          business.baseCurrency.decimalPlaces
+                        }
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ verticalAlign: "middle", color: "red" }}>
+                      <FormattedMessage
+                        id="label.difference"
+                        defaultMessage="Difference"
+                      />
+                    </td>
+                    <td className="text-align-right" colSpan="2">
+                      <FormattedNumber
+                        value={difference}
+                        style="decimal"
+                        minimumFractionDigits={
+                          business.baseCurrency.decimalPlaces
+                        }
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <UploadAttachment
+              onCustomFileListChange={(customFileList) =>
+                setFileList(customFileList)
+              }
+            />
+          </Form>
+        </div>
       </div>
       <div className="page-actions-bar">
         <Button

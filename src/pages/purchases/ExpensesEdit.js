@@ -279,422 +279,439 @@ const ExpensesEdit = () => {
         </p>
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish}>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.branch" defaultMessage="Branch" />
-            }
-            name="branch"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.branch.required"
-                    defaultMessage="Select the Branch"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Select allowClear showSearch optionFilterProp="label">
-              {branches?.map((branch) => (
-                <Select.Option
-                  key={branch.id}
-                  value={branch.id}
-                  label={branch.stateNameEn}
-                >
-                  {branch.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.date" defaultMessage="Date" />}
-            name="date"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.date.required"
-                    defaultMessage="Select the Date"
-                  />
-                ),
-              },
-            ]}
-          >
-            <DatePicker
-              format={REPORT_DATE_FORMAT}
-              onChange={(date, dateString) => console.log(date, dateString)}
-            ></DatePicker>
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.expenseAccount"
-                defaultMessage="Expense Account"
-              />
-            }
-            name="expenseAccount"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.expenseAccount.required"
-                    defaultMessage="Select the Expense Account"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder={
+        <div className="page-form-wrapper">
+          <Form form={form} onFinish={onFinish}>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.branch" defaultMessage="Branch" />
+              }
+              name="branch"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.branch.required"
+                      defaultMessage="Select the Branch"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select allowClear showSearch optionFilterProp="label">
+                {branches?.map((branch) => (
+                  <Select.Option
+                    key={branch.id}
+                    value={branch.id}
+                    label={branch.stateNameEn}
+                  >
+                    {branch.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={<FormattedMessage id="label.date" defaultMessage="Date" />}
+              name="date"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.date.required"
+                      defaultMessage="Select the Date"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <DatePicker
+                format={REPORT_DATE_FORMAT}
+                onChange={(date, dateString) => console.log(date, dateString)}
+              ></DatePicker>
+            </Form.Item>
+            <Form.Item
+              label={
                 <FormattedMessage
-                  id="label.account.placeholder"
-                  defaultMessage="Select an account"
+                  id="label.expenseAccount"
+                  defaultMessage="Expense Account"
                 />
               }
+              name="expenseAccount"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.expenseAccount.required"
+                      defaultMessage="Select the Expense Account"
+                    />
+                  ),
+                },
+              ]}
             >
-              {expenseAccounts?.map((account) => (
-                <Select.Option
-                  key={account.id}
-                  value={account.id}
-                  label={account.name}
-                >
-                  {account.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.paidThrough"
-                defaultMessage="Paid Through"
-              />
-            }
-            name="paidThrough"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder={
                   <FormattedMessage
-                    id="label.paidThrough.required"
-                    defaultMessage="Select the Paid Through"
+                    id="label.account.placeholder"
+                    defaultMessage="Select an account"
                   />
-                ),
-              },
-            ]}
-          >
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder={
+                }
+              >
+                {expenseAccounts?.map((account) => (
+                  <Select.Option
+                    key={account.id}
+                    value={account.id}
+                    label={account.name}
+                  >
+                    {account.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label={
                 <FormattedMessage
-                  id="label.account.placeholder"
-                  defaultMessage="Select an account"
+                  id="label.paidThrough"
+                  defaultMessage="Paid Through"
                 />
               }
+              name="paidThrough"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.paidThrough.required"
+                      defaultMessage="Select the Paid Through"
+                    />
+                  ),
+                },
+              ]}
             >
-              {assetAccounts?.map((account) => (
-                <Select.Option
-                  key={account.id}
-                  value={account.id}
-                  label={account.name}
-                >
-                  {account.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder={
+                  <FormattedMessage
+                    id="label.account.placeholder"
+                    defaultMessage="Select an account"
+                  />
+                }
+              >
+                {assetAccounts?.map((account) => (
+                  <Select.Option
+                    key={account.id}
+                    value={account.id}
+                    label={account.name}
+                  >
+                    {account.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <Form.Item
-            label={
-              <FormattedMessage
-                id="label.referenceNumber"
-                defaultMessage="Reference #"
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.referenceNumber"
+                  defaultMessage="Reference #"
+                />
+              }
+              name="referenceNumber"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input maxLength={255}></Input>
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.notes" defaultMessage="Notes" />
+              }
+              name="notes"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <TextArea maxLength={1000}></TextArea>
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.amount" defaultMessage="Amount" />
+              }
+              name="amount"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.amount.required"
+                      defaultMessage="Enter the Amount"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <InputNumber />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.currency"
+                  defaultMessage="Currency"
+                />
+              }
+              name="currency"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.currency.required"
+                      defaultMessage="Select the Currency"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select allowClear showSearch optionFilterProp="label">
+                {currencies?.map((currency) => (
+                  <Select.Option
+                    key={currency.id}
+                    value={currency.id}
+                    label={currency.name + "" + currency.symbol}
+                  >
+                    {currency.name} ({currency.symbol})
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              noStyle
+              shouldUpdate={(prevValues, currentValues) =>
+                prevValues.currency !== currentValues.currency
+              }
+            >
+              {({ getFieldValue }) =>
+                getFieldValue("currency") &&
+                getFieldValue("currency") !== business.baseCurrency.id ? (
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.exchangeRate"
+                        defaultMessage="Exchange Rate"
+                      />
+                    }
+                    name="exchangeRate"
+                    labelAlign="left"
+                    labelCol={{ span: 5 }}
+                    wrapperCol={{ span: 8 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.exchangeRate.required"
+                            defaultMessage="Enter the Exchange Rate"
+                          />
+                        ),
+                      },
+                    ]}
+                  >
+                    <InputNumber />
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+            <Form.Item
+              label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              labelAlign="left"
+              name="tax"
+            >
+              <Select
+                showSearch
+                allowClear
+                loading={loading}
+                optionFilterProp="label"
+              >
+                {allTax?.map((taxGroup) => (
+                  <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
+                    {taxGroup.taxes.map((tax) => (
+                      <Select.Option
+                        key={tax.id}
+                        value={tax.id}
+                        label={tax.name}
+                      >
+                        {tax.name}
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              noStyle
+              shouldUpdate={(prevValues, currentValues) =>
+                prevValues.tax !== currentValues.tax
+              }
+            >
+              {({ getFieldValue }) =>
+                getFieldValue("tax") ? (
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.taxOption"
+                        defaultMessage="Tax Option"
+                      />
+                    }
+                    name="taxOption"
+                    labelAlign="left"
+                    labelCol={{ span: 5 }}
+                    wrapperCol={{ span: 6 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.taxOption.required"
+                            defaultMessage="Select the Tax Option"
+                          />
+                        ),
+                      },
+                    ]}
+                  >
+                    <Radio.Group optionType="button">
+                      <Radio value="I">
+                        <FormattedMessage
+                          id="label.taxOption.inclusive"
+                          defaultMessage="Inclusive"
+                        />
+                      </Radio>
+                      <Radio value="E">
+                        <FormattedMessage
+                          id="label.taxOption.exclusive"
+                          defaultMessage="Exclusive"
+                        />
+                      </Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.supplier"
+                  defaultMessage="Supplier"
+                />
+              }
+              name="supplierName"
+              shouldUpdate
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input
+                readOnly
+                onClick={setSupplierSearchModalOpen}
+                className="search-input"
+                allowClear
+                suffix={
+                  <>
+                    {selectedSupplier && (
+                      <CloseOutlined
+                        style={{ height: 11, width: 11, cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedSupplier(null);
+                          form.resetFields(["supplierName"]);
+                        }}
+                      />
+                    )}
+
+                    <Button
+                      style={{ width: "2.5rem" }}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                      className="search-btn"
+                      onClick={setSupplierSearchModalOpen}
+                    />
+                  </>
+                }
               />
-            }
-            name="referenceNumber"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input maxLength={255}></Input>
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
-            name="notes"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <TextArea maxLength={1000}></TextArea>
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.amount" defaultMessage="Amount" />
-            }
-            name="amount"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.amount.required"
-                    defaultMessage="Enter the Amount"
-                  />
-                ),
-              },
-            ]}
-          >
-            <InputNumber />
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.currency" defaultMessage="Currency" />
-            }
-            name="currency"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.currency.required"
-                    defaultMessage="Select the Currency"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Select allowClear showSearch optionFilterProp="label">
-              {currencies?.map((currency) => (
-                <Select.Option
-                  key={currency.id}
-                  value={currency.id}
-                  label={currency.name + "" + currency.symbol}
-                >
-                  {currency.name} ({currency.symbol})
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.currency !== currentValues.currency
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue("currency") &&
-              getFieldValue("currency") !== business.baseCurrency.id ? (
-                <Form.Item
-                  label={
-                    <FormattedMessage
-                      id="label.exchangeRate"
-                      defaultMessage="Exchange Rate"
-                    />
-                  }
-                  name="exchangeRate"
-                  labelAlign="left"
-                  labelCol={{ span: 5 }}
-                  wrapperCol={{ span: 8 }}
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="label.exchangeRate.required"
-                          defaultMessage="Enter the Exchange Rate"
-                        />
-                      ),
-                    },
-                  ]}
-                >
-                  <InputNumber />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            labelAlign="left"
-            name="tax"
-          >
-            <Select
-              showSearch
-              allowClear
-              loading={loading}
-              optionFilterProp="label"
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.customer"
+                  defaultMessage="Customer"
+                />
+              }
+              name="customerName"
+              shouldUpdate
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
             >
-              {allTax?.map((taxGroup) => (
-                <Select.OptGroup key={taxGroup.title} label={taxGroup.title}>
-                  {taxGroup.taxes.map((tax) => (
-                    <Select.Option key={tax.id} value={tax.id} label={tax.name}>
-                      {tax.name}
-                    </Select.Option>
-                  ))}
-                </Select.OptGroup>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.tax !== currentValues.tax
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue("tax") ? (
-                <Form.Item
-                  label={
-                    <FormattedMessage
-                      id="label.taxOption"
-                      defaultMessage="Tax Option"
-                    />
-                  }
-                  name="taxOption"
-                  labelAlign="left"
-                  labelCol={{ span: 5 }}
-                  wrapperCol={{ span: 6 }}
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="label.taxOption.required"
-                          defaultMessage="Select the Tax Option"
-                        />
-                      ),
-                    },
-                  ]}
-                >
-                  <Radio.Group optionType="button">
-                    <Radio value="I">
-                      <FormattedMessage
-                        id="label.taxOption.inclusive"
-                        defaultMessage="Inclusive"
+              <Input
+                readOnly
+                onClick={setCustomerSearchModalOpen}
+                className="search-input"
+                suffix={
+                  <>
+                    {selectedCustomer && (
+                      <CloseOutlined
+                        style={{ height: 11, width: 11, cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedCustomer(null);
+                          form.resetFields(["customerName"]);
+                        }}
                       />
-                    </Radio>
-                    <Radio value="E">
-                      <FormattedMessage
-                        id="label.taxOption.exclusive"
-                        defaultMessage="Exclusive"
-                      />
-                    </Radio>
-                  </Radio.Group>
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
-            }
-            name="supplierName"
-            shouldUpdate
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input
-              readOnly
-              onClick={setSupplierSearchModalOpen}
-              className="search-input"
-              allowClear
-              suffix={
-                <>
-                  {selectedSupplier && (
-                    <CloseOutlined
-                      style={{ height: 11, width: 11, cursor: "pointer" }}
-                      onClick={() => {
-                        setSelectedSupplier(null);
-                        form.resetFields(["supplierName"]);
-                      }}
+                    )}
+                    <Button
+                      style={{ width: "2.5rem" }}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                      className="search-btn"
+                      onClick={setCustomerSearchModalOpen}
                     />
-                  )}
+                  </>
+                }
+              />
+            </Form.Item>
 
-                  <Button
-                    style={{ width: "2.5rem" }}
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    className="search-btn"
-                    onClick={setSupplierSearchModalOpen}
-                  />
-                </>
+            <UploadAttachment
+              onCustomFileListChange={(customFileList) =>
+                setFileList(customFileList)
               }
+              files={record?.documents}
             />
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.customer" defaultMessage="Customer" />
-            }
-            name="customerName"
-            shouldUpdate
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input
-              readOnly
-              onClick={setCustomerSearchModalOpen}
-              className="search-input"
-              suffix={
-                <>
-                  {selectedCustomer && (
-                    <CloseOutlined
-                      style={{ height: 11, width: 11, cursor: "pointer" }}
-                      onClick={() => {
-                        setSelectedCustomer(null);
-                        form.resetFields(["customerName"]);
-                      }}
-                    />
-                  )}
-                  <Button
-                    style={{ width: "2.5rem" }}
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    className="search-btn"
-                    onClick={setCustomerSearchModalOpen}
-                  />
-                </>
-              }
-            />
-          </Form.Item>
-
-          <UploadAttachment
-            onCustomFileListChange={(customFileList) =>
-              setFileList(customFileList)
-            }
-            files={record?.documents}
-          />
-        </Form>
+          </Form>
+        </div>
       </div>
       <div className="page-actions-bar">
         <Button

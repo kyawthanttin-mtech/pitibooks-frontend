@@ -1056,9 +1056,7 @@ const ProductsNew = () => {
         />
       </div>
       <div className="page-content page-content-with-form-buttons">
-        {productNewForm}
-        <br />
-        <br />
+        <div className="page-form-wrapper">{productNewForm}</div>
       </div>
     </>
   );

@@ -1118,6 +1118,7 @@ const InventoryAdjustmentsNew = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
+      <div className="page-form-wrapper">
         <Form form={form} onFinish={onFinish}>
           <Row>
             <Col span={12}>
@@ -1415,6 +1416,7 @@ const InventoryAdjustmentsNew = () => {
             </Button>
           </div>
         </Form>
+        </div>
       </div>
     </>
   );

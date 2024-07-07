@@ -413,7 +413,7 @@ const PaymentsMadeEdit = () => {
         <Flex justify="end">
           {record.currency?.symbol}{" "}
           <FormattedNumber
-            value={record.billTotalAmount - record.billTotalPaidAmount}
+            value={record.remainingBalance}
             style="decimal"
             minimumFractionDigits={record.currency?.decimalPlaces}
           />
@@ -502,210 +502,19 @@ const PaymentsMadeEdit = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish} initialValues={initialValues}>
-          <Row>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.supplier"
-                    defaultMessage="Supplier"
-                  />
-                }
-                name="supplierName"
-                shouldUpdate
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.supplierName.required"
-                        defaultMessage="Select the Supplier"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Input
-                  disabled
-                  readOnly
-                  // onClick={setSearchModalOpen}
-                  className="search-input"
-                  suffix={
-                    <>
-                      <Button
-                        disabled
-                        style={{ width: "2.5rem" }}
-                        type="primary"
-                        icon={<SearchOutlined />}
-                        className="search-btn"
-                        // onClick={setSearchModalOpen}
-                      />
-                    </>
-                  }
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage id="label.branch" defaultMessage="Branch" />
-                }
-                name="branch"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.branch.required"
-                        defaultMessage="Select the Branch"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Select
-                  disabled
-                  showSearch
-                  optionFilterProp="label"
-                  // onChange={(value) => setSelectedBranch(value)}
-                >
-                  {branches?.map((branch) => (
-                    <Select.Option
-                      key={branch.id}
-                      value={branch.id}
-                      label={branch.name}
-                    >
-                      {branch.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.currency"
-                    defaultMessage="Currency"
-                  />
-                }
-                name="currency"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.currency.required"
-                        defaultMessage="Select the Currency"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Select
-                  // onChange={(value) => setSelectedCurrency(value)}
-                  showSearch
-                  optionFilterProp="label"
-                  disabled
-                >
-                  {currencies.map((currency) => (
-                    <Select.Option
-                      key={currency.id}
-                      value={currency.id}
-                      label={currency?.name + currency.symbol}
-                    >
-                      {currency?.name} ({currency.symbol})
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                noStyle
-                shouldUpdate={(prevValues, currentValues) =>
-                  prevValues.currency !== currentValues.currency
-                }
-              >
-                {({ getFieldValue }) =>
-                  getFieldValue("currency") &&
-                  getFieldValue("currency") !== business.baseCurrency.id ? (
-                    <Form.Item
-                      label={
-                        <FormattedMessage
-                          id="label.exchangeRate"
-                          defaultMessage="Exchange Rate"
-                        />
-                      }
-                      name="exchangeRate"
-                      labelAlign="left"
-                      labelCol={{ span: 8 }}
-                      wrapperCol={{ span: 12 }}
-                      rules={[
-                        {
-                          required: true,
-                          message: (
-                            <FormattedMessage
-                              id="label.exchangeRate.required"
-                              defaultMessage="Enter the Exchange Rate"
-                            />
-                          ),
-                        },
-                        () => ({
-                          validator(_, value) {
-                            if (!value) {
-                              return Promise.resolve();
-                            } else if (isNaN(value) || value.length > 20) {
-                              return Promise.reject(
-                                intl.formatMessage({
-                                  id: "validation.invalidInput",
-                                  defaultMessage: "Invalid Input",
-                                })
-                              );
-                            } else {
-                              return Promise.resolve();
-                            }
-                          },
-                        }),
-                      ]}
-                    >
-                      <Input />
-                    </Form.Item>
-                  ) : null
-                }
-              </Form.Item>
-            </Col>
-          </Row>
-          <Divider />
-          <div
-            className={
-              selectedSupplier && selectedBranch && selectedCurrency
-                ? ""
-                : "form-mask"
-            }
-          >
+        <div className="page-form-wrapper">
+          <Form form={form} onFinish={onFinish} initialValues={initialValues}>
             <Row>
               <Col span={12}>
                 <Form.Item
                   label={
                     <FormattedMessage
-                      id="label.paymentDate"
-                      defaultMessage="Payment Date"
+                      id="label.supplier"
+                      defaultMessage="Supplier"
                     />
                   }
-                  name="paymentDate"
+                  name="supplierName"
+                  shouldUpdate
                   labelAlign="left"
                   labelCol={{ span: 8 }}
                   wrapperCol={{ span: 12 }}
@@ -714,60 +523,71 @@ const PaymentsMadeEdit = () => {
                       required: true,
                       message: (
                         <FormattedMessage
-                          id="label.date.required"
-                          defaultMessage="Select the Date"
+                          id="label.supplierName.required"
+                          defaultMessage="Select the Supplier"
                         />
                       ),
                     },
                   ]}
                 >
-                  <DatePicker
-                    onChange={(date, dateString) =>
-                      console.log(date, dateString)
+                  <Input
+                    disabled
+                    readOnly
+                    // onClick={setSearchModalOpen}
+                    className="search-input"
+                    suffix={
+                      <>
+                        <Button
+                          disabled
+                          style={{ width: "2.5rem" }}
+                          type="primary"
+                          icon={<SearchOutlined />}
+                          className="search-btn"
+                          // onClick={setSearchModalOpen}
+                        />
+                      </>
                     }
-                  ></DatePicker>
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
-                  labelCol={{ span: 8 }}
-                  wrapperCol={{ span: 12 }}
-                  labelAlign="left"
                   label={
                     <FormattedMessage
-                      id="label.paidThrough"
-                      defaultMessage="Paid Through"
+                      id="label.branch"
+                      defaultMessage="Branch"
                     />
                   }
-                  name="paidThrough"
+                  name="branch"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
                   rules={[
                     {
                       required: true,
                       message: (
                         <FormattedMessage
-                          id="label.paidThrough.required"
-                          defaultMessage="Select the Paid Through"
+                          id="label.branch.required"
+                          defaultMessage="Select the Branch"
                         />
                       ),
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
-                    {accounts.map((group) => (
-                      <Select.OptGroup
-                        key={group.detailType}
-                        label={group.detailType}
+                  <Select
+                    disabled
+                    showSearch
+                    optionFilterProp="label"
+                    // onChange={(value) => setSelectedBranch(value)}
+                  >
+                    {branches?.map((branch) => (
+                      <Select.Option
+                        key={branch.id}
+                        value={branch.id}
+                        label={branch.name}
                       >
-                        {group.accounts.map((acc) => (
-                          <Select.Option
-                            key={acc.id}
-                            value={acc.id}
-                            label={acc.name}
-                          >
-                            {acc.name}
-                          </Select.Option>
-                        ))}
-                      </Select.OptGroup>
+                        {branch.name}
+                      </Select.Option>
                     ))}
                   </Select>
                 </Form.Item>
@@ -776,36 +596,41 @@ const PaymentsMadeEdit = () => {
             <Row>
               <Col span={12}>
                 <Form.Item
-                  labelCol={{ span: 8 }}
-                  wrapperCol={{ span: 12 }}
-                  labelAlign="left"
                   label={
                     <FormattedMessage
-                      id="label.paymentMode"
-                      defaultMessage="Payment Mode"
+                      id="label.currency"
+                      defaultMessage="Currency"
                     />
                   }
-                  name="paymentMode"
-                  // rules={[
-                  //   {
-                  //     required: true,
-                  //     message: (
-                  //       <FormattedMessage
-                  //         id="label.paymentMode.required"
-                  //         defaultMessage="Select the Payment Mode"
-                  //       />
-                  //     ),
-                  //   },
-                  // ]}
+                  name="currency"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.currency.required"
+                          defaultMessage="Select the Currency"
+                        />
+                      ),
+                    },
+                  ]}
                 >
-                  <Select showSearch optionFilterProp="label">
-                    {paymentModes?.map((mode) => (
+                  <Select
+                    // onChange={(value) => setSelectedCurrency(value)}
+                    showSearch
+                    optionFilterProp="label"
+                    disabled
+                  >
+                    {currencies.map((currency) => (
                       <Select.Option
-                        key={mode.id}
-                        value={mode.id}
-                        label={mode.name}
+                        key={currency.id}
+                        value={currency.id}
+                        label={currency?.name + currency.symbol}
                       >
-                        {mode.name}
+                        {currency?.name} ({currency.symbol})
                       </Select.Option>
                     ))}
                   </Select>
@@ -813,238 +638,421 @@ const PaymentsMadeEdit = () => {
               </Col>
               <Col span={12}>
                 <Form.Item
-                  label={
-                    <FormattedMessage
-                      id="label.bankChargesIfAny"
-                      defaultMessage="Bank Charges (if any)"
-                    />
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.currency !== currentValues.currency
                   }
-                  labelCol={{ span: 8 }}
-                  wrapperCol={{ span: 12 }}
-                  labelAlign="left"
-                  name="bankCharges"
-                  rules={[
-                    () => ({
-                      validator(_, value) {
-                        if (!value) {
-                          return Promise.resolve();
-                        } else if (isNaN(value) || value.length > 20) {
-                          return Promise.reject(
-                            intl.formatMessage({
-                              id: "validation.invalidInput",
-                              defaultMessage: "Invalid Input",
-                            })
-                          );
-                        } else {
-                          return Promise.resolve();
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue("currency") &&
+                    getFieldValue("currency") !== business.baseCurrency.id ? (
+                      <Form.Item
+                        label={
+                          <FormattedMessage
+                            id="label.exchangeRate"
+                            defaultMessage="Exchange Rate"
+                          />
                         }
-                      },
-                    }),
-                  ]}
-                >
-                  <Input
-                    onBlur={(e) =>
-                      setBankCharges(parseFloat(e.target.value) || 0)
-                    }
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row>
-              <Col span={12}>
-                <Form.Item
-                  label={
-                    <FormattedMessage
-                      id="label.referenceNumber"
-                      defaultMessage="Reference #"
-                    />
+                        name="exchangeRate"
+                        labelAlign="left"
+                        labelCol={{ span: 8 }}
+                        wrapperCol={{ span: 12 }}
+                        rules={[
+                          {
+                            required: true,
+                            message: (
+                              <FormattedMessage
+                                id="label.exchangeRate.required"
+                                defaultMessage="Enter the Exchange Rate"
+                              />
+                            ),
+                          },
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (isNaN(value) || value.length > 20) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
+                        <Input />
+                      </Form.Item>
+                    ) : null
                   }
-                  name="referenceNumber"
-                  labelAlign="left"
-                  labelCol={{ span: 8 }}
-                  wrapperCol={{ span: 12 }}
-                >
-                  <Input maxLength={255}></Input>
                 </Form.Item>
               </Col>
             </Row>
-            {/* <Flex justify="end">
+            <Divider />
+            <div
+              className={
+                selectedSupplier && selectedBranch && selectedCurrency
+                  ? ""
+                  : "form-mask"
+              }
+            >
+              <Row>
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.paymentDate"
+                        defaultMessage="Payment Date"
+                      />
+                    }
+                    name="paymentDate"
+                    labelAlign="left"
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.date.required"
+                            defaultMessage="Select the Date"
+                          />
+                        ),
+                      },
+                    ]}
+                  >
+                    <DatePicker
+                      onChange={(date, dateString) =>
+                        console.log(date, dateString)
+                      }
+                    ></DatePicker>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                    labelAlign="left"
+                    label={
+                      <FormattedMessage
+                        id="label.paidThrough"
+                        defaultMessage="Paid Through"
+                      />
+                    }
+                    name="paidThrough"
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="label.paidThrough.required"
+                            defaultMessage="Select the Paid Through"
+                          />
+                        ),
+                      },
+                    ]}
+                  >
+                    <Select showSearch optionFilterProp="label">
+                      {accounts.map((group) => (
+                        <Select.OptGroup
+                          key={group.detailType}
+                          label={group.detailType}
+                        >
+                          {group.accounts.map((acc) => (
+                            <Select.Option
+                              key={acc.id}
+                              value={acc.id}
+                              label={acc.name}
+                            >
+                              {acc.name}
+                            </Select.Option>
+                          ))}
+                        </Select.OptGroup>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={12}>
+                  <Form.Item
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                    labelAlign="left"
+                    label={
+                      <FormattedMessage
+                        id="label.paymentMode"
+                        defaultMessage="Payment Mode"
+                      />
+                    }
+                    name="paymentMode"
+                    // rules={[
+                    //   {
+                    //     required: true,
+                    //     message: (
+                    //       <FormattedMessage
+                    //         id="label.paymentMode.required"
+                    //         defaultMessage="Select the Payment Mode"
+                    //       />
+                    //     ),
+                    //   },
+                    // ]}
+                  >
+                    <Select showSearch optionFilterProp="label">
+                      {paymentModes?.map((mode) => (
+                        <Select.Option
+                          key={mode.id}
+                          value={mode.id}
+                          label={mode.name}
+                        >
+                          {mode.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.bankChargesIfAny"
+                        defaultMessage="Bank Charges (if any)"
+                      />
+                    }
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                    labelAlign="left"
+                    name="bankCharges"
+                    rules={[
+                      () => ({
+                        validator(_, value) {
+                          if (!value) {
+                            return Promise.resolve();
+                          } else if (isNaN(value) || value.length > 20) {
+                            return Promise.reject(
+                              intl.formatMessage({
+                                id: "validation.invalidInput",
+                                defaultMessage: "Invalid Input",
+                              })
+                            );
+                          } else {
+                            return Promise.resolve();
+                          }
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input
+                      onBlur={(e) =>
+                        setBankCharges(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <FormattedMessage
+                        id="label.referenceNumber"
+                        defaultMessage="Reference #"
+                      />
+                    }
+                    name="referenceNumber"
+                    labelAlign="left"
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                  >
+                    <Input maxLength={255}></Input>
+                  </Form.Item>
+                </Col>
+              </Row>
+              {/* <Flex justify="end">
               <Button type="link" style={{ fontSize: "var(--small-text)" }}>
                 Clear Applied Amount
               </Button>
             </Flex> */}
-            <>
-              <Table
-                columns={columns}
-                dataSource={
-                  selectedSupplier && selectedBranch && selectedCurrency
-                    ? data
-                    : []
-                }
-                pagination={false}
-                className="payment-table"
-                // summary={() => (
-                //   <Table.Summary.Row>
-                //     <Table.Summary.Cell
-                //       index={0}
-                //       colSpan={5}
-                //     ></Table.Summary.Cell>
-                //     <Table.Summary.Cell index={2}>
-                //       <Flex justify="end">
-                //         <FormattedMessage
-                //           id="label.total"
-                //           defaultMessage="Total"
-                //         />
-                //         :{" "}
-                //       </Flex>
-                //     </Table.Summary.Cell>
-                //     <Table.Summary.Cell index={1}>
-                //       <Flex justify="end">{paidAmountTotal}</Flex>
-                //     </Table.Summary.Cell>
-                //   </Table.Summary.Row>
-                // )}
-              />
-              <Flex justify="end">
-                <Button
-                  type="link"
-                  style={{ fontSize: "var(--small-text)" }}
-                  onClick={clearPaidAmounts}
-                >
-                  Clear Applied Amount
-                </Button>
-              </Flex>
-              <br />
-            </>
+              <>
+                <Table
+                  columns={columns}
+                  dataSource={
+                    selectedSupplier && selectedBranch && selectedCurrency
+                      ? data
+                      : []
+                  }
+                  pagination={false}
+                  className="payment-table"
+                  // summary={() => (
+                  //   <Table.Summary.Row>
+                  //     <Table.Summary.Cell
+                  //       index={0}
+                  //       colSpan={5}
+                  //     ></Table.Summary.Cell>
+                  //     <Table.Summary.Cell index={2}>
+                  //       <Flex justify="end">
+                  //         <FormattedMessage
+                  //           id="label.total"
+                  //           defaultMessage="Total"
+                  //         />
+                  //         :{" "}
+                  //       </Flex>
+                  //     </Table.Summary.Cell>
+                  //     <Table.Summary.Cell index={1}>
+                  //       <Flex justify="end">{paidAmountTotal}</Flex>
+                  //     </Table.Summary.Cell>
+                  //   </Table.Summary.Row>
+                  // )}
+                />
+                <Flex justify="end">
+                  <Button
+                    type="link"
+                    style={{ fontSize: "var(--small-text)" }}
+                    onClick={clearPaidAmounts}
+                  >
+                    Clear Applied Amount
+                  </Button>
+                </Flex>
+                <br />
+              </>
 
-            <Row className="new-manual-journal-table-footer">
-              <Col span={8}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "normal",
-                  }}
-                >
-                  <div style={{ width: "100%" }}>
-                    <label>
-                      <FormattedMessage
-                        id="label.notes"
-                        defaultMessage="Notes"
-                      />
-                    </label>
-                    <Form.Item
-                      style={{ margin: 0, width: "100%" }}
-                      name="notes"
-                    >
-                      <TextArea rows={4}></TextArea>
-                    </Form.Item>
+              <Row className="new-manual-journal-table-footer">
+                <Col span={8}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "normal",
+                    }}
+                  >
+                    <div style={{ width: "100%" }}>
+                      <label>
+                        <FormattedMessage
+                          id="label.notes"
+                          defaultMessage="Notes"
+                        />
+                      </label>
+                      <Form.Item
+                        style={{ margin: 0, width: "100%" }}
+                        name="notes"
+                      >
+                        <TextArea rows={4}></TextArea>
+                      </Form.Item>
+                    </div>
                   </div>
-                </div>
-              </Col>
-              <Col
-                span={12}
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <table
-                  cellSpacing="0"
-                  border="0"
-                  id="balance-table"
+                </Col>
+                <Col
+                  span={12}
                   style={{
-                    background: "rgba(245, 157, 0, 0.10)",
-                    width: "27.7rem",
+                    display: "flex",
+                    justifyContent: "flex-end",
                   }}
                 >
-                  <tbody>
-                    <tr>
-                      <td
-                        style={{ verticalAlign: "middle", width: "20%" }}
-                        className="text-align-right"
-                      >
-                        <FormattedMessage
-                          id="label.subTotal"
-                          defaultMessage="Sub Total"
-                        />
-                      </td>
-                      <td className="text-align-right" style={{ width: "20%" }}>
-                        {paidAmountTotal}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        className="text-align-right"
-                        style={{ paddingTop: "0.5rem" }}
-                      >
-                        <FormattedMessage
-                          id="label.bankCharges"
-                          defaultMessage="Bank Charges"
-                        />
-                      </td>
+                  <table
+                    cellSpacing="0"
+                    border="0"
+                    id="balance-table"
+                    style={{
+                      background: "rgba(245, 157, 0, 0.10)",
+                      width: "27.7rem",
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          style={{ verticalAlign: "middle", width: "20%" }}
+                          className="text-align-right"
+                        >
+                          <FormattedMessage
+                            id="label.subTotal"
+                            defaultMessage="Sub Total"
+                          />
+                        </td>
+                        <td
+                          className="text-align-right"
+                          style={{ width: "20%" }}
+                        >
+                          {paidAmountTotal}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          className="text-align-right"
+                          style={{ paddingTop: "0.5rem" }}
+                        >
+                          <FormattedMessage
+                            id="label.bankCharges"
+                            defaultMessage="Bank Charges"
+                          />
+                        </td>
 
-                      <td
-                        className="text-align-right"
-                        style={{ width: "20%", paddingTop: "0.5rem" }}
-                      >
-                        {bankCharges}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        className="text-align-right"
-                        style={{ paddingTop: "0.5rem" }}
-                      >
-                        <FormattedMessage
-                          id="label.total"
-                          defaultMessage="Total"
-                        />
-                      </td>
-                      <td
-                        className="text-align-right"
-                        style={{ paddingTop: "0.5rem" }}
-                      >
-                        {paidAmountTotal + bankCharges}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Col>
-            </Row>
-            <UploadAttachment
-              onCustomFileListChange={(customFileList) =>
-                setFileList(customFileList)
-              }
-              files={record?.documents}
-            />
+                        <td
+                          className="text-align-right"
+                          style={{ width: "20%", paddingTop: "0.5rem" }}
+                        >
+                          {bankCharges}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          className="text-align-right"
+                          style={{ paddingTop: "0.5rem" }}
+                        >
+                          <FormattedMessage
+                            id="label.total"
+                            defaultMessage="Total"
+                          />
+                        </td>
+                        <td
+                          className="text-align-right"
+                          style={{ paddingTop: "0.5rem" }}
+                        >
+                          {paidAmountTotal + bankCharges}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </Col>
+              </Row>
+              <UploadAttachment
+                onCustomFileListChange={(customFileList) =>
+                  setFileList(customFileList)
+                }
+                files={record?.documents}
+              />
 
-            <div className="page-actions-bar page-actions-bar-margin">
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="page-actions-btn"
-                loading={loading}
-              >
-                <FormattedMessage id="button.save" defaultMessage="Save" />
-              </Button>
-              <Button
-                className="page-actions-btn"
-                onClick={() =>
-                  navigate(from, { state: location.state, replace: true })
-                }
-              >
-                {
-                  <FormattedMessage
-                    id="button.cancel"
-                    defaultMessage="Cancel"
-                  />
-                }
-              </Button>
+              <div className="page-actions-bar page-actions-bar-margin">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="page-actions-btn"
+                  loading={loading}
+                >
+                  <FormattedMessage id="button.save" defaultMessage="Save" />
+                </Button>
+                <Button
+                  className="page-actions-btn"
+                  onClick={() =>
+                    navigate(from, { state: location.state, replace: true })
+                  }
+                >
+                  {
+                    <FormattedMessage
+                      id="button.cancel"
+                      defaultMessage="Cancel"
+                    />
+                  }
+                </Button>
+              </div>
             </div>
-          </div>
-        </Form>
+          </Form>
+        </div>
       </div>
     </>
   );

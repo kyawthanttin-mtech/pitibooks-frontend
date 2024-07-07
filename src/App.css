@@ -16,6 +16,13 @@
   background-color: #fff;
 }
 
+.business-logo {
+  max-width: 240px;
+  max-height: 240px;
+  height: auto;
+  width: auto;
+}
+
 /* Layout Styles */
 .main-layout {
   display: flex;
@@ -26,11 +33,12 @@
 /* Page Styles */
 /* Page Content Styles */
 .page-content {
-  min-height: calc(100vh - 10.1925rem);
-  height: auto;
+  height: calc(100vh - 10.1925rem);
+  overflow: auto;
   background: var(--bg-color1);
   width: 100%;
-  padding-bottom: 5.5rem !important;
+  padding-bottom: 5rem !important;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .page-content-with-padding {
@@ -38,7 +46,7 @@
 }
 
 .page-content-with-form-buttons {
-  padding-bottom: 5.5rem;
+  padding-bottom: 9rem !important;
 }
 
 .page-with-column {
@@ -72,8 +80,8 @@
   position: fixed;
   bottom: 0;
   min-width: 100%;
-  height: 5.5rem;
-  padding: 0rem 1.5rem;
+  height: 5rem;
+  padding-inline: 1.5rem;
   display: flex;
   align-items: center;
   box-shadow: 0px 2px 7px 0px rgba(0, 0, 0, 0.15);
@@ -95,6 +103,30 @@
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+}
+
+.page-form-wrapper {
+  width: 80%;
+  display: inline-block;
+  vertical-align: text-top;
+}
+
+@media screen and (max-width: 1390px) {
+  .page-form-wrapper {
+    width: 100%;
+  }
+}
+
+.ob-page-form-wrapper {
+  width: 80%;
+  display: inline-block;
+  vertical-align: text-top;
+}
+
+@media screen and (max-width: 1390px) {
+  .ob-page-form-wrapper {
+    width: 100%;
+  }
 }
 
 /* Menu Styles */
@@ -311,7 +343,7 @@
 /*Fixed Table Header*/
 .main-table .ant-table-container table > thead > tr > th {
   position: sticky;
-  top: 5rem;
+  top: 0;
   z-index: 100;
 }
 
@@ -429,10 +461,9 @@
 }
 
 .content-column-header-row-actions div {
-  min-width: 5rem;
+  min-width: 4rem;
   display: flex;
   justify-content: center;
-  padding: 0.7rem;
 }
 
 .content-column-header-row-actions > :first-child {
@@ -499,6 +530,7 @@
   overflow: auto;
   transition: all 1s;
   z-index: 100;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .transaction-table {
@@ -842,7 +874,7 @@
   height: 32.625rem;
   overflow: auto;
   box-sizing: border-box;
-  scrollbar-color: rgba(128, 128, 128, 0.5) var(--main-bg-color);
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .items-list li {
@@ -1074,10 +1106,13 @@
   padding-top: 0;
   padding-bottom: 0.3rem;
 }
+
 .show {
-  max-height: 6rem;
+  max-height: 13.375rem;
   opacity: 100%;
   padding-top: 0.2rem;
+  overflow: auto;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 /*Supplier/Customer Search Input */

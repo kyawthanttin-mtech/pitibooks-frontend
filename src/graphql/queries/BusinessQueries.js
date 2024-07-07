@@ -39,6 +39,11 @@ const GET_BUSINESS = gql`
       taxId
       isTaxInclusive
       isTaxExclusive
+      migrationDate
+      salesTransactionLockDate
+      purchaseTransactionLockDate
+      bankingTransactionLockDate
+      accountantTransactionLockDate
       primaryBranch {
         id
         name

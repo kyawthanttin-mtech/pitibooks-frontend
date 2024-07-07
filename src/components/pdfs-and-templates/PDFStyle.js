@@ -1,8 +1,8 @@
 import { StyleSheet, Font } from "@react-pdf/renderer";
-import InvoiceTheme from "../../../config/InvoiceTheme";
+import PDFTheme from "../../config/PDFTheme";
 
-import RobotoRegular from "../fonts/Roboto-Regular.ttf";
-import RobotoBold from "../fonts/Roboto-Bold.ttf";
+import RobotoRegular from "./fonts/Roboto-Regular.ttf";
+import RobotoBold from "./fonts/Roboto-Bold.ttf";
 
 // Register fonts
 Font.register({
@@ -24,14 +24,15 @@ Font.register({
 //Styles
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: InvoiceTheme.pageBackground,
+    backgroundColor: PDFTheme.pageBackground,
     fontSize: 11,
     lineHeight: 1.2,
     flexDirection: "column",
     padding: "50 45 50 45",
+    width: "790px",
   },
-  text: { fontFamily: InvoiceTheme.font },
-  boldText: { fontFamily: InvoiceTheme.font, fontWeight: "bold" },
+  text: { fontFamily: PDFTheme.font, color: PDFTheme.fontColor },
+  boldText: { fontFamily: PDFTheme.font, fontWeight: "bold" },
   titleSection: {
     display: "flex",
     width: "100%",
@@ -44,6 +45,12 @@ const styles = StyleSheet.create({
   subHeader1: { fontSize: 10 },
 
   subHeader2: { fontSize: 13 },
+
+  logoImg: {
+    maxWidth: "180px",
+    maxHeight: "180px",
+    marginBottom: "5px",
+  },
 
   section1: {
     display: "flex",
@@ -62,7 +69,7 @@ const styles = StyleSheet.create({
   alignCenter: { textAlign: "center" },
   lineHeight2: { lineHeight: 2 },
   marginRight28: { marginRight: 28 },
-  invoiceDetails: {
+  contentDetails: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -72,23 +79,23 @@ const styles = StyleSheet.create({
   headerRow: {
     fontSize: 10,
     height: 23,
-    backgroundColor: InvoiceTheme.tableHeaderColor,
+    backgroundColor: PDFTheme.tableHeaderColor,
     borderWidth: 0,
-    color: InvoiceTheme.tableHeaderFontColor,
+    color: PDFTheme.tableHeaderFontColor,
     display: "flex",
     justifyContent: "center",
   },
-  cell1: { width: 30 },
-  cell2: { flex: 3.5, paddingLeft: 15 },
-  cell3: { width: 50, paddingRight: 5 },
-  cell4: { paddingRight: 5, paddingLeft: 5 },
-  cell5: { paddingRight: 5, paddingLeft: 5 },
+  cell1: { width: 30, color: "white" },
+  cell2: { flex: 1, paddingLeft: 10, color: "white" },
+  cell3: { width: 40, paddingRight: 5, color: "white" },
+  cell4: { paddingRight: 5, paddingLeft: 5, color: "white" },
+  cell5: { paddingRight: 5, paddingLeft: 5, color: "white" },
 
   //table body
   bodyRow: {
     width: "100%",
     flexDirection: "row",
-    borderBottom: "0.2px solid #333333",
+    borderBottom: "1px solid #ebeaf2",
     minHeight: 30,
     display: "table-row",
   },
@@ -103,13 +110,13 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 10,
-    padding: "10 5 10 15",
+    padding: "10 5 10 10",
     flex: 3.5,
     borderWidth: 0,
   },
   qty: {
     fontSize: 10,
-    width: 50,
+    width: 40,
     borderWidth: 0,
     padding: "10 5 10 0",
     height: "100%",
@@ -137,6 +144,29 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     lineHeight: 2.3,
   },
+  table: {
+    display: "flex",
+    flexDirection: "row",
+    maxWidth: "100%",
+    fontSize: 10,
+  },
+  tableCol: { fontSize: 10, display: "flex", flexDirection: "column" },
+  tableHeader: {
+    width: "100%",
+    height: 23,
+    backgroundColor: PDFTheme.tableHeaderColor,
+    borderWidth: 0,
+    color: PDFTheme.tableHeaderFontColor,
+    display: "flex",
+    justifyContent: "center",
+    verticalAlign: "center",
+  },
+  tableBody: {
+    width: "100%",
+    borderBottom: "0.2px solid #333333",
+    minHeight: 30,
+    padding: "10px 5px 5px 10px",
+  },
   notes: { fontSize: 10 },
   noteContainer: {
     position: "absolute",
@@ -161,6 +191,16 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 30,
     width: "100%",
+  },
+  wordBreak: {
+    wordBreak: "break-all",
+    wordWrap: "break-word",
+  },
+  red: {
+    color: PDFTheme.red,
+  },
+  primaryColor: {
+    color: PDFTheme.primaryColor,
   },
 });
 

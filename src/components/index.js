@@ -29,9 +29,11 @@ import TransferOrderTemplate from "./pdfs-and-templates/products/TransferOrderTe
 import SalesOrderTemplate from "./pdfs-and-templates/sales/SalesOrderTemplate";
 import UploadAttachment from "./UploadAttachment";
 import AttachFiles from "./AttachFiles";
-import PaginatedBankingTransactionTable from "./PaginatedBankingTransactionTable";
 import ReportFilterBar from "./ReportFilterBar";
 import AccordionTabs from "./AccordionTabs";
+import PDFPreviewModal from "./PDFPreviewModal";
+import CommentColumn from "./CommentColumn";
+import HistoryColumn from "./HistoryColumn";
 
 export {
   ErrorBoundary,
@@ -65,7 +67,9 @@ export {
   SalesOrderTemplate,
   UploadAttachment,
   AttachFiles,
-  PaginatedBankingTransactionTable,
   ReportFilterBar,
   AccordionTabs,
+  PDFPreviewModal,
+  CommentColumn,
+  HistoryColumn,
 };

@@ -1,0 +1,116 @@
+.cmt-column {
+  width: 0;
+  overflow: hidden;
+  background-color: white;
+  transition: width 0.2s ease;
+  height: calc(100vh - 5.1925rem);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  z-index: 10000;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.cmt-column.open {
+  width: 25rem;
+  height: calc(100vh - 5.1925rem);
+  background-color: white !;
+  border-left: 1px solid var(--border-color);
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.cmt-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.cmt-column-header .title {
+  font-size: var(--title-text);
+}
+
+.cmt-column-body {
+  padding: 1.25rem;
+  overflow: auto;
+  height: calc(100vh - 5.1925rem - 64px);
+  padding-bottom: 2rem;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.ql-toolbar.ql-snow {
+  font-family: "Roboto" !important;
+  border-top-right-radius: 0.3rem;
+  border-top-left-radius: 0.3rem;
+}
+
+.ql-container.ql-snow {
+  border-bottom-left-radius: 0.3rem;
+  border-bottom-right-radius: 0.3rem;
+}
+
+.ql-editor {
+  padding: 15px !important;
+}
+
+.ql-editor p {
+  font-size: 0.875rem;
+}
+
+.circle-box {
+  border: 1px solid #eee;
+  border-radius: 50%;
+  height: 25px;
+  width: 25px;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.cmt-box {
+  padding: 0.625rem 0.938rem;
+  background-color: var(--main-bg-color);
+  border-radius: 0.3rem;
+}
+
+.cmt-username {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.cmt-description p {
+  margin: 0;
+}
+
+.cmt-box span {
+  cursor: pointer;
+  font-size: var(--small-text);
+}
+
+.cmt-box span:hover {
+  color: var(--red);
+}
+
+.cmt-count {
+  padding: 3px 4px;
+  text-align: center;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 11px;
+  border-radius: 0.375rem;
+}
+
+.cmt-his-tabs.ant-tabs-top > .ant-tabs-nav {
+  padding-inline: 1.25rem;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+}

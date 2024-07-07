@@ -3,7 +3,6 @@ import React, { useState, useMemo } from "react";
 import {
   Space,
   Button,
-  Table,
   Row,
   Dropdown,
   Divider,
@@ -12,22 +11,22 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
 } from "antd";
 import {
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
-  PaperClipOutlined,
   CloseOutlined,
   EditOutlined,
   FilePdfOutlined,
   CaretDownFilled,
   PrinterOutlined,
-  CaretRightFilled,
+  CommentOutlined,
 } from "@ant-design/icons";
 import {
   AttachFiles,
+  CommentColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierSearchModal,
@@ -49,6 +48,7 @@ import {
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { TransferOrderPDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_TRANSFER_ORDER } = TransferOrderQueries;
 const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER } =
   PurchaseOrderMutations;
@@ -147,8 +147,13 @@ const TransferOrders = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const [deleteModal, contextHolder] = Modal.useModal();
   const [searchFormRef] = Form.useForm();
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
@@ -161,6 +166,8 @@ const TransferOrders = () => {
     "transferOrderCurrentPage",
     1
   );
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -604,6 +611,9 @@ const TransferOrders = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <TransferOrderPDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -698,6 +708,20 @@ const TransferOrders = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -718,30 +742,13 @@ const TransferOrders = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -794,6 +801,12 @@ const TransferOrders = () => {
               </div>
               <TransferOrderTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="transfer_orders"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
       </div>

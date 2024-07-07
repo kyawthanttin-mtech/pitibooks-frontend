@@ -22,18 +22,17 @@ import {
   MoreOutlined,
   SearchOutlined,
   FilePdfOutlined,
-  CaretDownFilled,
-  PaperClipOutlined,
   CloseOutlined,
   EditOutlined,
-  PrinterOutlined,
-  CaretRightFilled,
+  CommentOutlined,
 } from "@ant-design/icons";
 import RecordBillPayment from "./RecordBillPayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
 import {
   AccordionTabs,
   AttachFiles,
+  CommentColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierSearchModal,
@@ -52,6 +51,8 @@ import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import { BillQueries, BillMutations } from "../../graphql";
 import ApplyCreditModal from "./ApplyCreditModal";
+import { BillPDF } from "../../components/pdfs-and-templates";
+
 const { GET_PAGINATE_BILL } = BillQueries;
 const { CONFIRM_BILL, DELETE_BILL, VOID_BILL } = BillMutations;
 
@@ -151,6 +152,8 @@ const Bills = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -875,6 +878,9 @@ const Bills = () => {
         setModalOpen={setCreditModalOpen}
         selectedRecord={selectedRecord}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <BillPDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -1095,6 +1101,20 @@ const Bills = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -1115,30 +1135,14 @@ const Bills = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -1265,7 +1269,7 @@ const Bills = () => {
                         <Table
                           className="bill-table"
                           columns={purchaseOrderColumns}
-                          dataSource={selectedRecord?.purchaseOrder}
+                          dataSource={[selectedRecord?.purchaseOrder] || []}
                           pagination={false}
                         />
                       ),
@@ -1288,8 +1292,15 @@ const Bills = () => {
               )}
               <BillTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="bills"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
+
         {showRecordBillPaymentForm && (
           <div className="content-column">
             <Row className="content-column-header-row">

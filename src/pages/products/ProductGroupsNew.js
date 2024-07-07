@@ -1326,65 +1326,67 @@ const ProductGroupsNew = () => {
             </span>
           </Space>
         </Row>
-        {productNewForm}
-        <div className="product-variants-container">
-          <p>
-            <FormattedMessage id="title.variants" defaultMessage="Variants" />
-          </p>
-          <Flex gap="1rem">
-            {productVariations.map((variant, index) => (
-              <div
-                className="product-variants"
-                key={variant.id}
-                onClick={() => handleEditClick(variant, index)}
+        <div className="page-form-wrapper">
+          {productNewForm}
+          <div className="product-variants-container">
+            <p>
+              <FormattedMessage id="title.variants" defaultMessage="Variants" />
+            </p>
+            <Flex gap="1rem">
+              {productVariations.map((variant, index) => (
+                <div
+                  className="product-variants"
+                  key={variant.id}
+                  onClick={() => handleEditClick(variant, index)}
+                >
+                  <div className="product-variant-header">
+                    <div className="product-variant-name">{variant.name}</div>
+                    <DeleteOutlined
+                      className="product-variant-delete-icon"
+                      style={{
+                        fontSize: "1rem",
+                        color: "red",
+                        cursor: "pointer",
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveVariation(index);
+                      }}
+                    />
+                  </div>
+                  <div className="product-variant-values-container">
+                    {variant.values.map((values) => (
+                      <Tag key={values.id}>{values.value}</Tag>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </Flex>
+            <Space>
+              <PlusCircleFilled style={{ color: "var(--primary-color)" }} />
+              <a
+                onClick={(event) => {
+                  setCreateModalOpen(true);
+                }}
+                className="add-variant"
               >
-                <div className="product-variant-header">
-                  <div className="product-variant-name">{variant.name}</div>
-                  <DeleteOutlined
-                    className="product-variant-delete-icon"
-                    style={{
-                      fontSize: "1rem",
-                      color: "red",
-                      cursor: "pointer",
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleRemoveVariation(index);
-                    }}
-                  />
-                </div>
-                <div className="product-variant-values-container">
-                  {variant.values.map((values) => (
-                    <Tag key={values.id}>{values.value}</Tag>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </Flex>
-          <Space>
-            <PlusCircleFilled style={{ color: "var(--primary-color)" }} />
-            <a
-              onClick={(event) => {
-                setCreateModalOpen(true);
-              }}
-              className="add-variant"
-            >
-              <FormattedMessage
-                id="action.addVariants"
-                defaultMessage="Add Variants"
-              />
-            </a>
-          </Space>
+                <FormattedMessage
+                  id="action.addVariants"
+                  defaultMessage="Add Variants"
+                />
+              </a>
+            </Space>
+          </div>
+          <Form form={createProductFormRef} onFinish={onFinish}>
+            <Table
+              dataSource={combinationPairs}
+              columns={columns}
+              pagination={false}
+              rowKey={(record) => record.id}
+              className="product-variant-table"
+            />
+          </Form>
         </div>
-        <Form form={createProductFormRef} onFinish={onFinish}>
-          <Table
-            dataSource={combinationPairs}
-            columns={columns}
-            pagination={false}
-            rowKey={(record) => record.id}
-            className="product-variant-table"
-          />
-        </Form>
       </div>
     </>
   );

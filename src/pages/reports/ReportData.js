@@ -1,7 +1,7 @@
-import { DollarOutlined } from "@ant-design/icons";
 import { ReactComponent as AccountantOutlined } from "../../assets/icons/AccountOutlinedVariant.svg";
 import { ReactComponent as BuildingOutlined } from "../../assets/icons/BuildingOutlined.svg";
 import { ReactComponent as InventoryOutlined } from "../../assets/icons/InventoryOutlined.svg";
+import { ReactComponent as DollarOutlined } from "../../assets/icons/DollarOutlined.svg";
 
 export const reportData = [
   {

@@ -31,6 +31,9 @@ const GET_PAGINATE_INVOICE = gql`
           invoiceTotalTaxAmount
           invoiceTotalAmount
           invoiceTotalPaidAmount
+          remainingBalance
+          # invoiceTotalAdvanceUsedAmount
+          # invoiceTotalCreditUsedAmount
           salesPerson {
             id
             name
@@ -63,8 +66,6 @@ const GET_PAGINATE_INVOICE = gql`
           customer {
             id
             name
-            unusedCreditAmount
-            prepaidCreditAmount
           }
           branch {
             id

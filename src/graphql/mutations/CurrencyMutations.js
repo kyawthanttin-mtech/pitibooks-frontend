@@ -7,7 +7,6 @@ const CREATE_CURRENCY = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
     }
   }
 `;
@@ -19,7 +18,6 @@ const UPDATE_CURRENCY = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
     }
   }
 `;
@@ -31,7 +29,6 @@ const DELETE_CURRENCY = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
     }
   }
 `;
@@ -43,7 +40,6 @@ const TOGGLE_ACTIVE_CURRENCY = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
       isActive
     }
   }

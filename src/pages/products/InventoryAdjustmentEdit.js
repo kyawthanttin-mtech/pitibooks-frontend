@@ -1102,138 +1102,222 @@ const InventoryAdjustmentsEdit = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form form={form} onFinish={onFinish}>
-          <Row>
-            <Col span={12}>
-              <Form.Item
-                label="Mode of adjustment"
-                name="adjustmentType"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                value={adjustmentType}
-              >
-                <Radio.Group onChange={handleAdjustmentTypeChange}>
-                  <Space direction="vertical">
-                    <Radio value="q">Quantity Adjustment</Radio>
-                    <Radio value="v" disabled>
-                      Value Adjustment
-                    </Radio>
-                  </Space>
-                </Radio.Group>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <FormattedMessage id="label.date" defaultMessage="Date" />
-                }
-                name="date"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.date.required"
-                        defaultMessage="Select the Date"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <DatePicker
-                  onChange={(date, dateString) => console.log(date, dateString)}
-                  format={REPORT_DATE_FORMAT}
-                ></DatePicker>
-              </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.referenceNumber"
-                    defaultMessage="Reference #"
-                  />
-                }
-                name="referenceNumber"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-              >
-                <Input></Input>
-              </Form.Item>
-              <Form.Item
-                name="account"
-                label={
-                  <FormattedMessage
-                    id="label.account"
-                    defaultMessage="Account"
-                  />
-                }
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.account.required"
-                        defaultMessage="Select the Account"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Select allowClear showSearch optionFilterProp="label">
-                  {accounts?.map((account) => (
-                    <Select.Option
-                      key={account.id}
-                      value={account.id}
-                      label={account.name}
-                    >
-                      {account.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage id="label.branch" defaultMessage="Branch" />
-                }
-                name="branch"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.branch.required"
-                        defaultMessage="Select the Branch"
-                      />
-                    ),
-                  },
-                ]}
-              >
-                <Select showSearch optionFilterProp="label">
-                  {branches?.map((branch) => (
-                    <Select.Option
-                      key={branch.id}
-                      value={branch.id}
-                      label={branch.name}
-                    >
-                      {branch.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+        <div className="page-form-wrapper">
+          <Form form={form} onFinish={onFinish}>
+            <Row>
+              <Col span={12}>
+                <Form.Item
+                  label="Mode of adjustment"
+                  name="adjustmentType"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  value={adjustmentType}
+                >
+                  <Radio.Group onChange={handleAdjustmentTypeChange}>
+                    <Space direction="vertical">
+                      <Radio value="q">Quantity Adjustment</Radio>
+                      <Radio value="v" disabled>
+                        Value Adjustment
+                      </Radio>
+                    </Space>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <FormattedMessage id="label.date" defaultMessage="Date" />
+                  }
+                  name="date"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.date.required"
+                          defaultMessage="Select the Date"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <DatePicker
+                    onChange={(date, dateString) =>
+                      console.log(date, dateString)
+                    }
+                    format={REPORT_DATE_FORMAT}
+                  ></DatePicker>
+                </Form.Item>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.referenceNumber"
+                      defaultMessage="Reference #"
+                    />
+                  }
+                  name="referenceNumber"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                >
+                  <Input></Input>
+                </Form.Item>
+                <Form.Item
+                  name="account"
+                  label={
+                    <FormattedMessage
+                      id="label.account"
+                      defaultMessage="Account"
+                    />
+                  }
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.account.required"
+                          defaultMessage="Select the Account"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select allowClear showSearch optionFilterProp="label">
+                    {accounts?.map((account) => (
+                      <Select.Option
+                        key={account.id}
+                        value={account.id}
+                        label={account.name}
+                      >
+                        {account.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.branch"
+                      defaultMessage="Branch"
+                    />
+                  }
+                  name="branch"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.branch.required"
+                          defaultMessage="Select the Branch"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select showSearch optionFilterProp="label">
+                    {branches?.map((branch) => (
+                      <Select.Option
+                        key={branch.id}
+                        value={branch.id}
+                        label={branch.name}
+                      >
+                        {branch.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.warehouseName"
+                      defaultMessage="Warehouse Name"
+                    />
+                  }
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  labelAlign="left"
+                  name="warehouse"
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.warehouse.required"
+                          defaultMessage="Select the Warehouse"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select
+                    // placeholder="Select or type to add"
+                    showSearch
+                    allowClear
+                    loading={loading}
+                    optionFilterProp="label"
+                    onChange={(value) => setSelectedWarehouse(value)}
+                  >
+                    {warehouses?.map((w) => (
+                      <Select.Option key={w.id} value={w.id} label={w.name}>
+                        {w.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label="Reason"
+                  name="reason"
+                  labelAlign="left"
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.reason.required"
+                          defaultMessage="Enter the Reason"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.description"
+                      defaultMessage="Description"
+                    />
+                  }
+                  name="description"
+                  labelAlign="left"
+                  labelCol={{ span: 4 }}
+                  wrapperCol={{ span: 6 }}
+                >
+                  <Input.TextArea rows="4" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <br />
+            <>
+              <Divider />
               <Form.Item
                 label={
                   <FormattedMessage
@@ -1260,7 +1344,6 @@ const InventoryAdjustmentsEdit = () => {
                 <Select
                   // placeholder="Select or type to add"
                   showSearch
-                  allowClear
                   loading={loading}
                   optionFilterProp="label"
                   onChange={(value) => setSelectedWarehouse(value)}
@@ -1272,188 +1355,117 @@ const InventoryAdjustmentsEdit = () => {
                   ))}
                 </Select>
               </Form.Item>
-
-              <Form.Item
-                label="Reason"
-                name="reason"
-                labelAlign="left"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 12 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
+              {selectedWarehouse && (
+                <>
+                  <Table
+                    loading={stockLoading}
+                    columns={columns}
+                    dataSource={data}
+                    pagination={false}
+                    bordered
+                    // className="item-details-table"
+                  />
+                  <br />
+                  <Button
+                    icon={<PlusCircleFilled className="plus-circle-icon" />}
+                    onClick={handleAddRow}
+                    className="add-row-item-btn"
+                  >
+                    <span>
                       <FormattedMessage
-                        id="label.reason.required"
-                        defaultMessage="Enter the Reason"
+                        id="button.addNewRow"
+                        defaultMessage="Add New Row"
                       />
-                    ),
-                  },
-                ]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.description"
-                    defaultMessage="Description"
-                  />
-                }
-                name="description"
-                labelAlign="left"
-                labelCol={{ span: 4 }}
-                wrapperCol={{ span: 6 }}
-              >
-                <Input.TextArea rows="4" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <br />
-          <>
-            <Divider />
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.warehouseName"
-                  defaultMessage="Warehouse Name"
-                />
-              }
-              labelCol={{ span: 8 }}
-              wrapperCol={{ span: 12 }}
-              labelAlign="left"
-              name="warehouse"
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.warehouse.required"
-                      defaultMessage="Select the Warehouse"
-                    />
-                  ),
-                },
-              ]}
-            >
-              <Select
-                // placeholder="Select or type to add"
-                showSearch
-                loading={loading}
-                optionFilterProp="label"
-                onChange={(value) => setSelectedWarehouse(value)}
-              >
-                {warehouses?.map((w) => (
-                  <Select.Option key={w.id} value={w.id} label={w.name}>
-                    {w.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            {selectedWarehouse && (
-              <>
-                <Table
-                  loading={stockLoading}
-                  columns={columns}
-                  dataSource={data}
-                  pagination={false}
-                  bordered
-                  // className="item-details-table"
-                />
-                <br />
-                <Button
-                  icon={<PlusCircleFilled className="plus-circle-icon" />}
-                  onClick={handleAddRow}
-                  className="add-row-item-btn"
-                >
-                  <span>
-                    <FormattedMessage
-                      id="button.addNewRow"
-                      defaultMessage="Add New Row"
-                    />
-                  </span>
-                </Button>{" "}
-                {adjustmentType === "q" && (
-                  <>
-                    <Divider type="vertical" />
-                    <Button
-                      icon={<PlusCircleFilled className="plus-circle-icon" />}
-                      className="add-row-item-btn"
-                      onClick={() => setAddPurchaseProductsModalOpen(true)}
-                    >
-                      <span>
-                        <FormattedMessage
-                          id="button.addProductsInBulk"
-                          defaultMessage="Add Products in Bulk"
-                        />
-                      </span>
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
-          </>
-          <br />
-          <UploadAttachment
-            onCustomFileListChange={(customFileList) =>
-              setFileList(customFileList)
-            }
-            files={record?.documents}
-          />
-          <div className="page-actions-bar page-actions-bar-margin">
-            {!record.currentStatus === "Adjusted" && (
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="page-actions-btn"
-                loading={loading}
-                onClick={() => setSaveStatus("Draft")}
-              >
-                {
-                  <FormattedMessage
-                    id="button.saveAsDraft"
-                    defaultMessage="Save As Draft"
-                  />
-                }
-              </Button>
-            )}
-            {record.currentStatus === "Draft" && (
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="page-actions-btn"
-                loading={loading}
-                onClick={() => setSaveStatus("Draft")}
-              >
-                <FormattedMessage id="button.save" defaultMessage="Save" />
-              </Button>
-            )}
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="page-actions-btn"
-              loading={loading}
-              onClick={() => setSaveStatus("Adjusted")}
-            >
-              {record.currentStatus === "Adjusted" ? (
-                <FormattedMessage id="button.save" defaultMessage="Save" />
-              ) : (
-                <FormattedMessage
-                  id="button.convertToAdjusted"
-                  defaultMessage="Convert To Adjusted"
-                />
+                    </span>
+                  </Button>{" "}
+                  {adjustmentType === "q" && (
+                    <>
+                      <Divider type="vertical" />
+                      <Button
+                        icon={<PlusCircleFilled className="plus-circle-icon" />}
+                        className="add-row-item-btn"
+                        onClick={() => setAddPurchaseProductsModalOpen(true)}
+                      >
+                        <span>
+                          <FormattedMessage
+                            id="button.addProductsInBulk"
+                            defaultMessage="Add Products in Bulk"
+                          />
+                        </span>
+                      </Button>
+                    </>
+                  )}
+                </>
               )}
-            </Button>
-            <Button
-              className="page-actions-btn"
-              loading={loading}
-              onClick={() =>
-                navigate(from, { state: location.state, replace: true })
+            </>
+            <br />
+            <UploadAttachment
+              onCustomFileListChange={(customFileList) =>
+                setFileList(customFileList)
               }
-            >
-              {<FormattedMessage id="button.cancel" defaultMessage="Cancel" />}
-            </Button>
-          </div>
-        </Form>
+              files={record?.documents}
+            />
+            <div className="page-actions-bar page-actions-bar-margin">
+              {!record.currentStatus === "Adjusted" && (
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="page-actions-btn"
+                  loading={loading}
+                  onClick={() => setSaveStatus("Draft")}
+                >
+                  {
+                    <FormattedMessage
+                      id="button.saveAsDraft"
+                      defaultMessage="Save As Draft"
+                    />
+                  }
+                </Button>
+              )}
+              {record.currentStatus === "Draft" && (
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="page-actions-btn"
+                  loading={loading}
+                  onClick={() => setSaveStatus("Draft")}
+                >
+                  <FormattedMessage id="button.save" defaultMessage="Save" />
+                </Button>
+              )}
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="page-actions-btn"
+                loading={loading}
+                onClick={() => setSaveStatus("Adjusted")}
+              >
+                {record.currentStatus === "Adjusted" ? (
+                  <FormattedMessage id="button.save" defaultMessage="Save" />
+                ) : (
+                  <FormattedMessage
+                    id="button.convertToAdjusted"
+                    defaultMessage="Convert To Adjusted"
+                  />
+                )}
+              </Button>
+              <Button
+                className="page-actions-btn"
+                loading={loading}
+                onClick={() =>
+                  navigate(from, { state: location.state, replace: true })
+                }
+              >
+                {
+                  <FormattedMessage
+                    id="button.cancel"
+                    defaultMessage="Cancel"
+                  />
+                }
+              </Button>
+            </div>
+          </Form>
+        </div>
       </div>
     </>
   );

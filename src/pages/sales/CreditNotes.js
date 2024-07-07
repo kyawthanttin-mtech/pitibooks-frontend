@@ -18,11 +18,9 @@ import {
   MoreOutlined,
   CaretRightFilled,
   FilePdfOutlined,
-  CaretDownFilled,
-  PaperClipOutlined,
+  CommentOutlined,
   CloseOutlined,
   EditOutlined,
-  PrinterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import {
@@ -31,6 +29,8 @@ import {
   SearchCriteriaDisplay,
   CustomerSearchModal,
   AttachFiles,
+  PDFPreviewModal,
+  CommentColumn,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditNoteMutations, CreditNoteQueries } from "../../graphql";
@@ -45,6 +45,7 @@ import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import CreditNoteRefund from "./CreditNoteRefund";
+import { CreditNotePDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_CREDIT_NOTE } = CreditNoteQueries;
 const { DELETE_CREDIT_NOTE } = CreditNoteMutations;
 
@@ -81,8 +82,13 @@ const openActionItems = [
 
 const CreditNotes = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
-  const { notiApi, msgApi, allBranchesQueryRef, allWarehousesQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allBranchesQueryRef,
+    allWarehousesQueryRef,
+    business,
+  } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -103,6 +109,8 @@ const CreditNotes = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [showRefundForm, setShowRefundForm] = useState(false);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -302,7 +310,8 @@ const CreditNotes = () => {
       render: (text) => (
         <span
           style={{
-            color: text === "Confirmed" ? "var(--blue)" : "var(--primary-color)",
+            color:
+              text === "Confirmed" ? "var(--blue)" : "var(--primary-color)",
           }}
         >
           {text}
@@ -568,6 +577,9 @@ const CreditNotes = () => {
         setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <CreditNotePDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
 
       <div className={`${selectedRecord && "page-with-column"}`}>
@@ -713,6 +725,20 @@ const CreditNotes = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -733,30 +759,13 @@ const CreditNotes = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -834,6 +843,12 @@ const CreditNotes = () => {
               </div>
               <CreditNoteTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="credit_notes"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
         {showRefundForm && (

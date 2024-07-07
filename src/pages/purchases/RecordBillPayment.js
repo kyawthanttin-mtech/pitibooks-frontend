@@ -106,8 +106,7 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
     console.log(selectedRecord);
     form.setFieldsValue({
       branch: selectedRecord?.branch.id,
-      amount:
-        selectedRecord?.billTotalAmount - selectedRecord?.billTotalPaidAmount,
+      amount: selectedRecord?.remainingBalance,
     });
   }, [form, selectedRecord]);
 

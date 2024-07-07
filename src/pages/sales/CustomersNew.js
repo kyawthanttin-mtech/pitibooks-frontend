@@ -315,6 +315,7 @@ const CustomersNew = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
+      <div className="page-form-wrapper">
         <Form initialValues={initialValues} form={form} onFinish={onFinish}>
           <Form.Item
             label={<FormattedMessage id="label.name" defaultMessage="Name" />}
@@ -1162,6 +1163,7 @@ const CustomersNew = () => {
             </Tabs.TabPane>
           </Tabs>
         </Form>
+        </div>
       </div>
     </>
   );

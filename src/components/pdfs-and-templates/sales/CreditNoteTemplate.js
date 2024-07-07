@@ -36,6 +36,15 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
               <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -66,7 +75,7 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                         <b>
                           MMK{" "}
                           <FormattedNumber
-                            value={selectedRecord.supplier?.unusedCreditAmount}
+                            value={selectedRecord.customer?.unusedCreditAmount}
                             style="decimal"
                             minimumFractionDigits={
                               selectedRecord.currency.decimalPlaces
@@ -144,42 +153,26 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Reference Number :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.referenceNumber}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Notes :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.notes}</span>
-                          </td>
-                        </tr>
+                        {selectedRecord?.referenceNumber && (
+                          <tr>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>Reference Number :</span>
+                            </td>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>{selectedRecord.referenceNumber}</span>
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </td>
@@ -555,6 +548,28 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
           </div>
 
           <div style={{ clear: "both" }}></div>
+          {selectedRecord?.notes && (
+            <div
+              style={{
+                clear: "both",
+                paddingLeft: "3.3rem",
+                width: "100%",
+              }}
+            >
+              <label>Notes</label>
+              <br />
+              <p
+                style={{
+                  marginTop: "7px",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {selectedRecord?.notes}
+              </p>
+            </div>
+          )}
           <div
             className="template-footer"
             style={{

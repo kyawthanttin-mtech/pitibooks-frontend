@@ -11,6 +11,7 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { useMutation } from "@apollo/client";
+import { UploadAttachment } from "../../components";
 const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
 
 const initialValues = {
@@ -26,10 +27,12 @@ const OwnerContributionNew = ({
   accounts,
   allAccounts,
   selectedAcc,
+  selectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const { notiApi, msgApi, business } = useOutletContext();
+  const [fileList, setFileList] = useState(null);
   const [currencies, setCurrencies] = useState([
     selectedAcc?.currency?.id > 0
       ? selectedAcc.currency
@@ -53,6 +56,7 @@ const OwnerContributionNew = ({
             defaultMessage="Transaction Recorded"
           />
         );
+
         refetch();
       },
     }
@@ -79,12 +83,18 @@ const OwnerContributionNew = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl || file.documentUrl,
+        isDeletedItem: file.isDeletedItem,
+        id: file.id,
+      }));
 
       const input = {
         ...values,
         currencyId: selectedAcc?.currency.id,
         transactionType: "OwnerContribution",
         // isMoneyIn: true,
+        documents: fileUrls,
       };
 
       await createAccountTransfer({ variables: { input } });
@@ -384,30 +394,10 @@ const OwnerContributionNew = ({
         <Input.TextArea></Input.TextArea>
       </Form.Item>
       <Divider />
-      <div className="attachment-upload">
-        <p>
-          <FormattedMessage
-            id="label.attachments"
-            defaultMessage="Attachments"
-          />
-        </p>
-        <Button
-          type="dashed"
-          icon={<UploadOutlined />}
-          className="attachment-upload-button"
-        >
-          <FormattedMessage
-            id="button.uploadFile"
-            defaultMessage="Upload File"
-          />
-        </Button>
-        <p>
-          <FormattedMessage
-            id="label.uploadLimit"
-            defaultMessage="You can upload a maximum of 5 files, 5MB each"
-          />
-        </p>
-      </div>
+      <UploadAttachment
+        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+        files={null}
+      />
     </Form>
   );
   return (

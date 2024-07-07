@@ -15,6 +15,7 @@ const BillTemplate = ({ selectedRecord }) => {
       hasDetailDiscount = true;
     }
   });
+  console.log(details);
   return (
     <div className="details-page">
       <div className="details-container">
@@ -30,12 +31,21 @@ const BillTemplate = ({ selectedRecord }) => {
           </div>
         </div> */}
         <div className="template">
-          <div className="template-header header-content"></div>
+          ,<div className="template-header header-content"></div>
           <div className="template-body">
             <table className="title-section" id="title-table">
               <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -69,10 +79,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
-                            value={
-                              selectedRecord.billTotalAmount -
-                              selectedRecord.billTotalPaidAmount
-                            }
+                            value={selectedRecord.remainingBalance}
                             style="decimal"
                             minimumFractionDigits={
                               selectedRecord.currency.decimalPlaces
@@ -183,26 +190,13 @@ const BillTemplate = ({ selectedRecord }) => {
                             <span>
                               {selectedRecord.billPaymentTerms
                                 .split(/(?=[A-Z])/)
-                                .join(" ")}
+                                .join(" ") === "Custom"
+                                ? `${selectedRecord.billPaymentTerms} - Due in ${selectedRecord.billPaymentTerms}day(s)`
+                                : selectedRecord.billPaymentTerms
+                                    .split(/(?=[A-Z])/)
+                                    .join(" ")}
+                              {"\n"}
                             </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>Notes :</span>
-                          </td>
-                          <td
-                            className="text-align-right"
-                            style={{
-                              padding: "5px 10px 5px 0",
-                            }}
-                          >
-                            <span>{selectedRecord.notes}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -675,10 +669,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         <b>
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
-                            value={
-                              selectedRecord.billTotalAmount -
-                              selectedRecord.billTotalPaidAmount
-                            }
+                            value={selectedRecord.remainingBalance}
                             style="decimal"
                             minimumFractionDigits={
                               selectedRecord.currency.decimalPlaces
@@ -706,8 +697,29 @@ const BillTemplate = ({ selectedRecord }) => {
               </span>
             </Space> */}
           </div>
-
           <div style={{ clear: "both" }}></div>
+          {selectedRecord?.notes && (
+            <div
+              style={{
+                clear: "both",
+                paddingLeft: "3.3rem",
+                width: "100%",
+              }}
+            >
+              <label>Notes</label>
+              <br />
+              <p
+                style={{
+                  marginTop: "7px",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {selectedRecord?.notes}
+              </p>
+            </div>
+          )}
           <div
             className="template-footer"
             style={{

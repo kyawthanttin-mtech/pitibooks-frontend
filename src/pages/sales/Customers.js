@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Form,
@@ -12,6 +12,8 @@ import {
   Space,
   Divider,
   Table,
+  Skeleton,
+  Timeline,
 } from "antd";
 import {
   CloseOutlined,
@@ -22,6 +24,9 @@ import {
   PhoneOutlined,
   MobileOutlined,
   MailOutlined,
+  MessageOutlined,
+  LoadingOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import {
   PaginatedSelectionTable,
@@ -29,7 +34,12 @@ import {
 } from "../../components";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CustomerQueries, CustomerMutations } from "../../graphql";
+import {
+  CustomerQueries,
+  CustomerMutations,
+  CommentQueries,
+  CommentMutations,
+} from "../../graphql";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import {
@@ -37,8 +47,14 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { ReactComponent as UserThumbnail } from "../../assets/icons/UserThumbnail.svg";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
+import DOMPurify from "dompurify";
+import ReactQuill from "react-quill";
+import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import dayjs from "dayjs";
+const { CREATE_COMMENT, DELETE_COMMENT } = CommentMutations;
+const { GET_COMMENTS } = CommentQueries;
 
 const { GET_PAGINATE_CUSTOMER } = CustomerQueries;
 const { DELETE_CUSTOMER } = CustomerMutations;
@@ -60,8 +76,46 @@ const Customers = () => {
     "customerCurrentPage",
     1
   );
+  const [activeTab, setActiveTab] = useState("overview");
+  const [value, setValue] = useState("");
+
+  // Queries
+  const {
+    data: cmtData,
+    loading: cmtLoading,
+    refetch: cmtRefetch,
+  } = useQuery(GET_COMMENTS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+    variables: {
+      referenceId: selectedRecord?.id,
+      referenceType: "customers",
+    },
+    onError: (err) => openErrorNotification(notiApi, err.message),
+    skip: !selectedRecord && activeTab !== "comments",
+  });
+
+  useEffect(() => {
+    if (selectedRecord && activeTab === "comments") {
+      cmtRefetch();
+    }
+  }, [activeTab, cmtRefetch, selectedRecord]);
 
   // Mutations
+  const [createComment, { loading: createCmtLoading }] = useMutation(
+    CREATE_COMMENT,
+    {
+      refetchQueries: [GET_COMMENTS],
+    }
+  );
+
+  const [deleteComment, { loading: deleteCmtLoading }] = useMutation(
+    DELETE_COMMENT,
+    {
+      refetchQueries: [GET_COMMENTS],
+    }
+  );
   const [deleteCustomer, { loading: deleteLoading }] = useMutation(
     DELETE_CUSTOMER,
 
@@ -101,6 +155,8 @@ const Customers = () => {
   );
 
   const loading = deleteLoading;
+
+  const comments = useMemo(() => cmtData?.listComment || [], [cmtData]);
 
   const parseData = (data) => {
     let customers = [];
@@ -182,6 +238,53 @@ const Customers = () => {
       replace: true,
     });
   };
+
+  const stripHtml = (html) => {
+    let tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
+  const handleSubmitCmt = () => {
+    try {
+      createComment({
+        variables: {
+          input: {
+            description: value,
+            referenceId: selectedRecord?.id,
+            referenceType: "customers",
+          },
+        },
+      });
+      setValue("");
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
+  const handleDeleteCmt = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteComment({ variables: { id } });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+    try {
+    } catch (err) {
+      openErrorNotification(notiApi, err.message);
+    }
+  };
+
+  const isInputEmpty = (input) => stripHtml(input).trim().length === 0;
 
   const searchForm = (
     <Form form={searchFormRef}>
@@ -474,7 +577,7 @@ const Customers = () => {
             className="content-column-full-row product-details-content-column-full-row"
             style={{ paddingTop: 0 }}
           >
-            <Tabs>
+            <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key)}>
               <Tabs.TabPane tab="Overview" key="overview">
                 <Flex align="center" style={{ padding: "1.5rem 0" }}>
                   <Space size="middle">
@@ -722,7 +825,110 @@ const Customers = () => {
                   </Col>
                 </Row>
               </Tabs.TabPane>
-              <Tabs.TabPane tab="Comments" key="comments"></Tabs.TabPane>
+              <Tabs.TabPane tab="Comments" key="comments">
+                {" "}
+                <div style={{ width: "60%" }}>
+                  <div style={{ paddingTop: "1rem" }}>
+                    <ReactQuill
+                      value={value}
+                      onChange={setValue}
+                      modules={{
+                        toolbar: [["bold", "italic", "underline"]],
+                      }}
+                      theme="snow"
+                      placeholder="Write your comment here..."
+                    />
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <Button
+                        type="primary"
+                        onClick={handleSubmitCmt}
+                        disabled={isInputEmpty(value)}
+                        loading={createCmtLoading}
+                      >
+                        <FormattedMessage
+                          id="button.addComment"
+                          defaultMessage="Add Comment"
+                        />
+                      </Button>
+                    </div>
+                  </div>
+                  {cmtLoading ? (
+                    <Skeleton active />
+                  ) : comments?.length > 0 ? (
+                    <div style={{ marginLeft: "0.5rem", marginTop: "1.5rem" }}>
+                      <Timeline>
+                        {comments?.map((item) => (
+                          <Timeline.Item
+                            key={item.id}
+                            dot={
+                              <div className="circle-box">
+                                <span>
+                                  <MessageOutlined />
+                                </span>
+                              </div>
+                            }
+                          >
+                            <Flex
+                              gap="0.25rem"
+                              align="center"
+                              className="cmt-username"
+                            >
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: DOMPurify.sanitize(item.userName),
+                                }}
+                              ></div>
+                              <span style={{ opacity: "70%" }}>
+                                <b>•</b>
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "0.688rem",
+                                  opacity: "70%",
+                                  letterSpacing: ".2px",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {dayjs(item.createdAt).format(
+                                  REPORT_DATE_FORMAT + " h:mm A"
+                                )}
+                              </span>
+                            </Flex>
+                            <Flex
+                              justify="space-between"
+                              className="cmt-box"
+                              gap="1rem"
+                            >
+                              <div
+                                className="cmt-description"
+                                dangerouslySetInnerHTML={{
+                                  __html: DOMPurify.sanitize(item.description),
+                                }}
+                              ></div>
+
+                              <span onClick={() => handleDeleteCmt(item.id)}>
+                                {deleteCmtLoading ? (
+                                  <LoadingOutlined />
+                                ) : (
+                                  <DeleteOutlined />
+                                )}
+                              </span>
+                            </Flex>
+                          </Timeline.Item>
+                        ))}
+                      </Timeline>
+                    </div>
+                  ) : (
+                    <Flex
+                      justify="center"
+                      align="center"
+                      style={{ padding: "1rem" }}
+                    >
+                      No comment yet!
+                    </Flex>
+                  )}
+                </div>
+              </Tabs.TabPane>
               <Tabs.TabPane
                 tab="Transactions"
                 key="transactions"

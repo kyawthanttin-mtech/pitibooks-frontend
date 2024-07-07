@@ -1,8 +1,13 @@
 .custom-collapse.ant-collapse-borderless > .ant-collapse-item {
   border: none;
   margin-bottom: 24px;
-  border-radius: 0.4rem !important;
-  box-shadow: 0 1px 4px rgba(2, 77, 108, 0.1), 0 1px 2px rgba(2, 77, 108, 0.06);
+  border-radius: 0.3rem !important;
+  /* border: 1px solid var(--border-color); */
+  /* box-shadow: 0 2px 8px rgba(2, 77, 108, 0.05), 0 2px 4px rgba(2, 77, 108, 0.03); */
+}
+
+.custom-collapse.ant-collapse-borderless > .ant-collapse-item-active {
+  border: 1px solid var(--border-color);
 }
 
 .custom-collapse.ant-collapse > .ant-collapse-item > .ant-collapse-header {
@@ -14,12 +19,17 @@
   > .ant-collapse-content
   > .ant-collapse-content-box {
   background-color: white;
+  /* border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color); */
+  border-bottom-right-radius: 0.3rem;
+  border-bottom-left-radius: 0.3rem;
 }
 
 .custom-collapse.ant-collapse > .ant-collapse-item > .ant-collapse-header {
   border-radius: 0.5rem;
-  border-top-left-radius: 0.4rem;
-  border-top-right-radius: 0.4rem;
+  border-top-left-radius: 0.3rem;
+  border-top-right-radius: 0.3rem;
 }
 
 .account-value-box {
@@ -32,4 +42,63 @@
   box-sizing: border-box;
   opacity: 60%;
   font-weight: 500;
+}
+
+.ob-total-floater {
+  display: none;
+}
+
+.ob-actions-bar {
+  position: static;
+  width: auto;
+  padding: 15px;
+  margin-top: 30px;
+  box-shadow: none;
+  border-top: 1px solid var(--border-color);
+}
+
+.ob-page-content {
+  min-height: calc(100vh - 10.1925rem);
+  height: auto;
+  background: var(--bg-color1);
+  width: 100%;
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 1279px) {
+  .ob-actions-bar {
+    position: fixed;
+    bottom: 0;
+    min-width: 100%;
+    height: auto;
+    min-height: 5rem;
+    padding-inline: 1.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0px 2px 7px 0px rgba(0, 0, 0, 0.15);
+    gap: 0.5rem;
+    background: white;
+    z-index: 100;
+  }
+  .ob-total-floater {
+    display: block;
+    position: absolute;
+    right: 22rem;
+    z-index: 1101010100;
+  }
+  .ob-page-content {
+    padding-bottom: 9rem;
+  }
+}
+
+h4 {
+  font-weight: 500;
+}
+
+.ob-total-section {
+  background-color: var(--main-bg-color);
+  padding: 22px 10px;
+  margin: 0;
+  width: 100%;
+  border-radius: 0.3rem;
 }

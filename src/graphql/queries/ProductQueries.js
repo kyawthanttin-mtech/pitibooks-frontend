@@ -130,8 +130,6 @@ const GET_PRODUCT = gql`
         supplierPaymentTerms
         supplierPaymentTermsCustomDays
         notes
-        prepaidCreditAmount
-        unusedCreditAmount
         isActive
         createdAt
         updatedAt

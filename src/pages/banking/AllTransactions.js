@@ -67,6 +67,10 @@ import {
   SupplierAdvanceRefundEdit,
   CustomerAdvanceRefundNew,
   CustomerAdvanceRefundEdit,
+  DepositToAnotherAccNew,
+  DepositToAnotherAccEdit,
+  DepositFromAnotherAccNew,
+  DepositFromAnotherAccEdit,
 } from ".";
 import OwnerDrawingsEdit from "./OwnerDrawingsEdit";
 const { GET_PAGINATE_BANKING_TRANSACTION } = BankingTransactionQueries;
@@ -114,6 +118,15 @@ const addTransactionItems = [
           />
         ),
       },
+      {
+        key: "1-5",
+        label: (
+          <FormattedMessage
+            id="label.depositToAnotherAccount"
+            defaultMessage="Deposit To Another Account"
+          />
+        ),
+      },
     ],
   },
   {
@@ -157,21 +170,30 @@ const addTransactionItems = [
           />
         ),
       },
-      {
-        key: "2-5",
-        label: (
-          <FormattedMessage
-            id="label.interestIncome"
-            defaultMessage="Interest Income"
-          />
-        ),
-      },
+      // {
+      //   key: "2-5",
+      //   label: (
+      //     <FormattedMessage
+      //       id="label.interestIncome"
+      //       defaultMessage="Interest Income"
+      //     />
+      //   ),
+      // },
       {
         key: "2-6",
         label: (
           <FormattedMessage
             id="label.supplierAdvanceRefund"
             defaultMessage="Supplier Advance Refund"
+          />
+        ),
+      },
+      {
+        key: "2-7",
+        label: (
+          <FormattedMessage
+            id="label.depositFromAnotherAccount"
+            defaultMessage="Deposit From Another Account"
           />
         ),
       },
@@ -264,6 +286,11 @@ const AllTransactions = () => {
     customerAdvanceRefundEditModalOpen,
     setCustomerAdvanceRefundEditModalOpen,
   ] = useState(false);
+  const [depositToNewModalOpen, setDepositToNewModalOpen] = useState(false);
+  const [depositToEditModalOpen, setDepositToEditModalOpen] = useState(false);
+  const [depositFromNewModalOpen, setDepositFromNewModalOpen] = useState(false);
+  const [depositFromEditModalOpen, setDepositFromEditModalOpen] =
+    useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -338,17 +365,31 @@ const AllTransactions = () => {
     },
   ];
 
-  const accounts = useMemo(() => {
+  const allAccounts = useMemo(() => {
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount.reduce(
+      (acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      },
+      {}
+    );
+
+    return Object.values(groupedAccounts);
+  }, [accountData]);
+
+  const cashBankAccounts = useMemo(() => {
     if (!accountData?.listAllAccount) return [];
 
     const groupedAccounts = accountData.listAllAccount
       .filter(
         (account) =>
-          account.detailType === "Cash" ||
-          account.detailType === "Bank" ||
-          account.detailType === "OtherAsset" ||
-          account.detailType === "OtherCurrentAsset" ||
-          account.detailType === "Equity"
+          account.detailType === "Cash" || account.detailType === "Bank"
       )
       .reduce((acc, account) => {
         const { detailType } = account;
@@ -650,6 +691,8 @@ const AllTransactions = () => {
         return setSupplierAdvanceRefundEditModalOpen;
       case "CustomerAdvanceRefund":
         return setCustomerAdvanceRefundEditModalOpen;
+      case "DepositToAnotherAccount":
+        return setDepositFromEditModalOpen;
       default:
         return () => {};
     }
@@ -687,7 +730,10 @@ const AllTransactions = () => {
           <div>
             {record?.transactionType === "TransferToAnotherAccount" ||
             record?.transactionType === "TransferFromAnotherAccount"
-              ? "Transfer Fund"
+              ? "TransferFund"
+              : record?.transactionType === "DepositToAnotherAccount" ||
+                record?.transactionType === "DepositFromAnotherAccount"
+              ? "AccountDeposit"
               : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
           </div>
           <div
@@ -781,7 +827,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         refetch={refetch}
@@ -792,7 +838,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         selectedRecord={selectedRecord}
@@ -806,7 +852,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         refetch={refetch}
@@ -817,7 +863,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         selectedRecord={selectedRecord}
@@ -882,7 +928,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         allTax={allTax}
@@ -894,7 +940,7 @@ const AllTransactions = () => {
         branches={branches}
         currencies={currencies}
         bankingAccounts={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         selectedAcc={selectedAcc}
         allTax={allTax}
@@ -938,7 +984,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         refetch={refetch}
@@ -950,7 +996,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedRecord={selectedRecord}
@@ -990,7 +1036,7 @@ const AllTransactions = () => {
         setModalOpen={setInterestIncomeNewModalOpen}
         branches={branches}
         parsedData={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedAcc={selectedAcc}
@@ -1002,7 +1048,7 @@ const AllTransactions = () => {
         setModalOpen={setInterestIncomeEditModalOpen}
         branches={branches}
         parsedData={bankingAccounts}
-        accounts={accounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedAcc={selectedAcc}
@@ -1066,6 +1112,56 @@ const AllTransactions = () => {
         setSelectedRowIndex={setSelectedRowIndex}
         refetch={refetch}
       />
+      <DepositToAnotherAccNew
+        modalOpen={depositToNewModalOpen}
+        setModalOpen={setDepositToNewModalOpen}
+        branches={branches}
+        currencies={currencies}
+        bankingAccounts={bankingAccounts}
+        accounts={allAccounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedAcc={selectedAcc}
+        refetch={refetch}
+      />
+      <DepositToAnotherAccEdit
+        modalOpen={depositToEditModalOpen}
+        setModalOpen={setDepositToEditModalOpen}
+        branches={branches}
+        currencies={currencies}
+        bankingAccounts={bankingAccounts}
+        accounts={allAccounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedAcc={selectedAcc}
+        selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        setSelectedRowIndex={setSelectedRowIndex}
+        refetch={refetch}
+      />
+      <DepositFromAnotherAccNew
+        modalOpen={depositFromNewModalOpen}
+        setModalOpen={setDepositFromNewModalOpen}
+        branches={branches}
+        currencies={currencies}
+        bankingAccounts={bankingAccounts}
+        accounts={allAccounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedAcc={selectedAcc}
+        refetch={refetch}
+      />
+      <DepositFromAnotherAccEdit
+        modalOpen={depositFromEditModalOpen}
+        setModalOpen={setDepositFromEditModalOpen}
+        branches={branches}
+        currencies={currencies}
+        bankingAccounts={bankingAccounts}
+        accounts={allAccounts}
+        allAccounts={accountData?.listAllAccount}
+        selectedAcc={selectedAcc}
+        selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        setSelectedRowIndex={setSelectedRowIndex}
+        refetch={refetch}
+      />
       <Flex justify="space-between">
         <Flex vertical flex="1">
           <div className="page-header">
@@ -1122,6 +1218,8 @@ const AllTransactions = () => {
                         setSupplierAdvanceNewModalOpen(true);
                       } else if (key === "1-4") {
                         setCustomerAdvanceRefundNewModalOpen(true);
+                      } else if (key === "1-5") {
+                        setDepositToNewModalOpen(true);
                       } else if (key === "2-1") {
                         setTransferFromNewModalOpen(true);
                       } else if (key === "2-2") {
@@ -1134,6 +1232,8 @@ const AllTransactions = () => {
                         setInterestIncomeNewModalOpen(true);
                       } else if (key === "2-6") {
                         setSupplierAdvanceRefundNewModalOpen(true);
+                      } else if (key === "2-7") {
+                        setDepositFromNewModalOpen(true);
                       }
                     },
                     items: addTransactionItems,

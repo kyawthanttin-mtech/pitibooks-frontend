@@ -87,7 +87,7 @@ const TransferFromAnotherAccNew = ({
 
       const input = {
         ...values,
-        transactionType: "TransferFromAnotherAccounts",
+        transactionType: "AccountTransfer",
         // isMoneyIn: true,
         documents: fileUrls,
       };

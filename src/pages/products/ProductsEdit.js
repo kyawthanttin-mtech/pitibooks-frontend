@@ -851,8 +851,7 @@ const ProductsEdit = () => {
         />
       </div>
       <div className="page-content page-content-with-form-buttons">
-        {productEditForm}
-        <br />
+        <div className="page-form-wrapper">{productEditForm}</div>
       </div>
     </>
   );

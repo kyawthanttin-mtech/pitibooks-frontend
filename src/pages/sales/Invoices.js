@@ -21,11 +21,9 @@ import {
   MoreOutlined,
   SearchOutlined,
   FilePdfOutlined,
-  CaretDownFilled,
-  PaperClipOutlined,
+  CommentOutlined,
   CloseOutlined,
   EditOutlined,
-  PrinterOutlined,
   CaretRightFilled,
 } from "@ant-design/icons";
 import RecordInvoicePayment from "./RecordInvoicePayment";
@@ -36,6 +34,9 @@ import {
   SearchCriteriaDisplay,
   CustomerSearchModal,
   AttachFiles,
+  PDFPreviewModal,
+  InvoicePDF,
+  CommentColumn,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
@@ -155,6 +156,8 @@ const Invoices = () => {
     useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -826,6 +829,9 @@ const Invoices = () => {
         setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <InvoicePDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -1054,6 +1060,20 @@ const Invoices = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -1074,30 +1094,13 @@ const Invoices = () => {
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  <FormattedMessage
-                    id="button.pdf/print"
-                    defaultMessage="PDF/Print"
-                  />
-                  <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
 
               <Dropdown
                 menu={{
@@ -1268,6 +1271,12 @@ const Invoices = () => {
               )}
               <InvoiceTemplate selectedRecord={selectedRecord} />
             </div>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="sales_invoices"
+              referenceId={selectedRecord?.id}
+            />
           </div>
         )}
         {showRecordInvoicePaymentForm && (

@@ -1,5 +1,5 @@
 /* eslint-disable react/style-prop-object */
-import React from "react";
+import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 import { Divider, Space, Flex } from "antd";
@@ -8,6 +8,7 @@ import { FormattedNumber } from "react-intl";
 
 const PurchaseOrderTemplate = ({ selectedRecord }) => {
   const { business } = useOutletContext();
+  const [imageBase64, setImageBase64] = useState(null);
   const details = selectedRecord?.details ? selectedRecord?.details : [];
   let hasDetailDiscount = false;
   details?.forEach((d) => {
@@ -17,6 +18,28 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
       hasDetailDiscount = true;
     }
   });
+  console.log(business?.logoUrl);
+  useEffect(() => {
+    // Function to convert image to base64
+    const getImageBase64 = async () => {
+      try {
+        const response = await fetch(
+          "https://farm7.staticflickr.com/6089/6115759179_86316c08ff_z_d.jpg"
+        );
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageBase64(reader.result);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Error fetching image:", error);
+      }
+    };
+
+    getImageBase64();
+  }, []);
+  console.log(hasDetailDiscount);
   return (
     <div className="details-page">
       <div className="details-container">
@@ -38,6 +61,16 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
               <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
+
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -126,26 +159,54 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
-                        {selectedRecord.notes && (
-                          <tr>
-                            <td
-                              className="text-align-right"
-                              style={{
-                                padding: "5px 10px 5px 0",
-                              }}
-                            >
-                              <span>Notes :</span>
-                            </td>
-                            <td
-                              className="text-align-right"
-                              style={{
-                                padding: "5px 10px 5px 0",
-                              }}
-                            >
-                              <span>{selectedRecord.notes}</span>
-                            </td>
-                          </tr>
-                        )}
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Delivery Date :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>
+                              {dayjs(
+                                selectedRecord.expectedDeliveryDate
+                              ).format(REPORT_DATE_FORMAT)}
+                            </span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>Payment Terms :</span>
+                          </td>
+                          <td
+                            className="text-align-right"
+                            style={{
+                              padding: "5px 10px 5px 0",
+                            }}
+                          >
+                            <span>
+                              {selectedRecord.orderPaymentTerms
+                                .split(/(?=[A-Z])/)
+                                .join(" ") === "Custom"
+                                ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
+                                : selectedRecord.orderPaymentTerms
+                                    .split(/(?=[A-Z])/)
+                                    .join(" ")}
+                            </span>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </td>
@@ -507,21 +568,30 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
             </div>
             <Divider />
             <Flex justify="end"></Flex>
-            <Space>
-              <span>Payment Terms :</span>
-              <span>
-                {selectedRecord.orderPaymentTerms
-                  .split(/(?=[A-Z])/)
-                  .join(" ") === "Custom"
-                  ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
-                  : selectedRecord.orderPaymentTerms
-                      .split(/(?=[A-Z])/)
-                      .join(" ")}
-              </span>
-            </Space>
           </div>
-
           <div style={{ clear: "both" }}></div>
+          {selectedRecord?.notes && (
+            <div
+              style={{
+                clear: "both",
+                paddingLeft: "3.3rem",
+                width: "100%",
+              }}
+            >
+              <label>Notes</label>
+              <br />
+              <p
+                style={{
+                  marginTop: "7px",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {selectedRecord?.notes}
+              </p>
+            </div>
+          )}
           <div
             className="template-footer"
             style={{

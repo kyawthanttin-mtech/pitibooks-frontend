@@ -737,8 +737,11 @@ const Banking = () => {
         <>
           {record?.transactionType === "TransferToAnotherAccount" ||
           record?.transactionType === "TransferFromAnotherAccount"
-            ? "Transfer Fund"
-            : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
+            ? "TransferFund"
+            : record?.transactionType === "DepositToAnotherAccount" ||
+              record?.transactionType === "DepositFromAnotherAccount"
+                ? "AccountDeposit"
+                : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
         </>
       ),
     },

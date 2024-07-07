@@ -36,7 +36,6 @@ const GET_PAGINATE_BILL = gql`
           supplier {
             id
             name
-            unusedCreditAmount
           }
           branch {
             id
@@ -64,6 +63,7 @@ const GET_PAGINATE_BILL = gql`
           isTaxInclusive
           billTotalAdvanceUsedAmount
           billTotalCreditUsedAmount
+          remainingBalance
           appliedSupplierCredits {
             id
             businessId

@@ -68,15 +68,14 @@ const GET_PAGINATE_BANKING_TRANSACTION = gql`
           currency {
             id
             decimalPlaces
-            exchangeRate
             symbol
           }
-          # documents {
-          #   id
-          #   documentUrl
-          #   referenceType
-          #   referenceID
-          # }
+          documents {
+            id
+            documentUrl
+            referenceType
+            referenceID
+          }
         }
       }
       pageInfo {

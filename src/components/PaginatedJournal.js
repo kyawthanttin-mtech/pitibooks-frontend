@@ -12,6 +12,7 @@ import {
   FilePdfOutlined,
   PrinterOutlined,
   CaretDownFilled,
+  CommentOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -25,13 +26,16 @@ import {
 } from "antd";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import { FormattedMessage, FormattedNumber } from "react-intl";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import { openErrorNotification } from "../utils/Notification";
 import { paginateArray, useHistoryState } from "../utils/HelperFunctions";
 import { QUERY_DATA_LIMIT } from "../config/Constants";
 import JournalTemplate from "./pdfs-and-templates/accountant/JournalTemplate";
 import moment from "moment";
 import AttachFiles from "./AttachFiles";
+import CommentColumn from "./CommentColumn";
+import PDFPreviewModal from "./PDFPreviewModal";
+import { JournalPDF } from "./pdfs-and-templates";
 const compactColumns = [
   {
     title: "",
@@ -82,6 +86,7 @@ const PaginatedJournal = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { business } = useOutletContext();
   const [currentPage, setCurrentPage] = useHistoryState(
     "journalCurrentPage",
     1
@@ -92,6 +97,8 @@ const PaginatedJournal = ({
   );
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+  const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
 
   const handleRefetch = async () => {
     try {
@@ -227,150 +234,23 @@ const PaginatedJournal = ({
   // console.log("All data", allData);
 
   return (
-    <div className={`${selectedRecord && "page-with-column"}`}>
-      <div>
-        <div className="page-header page-header-with-button">
-          <p className="page-header-text">
-            {selectedRecord ? "Journals" : "Manual Journals"}
-          </p>
-          <div className="header-buttons">
-            <div className="new-journal-buttons-container">
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
-                // onClick={() => navigate("new")}
-                onClick={() =>
-                  navigate("new", {
-                    state: {
-                      ...location.state,
-                      from: { pathname: location.pathname },
-                    },
-                  })
-                }
-              >
-                {!selectedRecord && "New Journal"}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className={`page-content ${selectedRecord && "column-width2"}`}>
-          {searchCriteria && (
-            <div
-              style={{
-                padding: "1rem 1.5rem ",
-                background: "#eef8f1",
-                fontSize: 13,
-              }}
-            >
-              <Flex justify="space-between">
-                <span>
-                  <i>Search Criteria</i>
-                </span>
-                <CloseOutlined
-                  style={{ cursor: "pointer" }}
-                  onClick={handleModalClear}
-                />
-              </Flex>
-              <ul style={{ paddingLeft: "1.5rem" }}>
-                {searchCriteria.journalNumber && (
-                  <li>
-                    Journal Number contains{" "}
-                    <b>{searchCriteria.journalNumber}</b>
-                  </li>
-                )}
-                {searchCriteria.referenceNumber && (
-                  <li>
-                    Reference Number contains{" "}
-                    <b>{searchCriteria.referenceNumber}</b>
-                  </li>
-                )}
-                {searchCriteria.fromDate && searchCriteria.toDate && (
-                  <li>
-                    Journal Date between{" "}
-                    <b>
-                      {moment(searchCriteria.fromDate).format("DD MMM YYYY")}{" "}
-                      and {moment(searchCriteria.toDate).format("DD MMM YYYY")}
-                    </b>
-                  </li>
-                )}
-                {/* {searchCriteria.notes && (
-                  <li>
-                    Notes contains <b>{searchCriteria.notes}</b>
-                  </li>
-                )} */}
-                {searchCriteria.branchId && (
-                  <li>
-                    Branch is{" "}
-                    <b>
-                      {
-                        branchData?.find(
-                          (x) => x.id === searchCriteria.branchId
-                        ).name
-                      }
-                    </b>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-          <Table
-            className={`main-type ${selectedRecord && "header-less-table"}`}
-            rowKey="id"
-            loading={loading}
-            columns={selectedRecord ? compactColumns : columns}
-            dataSource={searchCriteria ? searchPageData : pageData}
-            pagination={false}
-            rowSelection={{ selectedRowKeys: [selectedRowIndex] }}
-            selectedRecord={selectedRecord}
-            onRow={(record) => {
-              return {
-                onClick: () => {
-                  setSelectedRecord(record);
-                  setSelectedRowIndex(record.id);
-                },
-              };
-            }}
-          />
-          {showSearch && (
-            <Modal
-              className="search-journal-modal"
-              width="65.5rem"
-              title={
-                <FormattedMessage
-                  id="journal.search"
-                  defaultMessage="Search Journal"
-                />
-              }
-              okText={
-                <FormattedMessage id="button.search" defaultMessage="Search" />
-              }
-              cancelText={
-                <FormattedMessage id="button.cancel" defaultMessage="Cancel" />
-              }
-              open={modalOpen}
-              onOk={handleModalSearch}
-              onCancel={() => setSearchModalOpen(false)}
-              okButtonProps={loading}
-            >
-              {searchForm}
-            </Modal>
-          )}
-          <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
-            <Space>
-              {/* {searchCriteria && 
-                          <Tooltip title={<FormattedMessage id="button.clearSearch" defaultMessage="Clear Search Results" />}>
-                              <Button
-                                  icon={<ClearOutlined />}
-                                  loading={loading}
-                                  onClick={handleModalClear}
-                              />
-                          </Tooltip>
-                      } */}
-              {showAddNew && (
+    <>
+      {" "}
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <JournalPDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
+      <div className={`${selectedRecord && "page-with-column"}`}>
+        <div>
+          <div className="page-header page-header-with-button">
+            <p className="page-header-text">
+              {selectedRecord ? "Journals" : "Manual Journals"}
+            </p>
+            <div className="header-buttons">
+              <div className="new-journal-buttons-container">
                 <Button
-                  type="primary"
                   icon={<PlusOutlined />}
+                  type="primary"
+                  // onClick={() => navigate("new")}
                   onClick={() =>
                     navigate("new", {
                       state: {
@@ -380,173 +260,294 @@ const PaginatedJournal = ({
                     })
                   }
                 >
-                  <FormattedMessage id="button.new" defaultMessage="New" />
+                  {!selectedRecord && "New Journal"}
                 </Button>
-              )}
-            </Space>
-            <Space style={{ padding: "0.5rem 1rem 0 0" }}>
-              <Tooltip
-                title={
-                  <FormattedMessage
-                    id="button.refetch"
-                    defaultMessage="Refetch"
-                  />
-                }
-              >
-                <Button
-                  icon={<SyncOutlined />}
-                  loading={loading}
-                  disabled={!refetchEnabled}
-                  onClick={handleRefetch}
-                />
-              </Tooltip>
-              <Tooltip
-                title={
-                  <FormattedMessage
-                    id="button.previous"
-                    defaultMessage="Previous"
-                  />
-                }
-              >
-                <Button
-                  icon={<LeftOutlined />}
-                  loading={loading}
-                  disabled={!hasPreviousPage}
-                  onClick={handlePrevious}
-                />
-              </Tooltip>
-              <Tooltip
-                title={
-                  <FormattedMessage id="button.next" defaultMessage="Next" />
-                }
-              >
-                <Button
-                  icon={<RightOutlined />}
-                  loading={loading}
-                  disabled={!hasNextPage}
-                  onClick={handleNext}
-                />
-              </Tooltip>
-            </Space>
-          </Row>
-        </div>
-      </div>
-
-      {selectedRecord && (
-        <div className="content-column">
-          <Row className="content-column-header-row">
-            <p className="page-header-text">{selectedRecord.journalNumber}</p>
-            <div className="content-column-header-row-actions">
-              <AttachFiles
-                files={selectedRecord?.documents}
-                key={selectedRecord?.key}
-              />
-              <div>
-                <Button
-                  icon={<CloseOutlined />}
-                  type="text"
-                  onClick={() => {
-                    setSelectedRecord(null);
-                    setSelectedRowIndex(0);
-                  }}
-                />
               </div>
             </div>
-          </Row>
-          <Row className="content-column-action-row">
-            <div
-              className="actions"
-              onClick={() => onEdit(selectedRecord, navigate, location)}
-            >
-              <EditOutlined />
-              <FormattedMessage id="button.edit" defaultMessage="Edit" />
-            </div>
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    // label: (
-                    //   <PDFDownloadLink
-                    //     document={
-                    //       <InvoicePDF selectedRecord={selectedRecord} />
-                    //     }
-                    //     fileName={selectedRecord.invoice}
-                    //   >
-                    //     PDF
-                    //   </PDFDownloadLink>
-                    // ),
-                    icon: <FilePdfOutlined />,
-                    key: "0",
+          </div>
+
+          <div className={`page-content ${selectedRecord && "column-width2"}`}>
+            {searchCriteria && (
+              <div
+                style={{
+                  padding: "1rem 1.5rem ",
+                  background: "#eef8f1",
+                  fontSize: 13,
+                }}
+              >
+                <Flex justify="space-between">
+                  <span>
+                    <i>Search Criteria</i>
+                  </span>
+                  <CloseOutlined
+                    style={{ cursor: "pointer" }}
+                    onClick={handleModalClear}
+                  />
+                </Flex>
+                <ul style={{ paddingLeft: "1.5rem" }}>
+                  {searchCriteria.journalNumber && (
+                    <li>
+                      Journal Number contains{" "}
+                      <b>{searchCriteria.journalNumber}</b>
+                    </li>
+                  )}
+                  {searchCriteria.referenceNumber && (
+                    <li>
+                      Reference Number contains{" "}
+                      <b>{searchCriteria.referenceNumber}</b>
+                    </li>
+                  )}
+                  {searchCriteria.fromDate && searchCriteria.toDate && (
+                    <li>
+                      Journal Date between{" "}
+                      <b>
+                        {moment(searchCriteria.fromDate).format("DD MMM YYYY")}{" "}
+                        and{" "}
+                        {moment(searchCriteria.toDate).format("DD MMM YYYY")}
+                      </b>
+                    </li>
+                  )}
+                  {/* {searchCriteria.notes && (
+                  <li>
+                    Notes contains <b>{searchCriteria.notes}</b>
+                  </li>
+                )} */}
+                  {searchCriteria.branchId && (
+                    <li>
+                      Branch is{" "}
+                      <b>
+                        {
+                          branchData?.find(
+                            (x) => x.id === searchCriteria.branchId
+                          ).name
+                        }
+                      </b>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+            <Table
+              className={`main-type ${selectedRecord && "header-less-table"}`}
+              rowKey="id"
+              loading={loading}
+              columns={selectedRecord ? compactColumns : columns}
+              dataSource={searchCriteria ? searchPageData : pageData}
+              pagination={false}
+              rowSelection={{ selectedRowKeys: [selectedRowIndex] }}
+              selectedRecord={selectedRecord}
+              onRow={(record) => {
+                return {
+                  onClick: () => {
+                    setSelectedRecord(record);
+                    setSelectedRowIndex(record.id);
                   },
-                  {
-                    // label: (
-                    //   <BlobProvider
-                    //     document={
-                    //       <InvoicePDF selectedRecord={selectedRecord} />
-                    //     }
-                    //   >
-                    //     {({ url, blob }) => (
-                    //       <a href={url} target="_blank" rel="noreferrer">
-                    //         Print
-                    //       </a>
-                    //     )}
-                    //   </BlobProvider>
-                    // ),
-                    icon: <PrinterOutlined />,
-                    key: "1",
-                  },
-                ],
+                };
               }}
-              trigger={["click"]}
-            >
-              <div>
+            />
+            {showSearch && (
+              <Modal
+                className="search-journal-modal"
+                width="65.5rem"
+                title={
+                  <FormattedMessage
+                    id="journal.search"
+                    defaultMessage="Search Journal"
+                  />
+                }
+                okText={
+                  <FormattedMessage
+                    id="button.search"
+                    defaultMessage="Search"
+                  />
+                }
+                cancelText={
+                  <FormattedMessage
+                    id="button.cancel"
+                    defaultMessage="Cancel"
+                  />
+                }
+                open={modalOpen}
+                onOk={handleModalSearch}
+                onCancel={() => setSearchModalOpen(false)}
+                okButtonProps={loading}
+              >
+                {searchForm}
+              </Modal>
+            )}
+            <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
+              <Space>
+                {/* {searchCriteria && 
+                          <Tooltip title={<FormattedMessage id="button.clearSearch" defaultMessage="Clear Search Results" />}>
+                              <Button
+                                  icon={<ClearOutlined />}
+                                  loading={loading}
+                                  onClick={handleModalClear}
+                              />
+                          </Tooltip>
+                      } */}
+                {showAddNew && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() =>
+                      navigate("new", {
+                        state: {
+                          ...location.state,
+                          from: { pathname: location.pathname },
+                        },
+                      })
+                    }
+                  >
+                    <FormattedMessage id="button.new" defaultMessage="New" />
+                  </Button>
+                )}
+              </Space>
+              <Space style={{ padding: "0.5rem 1rem 0 0" }}>
+                <Tooltip
+                  title={
+                    <FormattedMessage
+                      id="button.refetch"
+                      defaultMessage="Refetch"
+                    />
+                  }
+                >
+                  <Button
+                    icon={<SyncOutlined />}
+                    loading={loading}
+                    disabled={!refetchEnabled}
+                    onClick={handleRefetch}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <FormattedMessage
+                      id="button.previous"
+                      defaultMessage="Previous"
+                    />
+                  }
+                >
+                  <Button
+                    icon={<LeftOutlined />}
+                    loading={loading}
+                    disabled={!hasPreviousPage}
+                    onClick={handlePrevious}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <FormattedMessage id="button.next" defaultMessage="Next" />
+                  }
+                >
+                  <Button
+                    icon={<RightOutlined />}
+                    loading={loading}
+                    disabled={!hasNextPage}
+                    onClick={handleNext}
+                  />
+                </Tooltip>
+              </Space>
+            </Row>
+          </div>
+        </div>
+
+        {selectedRecord && (
+          <div className="content-column">
+            <Row className="content-column-header-row">
+              <p className="page-header-text">{selectedRecord.journalNumber}</p>
+              <div className="content-column-header-row-actions">
+                <AttachFiles
+                  files={selectedRecord?.documents}
+                  key={selectedRecord?.key}
+                />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<CommentOutlined />}
+                    onClick={setCmtColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.commentsAndHistory"
+                        defaultMessage="Comments & History"
+                      />
+                    </span>
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    icon={<CloseOutlined />}
+                    type="text"
+                    onClick={() => {
+                      setSelectedRecord(null);
+                      setSelectedRowIndex(0);
+                    }}
+                  />
+                </div>
+              </div>
+            </Row>
+            <Row className="content-column-action-row">
+              <div
+                className="actions"
+                onClick={() => onEdit(selectedRecord, navigate, location)}
+              >
+                <EditOutlined />
+                <FormattedMessage id="button.edit" defaultMessage="Edit" />
+              </div>
+              <div onClick={() => setPDFModalOpen(true)}>
                 <FilePdfOutlined />
                 <FormattedMessage
                   id="button.pdf/print"
                   defaultMessage="PDF/Print"
                 />
-                <CaretDownFilled />
               </div>
-            </Dropdown>
-            <div>
-              <Dropdown
-                loading={loading}
-                trigger="click"
-                // key={record.key}
-                menu={{
-                  onClick: ({ key }) => {
-                    if (key === "1") console.log("Clone");
-                    else if (key === "2") {
-                      if (onDelete(selectedRecord.id)) setSelectedRecord(null);
-                    }
-                  },
-                  items: [
-                    {
-                      label: "Clone",
-                      key: "1",
+              <div>
+                <Dropdown
+                  loading={loading}
+                  trigger="click"
+                  // key={record.key}
+                  menu={{
+                    onClick: ({ key }) => {
+                      if (key === "1") console.log("Clone");
+                      else if (key === "2") {
+                        if (onDelete(selectedRecord.id))
+                          setSelectedRecord(null);
+                      }
                     },
-                    {
-                      label: (
-                        <FormattedMessage
-                          id="button.delete"
-                          defaultMessage="Delete"
-                        />
-                      ),
-                      key: "2",
-                    },
-                  ],
-                }}
-              >
-                <MoreOutlined />
-              </Dropdown>
-            </div>
-          </Row>
-          <Row className="content-column-full-row">
-            <JournalTemplate selectedRecord={selectedRecord} />
-          </Row>
-        </div>
-      )}
-    </div>
+                    items: [
+                      {
+                        label: "Clone",
+                        key: "1",
+                      },
+                      {
+                        label: (
+                          <FormattedMessage
+                            id="button.delete"
+                            defaultMessage="Delete"
+                          />
+                        ),
+                        key: "2",
+                      },
+                    ],
+                  }}
+                >
+                  <MoreOutlined />
+                </Dropdown>
+              </div>
+            </Row>
+            <Row className="content-column-full-row">
+              <JournalTemplate selectedRecord={selectedRecord} />
+            </Row>
+            <CommentColumn
+              open={cmtColumnOpen}
+              setOpen={setCmtColumnOpen}
+              referenceType="journals"
+              referenceId={selectedRecord?.id}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

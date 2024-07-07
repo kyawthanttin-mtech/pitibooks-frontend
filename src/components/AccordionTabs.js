@@ -37,13 +37,10 @@ const AccordionTabs = ({ tabs }) => {
                   >
                     <span>{tab.title}</span>
                     <span className="bill">
-                      {tab.data || tab.data?.id ? tab.data.length || 1 : 0}
+                      {tab.data || tab.data?.id > 0 ? tab.data?.length || 1 : 0}
                     </span>
                   </li>
-                  {index <
-                    tabs.filter((t) => t.data?.length > 0 || t.data?.id > 0)
-                      .length -
-                      1 && <Divider type="vertical" className="tab-divider" />}
+                  <Divider type="vertical" className="tab-divider" />
                 </React.Fragment>
               )
           )}

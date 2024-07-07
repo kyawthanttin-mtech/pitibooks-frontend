@@ -27,8 +27,6 @@ const CREATE_SUPPLIER = gql`
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       billingAddress {
         id
         attention
@@ -103,8 +101,6 @@ const UPDATE_SUPPLIER = gql`
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       billingAddress {
         id
         attention
@@ -178,8 +174,6 @@ const DELETE_SUPPLIER = gql`
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       billingAddress {
         id
         attention
@@ -254,8 +248,6 @@ const TOGGLE_ACTIVE_SUPPLIER = gql`
       supplierPaymentTerms
       supplierPaymentTermsCustomDays
       notes
-      prepaidCreditAmount
-      unusedCreditAmount
       billingAddress {
         id
         attention

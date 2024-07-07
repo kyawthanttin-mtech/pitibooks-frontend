@@ -10,6 +10,7 @@ import { ReactComponent as CollapseOutlined } from "../assets/icons/CollapseOutl
 import { ReactComponent as ShareOutlined } from "../assets/icons/ShareOutlined.svg";
 import { PeriodDropdown } from "../components";
 import { FormattedMessage } from "react-intl";
+import { pdf } from "@react-pdf/renderer";
 
 const ReportHeader = ({
   onCollapseClick,
@@ -26,6 +27,8 @@ const ReportHeader = ({
   currentReport,
   setCollapsed,
   collapsed,
+  PDFComponent,
+  selectedRecord,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +37,24 @@ const ReportHeader = ({
   const handleNavigate = () => {
     navigate("/reports");
   };
+
+  // const handleExportAsClick = async () => {
+  //   if (!PDFComponent) {
+  //     console.error("No PDF component provided");
+  //     return;
+  //   }
+
+  //   const pdfDoc = <PDFComponent selectedRecord={selectedRecord} />;
+  //   const blob = await pdf(pdfDoc).toBlob();
+  //   const blobUrl = URL.createObjectURL(blob);
+
+  //   const newTab = window.open(blobUrl, "_blank");
+  //   if (newTab) {
+  //     newTab.focus();
+  //   } else {
+  //     alert("Please allow popups for this website");
+  //   }
+  // };
 
   return (
     <div className="page-header">

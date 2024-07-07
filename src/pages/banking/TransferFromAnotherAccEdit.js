@@ -55,12 +55,18 @@ const TransferFromAnotherAccEdit = ({
       if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
         fromAccountCurrency = business.baseCurrency;
       }
+      const selectedCurrencyId = form.getFieldValue("currencyId");
+      let isIncluded = false;
       let newCurrencies = [toAccountCurrency];
+      if (selectedCurrencyId === toAccountCurrency.id) isIncluded = true;
       if (toAccountCurrency.id !== fromAccountCurrency.id) {
+        if (selectedCurrencyId === fromAccountCurrency.id) isIncluded = true;
         newCurrencies.push(fromAccountCurrency);
       }
       setCurrencies(newCurrencies);
-      form.setFieldValue("currencyId", null);
+      if (!isIncluded) {
+        form.setFieldValue("currencyId", null);
+      }
     },
     [
       allAccounts,
@@ -120,7 +126,7 @@ const TransferFromAnotherAccEdit = ({
 
       const input = {
         ...values,
-        transactionType: "TransferFromAnotherAccounts",
+        transactionType: "AccountTransfer",
         // isMoneyIn: true,
         documents: fileUrls,
       };
@@ -426,6 +432,7 @@ const TransferFromAnotherAccEdit = ({
       <Divider />
       <UploadAttachment
         onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+        files={selectedRecord?.documents}
       />
     </Form>
   );

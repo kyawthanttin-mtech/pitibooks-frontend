@@ -18,17 +18,17 @@ import {
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
-  PaperClipOutlined,
   CloseOutlined,
   EditOutlined,
   FilePdfOutlined,
-  CaretDownFilled,
-  PrinterOutlined,
+  HistoryOutlined,
   // CaretRightFilled,
 } from "@ant-design/icons";
 import { useHistoryState } from "../../utils/HelperFunctions";
 import {
   AttachFiles,
+  HistoryColumn,
+  PDFPreviewModal,
   PaginatedSelectionTable,
   SearchCriteriaDisplay,
   SupplierPaymentTemplate,
@@ -47,6 +47,7 @@ import {
 import { useMutation, useReadQuery } from "@apollo/client";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
+import { PaymentMadePDF } from "../../components/pdfs-and-templates";
 const { GET_PAGINATE_SUPPLIER_PAYMENT } = SupplierPaymentQueries;
 const { DELETE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
 
@@ -111,6 +112,7 @@ const PaymentsMade = () => {
     allBranchesQueryRef,
     allWarehousesQueryRef,
     allAccountsQueryRef,
+    business,
   } = useOutletContext();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
     "supplierPaymentSearchCriteria",
@@ -120,6 +122,8 @@ const PaymentsMade = () => {
     "supplierPaymentCurrentPage",
     1
   );
+  const [pdfModalOpen, setPDFModalOpen] = useState(false);
+  const [hisColumnOpen, setHisColumnOpen] = useState(false);
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -565,6 +569,9 @@ const PaymentsMade = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
+      <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
+        <PaymentMadePDF selectedRecord={selectedRecord} business={business} />
+      </PDFPreviewModal>
       {contextHolder}
       <div className={`${selectedRecord && "page-with-column"}`}>
         <div>
@@ -703,6 +710,20 @@ const PaymentsMade = () => {
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
                 />
+                <div style={{ borderRight: "1px solid var(--border-color)" }}>
+                  <Button
+                    type="text"
+                    icon={<HistoryOutlined />}
+                    onClick={setHisColumnOpen}
+                  >
+                    <span>
+                      <FormattedMessage
+                        id="button.History"
+                        defaultMessage="Payment History"
+                      />
+                    </span>
+                  </Button>
+                </div>
                 <div>
                   <Button
                     icon={<CloseOutlined />}
@@ -723,26 +744,13 @@ const PaymentsMade = () => {
                 <EditOutlined />
                 Edit
               </div>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      icon: <FilePdfOutlined />,
-                      key: "0",
-                    },
-                    {
-                      icon: <PrinterOutlined />,
-                      key: "1",
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <div>
-                  <FilePdfOutlined />
-                  PDF/Print <CaretDownFilled />
-                </div>
-              </Dropdown>
+              <div onClick={() => setPDFModalOpen(true)}>
+                <FilePdfOutlined />
+                <FormattedMessage
+                  id="button.pdf/print"
+                  defaultMessage="PDF/Print"
+                />
+              </div>
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
@@ -768,6 +776,13 @@ const PaymentsMade = () => {
             <div className="content-column-full-row">
               <SupplierPaymentTemplate selectedRecord={selectedRecord} />
             </div>
+            <HistoryColumn
+              open={hisColumnOpen}
+              setOpen={setHisColumnOpen}
+              referenceType="supplier_payments"
+              referenceId={selectedRecord?.id}
+              name="Payment"
+            />
           </div>
         )}
       </div>

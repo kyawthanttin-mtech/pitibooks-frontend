@@ -512,6 +512,64 @@ const GET_PRODUCT_SALES_REPORT = gql`
   }
 `;
 
+const GET_AR_AGING_SUMMARY_REPORT = gql`
+  query GetARAgingSummaryReport($currentDate: Time!, $branchId: Int) {
+    getARAgingSummaryReport(currentDate: $currentDate, branchId: $branchId) {
+      customerName
+      customerId
+      current
+      int1to15
+      int16to30
+      int31to45
+      int46plus
+      invoiceCount
+      currencySymbol
+      total
+      totalFcy
+    }
+  }
+`;
+
+const GET_STOCK_SUMMARY_REPORT = gql`
+  query GetStockSummaryReport(
+    $fromDate: Time!
+    $toDate: Time!
+    $warehouseId: Int
+  ) {
+    getStockSummaryReport(
+      fromDate: $fromDate
+      toDate: $toDate
+      warehouseId: $warehouseId
+    ) {
+      productName
+      productSku
+      openingStock
+      qtyIn
+      qtyOut
+      closingStock
+    }
+  }
+`;
+
+const GET_AP_AGING_SUMMARY_REPORT = gql`
+query GetAPAgingSummaryReport($currentDate: Time!, $branchId: Int) {
+    getAPAgingSummaryReport(currentDate: $currentDate, branchId: $branchId) {
+        supplierId
+        supplierName
+        current
+        int31to45
+        int1to15
+        int16to30
+        int46plus
+        currencySymbol
+        total
+        totalFcy
+        billCount
+    }
+}
+
+`
+
 const ReportQueries = {
   GET_PAGINATED_JOURNAL_REPORTS,
   GET_ACCOUNT_TYPE_SUMMARY_REPORT,
@@ -529,6 +587,9 @@ const ReportQueries = {
   GET_SALES_BY_PRODUCT_REPORT,
   GET_INVENTORY_SUMMARY_REPORT,
   GET_PRODUCT_SALES_REPORT,
+  GET_AR_AGING_SUMMARY_REPORT,
+  GET_STOCK_SUMMARY_REPORT,
+  GET_AP_AGING_SUMMARY_REPORT
 };
 
 export default ReportQueries;

@@ -46,6 +46,7 @@ import {
   ChartOfAccounts,
   ManualJournalsNew,
   ManualJournalsEdit,
+  TransactionLocking,
 } from "./pages/accountant";
 import {
   AccountTransactions,
@@ -75,6 +76,7 @@ import {
   SalesOrderDetails,
   CustomerBalances,
   CustomerBalanceSummary,
+  ARAgingSummary,
 } from "./pages/reports";
 import {
   Profile,
@@ -117,6 +119,7 @@ import PaymentsMadeEdit from "./pages/purchases/PaymentsMadeEdit";
 import PaymentsReceivedNew from "./pages/sales/PaymentsReceivedNew";
 import PaymentsReceivedEdit from "./pages/sales/PaymentsReceivedEdit";
 import { AllTransactions } from "./pages/banking";
+import BillPDF from "./components/pdfs-and-templates/purchases/BillPDF";
 
 if (process.env.NODE_ENV !== "production") {
   // Adds messages only in a dev environment
@@ -348,6 +351,7 @@ const router = createHashRouter([
         path: "supplierCredits/edit",
         Component: SupplierCreditsEdit,
       },
+
       //Accountant
       {
         path: "manualJournals",
@@ -364,6 +368,10 @@ const router = createHashRouter([
       {
         path: "chartOfAccounts",
         Component: ChartOfAccounts,
+      },
+      {
+        path: "transactionLocking",
+        Component: TransactionLocking,
       },
       //Reports
       {
@@ -474,6 +482,10 @@ const router = createHashRouter([
         path: "reports/customerBalanceSummary",
         Component: CustomerBalanceSummary,
       },
+      {
+        path: "reports/arAgingSummary",
+        Component: ARAgingSummary,
+      },
       //Settings
       {
         path: "profile",
@@ -549,6 +561,11 @@ const router = createHashRouter([
       {
         path: "salesPersons",
         Component: SalesPersons,
+      },
+      //PDF
+      {
+        path: "billPDF",
+        Component: BillPDF,
       },
     ],
   },

@@ -7,7 +7,6 @@ const GET_ALL_CURRENCIES = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
       isActive
     }
   }
@@ -20,7 +19,6 @@ const GET_CURRENCIES = gql`
       symbol
       name
       decimalPlaces
-      exchangeRate
       isActive
     }
   }

@@ -395,11 +395,23 @@ const AttachFiles = ({ files, iconButton = false }) => {
           onOpenChange={handleOpenChange}
         >
           {iconButton ? (
-            <Button icon={<PaperClipOutlined />}>
-              {files?.length > 0 && files?.length}
-            </Button>
+            <Button
+              icon={
+                <span>
+                  <PaperClipOutlined
+                    style={{ color: "var(--primary-color)", fontSize: "16px" }}
+                  />
+                  {files?.length > 0 && files?.length}
+                </span>
+              }
+            ></Button>
           ) : (
-            <Button type="text" icon={<PaperClipOutlined />}>
+            <Button
+              type="text"
+              icon={
+                <PaperClipOutlined style={{ color: "var(--primary-color)" }} />
+              }
+            >
               <span>
                 {files
                   ? `${files.length} File${files.length > 1 ? "s" : ""}`

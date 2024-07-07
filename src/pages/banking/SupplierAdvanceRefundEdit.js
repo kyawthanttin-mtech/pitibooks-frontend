@@ -32,6 +32,7 @@ const SupplierAdvanceRefundEdit = ({
   allAccounts,
   accounts,
   bankingAccounts,
+  selectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
@@ -465,6 +466,7 @@ const SupplierAdvanceRefundEdit = ({
       <Divider />
       <UploadAttachment
         onCustomFileListChange={(customFileList) => setFileList(customFileList)}
+        files={selectedRecord?.documents}
       />
     </Form>
   );

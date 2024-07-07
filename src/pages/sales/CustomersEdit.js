@@ -289,14 +289,16 @@ const CustomersEdit = () => {
                       mobile
                       currency
                       customerTax
-                      openingBalance
                       customerPaymentTerms
                       customerPaymentTermsCustomDays
-                      contactPersons
-                      billingAddress
-                      shippingAddress
                       notes
                       exchangeRate
+                      openingBalanceBranchId
+                      openingBalance
+                      billingAddress
+                      shippingAddress
+                      contactPersons
+                      documents
                     }
                   `,
                 });
@@ -420,151 +422,260 @@ const CustomersEdit = () => {
         />
       </div>
       <div className="page-content page-content-with-padding page-content-with-form-buttons">
-        <Form initialValues={initialValues} form={form} onFinish={onFinish}>
-          <Form.Item
-            label={<FormattedMessage id="label.name" defaultMessage="Name" />}
-            name="name"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="label.name.required"
-                    defaultMessage="Enter the Name"
-                  />
-                ),
-              },
-            ]}
-          >
-            <Input maxLength={100} />
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.email" defaultMessage="Email" />}
-            name="email"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input maxLength={100} />
-          </Form.Item>
-          <Form.Item
-            label={<FormattedMessage id="label.phone" defaultMessage="Phone" />}
-            name="phone"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input maxLength={20} />
-          </Form.Item>
-          <Form.Item
-            label={
-              <FormattedMessage id="label.mobile" defaultMessage="Mobile" />
-            }
-            name="mobile"
-            labelAlign="left"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Input maxLength={20} />
-          </Form.Item>
-          <div className="page-actions-bar page-actions-bar-margin">
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="page-actions-btn"
-              //   loading={loading}
+        <div className="page-form-wrapper">
+          <Form initialValues={initialValues} form={form} onFinish={onFinish}>
+            <Form.Item
+              label={<FormattedMessage id="label.name" defaultMessage="Name" />}
+              name="name"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.name.required"
+                      defaultMessage="Enter the Name"
+                    />
+                  ),
+                },
+              ]}
             >
-              Save
-            </Button>
-            <Button
-              className="page-actions-btn"
-              onClick={() =>
-                navigate(from, { state: location.state, replace: true })
+              <Input maxLength={100} />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.email" defaultMessage="Email" />
               }
+              name="email"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
             >
-              {<FormattedMessage id="button.cancel" defaultMessage="Cancel" />}
-            </Button>
-          </div>
-          <Tabs>
-            <Tabs.TabPane
-              tab={
-                <FormattedMessage
-                  id="label.otherDetails"
-                  defaultMessage="Other Details"
-                />
+              <Input maxLength={100} />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.phone" defaultMessage="Phone" />
               }
-              key="otherDetails"
-              style={{ paddingTop: "2rem" }}
+              name="phone"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
             >
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.currency"
-                    defaultMessage="Currency"
-                  />
-                }
-                name="currency"
-                labelAlign="left"
-                labelCol={{ span: 5 }}
-                wrapperCol={{ span: 8 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.currency.required"
-                        defaultMessage="Select the Currency"
-                      />
-                    ),
-                  },
-                ]}
+              <Input maxLength={20} />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage id="label.mobile" defaultMessage="Mobile" />
+              }
+              name="mobile"
+              labelAlign="left"
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+            >
+              <Input maxLength={20} />
+            </Form.Item>
+            <div className="page-actions-bar page-actions-bar-margin">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="page-actions-btn"
+                //   loading={loading}
               >
-                <Select allowClear showSearch optionFilterProp="label">
-                  {currencies?.map((currency) => (
-                    <Select.Option
-                      key={currency.id}
-                      value={currency.id}
-                      label={currency.name + "" + currency.symbol}
-                    >
-                      {currency.name} ({currency.symbol})
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                noStyle
-                shouldUpdate={(prevValues, currentValues) =>
-                  prevValues.currency !== currentValues.currency
+                Save
+              </Button>
+              <Button
+                className="page-actions-btn"
+                onClick={() =>
+                  navigate(from, { state: location.state, replace: true })
                 }
               >
-                {({ getFieldValue }) =>
-                  getFieldValue("currency") &&
-                  getFieldValue("currency") !== business.baseCurrency.id ? (
+                {
+                  <FormattedMessage
+                    id="button.cancel"
+                    defaultMessage="Cancel"
+                  />
+                }
+              </Button>
+            </div>
+            <Tabs>
+              <Tabs.TabPane
+                tab={
+                  <FormattedMessage
+                    id="label.otherDetails"
+                    defaultMessage="Other Details"
+                  />
+                }
+                key="otherDetails"
+                style={{ paddingTop: "2rem" }}
+              >
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.currency"
+                      defaultMessage="Currency"
+                    />
+                  }
+                  name="currency"
+                  labelAlign="left"
+                  labelCol={{ span: 5 }}
+                  wrapperCol={{ span: 8 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.currency.required"
+                          defaultMessage="Select the Currency"
+                        />
+                      ),
+                    },
+                  ]}
+                >
+                  <Select allowClear showSearch optionFilterProp="label">
+                    {currencies?.map((currency) => (
+                      <Select.Option
+                        key={currency.id}
+                        value={currency.id}
+                        label={currency.name + "" + currency.symbol}
+                      >
+                        {currency.name} ({currency.symbol})
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.currency !== currentValues.currency
+                  }
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue("currency") &&
+                    getFieldValue("currency") !== business.baseCurrency.id ? (
+                      <Form.Item
+                        label={
+                          <FormattedMessage
+                            id="label.exchangeRate"
+                            defaultMessage="Exchange Rate"
+                          />
+                        }
+                        name="exchangeRate"
+                        labelAlign="left"
+                        labelCol={{ span: 5 }}
+                        wrapperCol={{ span: 5 }}
+                        rules={[
+                          {
+                            required: true,
+                            message: (
+                              <FormattedMessage
+                                id="label.exchangeRate.required"
+                                defaultMessage="Enter the Exchange Rate"
+                              />
+                            ),
+                          },
+
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (isNaN(value) || value.length > 20) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
+                        <Input />
+                      </Form.Item>
+                    ) : null
+                  }
+                </Form.Item>
+                <Form.Item
+                  label={
+                    <FormattedMessage id="label.tax" defaultMessage="Tax" />
+                  }
+                  name="tax"
+                  labelAlign="left"
+                  labelCol={{ span: 5 }}
+                  wrapperCol={{ span: 8 }}
+                  // rules={[
+                  //   {
+                  //     required: true,
+                  //     message: (
+                  //       <FormattedMessage
+                  //         id="label.tax.required"
+                  //         defaultMessage="Select the Tax"
+                  //       />
+                  //     ),
+                  //   },
+                  // ]}
+                >
+                  <Select
+                    showSearch
+                    allowClear
+                    loading={loading}
+                    optionFilterProp="label"
+                  >
+                    {allTax?.map((taxGroup) => (
+                      <Select.OptGroup
+                        key={taxGroup.title}
+                        label={taxGroup.title}
+                      >
+                        {taxGroup.taxes.map((tax) => (
+                          <Select.Option
+                            key={tax.id}
+                            value={tax.id}
+                            label={tax.name}
+                          >
+                            {tax.name}
+                          </Select.Option>
+                        ))}
+                      </Select.OptGroup>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Row>
+                  <Col span={12}>
                     <Form.Item
                       label={
                         <FormattedMessage
-                          id="label.exchangeRate"
-                          defaultMessage="Exchange Rate"
+                          id="label.openingBalance"
+                          defaultMessage="Opening Balance"
                         />
                       }
-                      name="exchangeRate"
+                      name="openingBalanceBranch"
                       labelAlign="left"
-                      labelCol={{ span: 5 }}
-                      wrapperCol={{ span: 5 }}
+                      labelCol={{ span: 10 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Select allowClear showSearch optionFilterProp="label">
+                        {branches?.map((branch) => (
+                          <Select.Option
+                            key={branch.id}
+                            value={branch.id}
+                            label={branch.name}
+                          >
+                            {branch.name}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <Form.Item
+                      name="openingBalance"
+                      labelAlign="left"
                       rules={[
-                        {
-                          required: true,
-                          message: (
-                            <FormattedMessage
-                              id="label.exchangeRate.required"
-                              defaultMessage="Enter the Exchange Rate"
-                            />
-                          ),
-                        },
-
                         () => ({
                           validator(_, value) {
                             if (!value) {
@@ -585,688 +696,603 @@ const CustomersEdit = () => {
                     >
                       <Input />
                     </Form.Item>
-                  ) : null
-                }
-              </Form.Item>
-              <Form.Item
-                label={<FormattedMessage id="label.tax" defaultMessage="Tax" />}
-                name="tax"
-                labelAlign="left"
-                labelCol={{ span: 5 }}
-                wrapperCol={{ span: 8 }}
-                // rules={[
-                //   {
-                //     required: true,
-                //     message: (
-                //       <FormattedMessage
-                //         id="label.tax.required"
-                //         defaultMessage="Select the Tax"
-                //       />
-                //     ),
-                //   },
-                // ]}
-              >
-                <Select
-                  showSearch
-                  allowClear
-                  loading={loading}
-                  optionFilterProp="label"
+                  </Col>
+                </Row>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.paymentTerms"
+                      defaultMessage="Payment Terms"
+                    />
+                  }
+                  name="paymentTerms"
+                  labelAlign="left"
+                  labelCol={{ span: 5 }}
+                  wrapperCol={{ span: 8 }}
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.paymentTerms.required"
+                          defaultMessage="Select the Payment Terms"
+                        />
+                      ),
+                    },
+                  ]}
                 >
-                  {allTax?.map((taxGroup) => (
-                    <Select.OptGroup
-                      key={taxGroup.title}
-                      label={taxGroup.title}
+                  <Select
+                    showSearch
+                    allowClear
+                    //   loading={loading}
+                    optionFilterProp="label"
+                  >
+                    {paymentTerms?.map((p) => (
+                      <Select.Option key={p} value={p} label={p}>
+                        {p.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.paymentTerms !== currentValues.paymentTerms
+                  }
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue("paymentTerms") &&
+                    getFieldValue("paymentTerms") === "Custom" ? (
+                      <Form.Item
+                        label={
+                          <FormattedMessage
+                            id="label.customDays"
+                            defaultMessage="Custom Day(s)"
+                          />
+                        }
+                        name="customDays"
+                        labelAlign="left"
+                        labelCol={{ span: 5 }}
+                        wrapperCol={{ span: 5 }}
+                        rules={[
+                          {
+                            required: true,
+                            message: (
+                              <FormattedMessage
+                                id="label.customDays.required"
+                                defaultMessage="Enter the Custom Day(s)"
+                              />
+                            ),
+                          },
+
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 3 ||
+                                !Number.isInteger(Number(value)) ||
+                                Number(value) < 1
+                              ) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
+                        <Input />
+                      </Form.Item>
+                    ) : null
+                  }
+                </Form.Item>
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.documents"
+                      defaultMessage="Documents"
+                    />
+                  }
+                  name="documents"
+                  labelAlign="left"
+                  labelCol={{ span: 5 }}
+                  wrapperCol={{ span: 8 }}
+                >
+                  <div className="attachment-upload">
+                    <Button
+                      type="dashed"
+                      icon={<UploadOutlined />}
+                      className="attachment-upload-button"
                     >
-                      {taxGroup.taxes.map((tax) => (
-                        <Select.Option
-                          key={tax.id}
-                          value={tax.id}
-                          label={tax.name}
-                        >
-                          {tax.name}
-                        </Select.Option>
-                      ))}
-                    </Select.OptGroup>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Row>
-                <Col span={12}>
-                  <Form.Item
-                    label={
                       <FormattedMessage
-                        id="label.openingBalance"
-                        defaultMessage="Opening Balance"
+                        id="button.uploadFile"
+                        defaultMessage="Upload File"
                       />
-                    }
-                    name="openingBalanceBranch"
-                    labelAlign="left"
-                    labelCol={{ span: 10 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Select allowClear showSearch optionFilterProp="label">
-                      {branches?.map((branch) => (
-                        <Select.Option
-                          key={branch.id}
-                          value={branch.id}
-                          label={branch.name}
-                        >
-                          {branch.name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col>
-                  <Form.Item
-                    name="openingBalance"
-                    labelAlign="left"
-                    rules={[
-                      () => ({
-                        validator(_, value) {
-                          if (!value) {
-                            return Promise.resolve();
-                          } else if (isNaN(value) || value.length > 20) {
-                            return Promise.reject(
-                              intl.formatMessage({
-                                id: "validation.invalidInput",
-                                defaultMessage: "Invalid Input",
-                              })
-                            );
-                          } else {
-                            return Promise.resolve();
-                          }
-                        },
-                      }),
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Form.Item
-                label={
+                    </Button>
+                    <p>
+                      <FormattedMessage
+                        id="label.uploadLimit"
+                        defaultMessage="You can upload a maximum of 5 files, 5MB each"
+                      />
+                    </p>
+                  </div>
+                </Form.Item>
+              </Tabs.TabPane>
+              <Tabs.TabPane
+                tab={
                   <FormattedMessage
-                    id="label.paymentTerms"
-                    defaultMessage="Payment Terms"
+                    id="label.address"
+                    defaultMessage="Address"
                   />
                 }
-                name="paymentTerms"
-                labelAlign="left"
-                labelCol={{ span: 5 }}
-                wrapperCol={{ span: 8 }}
-                rules={[
-                  {
-                    required: true,
-                    message: (
+                key="address"
+                style={{ paddingTop: "2rem" }}
+              >
+                <Row>
+                  <Col span={12}>
+                    <p style={{ fontSize: "1rem", marginTop: 0 }}>
                       <FormattedMessage
-                        id="label.paymentTerms.required"
-                        defaultMessage="Select the Payment Terms"
+                        id="label.billingAddress"
+                        defaultMessage="Billing Address"
                       />
-                    ),
-                  },
-                ]}
-              >
-                <Select
-                  showSearch
-                  allowClear
-                  //   loading={loading}
-                  optionFilterProp="label"
-                >
-                  {paymentTerms?.map((p) => (
-                    <Select.Option key={p} value={p} label={p}>
-                      {p.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                noStyle
-                shouldUpdate={(prevValues, currentValues) =>
-                  prevValues.paymentTerms !== currentValues.paymentTerms
-                }
-              >
-                {({ getFieldValue }) =>
-                  getFieldValue("paymentTerms") &&
-                  getFieldValue("paymentTerms") === "Custom" ? (
+                    </p>
                     <Form.Item
                       label={
                         <FormattedMessage
-                          id="label.customDays"
-                          defaultMessage="Custom Day(s)"
+                          id="label.attention"
+                          defaultMessage="Attention"
                         />
                       }
-                      name="customDays"
+                      name="b_attention"
                       labelAlign="left"
-                      labelCol={{ span: 5 }}
-                      wrapperCol={{ span: 5 }}
-                      rules={[
-                        {
-                          required: true,
-                          message: (
-                            <FormattedMessage
-                              id="label.customDays.required"
-                              defaultMessage="Enter the Custom Day(s)"
-                            />
-                          ),
-                        },
-
-                        () => ({
-                          validator(_, value) {
-                            if (!value) {
-                              return Promise.resolve();
-                            } else if (
-                              isNaN(value) ||
-                              value.length > 3 ||
-                              !Number.isInteger(Number(value)) ||
-                              Number(value) < 1
-                            ) {
-                              return Promise.reject(
-                                intl.formatMessage({
-                                  id: "validation.invalidInput",
-                                  defaultMessage: "Invalid Input",
-                                })
-                              );
-                            } else {
-                              return Promise.resolve();
-                            }
-                          },
-                        }),
-                      ]}
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
                     >
-                      <Input />
+                      <Input maxLength={100} />
                     </Form.Item>
-                  ) : null
-                }
-              </Form.Item>
-              <Form.Item
-                label={
+                    <Form.Item
+                      label="Country"
+                      name="b_country"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Select>
+                        <Select.Option value="Myanmar">Myanmar</Select.Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.state"
+                          defaultMessage="State"
+                        />
+                      }
+                      name="b_stateId"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Select
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        onChange={(value) => {
+                          setSelectedBAState(
+                            states?.find((state) => state.id === value)
+                          );
+                          form.setFieldValue("b_townshipId", null);
+                        }}
+                      >
+                        {states?.map((state) => (
+                          <Select.Option
+                            key={state.id}
+                            value={state.id}
+                            label={state.stateNameEn}
+                          >
+                            {state.stateNameEn}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.city"
+                          defaultMessage="City"
+                        />
+                      }
+                      name="b_city"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={100} />
+                    </Form.Item>
+                    <Form.Item
+                      noStyle
+                      shouldUpdate={(prevValues, currentValues) =>
+                        prevValues.b_stateId !== currentValues.b_stateId
+                      }
+                    >
+                      {({ getFieldValue }) =>
+                        getFieldValue("b_stateId") ? (
+                          <Form.Item
+                            label={
+                              <FormattedMessage
+                                id="label.township"
+                                defaultMessage="Township"
+                              />
+                            }
+                            name="b_townshipId"
+                            labelAlign="left"
+                            labelCol={{ span: 8 }}
+                            wrapperCol={{ span: 12 }}
+                          >
+                            <Select
+                              loading={loading}
+                              allowClear
+                              showSearch
+                              optionFilterProp="label"
+                            >
+                              {townships?.map((township) => {
+                                if (
+                                  township.stateCode === selectedBAState?.code
+                                ) {
+                                  return (
+                                    <Select.Option
+                                      key={township.id}
+                                      value={township.id}
+                                      label={township.townshipNameEn}
+                                    >
+                                      {township.townshipNameEn}
+                                    </Select.Option>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </Select>
+                          </Form.Item>
+                        ) : null
+                      }
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.address"
+                          defaultMessage="Address"
+                        />
+                      }
+                      name="b_address"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input.TextArea maxLength={1000} rows={4} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.email"
+                          defaultMessage="Email"
+                        />
+                      }
+                      name="b_email"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={100} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.phone"
+                          defaultMessage="Phone"
+                        />
+                      }
+                      name="b_phone"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={20} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.mobile"
+                          defaultMessage="Mobile"
+                        />
+                      }
+                      name="b_mobile"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={20} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <p style={{ fontSize: "1rem", marginTop: 0 }}>
+                      <FormattedMessage
+                        id="label.shippingAddress"
+                        defaultMessage="Shipping Address"
+                      />
+                      <Button
+                        type="link"
+                        onClick={() => {
+                          const values = form.getFieldsValue();
+                          form.setFieldValue(
+                            "s_attention",
+                            values["b_attention"]
+                          );
+                          form.setFieldValue("s_country", values["b_country"]);
+                          form.setFieldValue("s_stateId", values["b_stateId"]);
+                          form.setFieldValue("s_city", values["b_city"]);
+                          form.setFieldValue(
+                            "s_townshipId",
+                            values["b_townshipId"]
+                          );
+                          form.setFieldValue("s_address", values["b_address"]);
+                          form.setFieldValue("s_email", values["b_email"]);
+                          form.setFieldValue("s_phone", values["b_phone"]);
+                          form.setFieldValue("s_mobile", values["b_mobile"]);
+                        }}
+                      >
+                        <FormattedMessage
+                          id="button.copyBillingAddress"
+                          defaultMessage="Copy Billing Address"
+                        />
+                      </Button>
+                    </p>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.attention"
+                          defaultMessage="Attention"
+                        />
+                      }
+                      name="s_attention"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={100} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.country"
+                          defaultMessage="Country"
+                        />
+                      }
+                      name="s_country"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Select>
+                        <Select.Option value="Myanmar">Myanmar</Select.Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.state"
+                          defaultMessage="State"
+                        />
+                      }
+                      name="s_stateId"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Select
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        onChange={(value) => {
+                          setSelectedSAState(
+                            states?.find((state) => state.id === value)
+                          );
+                          form.setFieldValue("s_townshipId", null);
+                        }}
+                      >
+                        {states?.map((state) => (
+                          <Select.Option
+                            key={state.id}
+                            value={state.id}
+                            label={state.stateNameEn}
+                          >
+                            {state.stateNameEn}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.city"
+                          defaultMessage="City"
+                        />
+                      }
+                      name="s_city"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={100} />
+                    </Form.Item>
+                    <Form.Item
+                      noStyle
+                      shouldUpdate={(prevValues, currentValues) =>
+                        prevValues.s_stateId !== currentValues.s_stateId
+                      }
+                    >
+                      {({ getFieldValue }) =>
+                        getFieldValue("s_stateId") ? (
+                          <Form.Item
+                            label={
+                              <FormattedMessage
+                                id="label.township"
+                                defaultMessage="Township"
+                              />
+                            }
+                            name="s_townshipId"
+                            labelAlign="left"
+                            labelCol={{ span: 8 }}
+                            wrapperCol={{ span: 12 }}
+                          >
+                            <Select
+                              loading={loading}
+                              allowClear
+                              showSearch
+                              optionFilterProp="label"
+                            >
+                              {townships?.map((township) => {
+                                if (
+                                  township.stateCode === selectedSAState?.code
+                                ) {
+                                  return (
+                                    <Select.Option
+                                      key={township.id}
+                                      value={township.id}
+                                      label={township.townshipNameEn}
+                                    >
+                                      {township.townshipNameEn}
+                                    </Select.Option>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </Select>
+                          </Form.Item>
+                        ) : null
+                      }
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.address"
+                          defaultMessage="Address"
+                        />
+                      }
+                      name="s_address"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input.TextArea maxLength={1000} rows={4} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.email"
+                          defaultMessage="Email"
+                        />
+                      }
+                      name="s_email"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={100} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.phone"
+                          defaultMessage="Phone"
+                        />
+                      }
+                      name="s_phone"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={20} />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.mobile"
+                          defaultMessage="Mobile"
+                        />
+                      }
+                      name="s_mobile"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                    >
+                      <Input maxLength={20} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Tabs.TabPane>
+              <Tabs.TabPane
+                tab={
                   <FormattedMessage
-                    id="label.documents"
-                    defaultMessage="Documents"
+                    id="label.contactPersons"
+                    defaultMessage="Contact Persons"
                   />
                 }
-                name="documents"
-                labelAlign="left"
-                labelCol={{ span: 5 }}
-                wrapperCol={{ span: 8 }}
+                key="contactPersons"
+                style={{ paddingTop: "2rem" }}
               >
-                <div className="attachment-upload">
-                  <Button
-                    type="dashed"
-                    icon={<UploadOutlined />}
-                    className="attachment-upload-button"
-                  >
-                    <FormattedMessage
-                      id="button.uploadFile"
-                      defaultMessage="Upload File"
-                    />
-                  </Button>
-                  <p>
-                    <FormattedMessage
-                      id="label.uploadLimit"
-                      defaultMessage="You can upload a maximum of 5 files, 5MB each"
-                    />
-                  </p>
-                </div>
-              </Form.Item>
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <FormattedMessage id="label.address" defaultMessage="Address" />
-              }
-              key="address"
-              style={{ paddingTop: "2rem" }}
-            >
-              <Row>
-                <Col span={12}>
-                  <p style={{ fontSize: "1rem", marginTop: 0 }}>
-                    <FormattedMessage
-                      id="label.billingAddress"
-                      defaultMessage="Billing Address"
-                    />
-                  </p>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.attention"
-                        defaultMessage="Attention"
-                      />
-                    }
-                    name="b_attention"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    label="Country"
-                    name="b_country"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Select>
-                      <Select.Option value="Myanmar">Myanmar</Select.Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.state"
-                        defaultMessage="State"
-                      />
-                    }
-                    name="b_stateId"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Select
-                      allowClear
-                      showSearch
-                      optionFilterProp="label"
-                      onChange={(value) => {
-                        setSelectedBAState(
-                          states?.find((state) => state.id === value)
-                        );
-                        form.setFieldValue("b_townshipId", null);
-                      }}
-                    >
-                      {states?.map((state) => (
-                        <Select.Option
-                          key={state.id}
-                          value={state.id}
-                          label={state.stateNameEn}
-                        >
-                          {state.stateNameEn}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage id="label.city" defaultMessage="City" />
-                    }
-                    name="b_city"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    noStyle
-                    shouldUpdate={(prevValues, currentValues) =>
-                      prevValues.b_stateId !== currentValues.b_stateId
-                    }
-                  >
-                    {({ getFieldValue }) =>
-                      getFieldValue("b_stateId") ? (
-                        <Form.Item
-                          label={
-                            <FormattedMessage
-                              id="label.township"
-                              defaultMessage="Township"
-                            />
-                          }
-                          name="b_townshipId"
-                          labelAlign="left"
-                          labelCol={{ span: 8 }}
-                          wrapperCol={{ span: 12 }}
-                        >
-                          <Select
-                            loading={loading}
-                            allowClear
-                            showSearch
-                            optionFilterProp="label"
-                          >
-                            {townships?.map((township) => {
-                              if (
-                                township.stateCode === selectedBAState?.code
-                              ) {
-                                return (
-                                  <Select.Option
-                                    key={township.id}
-                                    value={township.id}
-                                    label={township.townshipNameEn}
-                                  >
-                                    {township.townshipNameEn}
-                                  </Select.Option>
-                                );
-                              }
-                              return null;
-                            })}
-                          </Select>
-                        </Form.Item>
-                      ) : null
-                    }
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.address"
-                        defaultMessage="Address"
-                      />
-                    }
-                    name="b_address"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input.TextArea maxLength={1000} rows={4} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.email"
-                        defaultMessage="Email"
-                      />
-                    }
-                    name="b_email"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.phone"
-                        defaultMessage="Phone"
-                      />
-                    }
-                    name="b_phone"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={20} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.mobile"
-                        defaultMessage="Mobile"
-                      />
-                    }
-                    name="b_mobile"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={20} />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <p style={{ fontSize: "1rem", marginTop: 0 }}>
-                    <FormattedMessage
-                      id="label.shippingAddress"
-                      defaultMessage="Shipping Address"
-                    />
-                    <Button
-                      type="link"
-                      onClick={() => {
-                        const values = form.getFieldsValue();
-                        form.setFieldValue(
-                          "s_attention",
-                          values["b_attention"]
-                        );
-                        form.setFieldValue("s_country", values["b_country"]);
-                        form.setFieldValue("s_stateId", values["b_stateId"]);
-                        form.setFieldValue("s_city", values["b_city"]);
-                        form.setFieldValue(
-                          "s_townshipId",
-                          values["b_townshipId"]
-                        );
-                        form.setFieldValue("s_address", values["b_address"]);
-                        form.setFieldValue("s_email", values["b_email"]);
-                        form.setFieldValue("s_phone", values["b_phone"]);
-                        form.setFieldValue("s_mobile", values["b_mobile"]);
-                      }}
-                    >
-                      <FormattedMessage
-                        id="button.copyBillingAddress"
-                        defaultMessage="Copy Billing Address"
-                      />
-                    </Button>
-                  </p>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.attention"
-                        defaultMessage="Attention"
-                      />
-                    }
-                    name="s_attention"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.country"
-                        defaultMessage="Country"
-                      />
-                    }
-                    name="s_country"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Select>
-                      <Select.Option value="Myanmar">Myanmar</Select.Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.state"
-                        defaultMessage="State"
-                      />
-                    }
-                    name="s_stateId"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Select
-                      allowClear
-                      showSearch
-                      optionFilterProp="label"
-                      onChange={(value) => {
-                        setSelectedSAState(
-                          states?.find((state) => state.id === value)
-                        );
-                        form.setFieldValue("s_townshipId", null);
-                      }}
-                    >
-                      {states?.map((state) => (
-                        <Select.Option
-                          key={state.id}
-                          value={state.id}
-                          label={state.stateNameEn}
-                        >
-                          {state.stateNameEn}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage id="label.city" defaultMessage="City" />
-                    }
-                    name="s_city"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    noStyle
-                    shouldUpdate={(prevValues, currentValues) =>
-                      prevValues.s_stateId !== currentValues.s_stateId
-                    }
-                  >
-                    {({ getFieldValue }) =>
-                      getFieldValue("s_stateId") ? (
-                        <Form.Item
-                          label={
-                            <FormattedMessage
-                              id="label.township"
-                              defaultMessage="Township"
-                            />
-                          }
-                          name="s_townshipId"
-                          labelAlign="left"
-                          labelCol={{ span: 8 }}
-                          wrapperCol={{ span: 12 }}
-                        >
-                          <Select
-                            loading={loading}
-                            allowClear
-                            showSearch
-                            optionFilterProp="label"
-                          >
-                            {townships?.map((township) => {
-                              if (
-                                township.stateCode === selectedSAState?.code
-                              ) {
-                                return (
-                                  <Select.Option
-                                    key={township.id}
-                                    value={township.id}
-                                    label={township.townshipNameEn}
-                                  >
-                                    {township.townshipNameEn}
-                                  </Select.Option>
-                                );
-                              }
-                              return null;
-                            })}
-                          </Select>
-                        </Form.Item>
-                      ) : null
-                    }
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.address"
-                        defaultMessage="Address"
-                      />
-                    }
-                    name="s_address"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input.TextArea maxLength={1000} rows={4} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.email"
-                        defaultMessage="Email"
-                      />
-                    }
-                    name="s_email"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={100} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.phone"
-                        defaultMessage="Phone"
-                      />
-                    }
-                    name="s_phone"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={20} />
-                  </Form.Item>
-                  <Form.Item
-                    label={
-                      <FormattedMessage
-                        id="label.mobile"
-                        defaultMessage="Mobile"
-                      />
-                    }
-                    name="s_mobile"
-                    labelAlign="left"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 12 }}
-                  >
-                    <Input maxLength={20} />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <FormattedMessage
-                  id="label.contactPersons"
-                  defaultMessage="Contact Persons"
-                />
-              }
-              key="contactPersons"
-              style={{ paddingTop: "2rem" }}
-            >
-              <Table
-                className="input-only-table"
-                pagination={false}
-                style={{ width: "95%" }}
-                dataSource={data}
-                columns={columns}
-                bordered={false}
-              ></Table>
-              <Button
-                onClick={handleAddRow}
-                className="add-row-button"
-                type="link"
-              >
-                <Space>
-                  <PlusCircleFilled className="add-row-icon" />
-                  <FormattedMessage
-                    id="button.addNewRow"
-                    defaultMessage="Add New Row"
-                  />
-                </Space>
-              </Button>
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
-              key="notes"
-              style={{ paddingTop: "2rem" }}
-            >
-              <div style={{ width: "100%" }}>
-                <label>
-                  <FormattedMessage id="label.notes" defaultMessage="Notes" />
-                </label>
-                <Form.Item
-                  name="notes"
-                  labelAlign="left"
-                  labelCol={{ span: 8 }}
-                  wrapperCol={{ span: 12 }}
+                <Table
+                  className="input-only-table"
+                  pagination={false}
+                  style={{ width: "95%" }}
+                  dataSource={data}
+                  columns={columns}
+                  bordered={false}
+                ></Table>
+                <Button
+                  onClick={handleAddRow}
+                  className="add-row-button"
+                  type="link"
                 >
-                  <Input.TextArea maxLength={1000} rows={4} />
-                </Form.Item>
-              </div>
-            </Tabs.TabPane>
-          </Tabs>
-        </Form>
+                  <Space>
+                    <PlusCircleFilled className="add-row-icon" />
+                    <FormattedMessage
+                      id="button.addNewRow"
+                      defaultMessage="Add New Row"
+                    />
+                  </Space>
+                </Button>
+              </Tabs.TabPane>
+              <Tabs.TabPane
+                tab={
+                  <FormattedMessage id="label.notes" defaultMessage="Notes" />
+                }
+                key="notes"
+                style={{ paddingTop: "2rem" }}
+              >
+                <div style={{ width: "100%" }}>
+                  <label>
+                    <FormattedMessage id="label.notes" defaultMessage="Notes" />
+                  </label>
+                  <Form.Item
+                    name="notes"
+                    labelAlign="left"
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 12 }}
+                  >
+                    <Input.TextArea maxLength={1000} rows={4} />
+                  </Form.Item>
+                </div>
+              </Tabs.TabPane>
+            </Tabs>
+          </Form>
+        </div>
       </div>
     </>
   );

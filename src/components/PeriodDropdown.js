@@ -13,6 +13,7 @@ const PeriodDropdown = ({
   setToDate,
   fiscalYear,
   onGenerateReport,
+  setIsButtonDisabled,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -105,9 +106,9 @@ const PeriodDropdown = ({
   const handlePeriodChange = (key) => {
     const selectedFilter = items.find((option) => option.key === key);
     setSelectedPeriod(selectedFilter);
-
     if (key !== "11") {
       setDropdownOpen(true);
+      setIsButtonDisabled(false);
     }
   };
 
@@ -136,6 +137,7 @@ const PeriodDropdown = ({
         setDropdownOpen(false);
       }
     }
+    setIsButtonDisabled(false);
   };
 
   // const handleGenerateReport = () => {
@@ -334,7 +336,7 @@ const PeriodDropdown = ({
                   {hasFromDate ? (
                     <DatePicker.RangePicker />
                   ) : (
-                    <DatePicker placeholder="End Date" />
+                    <DatePicker placeholder="Date" />
                   )}
                 </Form.Item>
                 <Button

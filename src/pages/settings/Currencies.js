@@ -9,7 +9,6 @@ import {
   Input,
   Select,
   Dropdown,
-  InputNumber,
 } from "antd";
 import {
   PlusOutlined,
@@ -159,7 +158,6 @@ const Currencies = () => {
       name: record.name,
       symbol: record.symbol,
       decimalPlaces: record.decimalPlaces,
-      exchangeRate: record.exchangeRate,
     });
 
     setEditModalOpen(true);
@@ -248,16 +246,6 @@ const Currencies = () => {
       title: <FormattedMessage id="label.symbol" defaultMessage="Symbol" />,
       dataIndex: "symbol",
       key: "symbol",
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="label.exchangeRate"
-          defaultMessage="Exchange Rate"
-        />
-      ),
-      dataIndex: "exchangeRate",
-      key: "exchangeRate",
     },
     {
       title: "",
@@ -402,31 +390,6 @@ const Currencies = () => {
           </Select.Option>
         </Select>
       </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.exchangeRate"
-            defaultMessage="Exchange Rate"
-          />
-        }
-        labelAlign="left"
-        name="exchangeRate"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.exchangeRate.required"
-                defaultMessage="Enter the Exchange Rate"
-              />
-            ),
-          },
-        ]}
-      >
-        <InputNumber min={0.001} />
-      </Form.Item>
     </Form>
   );
 
@@ -513,31 +476,6 @@ const Currencies = () => {
             3
           </Select.Option>
         </Select>
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.exchangeRate"
-            defaultMessage="Exchange Rate"
-          />
-        }
-        labelAlign="left"
-        name="exchangeRate"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 13 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.exchangeRate.required"
-                defaultMessage="Enter the Exchange Rate"
-              />
-            ),
-          },
-        ]}
-      >
-        <InputNumber min={0.001} />
       </Form.Item>
     </Form>
   );

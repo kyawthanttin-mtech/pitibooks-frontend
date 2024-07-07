@@ -46,8 +46,6 @@ const GET_PAGINATE_SUPPLIER = gql`
           supplierPaymentTerms
           supplierPaymentTermsCustomDays
           notes
-          prepaidCreditAmount
-          unusedCreditAmount
           billingAddress {
             id
             attention
@@ -127,7 +125,6 @@ const GET_PAGINATE_SUPPLIER = gql`
             currency {
               id
               decimalPlaces
-              exchangeRate
               name
               symbol
             }

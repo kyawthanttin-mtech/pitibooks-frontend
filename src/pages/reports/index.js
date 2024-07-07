@@ -27,6 +27,7 @@ import SalesOrderDetails from "./receivables/SalesOrderDetails";
 import CustomerBalances from "./receivables/CustomerBalances";
 import CustomerBalanceSummary from "./receivables/CustomerBalanceSummary";
 import ReportLayout from "./ReportLayout";
+import ARAgingSummary from "./receivables/ARAgingSummary";
 
 export {
   JournalReport,
@@ -58,4 +59,5 @@ export {
   CustomerBalances,
   CustomerBalanceSummary,
   ReportLayout,
+  ARAgingSummary,
 };

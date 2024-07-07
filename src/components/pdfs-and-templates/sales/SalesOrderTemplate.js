@@ -36,6 +36,15 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
               <tbody style={{ lineHeight: "1.5rem" }}>
                 <tr>
                   <td>
+                    {business?.logoUrl && (
+                      <div>
+                        <img
+                          className="business-logo"
+                          src={business?.logoUrl}
+                          alt="Logo"
+                        />
+                      </div>
+                    )}
                     <span
                       style={{
                         fontSize: "var(--detail-text)",
@@ -126,6 +135,51 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
                             </span>
                           </td>
                         </tr>
+                        {selectedRecord?.expectedShipmentDate && (
+                          <tr>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>Expected Shipment Date :</span>
+                            </td>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>
+                                {dayjs(
+                                  selectedRecord.expectedShipmentDate
+                                ).format(REPORT_DATE_FORMAT)}
+                              </span>
+                            </td>
+                          </tr>
+                        )}
+                        {selectedRecord?.deliveryMethod?.id > 0 && (
+                          <tr>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              <span>Delivery Method :</span>
+                            </td>
+                            <td
+                              className="text-align-right"
+                              style={{
+                                padding: "5px 10px 5px 0",
+                              }}
+                            >
+                              {selectedRecord?.deliveryMethod?.name}
+                            </td>
+                          </tr>
+                        )}
+
                         <tr>
                           <td
                             className="text-align-right"
@@ -133,7 +187,7 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>Notes :</span>
+                            <span>Payment Terms :</span>
                           </td>
                           <td
                             className="text-align-right"
@@ -141,7 +195,13 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
                               padding: "5px 10px 5px 0",
                             }}
                           >
-                            <span>{selectedRecord.notes}</span>
+                            {selectedRecord.orderPaymentTerms
+                              ?.split(/(?=[A-Z])/)
+                              .join(" ") === "Custom"
+                              ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
+                              : selectedRecord.orderPaymentTerms
+                                  ?.split(/(?=[A-Z])/)
+                                  .join(" ")}
                           </td>
                         </tr>
                       </tbody>
@@ -505,21 +565,30 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
             </div>
             <Divider />
             <Flex justify="end"></Flex>
-            <Space>
-              <span>Payment Terms :</span>
-              <span>
-                {selectedRecord.orderPaymentTerms
-                  ?.split(/(?=[A-Z])/)
-                  .join(" ") === "Custom"
-                  ? `${selectedRecord.orderPaymentTerms} - Due in ${selectedRecord.orderPaymentTermsCustomDays}day(s)`
-                  : selectedRecord.orderPaymentTerms
-                      ?.split(/(?=[A-Z])/)
-                      .join(" ")}
-              </span>
-            </Space>
           </div>
-
           <div style={{ clear: "both" }}></div>
+          {selectedRecord?.notes && (
+            <div
+              style={{
+                clear: "both",
+                paddingLeft: "3.3rem",
+                width: "100%",
+              }}
+            >
+              <label>Notes</label>
+              <br />
+              <p
+                style={{
+                  marginTop: "7px",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {selectedRecord?.notes}
+              </p>
+            </div>
+          )}
           <div
             className="template-footer"
             style={{

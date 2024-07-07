@@ -71,6 +71,7 @@ const OtherIncomeEdit = ({
             fromAccountId: selectedRecord.fromAccount?.id || null,
             toAccountId: selectedRecord.toAccount?.id || null,
             currencyId: selectedRecord.currency?.id || null,
+            exchangeRate: selectedRecord.exchangeRate || 0,
             amount: selectedRecord.amount,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
