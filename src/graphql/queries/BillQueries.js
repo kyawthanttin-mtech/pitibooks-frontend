@@ -36,6 +36,8 @@ const GET_PAGINATE_BILL = gql`
           supplier {
             id
             name
+            openingBalance
+            openingBalanceBranchId
           }
           branch {
             id
@@ -74,8 +76,12 @@ const GET_PAGINATE_BILL = gql`
             billNumber
             creditDate
             amount
-            createdAt
-            updatedAt
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
           }
           billTax {
             id

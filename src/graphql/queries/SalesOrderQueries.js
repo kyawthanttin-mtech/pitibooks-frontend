@@ -72,6 +72,10 @@ const GET_PAGINATE_SALES_ORDER = gql`
             batchNumber
             name
             description
+            detailAccount {
+              id
+              name
+            }
             detailQty
             detailUnitRate
             detailDiscount

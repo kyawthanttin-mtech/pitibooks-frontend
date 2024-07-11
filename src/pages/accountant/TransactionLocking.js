@@ -7,6 +7,7 @@ import {
   Button,
   DatePicker,
   Flex,
+  Input,
 } from "antd";
 import { useMutation } from "@apollo/client";
 import dayjs from "dayjs";
@@ -189,6 +190,35 @@ const TransactionLocking = () => {
                 format={REPORT_DATE_FORMAT}
               ></DatePicker>
             </Form.Item>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={24}>
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.reason"
+                    defaultMessage="Reason"
+                  />
+                }
+                name="reason"
+                labelAlign="left"
+                labelCol={{ span: 6 }}
+                wrapperCol={{ span: 6 }}
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.reason.required"
+                        defaultMessage="Enter the Reason"
+                      />
+                    ),
+                  },
+                ]}
+              >
+                <Input.TextArea maxLength={1000} rows="4"></Input.TextArea>
+              </Form.Item>
             </Col>
           </Row>
           {/* <br/>

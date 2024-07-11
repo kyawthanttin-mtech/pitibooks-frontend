@@ -118,7 +118,7 @@ const DepositToAnotherAccEdit = ({
 
       const input = {
         ...values,
-        transactionType: "AccountDeposit",
+        transactionType: "DepositToOtherAccounts",
         // isMoneyIn: false,
         documents: fileUrls,
       };
@@ -311,7 +311,7 @@ const DepositToAnotherAccEdit = ({
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -347,7 +347,7 @@ const DepositToAnotherAccEdit = ({
             validator(_, value) {
               if (!value) {
                 return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20) {
+              } else if (isNaN(value) || value.length > 20 || value < 0) {
                 return Promise.reject(
                   intl.formatMessage({
                     id: "validation.invalidInput",
@@ -378,7 +378,7 @@ const DepositToAnotherAccEdit = ({
             validator(_, value) {
               if (!value) {
                 return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20) {
+              } else if (isNaN(value) || value.length > 20 || value < 0) {
                 return Promise.reject(
                   intl.formatMessage({
                     id: "validation.invalidInput",

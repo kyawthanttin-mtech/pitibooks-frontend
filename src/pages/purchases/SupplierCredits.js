@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+/* eslint-disable react/style-prop-object */
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Space,
@@ -35,7 +36,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { SupplierCreditQueries, SupplierCreditMutations } from "../../graphql";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
   openErrorNotification,
   openSuccessMessage,
@@ -80,6 +81,13 @@ const confirmedActionItems = [
   },
 ];
 
+const closedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+];
+
 const SupplierCredits = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const {
@@ -88,6 +96,7 @@ const SupplierCredits = () => {
     allBranchesQueryRef,
     allWarehousesQueryRef,
     business,
+    allAccountsQueryRef,
   } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
@@ -112,6 +121,7 @@ const SupplierCredits = () => {
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
+  const { data: accountData } = useReadQuery(allAccountsQueryRef);
 
   const { refetch } = useQuery(GET_PAGINATE_SUPPLIER_CREDIT, {
     errorPolicy: "all",
@@ -170,6 +180,38 @@ const SupplierCredits = () => {
   const warehouses = useMemo(() => {
     return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
   }, [warehouseData]);
+
+  const cashBankAccounts = useMemo(() => {
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (account) =>
+          account.detailType === "Cash" || account.detailType === "Bank"
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
+  }, [accountData]);
+
+  const accountsPayable = useMemo(() => {
+    if (!accountData?.listAllAccount) return null;
+    const account = accountData.listAllAccount.filter(
+      (acc) => acc.detailType === "AccountsPayable"
+    );
+    return account;
+  }, [accountData]);
+
+  useEffect(() => {
+    if (selectedRecord && selectedRowIndex) {
+      setShowRefundForm(false);
+    }
+  }, [selectedRecord, selectedRowIndex]);
 
   const parseData = (data) => {
     let bills = [];
@@ -320,14 +362,29 @@ const SupplierCredits = () => {
       key: "supplierCreditTotalAmount",
       render: (text, record) => (
         <>
-          {record.currency?.symbol} {text}
+          {record.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.supplierCreditTotalAmount}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
         </>
       ),
     },
     {
-      title: "Balance",
-      dataIndex: "balance",
-      key: "balance",
+      title: "Balance Due",
+      dataIndex: "balanceDue",
+      key: "remainingBalance",
+      render: (text, record) => (
+        <>
+          {record.currency.symbol}{" "}
+          <FormattedNumber
+            value={record.remainingBalance}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
+        </>
+      ),
     },
     {
       title: (
@@ -351,7 +408,7 @@ const SupplierCredits = () => {
             <div className="column-list-item">
               <span>{record.supplierName}</span>
               <span>
-                {record.currency.symbol} {record.supplierCreditTotalAmount}
+                {record.currency.symbol} {record.remainingBalance}
               </span>
             </div>
             <div className="column-list-item">
@@ -393,8 +450,8 @@ const SupplierCredits = () => {
     },
     {
       title: "Amount Credited",
-      dataIndex: "billTotalAmount",
-      key: "billTotalAmount",
+      dataIndex: "amount",
+      key: "amount",
     },
   ];
 
@@ -773,7 +830,7 @@ const SupplierCredits = () => {
                       ? draftActionItems
                       : selectedRecord.currentStatus === "Confirmed"
                       ? confirmedActionItems
-                      : draftActionItems,
+                      : closedActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -799,7 +856,7 @@ const SupplierCredits = () => {
                       }}
                     >
                       <span>Bills Credited</span>
-                      <span className="bill">1</span>
+                      <span className="bill">{selectedRecord?.creditedBills?.length || 0}</span>
                     </li>
                   </ul>
                   <CaretRightFilled
@@ -818,7 +875,7 @@ const SupplierCredits = () => {
                       <Table
                         className="bill-table"
                         columns={billTableColumns}
-                        dataSource={[selectedRecord.bill]}
+                        dataSource={selectedRecord.creditedBills}
                         pagination={false}
                       />
                     </div>
@@ -855,6 +912,8 @@ const SupplierCredits = () => {
               </p>
             </Row>
             <SupplierCreditRefund
+              accountsPayable={accountsPayable}
+              accounts={cashBankAccounts}
               refetch={() => {
                 refetch();
                 setCurrentPage(1);

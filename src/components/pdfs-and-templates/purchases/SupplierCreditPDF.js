@@ -1,3 +1,4 @@
+/* eslint-disable react/style-prop-object */
 import React, { useState, useEffect, useMemo } from "react";
 import styles from "../PDFStyle";
 import { FormattedNumber, IntlProvider } from "react-intl";
@@ -129,13 +130,26 @@ const SupplierCreditPDF = ({ selectedRecord, business }) => {
           {"\n"}
           {"\n"}
         </CustomText>
-        <CustomText style={[styles.subHeader1, styles.boldText]}>
+        {/* <CustomText style={[styles.subHeader1, styles.boldText]}>
           Available Credits {"\n"}
         </CustomText>
         <CustomText style={[styles.subHeader2, styles.boldText]}>
           {selectedRecord?.currency?.symbol}{" "}
           <FormattedNumber
             value={selectedRecord.supplier?.unusedCreditAmount}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+          {"\n"}
+          {"\n"}
+        </CustomText> */}
+        <CustomText style={[styles.subHeader1, styles.boldText]}>
+          Remaining Balance {"\n"}
+        </CustomText>
+        <CustomText style={[styles.subHeader2, styles.boldText]}>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={selectedRecord?.remainingBalance}
             style="decimal"
             minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
           />
@@ -364,6 +378,17 @@ const SupplierCreditPDF = ({ selectedRecord, business }) => {
           <CustomText>Adjustment{"\n"}</CustomText>
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
+        {selectedRecord.supplierCreditTotalUsedAmount > 0 && (
+          <CustomText style={[styles.boldText, styles.red]}>
+            Used{"\n"}
+          </CustomText>
+        )}
+        {selectedRecord.supplierCreditTotalRefundAmount > 0 && (
+          <CustomText style={[styles.boldText, styles.red]}>
+            Refund{"\n"}
+          </CustomText>
+        )}
+        <CustomText style={[styles.boldText]}>Remaining{"\n"}</CustomText>
       </CustomText>
       <CustomText style={styles.alignRight}>
         <CustomText>
@@ -409,6 +434,37 @@ const SupplierCreditPDF = ({ selectedRecord, business }) => {
           {selectedRecord?.currency?.symbol}{" "}
           <FormattedNumber
             value={selectedRecord?.supplierCreditTotalAmount}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+          {"\n"}
+        </CustomText>
+        {selectedRecord.supplierCreditTotalUsedAmount > 0 && (
+          <CustomText style={[styles.boldText, styles.red]}>
+            {"(-) "}
+            <FormattedNumber
+              value={selectedRecord?.supplierCreditTotalUsedAmount}
+              style="decimal"
+              minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            />
+            {"\n"}
+          </CustomText>
+        )}
+        {selectedRecord.supplierCreditTotalRefundAmount > 0 && (
+          <CustomText style={[styles.boldText, styles.red]}>
+            {"(-) "}
+            <FormattedNumber
+              value={selectedRecord?.supplierCreditTotalRefundAmount}
+              style="decimal"
+              minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            />
+            {"\n"}
+          </CustomText>
+        )}
+        <CustomText style={[styles.boldText]}>
+          {selectedRecord?.currency.symbol}{" "}
+          <FormattedNumber
+            value={selectedRecord?.remainingBalance}
             style="decimal"
             minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
           />

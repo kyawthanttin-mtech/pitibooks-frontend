@@ -988,6 +988,7 @@ const AllTransactions = () => {
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         refetch={refetch}
+        selectedRecord={selectedRecord}
       />
       <CustomerAdvanceEdit
         modalOpen={customerAdvanceEditModalOpen}
@@ -1065,7 +1066,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={otherCurrentAssetAccounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         refetch={refetch}
@@ -1077,7 +1078,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={otherCurrentAssetAccounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedRecord={selectedRecord}
@@ -1092,7 +1093,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={otherCurrentAssetAccounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         refetch={refetch}
@@ -1104,7 +1105,7 @@ const AllTransactions = () => {
         currencies={currencies}
         paymentModes={paymentModes}
         selectedAcc={selectedAcc}
-        accounts={otherCurrentAssetAccounts}
+        accounts={cashBankAccounts}
         allAccounts={accountData?.listAllAccount}
         bankingAccounts={bankingAccounts}
         selectedRecord={selectedRecord}

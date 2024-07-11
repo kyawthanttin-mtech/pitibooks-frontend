@@ -300,11 +300,59 @@ const TOGGLE_ACTIVE_CUSTOMER = gql`
   }
 `;
 
+const CREATE_CUSTOMER_APPLY_CREDIT = gql`
+  mutation CreateCustomerApplyCredit($input: NewInvoiceApplyToCustomerCredit!) {
+    createCustomerApplyCredit(input: $input) {
+      id
+      businessId
+      referenceId
+      referenceType
+      customerCreditNumber
+      branchId
+      customerId
+      invoiceId
+      invoiceNumber
+      creditDate
+      amount
+      exchangeRate
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const DELETE_CUSTOMER_CREDIT_INVOICE = gql`
+  mutation DeleteCustomerCreditInvoice($id: ID!) {
+    deleteCustomerCreditInvoice(id: $id) {
+      id
+      businessId
+      referenceId
+      referenceType
+      customerCreditNumber
+      branchId
+      customerId
+      invoiceId
+      invoiceNumber
+      creditDate
+      amount
+      exchangeRate
+      currency {
+        id
+        decimalPlaces
+        name
+        symbol
+      }
+    }
+  }
+`;
+
 const CustomerMutations = {
   CREATE_CUSTOMER,
   UPDATE_CUSTOMER,
   DELETE_CUSTOMER,
   TOGGLE_ACTIVE_CUSTOMER,
+  CREATE_CUSTOMER_APPLY_CREDIT,
+  DELETE_CUSTOMER_CREDIT_INVOICE,
 };
 
 export default CustomerMutations;

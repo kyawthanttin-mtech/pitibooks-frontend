@@ -34,6 +34,7 @@ import ImageMutations from "./mutations/ImageMutations";
 import FileMutations from "./mutations/FileMutations";
 import BankingTransactionMutations from "./mutations/BankingTransactionMutations";
 import CommentMutations from "./mutations/CommentMutations";
+import RefundMutations from "./mutations/RefundMutations";
 
 import BankingQueries from "./queries/BankingQueries";
 import BranchQueries from "./queries/BranchQueries";
@@ -153,4 +154,5 @@ export {
   CommentQueries,
   CommentMutations,
   HistoryQueries,
+  RefundMutations,
 };

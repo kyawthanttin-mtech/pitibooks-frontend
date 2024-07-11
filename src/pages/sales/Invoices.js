@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+/* eslint-disable react/style-prop-object */
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Space,
@@ -24,7 +25,7 @@ import {
   CommentOutlined,
   CloseOutlined,
   EditOutlined,
-  CaretRightFilled,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import RecordInvoicePayment from "./RecordInvoicePayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
@@ -37,6 +38,7 @@ import {
   PDFPreviewModal,
   InvoicePDF,
   CommentColumn,
+  AccordionTabs,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
@@ -49,9 +51,15 @@ import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useReadQuery, useQuery, useMutation } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
-import { InvoiceMutations, InvoiceQueries } from "../../graphql";
+import {
+  InvoiceMutations,
+  InvoiceQueries,
+  CustomerMutations,
+} from "../../graphql";
+import InvoiceApplyCreditModal from "./InvoiceApplyCreditModal";
 const { GET_PAGINATE_INVOICE } = InvoiceQueries;
 const { DELETE_INVOICE, CONFIRM_INVOICE, VOID_INVOICE } = InvoiceMutations;
+const { DELETE_CUSTOMER_CREDIT_INVOICE } = CustomerMutations;
 
 const draftActionItems = [
   {
@@ -119,6 +127,31 @@ const voidActionItems = [
   },
 ];
 
+const partialPaidActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.recordPayment"
+        defaultMessage="Record Payment"
+      />
+    ),
+    key: "2",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.applyCredits"
+        defaultMessage="Apply Credits"
+      />
+    ),
+    key: "3",
+  },
+];
+
 const paidActionItems = [
   {
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
@@ -140,7 +173,6 @@ const Invoices = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState("bill");
   const [isContentExpanded, setContentExpanded] = useState(false);
   const [caretRotation, setCaretRotation] = useState(0);
   const location = useLocation();
@@ -158,6 +190,7 @@ const Invoices = () => {
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [pdfModalOpen, setPDFModalOpen] = useState(false);
   const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
+  const [creditModalOpen, setCreditModalOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -285,6 +318,22 @@ const Invoices = () => {
     },
   });
 
+  const [deleteAppliedCredit, { loading: deleteAppliedCreditLoading }] =
+    useMutation(DELETE_CUSTOMER_CREDIT_INVOICE, {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="appliedCredit.deleted"
+            defaultMessage="Applied Credit Deleted"
+          />
+        );
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    });
+
   const loading =
     queryLoading || deleteLoading || confirmLoading || voidLoading;
 
@@ -301,6 +350,12 @@ const Invoices = () => {
   const invoiceTotalSummary = useMemo(() => {
     return data?.paginateSalesInvoice?.invoiceTotalSummary;
   }, [data]);
+
+  useEffect(() => {
+    if (selectedRecord && selectedRowIndex) {
+      setShowRecordInvoicePaymentForm(false);
+    }
+  }, [selectedRecord, selectedRowIndex]);
 
   const parseData = (data) => {
     let invoices = [];
@@ -389,8 +444,8 @@ const Invoices = () => {
     const confirmed = await deleteModal.confirm({
       content: (
         <FormattedMessage
-          id="confirm.voidBill"
-          defaultMessage="Are you sure to void bill?"
+          id="confirm.voidInvoice"
+          defaultMessage="Are you sure to void invoice?"
         />
       ),
     });
@@ -455,6 +510,76 @@ const Invoices = () => {
     });
   };
 
+  const handleDeleteAppliedCredit = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteAppliedCredit({
+          variables: {
+            id: id,
+          },
+          update: (cache) => {
+            const existingData = cache.readQuery({
+              query: GET_PAGINATE_INVOICE,
+            });
+
+            if (existingData) {
+              const newEdges = existingData.paginateSalesInvoice.edges.map(
+                (edge) => {
+                  if (edge.node.appliedCustomerCredits) {
+                    return {
+                      ...edge,
+                      node: {
+                        ...edge.node,
+                        appliedCustomerCredits:
+                          edge.node.appliedCustomerCredits.filter(
+                            (credit) => credit.id !== id
+                          ),
+                      },
+                    };
+                  }
+                  return edge;
+                }
+              );
+
+              cache.writeQuery({
+                query: GET_PAGINATE_INVOICE,
+                data: {
+                  paginateSalesInvoice: {
+                    ...existingData.paginateSalesInvoice,
+                    edges: newEdges,
+                  },
+                },
+              });
+
+              // Update selectedRecord state
+              if (selectedRecord && selectedRecord.appliedCustomerCredits) {
+                const updatedSelectedRecord = {
+                  ...selectedRecord,
+                  appliedCustomerCredits:
+                    selectedRecord.appliedCustomerCredits.filter(
+                      (credit) => credit.id !== id
+                    ),
+                };
+
+                setSelectedRecord(updatedSelectedRecord);
+              }
+            }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
   const compactColumns = [
     {
       title: "",
@@ -467,7 +592,7 @@ const Invoices = () => {
               <span>
                 {record.currency.symbol}{" "}
                 <FormattedNumber
-                  value={record.invoiceTotalAmount}
+                  value={record.remainingAmount}
                   style="decimal"
                   minimumFractionDigits={record.currency.decimalPlaces}
                 />
@@ -551,7 +676,17 @@ const Invoices = () => {
     {
       title: "Balance Due",
       dataIndex: "balanceDue",
-      key: "balanceDue",
+      key: "remainingBalance",
+      render: (text, record) => (
+        <>
+          {record.currency.symbol}{" "}
+          <FormattedNumber
+            value={record.remainingBalance}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
+        </>
+      ),
     },
     {
       title: (
@@ -591,6 +726,16 @@ const Invoices = () => {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      render: (_, record) => (
+        <>
+          {selectedRecord?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount || 0}
+            style="decimal"
+            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+          />
+        </>
+      ),
     },
   ];
 
@@ -610,6 +755,47 @@ const Invoices = () => {
       title: "Status",
       dataIndex: "currentStatus",
       key: "currentStatus",
+    },
+  ];
+
+  const appliedCreditColumns = [
+    {
+      title: "Date",
+      dataIndex: "creditDate",
+      key: "creditDate",
+      render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Customer Credit#",
+      dataIndex: "customerCreditNumber",
+      key: "customerCreditNumber",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      render: (_, record) => (
+        <>
+          {record?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount || 0}
+            style="decimal"
+            minimumFractionDigits={record?.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      dataIndex: "action",
+      key: "action",
+      render: (_, record) => (
+        <span>
+          <DeleteOutlined
+            className="delete-icon"
+            onClick={() => handleDeleteAppliedCredit(record.id)}
+          />
+        </span>
+      ),
     },
   ];
 
@@ -828,6 +1014,18 @@ const Invoices = () => {
         modalOpen={customerSearchModalOpen}
         setModalOpen={setCustomerSearchModalOpen}
         onRowSelect={handleModalRowSelect}
+      />
+      <InvoiceApplyCreditModal
+        modalOpen={creditModalOpen}
+        setModalOpen={setCreditModalOpen}
+        selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        refetch={() => {
+          refetch();
+          setCurrentPage(1);
+          setSelectedRecord(null);
+          setSelectedRowIndex(null);
+        }}
       />
       <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
         <InvoicePDF selectedRecord={selectedRecord} business={business} />
@@ -1088,8 +1286,15 @@ const Invoices = () => {
             </Row>
             <Row className="content-column-action-row">
               <div
-                className="actions"
-                onClick={() => handleEdit(selectedRecord, navigate, location)}
+                className={`actions ${
+                  selectedRecord?.invoiceNumber ===
+                    "Customer Opening Balance" && "disable"
+                }`}
+                onClick={() =>
+                  selectedRecord?.invoiceNumber !==
+                    "Customer Opening Balance" &&
+                  handleEdit(selectedRecord, navigate, location)
+                }
               >
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
@@ -1115,18 +1320,19 @@ const Invoices = () => {
                         },
                       });
                     } else if (key === "1") {
-                      // confirm bill
+                      // confirm invoice
                       handleConfirmInvoice(selectedRecord.id);
                     } else if (key === "2") {
                       // record payment
                       setShowRecordInvoicePaymentForm(true);
                     } else if (key === "3") {
                       // apply credits
+                      setCreditModalOpen(true);
                     } else if (key === "4") {
-                      // void bill
+                      // void invoice
                       handleVoidInvoice(selectedRecord.id);
                     } else if (key === "5") {
-                      // delete bill
+                      // delete invoice
                       handleDelete(selectedRecord.id);
                     }
                   },
@@ -1137,6 +1343,8 @@ const Invoices = () => {
                       ? confirmedActionItems
                       : selectedRecord.currentStatus === "Void"
                       ? voidActionItems
+                      : selectedRecord.currentStatus === "Partial Paid"
+                      ? partialPaidActionItems
                       : paidActionItems,
                 }}
                 trigger={["click"]}
@@ -1147,127 +1355,91 @@ const Invoices = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              {selectedRecord.status === "Paid" ? (
-                <div className="bill-receives-container">
-                  <div
-                    className={`nav-bar ${!isContentExpanded && "collapsed"}`}
-                    onClick={toggleContent}
-                  >
-                    <ul className="nav-tabs">
-                      <li
-                        className={`nav-link ${
-                          activeTab === "bill" && isContentExpanded && "active"
-                        }`}
-                        onClick={(event) => {
-                          setActiveTab("bill");
-                          isContentExpanded && event.stopPropagation();
-                        }}
-                      >
-                        <span>Payments Received</span>
-                        <span className="bill">
-                          {selectedRecord.invoicePayment
-                            ? selectedRecord.invoicePayment.length
-                            : 0}
-                        </span>
-                      </li>
-                      <Divider type="vertical" className="tab-divider" />
-                      <li
-                        className={`nav-link ${
-                          activeTab === "receives" &&
-                          isContentExpanded &&
-                          "active"
-                        }`}
-                        onClick={(event) => {
-                          setActiveTab("receives");
-                          isContentExpanded && event.stopPropagation();
-                        }}
-                      >
-                        <span>Sales Orders</span>
-                        <span className="bill">
-                          {selectedRecord.salesOrder &&
-                          selectedRecord.salesOrder.id > 0
-                            ? 1
-                            : 0}
-                        </span>
-                      </li>
-                    </ul>
-                    <CaretRightFilled
-                      style={{
-                        transform: `rotate(${caretRotation}deg)`,
-                        transition: "0.4s",
-                      }}
+              {/* <div
+                className="bill-receives-container"
+                style={{ padding: "1.2rem 1rem " }}
+              >
+                <span>
+                  Credits Available:{" "}
+                  <b>
+                    {selectedRecord.currency.symbol}{" "}
+                    <FormattedNumber
+                      value={selectedRecord.customer?.unusedCreditAmount}
+                      style="decimal"
+                      minimumFractionDigits={
+                        selectedRecord.currency.decimalPlaces
+                      }
                     />
-                  </div>
-
-                  <div
-                    className={`content-wrapper ${isContentExpanded && "show"}`}
-                  >
-                    {activeTab === "bill" && (
-                      <div className="bill-tab">
+                  </b>
+                </span>
+                <Divider style={{ marginBlock: "1rem" }} />
+                <Flex justify="space-between" align="center">
+                  <Flex vertical gap="0.5rem">
+                    <b>Record Payment</b>
+                    <span style={{ fontSize: "var(--small-text)" }}>
+                      Apply available credits or record the payment for invoice
+                      if paid already.
+                    </span>
+                  </Flex>
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={setShowRecordInvoicePaymentForm}
+                    >
+                      Record Payment
+                    </Button>
+                    <Button onClick={setCreditModalOpen}>Apply Credits</Button>
+                  </Space>
+                </Flex>
+              </div>
+              <br /> */}
+              {(selectedRecord.status === "Paid" ||
+                selectedRecord.status === "Partial Paid") && (
+                <AccordionTabs
+                  key="invoiceAccordion"
+                  tabs={[
+                    {
+                      key: "invoice",
+                      title: "Payments Received",
+                      data: selectedRecord?.invoicePayment,
+                      content: (
                         <Table
                           className="bill-table"
                           columns={paymentReceivedColumns}
-                          dataSource={selectedRecord.invoicePayment}
+                          dataSource={selectedRecord?.invoicePayment}
                           pagination={false}
                         />
-                      </div>
-                    )}
-                    {activeTab === "receives" && (
-                      <div className="bill-tab">
-                        {selectedRecord.salesOrder &&
-                        selectedRecord.salesOrder.id > 0 ? (
-                          <Table
-                            className="bill-table"
-                            columns={salesOrderColumns}
-                            dataSource={[selectedRecord.salesOrder]}
-                            pagination={false}
-                          />
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="bill-receives-container"
-                  style={{ minHeight: "8.875rem", padding: "1.2rem 1rem " }}
-                >
-                  <span>
-                    Credits Available:{" "}
-                    <b>
-                      {selectedRecord.currency.symbol}{" "}
-                      <FormattedNumber
-                        value={selectedRecord.customer?.unusedCreditAmount}
-                        style="decimal"
-                        minimumFractionDigits={
-                          selectedRecord.currency.decimalPlaces
-                        }
-                      />
-                    </b>
-                  </span>
-                  <Button type="link" noStyle>
-                    Apply
-                  </Button>
-                  <Divider style={{ marginBlock: "1rem" }} />
-                  <Flex justify="space-between" align="center">
-                    <Flex vertical gap="0.5rem">
-                      <b>Record Payment</b>
-                      <span style={{ fontSize: "var(--small-text)" }}>
-                        Payment for this bill is overdue. Apply available
-                        credits or record the payment for bill if paid already.
-                      </span>
-                    </Flex>
-                    <Space>
-                      <Button
-                        type="primary"
-                        onClick={setShowRecordInvoicePaymentForm}
-                      >
-                        Record Payment
-                      </Button>
-                      <Button>Apply Credits</Button>
-                    </Space>
-                  </Flex>
-                </div>
+                      ),
+                    },
+                    {
+                      key: "salesOrders",
+                      title: "Sales Orders",
+                      data: selectedRecord?.salesOrder,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={salesOrderColumns}
+                          dataSource={[selectedRecord?.salesOrder]}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                    {
+                      key: "creditsApplied",
+                      title: "Credits Applied",
+                      data: selectedRecord?.appliedCustomerCredits,
+                      content: (
+                        <Table
+                          loading={deleteAppliedCreditLoading}
+                          className="bill-table"
+                          columns={appliedCreditColumns}
+                          dataSource={selectedRecord?.appliedCustomerCredits}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                  ]}
+                />
               )}
               <InvoiceTemplate selectedRecord={selectedRecord} />
             </div>

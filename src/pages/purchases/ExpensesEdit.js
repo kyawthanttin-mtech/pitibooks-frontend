@@ -1,18 +1,6 @@
 import React, { useMemo, useState } from "react";
-import {
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  DatePicker,
-  Radio,
-  Select,
-} from "antd";
-import {
-  CloseOutlined,
-  SearchOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
+import { Button, Form, Input, DatePicker, Radio, Select } from "antd";
+import { CloseOutlined, SearchOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import { useReadQuery, useMutation, gql } from "@apollo/client";
@@ -22,7 +10,7 @@ import {
 } from "../../utils/Notification";
 import { useOutletContext } from "react-router-dom";
 import dayjs from "dayjs";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ExpenseMutations } from "../../graphql";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import {
@@ -54,6 +42,7 @@ const ExpensesEdit = () => {
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [fileList, setFileList] = useState(null);
+  const intl = useIntl();
 
   // Queries
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -104,6 +93,7 @@ const ExpensesEdit = () => {
             taxOption: record.isTaxInclusive ? "I" : "E",
             supplierName: record.supplier?.name,
             customerName: record.customer?.name,
+            bankCharges: record.bankCharges,
           }
         : {};
 
@@ -122,26 +112,54 @@ const ExpensesEdit = () => {
   }, [currencyData]);
 
   const expenseAccounts = useMemo(() => {
-    return accountData?.listAllAccount.filter(
-      (a) =>
-        a.detailType === "CostOfGoodsSold" ||
-        a.detailType === "Expense" ||
-        a.detailType === "OtherCurrentLiability" ||
-        a.detailType === "FixedAsset" ||
-        a.detailType === "OtherCurrentAsset"
-    );
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (a) =>
+          a.isActive === true &&
+          (a.detailType === "CostOfGoodsSold" ||
+            a.detailType === "Expense" ||
+            a.detailType === "OtherCurrentLiability" ||
+            a.detailType === "FixedAsset" ||
+            a.detailType === "OtherCurrentAsset")
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
   }, [accountData]);
 
   const assetAccounts = useMemo(() => {
-    return accountData?.listAllAccount.filter(
-      (a) =>
-        a.detailType === "OtherCurrentAsset" ||
-        a.detailType === "Cash" ||
-        a.detailType === "OtherCurrentLiability" ||
-        a.detailType === "FixedAsset" ||
-        a.detailType === "Bank" ||
-        a.detailType === "Equity"
-    );
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (a) =>
+          a.isActive === true &&
+          (a.detailType === "OtherCurrentAsset" ||
+            a.detailType === "Cash" ||
+            a.detailType === "OtherCurrentLiability" ||
+            a.detailType === "FixedAsset" ||
+            a.detailType === "Bank" ||
+            a.detailType === "Equity")
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
   }, [accountData]);
 
   const taxes = useMemo(() => {
@@ -202,6 +220,7 @@ const ExpensesEdit = () => {
       customerId: selectedCustomer.id || 0,
       referenceNumber: values.referenceNumber,
       notes: values.notes,
+      bankCharges: values.bankCharges,
       expenseTaxId: taxId,
       expenseTaxType: taxType,
       isTaxInclusive,
@@ -359,25 +378,22 @@ const ExpensesEdit = () => {
                 },
               ]}
             >
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder={
-                  <FormattedMessage
-                    id="label.account.placeholder"
-                    defaultMessage="Select an account"
-                  />
-                }
-              >
-                {expenseAccounts?.map((account) => (
-                  <Select.Option
-                    key={account.id}
-                    value={account.id}
-                    label={account.name}
+              <Select showSearch optionFilterProp="label">
+                {expenseAccounts.map((group) => (
+                  <Select.OptGroup
+                    key={group.detailType}
+                    label={group.detailType}
                   >
-                    {account.name}
-                  </Select.Option>
+                    {group.accounts.map((acc) => (
+                      <Select.Option
+                        key={acc.id}
+                        value={acc.id}
+                        label={acc.name}
+                      >
+                        {acc.name}
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
                 ))}
               </Select>
             </Form.Item>
@@ -404,25 +420,22 @@ const ExpensesEdit = () => {
                 },
               ]}
             >
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder={
-                  <FormattedMessage
-                    id="label.account.placeholder"
-                    defaultMessage="Select an account"
-                  />
-                }
-              >
-                {assetAccounts?.map((account) => (
-                  <Select.Option
-                    key={account.id}
-                    value={account.id}
-                    label={account.name}
+              <Select showSearch optionFilterProp="label">
+                {assetAccounts.map((group) => (
+                  <Select.OptGroup
+                    key={group.detailType}
+                    label={group.detailType}
                   >
-                    {account.name}
-                  </Select.Option>
+                    {group.accounts.map((acc) => (
+                      <Select.Option
+                        key={acc.id}
+                        value={acc.id}
+                        label={acc.name}
+                      >
+                        {acc.name}
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
                 ))}
               </Select>
             </Form.Item>
@@ -470,9 +483,25 @@ const ExpensesEdit = () => {
                     />
                   ),
                 },
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20 || value < 0) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
               ]}
             >
-              <InputNumber />
+              <Input />
             </Form.Item>
             <Form.Item
               label={
@@ -539,9 +568,30 @@ const ExpensesEdit = () => {
                           />
                         ),
                       },
+
+                      () => ({
+                        validator(_, value) {
+                          if (!value) {
+                            return Promise.resolve();
+                          } else if (
+                            isNaN(value) ||
+                            value.length > 20 ||
+                            value < 0
+                          ) {
+                            return Promise.reject(
+                              intl.formatMessage({
+                                id: "validation.invalidInput",
+                                defaultMessage: "Invalid Input",
+                              })
+                            );
+                          } else {
+                            return Promise.resolve();
+                          }
+                        },
+                      }),
                     ]}
                   >
-                    <InputNumber />
+                    <Input />
                   </Form.Item>
                 ) : null
               }
@@ -622,6 +672,38 @@ const ExpensesEdit = () => {
                   </Form.Item>
                 ) : null
               }
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.bankCharges"
+                  defaultMessage="Bank Charges"
+                />
+              }
+              labelCol={{ span: 5 }}
+              wrapperCol={{ span: 8 }}
+              labelAlign="left"
+              name="bankCharges"
+              rules={[
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20 || value < 0) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
+              ]}
+            >
+              <Input></Input>
             </Form.Item>
             <Form.Item
               label={

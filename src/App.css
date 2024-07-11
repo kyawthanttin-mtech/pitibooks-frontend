@@ -311,8 +311,12 @@
   padding-bottom: 0;
 }
 
+.credit-table .ant-table-tbody > tr > td {
+  vertical-align: top;
+}
+
 .payment-table .ant-table-thead > tr > th,
-.ant-table-wrapper .ant-table-thead > tr > td {
+.payment-table .ant-table-thead > tr > td {
   border-top: 1px solid var(--border-color);
 }
 
@@ -508,7 +512,13 @@
   cursor: pointer;
   gap: 0.5rem;
 }
-
+.content-column-action-row div.disable {
+  cursor: not-allowed;
+  opacity: 60%;
+}
+.content-column-action-row div.disable:hover {
+  color: var(--text-color);
+}
 .content-column-action-row div:hover {
   color: var(--primary-color);
   transition: all 0.3s;
@@ -583,7 +593,6 @@
 .txn-details-table .ant-table-thead > tr > th,
 .ant-table-wrapper .ant-table-thead > tr > td {
   height: auto !important;
-  border-top: 1px solid var(--border-color);
   padding: 0.5rem;
 }
 
@@ -1070,11 +1079,19 @@
 .bill-table .ant-table-tbody > tr > td,
 .bill-table .ant-table-thead > tr > th {
   height: 2.5rem !important;
+  position: sticky;
+  top: 0;
+  z-index: 100000000000000000000000;
+  background-color: white;
 }
 
 .bill-table .ant-table-tbody > tr > td,
 .bill-table .ant-table-thead > tr > th {
   padding: 0;
+}
+
+.bill-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
 }
 
 .bill-tab {
@@ -1158,4 +1175,12 @@
 .report-filter-select {
   height: 2rem !important;
   min-width: 8rem;
+}
+
+.delete-icon {
+  font-size: 0.813rem;
+}
+
+.delete-icon:hover {
+  color: var(--red);
 }

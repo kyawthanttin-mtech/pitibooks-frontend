@@ -64,8 +64,6 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
     //   return false;
     // }
 
-    console.log("file", file);
-
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
       openErrorNotification(notiApi, "File size must be smaller than 5MB!");
@@ -80,7 +78,6 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
       const { data } = await uploadFile({
         variables: { file },
       });
-      console.log("data", file);
 
       const newFile = {
         uid: file.uid,
@@ -102,7 +99,6 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
   };
 
   const handleRemove = async (file) => {
-    console.log("remove file", file);
     const confirmed = await deleteModal.confirm({
       content: (
         <FormattedMessage
@@ -147,8 +143,6 @@ const UploadAttachment = ({ onCustomFileListChange, files }) => {
   const handleOpenChange = (newOpen) => {
     setOpen(newOpen);
   };
-
-  console.log("File List", customFileList);
 
   const content = (
     <>

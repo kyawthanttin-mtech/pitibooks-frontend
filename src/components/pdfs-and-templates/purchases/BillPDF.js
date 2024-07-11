@@ -92,7 +92,6 @@ const BillPDF = ({ selectedRecord, business }) => {
       4 +
       extraPixelsForMaxDiscount +
       extraPixelsForDecimalPlaces;
-
     setMaxAmountWidth(maxAmountWidth);
     setMaxRateWidth(maxRateWidth);
     setMaxDiscountWidth(maxDiscountWidth);

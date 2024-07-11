@@ -1,5 +1,5 @@
 /* eslint-disable react/style-prop-object */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Space,
@@ -25,6 +25,8 @@ import {
   CloseOutlined,
   EditOutlined,
   CommentOutlined,
+  DeleteOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import RecordBillPayment from "./RecordBillPayment";
 import { ReactComponent as ArrowEllipseFilled } from "../../assets/icons/ArrowEllipseFilled.svg";
@@ -47,14 +49,15 @@ import {
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { BillTemplate } from "../../components";
-import { useMutation, useReadQuery, useQuery } from "@apollo/client";
+import { useMutation, useReadQuery, useQuery, gql } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
-import { BillQueries, BillMutations } from "../../graphql";
-import ApplyCreditModal from "./ApplyCreditModal";
+import { BillQueries, BillMutations, SupplierMutations } from "../../graphql";
+import BillApplyCreditModal from "./BillApplyCreditModal";
 import { BillPDF } from "../../components/pdfs-and-templates";
 
 const { GET_PAGINATE_BILL } = BillQueries;
 const { CONFIRM_BILL, DELETE_BILL, VOID_BILL } = BillMutations;
+const { DELETE_SUPPLIER_CREDIT_BILL } = SupplierMutations;
 
 const draftActionItems = [
   {
@@ -116,6 +119,31 @@ const voidActionItems = [
     key: "5",
   },
 ];
+
+const partialPaidActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.recordPayment"
+        defaultMessage="Record Payment"
+      />
+    ),
+    key: "2",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.applyCredits"
+        defaultMessage="Apply Credits"
+      />
+    ),
+    key: "3",
+  },
+]
 
 const paidActionItems = [
   {
@@ -266,6 +294,22 @@ const Bills = () => {
     },
   });
 
+  const [deleteAppliedCredit, { loading: deleteAppliedCreditLoading }] =
+    useMutation(DELETE_SUPPLIER_CREDIT_BILL, {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="appliedCredit.deleted"
+            defaultMessage="Applied Credit Deleted"
+          />
+        );
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    });
+
   const loading =
     queryLoading || deleteLoading || confirmLoading || voidLoading;
 
@@ -282,6 +326,12 @@ const Bills = () => {
   const billTotalSummary = useMemo(() => {
     return data?.paginateBill?.billTotalSummary;
   }, [data]);
+
+  useEffect(() => {
+    if (selectedRecord && selectedRowIndex) {
+      setShowRecordBillPaymentForm(false);
+    }
+  }, [selectedRecord, selectedRowIndex]);
 
   const parseData = (data) => {
     let bills = [];
@@ -343,11 +393,6 @@ const Bills = () => {
     }
 
     return color;
-  };
-
-  const toggleContent = () => {
-    setContentExpanded(!isContentExpanded);
-    setCaretRotation(caretRotation === 0 ? 90 : 0);
   };
 
   const handleEdit = (record, navigate, location) => {
@@ -453,6 +498,74 @@ const Bills = () => {
     });
   };
 
+  const handleDeleteAppliedCredit = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteAppliedCredit({
+          variables: {
+            id: id,
+          },
+          update: (cache) => {
+            const existingData = cache.readQuery({
+              query: GET_PAGINATE_BILL,
+            });
+
+            if (existingData) {
+              const newEdges = existingData.paginateBill.edges.map((edge) => {
+                if (edge.node.appliedSupplierCredits) {
+                  return {
+                    ...edge,
+                    node: {
+                      ...edge.node,
+                      appliedSupplierCredits:
+                        edge.node.appliedSupplierCredits.filter(
+                          (credit) => credit.id !== id
+                        ),
+                    },
+                  };
+                }
+                return edge;
+              });
+
+              cache.writeQuery({
+                query: GET_PAGINATE_BILL,
+                data: {
+                  paginateBill: {
+                    ...existingData.paginateBill,
+                    edges: newEdges,
+                  },
+                },
+              });
+
+              // Update selectedRecord state
+              if (selectedRecord && selectedRecord.appliedSupplierCredits) {
+                const updatedSelectedRecord = {
+                  ...selectedRecord,
+                  appliedSupplierCredits:
+                    selectedRecord.appliedSupplierCredits.filter(
+                      (credit) => credit.id !== id
+                    ),
+                };
+
+                setSelectedRecord(updatedSelectedRecord);
+              }
+            }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
   const compactColumns = [
     {
       title: "",
@@ -465,7 +578,7 @@ const Bills = () => {
               <span>
                 {record.currency.symbol}{" "}
                 <FormattedNumber
-                  value={record.billTotalAmount}
+                  value={record.remainingBalance}
                   style="decimal"
                   minimumFractionDigits={record.currency.decimalPlaces}
                 />
@@ -549,12 +662,12 @@ const Bills = () => {
     {
       title: "Balance Due",
       dataIndex: "balanceDue",
-      key: "billTotalPaidAmount",
+      key: "remainingBalance",
       render: (text, record) => (
         <>
           {record.currency.symbol}{" "}
           <FormattedNumber
-            value={record.billTotalAmount - record.billTotalPaidAmount}
+            value={record.remainingBalance}
             style="decimal"
             minimumFractionDigits={record.currency.decimalPlaces}
           />
@@ -645,17 +758,29 @@ const Bills = () => {
     },
     {
       title: "Amount",
-      dataIndex: "amountCredited",
-      key: "amountCredited",
+      dataIndex: "amount",
+      key: "amount",
       render: (_, record) => (
         <>
-          {selectedRecord?.currency?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
-            value={record.amountCredited || 0}
+            value={record.amount || 0}
             style="decimal"
-            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            minimumFractionDigits={record?.currency?.decimalPlaces}
           />
         </>
+      ),
+    },
+    {
+      dataIndex: "action",
+      key: "action",
+      render: (_, record) => (
+        <span>
+          <DeleteOutlined
+            className="delete-icon"
+            onClick={() => handleDeleteAppliedCredit(record.id)}
+          />
+        </span>
       ),
     },
   ];
@@ -873,10 +998,17 @@ const Bills = () => {
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={handleModalRowSelect}
       />
-      <ApplyCreditModal
+      <BillApplyCreditModal
         modalOpen={creditModalOpen}
         setModalOpen={setCreditModalOpen}
         selectedRecord={selectedRecord}
+        setSelectedRecord={setSelectedRecord}
+        refetch={() => {
+          refetch();
+          setCurrentPage(1);
+          setSelectedRecord(null);
+          setSelectedRowIndex(null);
+        }}
       />
       <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
         <BillPDF selectedRecord={selectedRecord} business={business} />
@@ -1129,8 +1261,14 @@ const Bills = () => {
             </Row>
             <Row className="content-column-action-row">
               <div
-                className="actions"
-                onClick={() => handleEdit(selectedRecord, navigate, location)}
+                className={`actions ${
+                  selectedRecord?.billNumber === "Supplier Opening Balance" &&
+                  "disable"
+                }`}
+                onClick={() =>
+                  selectedRecord?.billNumber !== "Supplier Opening Balance" &&
+                  handleEdit(selectedRecord, navigate, location)
+                }
               >
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
@@ -1178,6 +1316,8 @@ const Bills = () => {
                       ? confirmedActionItems
                       : selectedRecord.currentStatus === "Void"
                       ? voidActionItems
+                      : selectedRecord.currentStatus === "Partial Paid"
+                      ? partialPaidActionItems
                       : paidActionItems,
                 }}
                 trigger={["click"]}
@@ -1188,11 +1328,11 @@ const Bills = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              {(selectedRecord.status === "Confirmed" ||
+              {/* {(selectedRecord.status === "Confirmed" ||
                 selectedRecord.status === "Partial Paid") && (
                 <div
                   className="bill-receives-container"
-                  style={{ minHeight: "8.875rem", padding: "1.2rem 1rem " }}
+                  style={{ padding: "1.2rem 1rem " }}
                 >
                   <span>
                     <FormattedMessage
@@ -1210,16 +1350,6 @@ const Bills = () => {
                       />
                     </b>
                   </span>
-                  {/* <Button
-                    type="link"
-                    noStyle
-                    onClick={() => setCreditModalOpen(true)}
-                  >
-                    <FormattedMessage
-                      id="button.apply"
-                      defaultMessage="Apply"
-                    />
-                  </Button> */}
                   <Divider style={{ marginBlock: "1rem" }} />
                   <Flex justify="space-between" align="center">
                     <Flex vertical gap="0.5rem">
@@ -1243,7 +1373,7 @@ const Bills = () => {
                   </Flex>
                 </div>
               )}
-              <br />
+              <br /> */}
               {(selectedRecord.status === "Paid" ||
                 selectedRecord.status === "Partial Paid") && (
                 <AccordionTabs
@@ -1280,6 +1410,7 @@ const Bills = () => {
                       data: selectedRecord?.appliedSupplierCredits,
                       content: (
                         <Table
+                          loading={deleteAppliedCreditLoading}
                           className="bill-table"
                           columns={appliedCreditColumns}
                           dataSource={selectedRecord?.appliedSupplierCredits}
@@ -1314,6 +1445,7 @@ const Bills = () => {
                 refetch();
                 setCurrentPage(1);
                 setSelectedRecord(null);
+                setSelectedRowIndex(null);
               }}
               branches={branches}
               selectedRecord={selectedRecord}

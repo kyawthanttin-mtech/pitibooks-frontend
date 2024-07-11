@@ -297,6 +297,7 @@ const PaymentsMadeNew = () => {
       ),
       dataIndex: "billTotalAmount",
       key: "billTotalAmount",
+      align: "right",
       render: (_, record) => (
         <Flex justify="end">
           {record.currency?.symbol}{" "}
@@ -312,6 +313,7 @@ const PaymentsMadeNew = () => {
       title: "Remaining Balance",
       dataIndex: "remainingBalance",
       key: "remainingBalance",
+      align: "right",
       render: (_, record) => (
         <Flex justify="end">
           {record.currency?.symbol}{" "}
@@ -328,6 +330,7 @@ const PaymentsMadeNew = () => {
       dataIndex: "payment",
       key: "payment",
       width: "15%",
+      align: "right",
       render: (_, record) => (
         <>
           <Form.Item
@@ -338,7 +341,7 @@ const PaymentsMadeNew = () => {
                 validator(_, value) {
                   if (!value) {
                     return Promise.resolve();
-                  } else if (isNaN(value) || value.length > 20) {
+                  } else if (isNaN(value) || value.length > 20 || value < 0) {
                     return Promise.reject(
                       intl.formatMessage({
                         id: "validation.invalidInput",
@@ -564,7 +567,11 @@ const PaymentsMadeNew = () => {
                             validator(_, value) {
                               if (!value) {
                                 return Promise.resolve();
-                              } else if (isNaN(value) || value.length > 20) {
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 20 ||
+                                value < 0
+                              ) {
                                 return Promise.reject(
                                   intl.formatMessage({
                                     id: "validation.invalidInput",
@@ -725,7 +732,11 @@ const PaymentsMadeNew = () => {
                         validator(_, value) {
                           if (!value) {
                             return Promise.resolve();
-                          } else if (isNaN(value) || value.length > 20) {
+                          } else if (
+                            isNaN(value) ||
+                            value.length > 20 ||
+                            value < 0
+                          ) {
                             return Promise.reject(
                               intl.formatMessage({
                                 id: "validation.invalidInput",

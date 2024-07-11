@@ -9,12 +9,19 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { BankingTransactionMutations } from "../../graphql";
+import { RefundMutations } from "../../graphql";
 import dayjs from "dayjs";
 import { UploadAttachment } from "../../components";
-const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
+const { CREATE_REFUND } = RefundMutations;
 
-const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
+const CreditNoteRefund = ({
+  refetch,
+  branches,
+  selectedRecord,
+  onClose,
+  accounts,
+  accountsReceivable,
+}) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState(null);
@@ -29,15 +36,15 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
     );
   }, [paymentModeData]);
 
-  const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_BANKING_TRANSACTION,
+  const [createRefund, { loading: createLoading }] = useMutation(
+    CREATE_REFUND,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="transaction.recorded"
-            defaultMessage="Transaction Recorded"
+            id="refund.informationSaved"
+            defaultMessage="Refund Information Saved"
           />
         );
         refetch();
@@ -58,23 +65,17 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
         currencyId: selectedRecord.currency.id,
         exchangeRate: values.exchangeRate,
         amount: values.amount,
-        transactionDate: values.date,
+        refundDate: values.date,
         paymentModeId: values.paymentMode,
         referenceNumber: values.referenceNumber,
         description: values.description,
-        transactionType: "CreditNoteRefund",
-        // isMoneyIn: false,
+        accountId: values.toAccountId,
+        referenceId: selectedRecord.id,
+        transactionType: "CN",
         documents: fileUrls,
-        // paidBills: [
-        //   {
-        //     paidBillId: 0,
-        //     billId: selectedRecord.id,
-        //     paidAmount: values.amount,
-        //   },
-        // ],
       };
 
-      await createAccountTransfer({ variables: { input: input } });
+      await createRefund({ variables: { input: input } });
       onClose();
       form.resetFields();
     } catch (err) {
@@ -86,7 +87,7 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
     console.log(selectedRecord);
     form.setFieldsValue({
       branch: selectedRecord?.branch.id,
-      amount: selectedRecord?.creditNoteTotalAmount,
+      amount: selectedRecord?.remainingAmount,
     });
   }, [form, selectedRecord]);
 
@@ -165,7 +166,7 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
                   validator(_, value) {
                     if (!value) {
                       return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
+                    } else if (isNaN(value) || value.length > 20 || value < 0) {
                       return Promise.reject(
                         intl.formatMessage({
                           id: "validation.invalidInput",
@@ -181,6 +182,50 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
             >
               <Input addonBefore={selectedRecord.currency.symbol}></Input>
             </Form.Item>
+            {selectedRecord.currency.id !== business.baseCurrency.id && (
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.exchangeRate"
+                    defaultMessage="Exchange Rate"
+                  />
+                }
+                name="exchangeRate"
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.exchangeRate.required"
+                        defaultMessage="Enter the Exchange Rate"
+                      />
+                    ),
+                  },
+                  () => ({
+                    validator(_, value) {
+                      if (!value) {
+                        return Promise.resolve();
+                      } else if (
+                        isNaN(value) ||
+                        value.length > 20 ||
+                        value < 0
+                      ) {
+                        return Promise.reject(
+                          intl.formatMessage({
+                            id: "validation.invalidInput",
+                            defaultMessage: "Invalid Input",
+                          })
+                        );
+                      } else {
+                        return Promise.resolve();
+                      }
+                    },
+                  }),
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            )}
           </Col>
           <Col span={7} offset={1}>
             <Form.Item
@@ -212,47 +257,52 @@ const CreditNoteRefund = ({ refetch, branches, selectedRecord, onClose }) => {
             >
               <Input maxLength={255}></Input>
             </Form.Item>
-
-            {selectedRecord.currency.id !== business.baseCurrency.id && (
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.exchangeRate"
-                    defaultMessage="Exchange Rate"
-                  />
-                }
-                name="exchangeRate"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.exchangeRate.required"
-                        defaultMessage="Enter the Exchange Rate"
-                      />
-                    ),
-                  },
-                  () => ({
-                    validator(_, value) {
-                      if (!value) {
-                        return Promise.resolve();
-                      } else if (isNaN(value) || value.length > 20) {
-                        return Promise.reject(
-                          intl.formatMessage({
-                            id: "validation.invalidInput",
-                            defaultMessage: "Invalid Input",
-                          })
-                        );
-                      } else {
-                        return Promise.resolve();
-                      }
-                    },
-                  }),
-                ]}
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.fromAccount"
+                  defaultMessage="From Account"
+                />
+              }
+              name="fromAccountId"
+              labelAlign="left"
+              labelCol={{ span: 8 }}
+              // wrapperCol={{ span: 15 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.account.required"
+                      defaultMessage="Select the Account"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select
+                showSearch
+                optionFilterProp="label"
+                // onChange={handleFromAccountChange}
               >
-                <Input />
-              </Form.Item>
-            )}
+                {accounts.map((group) => (
+                  <Select.OptGroup
+                    key={group.detailType}
+                    label={group.detailType}
+                  >
+                    {group.accounts.map((acc) => (
+                      <Select.Option
+                        key={acc.id}
+                        value={acc.id}
+                        label={acc.name}
+                      >
+                        {acc.name}
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
+                ))}
+              </Select>
+            </Form.Item>
           </Col>
         </Row>
         <Form.Item

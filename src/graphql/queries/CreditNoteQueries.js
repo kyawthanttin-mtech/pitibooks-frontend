@@ -69,6 +69,13 @@ const GET_PAGINATE_CREDIT_NOTE = gql`
           creditNoteTotalDiscountAmount
           creditNoteTotalTaxAmount
           creditNoteTotalAmount
+          creditNoteTotalUsedAmount
+          creditNoteTotalRefundAmount
+          remainingBalance
+          creditedInvoice {
+            invoiceNumber
+            amount
+          }
           details {
             id
             creditNoteId

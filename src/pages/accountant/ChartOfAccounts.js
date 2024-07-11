@@ -1619,7 +1619,7 @@ const ChartOfAccounts = () => {
                 <span>{selectedRecord.accountName}</span>
               </div>
               <div className="content-column-header-row-actions">
-                <div>
+                {/* <div>
                   <PaperClipOutlined />
                   <span>
                     <FormattedMessage
@@ -1627,7 +1627,7 @@ const ChartOfAccounts = () => {
                       defaultMessage="Attachment"
                     />
                   </span>
-                </div>
+                </div> */}
                 <div>
                   <Button
                     icon={<CloseOutlined />}

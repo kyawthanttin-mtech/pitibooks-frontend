@@ -1,10 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CaretRightFilled } from "@ant-design/icons";
 import { Divider } from "antd";
 
 const AccordionTabs = ({ tabs }) => {
-  const [activeTab, setActiveTab] = useState(tabs[0].key);
-  const [isContentExpanded, setIsContentExpanded] = useState(true);
+  const filteredTabs = useMemo(
+    () => tabs.filter((tab) => tab.data?.length > 0 || tab.data?.id > 0),
+    [tabs]
+  );
+  const [activeTab, setActiveTab] = useState(filteredTabs[0]?.key);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  // useEffect(() => {
+  //   setActiveTab(filteredTabs[0]?.key);
+  // }, [filteredTabs]);
+
+  useEffect(() => {
+    if (tabs) {
+      setIsContentExpanded(false);
+    }
+  }, [tabs]);
 
   const toggleContent = () => {
     setIsContentExpanded(!isContentExpanded);

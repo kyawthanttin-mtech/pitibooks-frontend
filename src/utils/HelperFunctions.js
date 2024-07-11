@@ -74,6 +74,16 @@ export function convertTransactionType(type) {
       return "OwnerContribution";
     case "OI":
       return "Income";
+    case "SAA":
+      return "SupplierAdvanceApplied";
+    case "SAR":
+      return "SupplierAdvanceRefund";
+    case "SCR":
+      return "SupplierCreditRefund";
+    case "CAA":
+      return "CustomerAdvanceApplied";
+    case "CAR":
+      return "CustomerAdvanceRefund";
     default:
       return "";
   }

@@ -100,6 +100,13 @@ const GET_PAGINATE_SUPPLIER_CREDIT = gql`
           supplierCreditTotalDiscountAmount
           supplierCreditTotalTaxAmount
           supplierCreditTotalAmount
+          supplierCreditTotalUsedAmount
+          supplierCreditTotalRefundAmount
+          remainingBalance
+          creditedBills {
+            billNumber
+            amount
+          }
         }
       }
       pageInfo {

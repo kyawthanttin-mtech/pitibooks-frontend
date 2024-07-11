@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+/* eslint-disable react/style-prop-object */
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Space,
@@ -35,7 +36,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditNoteMutations, CreditNoteQueries } from "../../graphql";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
   openErrorNotification,
   openSuccessMessage,
@@ -80,6 +81,14 @@ const openActionItems = [
   },
 ];
 
+const closedActionItems = [
+  {
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+];
+
+
 const CreditNotes = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const {
@@ -88,6 +97,7 @@ const CreditNotes = () => {
     allBranchesQueryRef,
     allWarehousesQueryRef,
     business,
+    allAccountsQueryRef,
   } = useOutletContext();
   const navigate = useNavigate();
   const [searchFormRef] = Form.useForm();
@@ -115,6 +125,7 @@ const CreditNotes = () => {
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
   const { data: warehouseData } = useReadQuery(allWarehousesQueryRef);
+  const { data: accountData } = useReadQuery(allAccountsQueryRef);
 
   const { refetch } = useQuery(GET_PAGINATE_CREDIT_NOTE, {
     errorPolicy: "all",
@@ -173,6 +184,40 @@ const CreditNotes = () => {
   const warehouses = useMemo(() => {
     return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
   }, [warehouseData]);
+
+  const cashBankAccounts = useMemo(() => {
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (account) =>
+          account.detailType === "Cash" || account.detailType === "Bank"
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
+  }, [accountData]);
+
+  const accountsReceivable = useMemo(() => {
+    if (!accountData?.listAllAccount) return null;
+    const account = accountData.listAllAccount.filter(
+      (acc) => acc.detailType === "AccountsReceivable"
+    );
+    return account;
+  }, [accountData]);
+
+  useEffect(() => {
+    if (selectedRecord && selectedRowIndex) {
+      setShowRefundForm(false);
+    }
+  }, [selectedRecord, selectedRowIndex]);
 
   const parseData = (data) => {
     let creditNotes = [];
@@ -324,14 +369,29 @@ const CreditNotes = () => {
       key: "creditNoteTotalAmount",
       render: (text, record) => (
         <>
-          {record.currency?.symbol} {text}
+          {record.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.creditNoteTotalAmount}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
         </>
       ),
     },
     {
-      title: "Balance",
-      dataIndex: "balance",
-      key: "balance",
+      title: "Balance Due",
+      dataIndex: "balanceDue",
+      key: "remainingBalance",
+      render: (text, record) => (
+        <>
+          {record.currency.symbol}{" "}
+          <FormattedNumber
+            value={record.remainingBalance}
+            style="decimal"
+            minimumFractionDigits={record.currency.decimalPlaces}
+          />
+        </>
+      ),
     },
     {
       title: (
@@ -355,7 +415,7 @@ const CreditNotes = () => {
             <div className="column-list-item">
               <span>{record.customerName}</span>
               <span>
-                {record.currency.symbol} {record.creditNoteTotalAmount}
+                {record.currency.symbol} {record.remainingBalance}
               </span>
             </div>
             <div className="column-list-item">
@@ -385,20 +445,20 @@ const CreditNotes = () => {
 
   const billTableColumns = [
     {
-      title: "#Bill",
-      dataIndex: "billNumber",
-      key: "billNumber",
+      title: "#Invoice",
+      dataIndex: "invoiceNumber",
+      key: "invoiceNumber",
     },
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "invoiceDate",
+      key: "invoiceDate",
       render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
       title: "Amount Credited",
-      dataIndex: "billTotalAmount",
-      key: "billTotalAmount",
+      dataIndex: "amount",
+      key: "amount",
     },
   ];
 
@@ -779,7 +839,7 @@ const CreditNotes = () => {
                       ? draftActionItems
                       : selectedRecord.currentStatus === "Confirmed"
                       ? openActionItems
-                      : draftActionItems,
+                      : closedActionItems,
                 }}
                 trigger={["click"]}
               >
@@ -824,7 +884,7 @@ const CreditNotes = () => {
                       <Table
                         className="bill-table"
                         columns={billTableColumns}
-                        dataSource={[selectedRecord.bill]}
+                        dataSource={selectedRecord.creditedInvoices}
                         pagination={false}
                       />
                     </div>
@@ -866,6 +926,8 @@ const CreditNotes = () => {
                 setCurrentPage(1);
                 setSelectedRecord(null);
               }}
+              accountsReceivable={accountsReceivable}
+              accounts={cashBankAccounts}
               branches={branches}
               selectedRecord={selectedRecord}
               onClose={() => setShowRefundForm(false)}

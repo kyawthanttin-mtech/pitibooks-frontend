@@ -258,7 +258,7 @@ const InvoicesEdit = () => {
           invoiceTaxType: "I",
           // Map transactions to form fields
           ...record?.details.reduce((acc, d, index) => {
-            acc[`account${index + 1}`] = d.detailAccount.id || null;
+            acc[`account${index + 1}`] = d.detailAccount?.id || null;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
             acc[`detailDiscount${index + 1}`] = d.detailDiscount;
@@ -1207,7 +1207,7 @@ const InvoicesEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1252,7 +1252,7 @@ const InvoicesEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1289,7 +1289,7 @@ const InvoicesEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1774,7 +1774,11 @@ const InvoicesEdit = () => {
                             validator(_, value) {
                               if (!value) {
                                 return Promise.resolve();
-                              } else if (isNaN(value) || value.length > 20) {
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 20 ||
+                                value < 0
+                              ) {
                                 return Promise.reject(
                                   intl.formatMessage({
                                     id: "validation.invalidInput",
@@ -2035,7 +2039,8 @@ const InvoicesEdit = () => {
                                     return Promise.resolve();
                                   } else if (
                                     isNaN(value) ||
-                                    value.length > 20
+                                    value.length > 20 ||
+                                    value < 0
                                   ) {
                                     return Promise.reject(
                                       intl.formatMessage({

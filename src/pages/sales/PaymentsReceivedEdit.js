@@ -76,39 +76,43 @@ const PaymentsReceivedEdit = () => {
     record?.currency?.id
   );
 
-  const paidBills = useMemo(() => {
-    const transformPaidBills = (paidBills) => {
-      return paidBills.map((paidBill) => ({
-        paidBillId: paidBill.id,
-        ...paidBill.bill,
-        paidAmount: paidBill.paidAmount,
+  const paidInvoices = useMemo(() => {
+    const transformPaidInvoices = (paidInvoices) => {
+      return paidInvoices.map((paidInvoice) => ({
+        paidInvoiceId: paidInvoice.id,
+        ...paidInvoice.invoice,
+        paidAmount: paidInvoice.paidAmount,
       }));
     };
 
-    return record.paidBills ? transformPaidBills(record.paidBills || []) : [];
-  }, [record.paidBills]);
+    return record.paidInvoices
+      ? transformPaidInvoices(record.paidInvoices || [])
+      : [];
+  }, [record.paidInvoices]);
 
   const filteredData = useMemo(() => {
     if (selectedCustomer && selectedBranch && selectedCurrency) {
-      const unpaidBills = selectedCustomer.unpaidBills || [];
+      const unpaidInvoices = selectedCustomer.unpaidInvoices || [];
 
-      const combinedBills = [...paidBills, ...unpaidBills].map((bill) => ({
-        ...bill,
-      }));
-
-      const filtered = combinedBills.filter(
-        (bill) =>
-          bill.branch?.id === selectedBranch &&
-          bill.currency?.id === selectedCurrency
+      const combinedInvoices = [...paidInvoices, ...unpaidInvoices].map(
+        (invoice) => ({
+          ...invoice,
+        })
       );
 
-      return filtered.map((bill, index) => ({
-        ...bill,
+      const filtered = combinedInvoices.filter(
+        (invoice) =>
+          invoice.branch?.id === selectedBranch &&
+          invoice.currency?.id === selectedCurrency
+      );
+
+      return filtered.map((invoice, index) => ({
+        ...invoice,
         key: index + 1,
       }));
     }
     return [];
-  }, [selectedCustomer, selectedBranch, selectedCurrency, paidBills]);
+  }, [selectedCustomer, selectedBranch, selectedCurrency, paidInvoices]);
 
   useEffect(() => {
     setData(filteredData);
@@ -200,21 +204,21 @@ const PaymentsReceivedEdit = () => {
     try {
       const values = await form.validateFields();
 
-      let paidBills = [];
+      let paidInvoices = [];
       let foundInvalid = false;
 
       data.forEach((item) => {
         let paidAmount = parseFloat(values[`paidAmount${item.key}`]) || 0;
         if (paidAmount > 0) {
-          if (item.paidBillId) {
-            paidBills.push({
-              billId: item.id,
-              paidBillId: item.paidBillId,
+          if (item.paidInvoiceId) {
+            paidInvoices.push({
+              invoiceId: item.id,
+              paidInvoiceId: item.paidInvoiceId,
               paidAmount,
             });
           } else {
-            paidBills.push({
-              billId: item.id,
+            paidInvoices.push({
+              invoiceId: item.id,
               paidAmount,
             });
           }
@@ -234,7 +238,7 @@ const PaymentsReceivedEdit = () => {
         return;
       }
 
-      if (paidBills.length <= 0) {
+      if (paidInvoices.length <= 0) {
         openErrorNotification(
           notiApi,
           intl.formatMessage({
@@ -262,7 +266,7 @@ const PaymentsReceivedEdit = () => {
         depositAccountId: values.depositTo,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
-        paidBills,
+        paidInvoices,
         documents: fileUrls,
       };
       console.log("input", input);
@@ -316,15 +320,15 @@ const PaymentsReceivedEdit = () => {
   const handleModalRowSelect = (record) => {
     setSelectedCustomer(record);
     form.setFieldsValue({ customerName: record.name });
-    const unpaidBills = record.unpaidBills.map((bill, index) => ({
-      ...bill,
+    const unpaidInvoices = record.unpaidInvoices.map((invoice, index) => ({
+      ...invoice,
     }));
-    const paidBills = record.paidBills.map((bill) => ({
-      ...bill,
+    const paidInvoices = record.paidInvoices.map((invoice) => ({
+      ...invoice,
     }));
-    const combinedBills = [...paidBills, ...unpaidBills];
-    setData(combinedBills);
-    console.log(unpaidBills);
+    const combinedInvoices = [...paidInvoices, ...unpaidInvoices];
+    setData(combinedInvoices);
+    console.log(unpaidInvoices);
   };
 
   const handlePaidAmountBlur = () => {
@@ -359,17 +363,17 @@ const PaymentsReceivedEdit = () => {
       key: "date",
       render: (_, record) => (
         <Flex vertical>
-          <span>{dayjs(record.billDate).format(REPORT_DATE_FORMAT)}</span>
+          <span>{dayjs(record.invoiceDate).format(REPORT_DATE_FORMAT)}</span>
           <span style={{ fontSize: "var(--small-text)" }}>
-            Due Date: {dayjs(record.billDueDate).format(REPORT_DATE_FORMAT)}
+            Due Date: {dayjs(record.invoiceDueDate).format(REPORT_DATE_FORMAT)}
           </span>
         </Flex>
       ),
     },
     {
-      title: "Bill#",
-      dataIndex: "billNumber",
-      key: "billNumber",
+      title: "Invoice#",
+      dataIndex: "invoiceNumber",
+      key: "invoiceNumber",
     },
     {
       title: (
@@ -389,15 +393,19 @@ const PaymentsReceivedEdit = () => {
     },
     {
       title: (
-        <FormattedMessage id="label.billAmount" defaultMessage="Bill Amount" />
+        <FormattedMessage
+          id="label.invoiceAmount"
+          defaultMessage="Invoice Amount"
+        />
       ),
-      dataIndex: "billTotalAmount",
-      key: "billTotalAmount",
+      dataIndex: "invoiceTotalAmount",
+      key: "invoiceTotalAmount",
+      align: "right",
       render: (_, record) => (
         <Flex justify="end">
           {record.currency?.symbol}{" "}
           <FormattedNumber
-            value={record.billTotalAmount}
+            value={record.invoiceTotalAmount}
             style="decimal"
             minimumFractionDigits={record.currency?.decimalPlaces}
           />
@@ -430,14 +438,14 @@ const PaymentsReceivedEdit = () => {
             noStyle
             name={`paidAmount${record.key}`}
             initialValue={
-              record.billTotalPaidAmount && record.billTotalPaidAmount
+              record.invoiceTotalPaidAmount && record.invoiceTotalPaidAmount
             }
             rules={[
               () => ({
                 validator(_, value) {
                   if (!value) {
                     return Promise.resolve();
-                  } else if (isNaN(value) || value.length > 20) {
+                  } else if (isNaN(value) || value.length > 20 || value < 0) {
                     return Promise.reject(
                       intl.formatMessage({
                         id: "validation.invalidInput",
@@ -464,7 +472,7 @@ const PaymentsReceivedEdit = () => {
               onClick={() => {
                 form.setFieldValue(
                   `paidAmount${record.key}`,
-                  record.billTotalAmount - record.billTotalPaidAmount
+                  record.invoiceTotalAmount - record.invoiceTotalPaidAmount
                 );
                 calculateTotalPaidAmount();
               }}
@@ -668,7 +676,11 @@ const PaymentsReceivedEdit = () => {
                             validator(_, value) {
                               if (!value) {
                                 return Promise.resolve();
-                              } else if (isNaN(value) || value.length > 20) {
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 20 ||
+                                value < 0
+                              ) {
                                 return Promise.reject(
                                   intl.formatMessage({
                                     id: "validation.invalidInput",
@@ -829,7 +841,11 @@ const PaymentsReceivedEdit = () => {
                         validator(_, value) {
                           if (!value) {
                             return Promise.resolve();
-                          } else if (isNaN(value) || value.length > 20) {
+                          } else if (
+                            isNaN(value) ||
+                            value.length > 20 ||
+                            value < 0
+                          ) {
                             return Promise.reject(
                               intl.formatMessage({
                                 id: "validation.invalidInput",

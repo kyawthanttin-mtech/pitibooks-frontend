@@ -63,6 +63,10 @@ const CREATE_SALES_ORDER = gql`
         batchNumber
         name
         description
+        detailAccount {
+              id
+              name
+            }
         detailQty
         detailUnitRate
         detailDiscount
@@ -144,6 +148,10 @@ const UPDATE_SALES_ORDER = gql`
         batchNumber
         name
         description
+        detailAccount {
+              id
+              name
+            }
         detailQty
         detailUnitRate
         detailDiscount
@@ -224,6 +232,10 @@ const DELETE_SALES_ORDER = gql`
         batchNumber
         name
         description
+        detailAccount {
+              id
+              name
+            }
         detailQty
         detailUnitRate
         detailDiscount
@@ -305,6 +317,10 @@ const CONFIRM_SALES_ORDER = gql`
         batchNumber
         name
         description
+        detailAccount {
+              id
+              name
+            }
         detailQty
         detailUnitRate
         detailDiscount
@@ -386,6 +402,10 @@ const CANCEL_SALES_ORDER = gql`
         batchNumber
         name
         description
+        detailAccount {
+              id
+              name
+            }
         detailQty
         detailUnitRate
         detailDiscount

@@ -56,6 +56,7 @@ const SuppliersEdit = () => {
     allTaxGroupsQueryRef,
     allStatesQueryRef,
     allTownshipsQueryRef,
+    business,
   } = useOutletContext();
   const [selectedBAState, setSelectedBAState] = useState(
     record?.billingAddress.stateId
@@ -112,6 +113,7 @@ const SuppliersEdit = () => {
             phone: record?.phone,
             mobile: record?.mobile,
             currency: record?.currency?.id,
+            exchangeRate: record?.exchangeRate,
             openingBalance: record?.openingBalance,
             openingBalanceBranch:
               record?.openingBalanceBranchId &&
@@ -254,7 +256,7 @@ const SuppliersEdit = () => {
       currencyId: values.currency,
       supplierTaxId: taxId,
       supplierTaxType: taxType,
-
+      exchangeRate: values.exchangeRate || 0,
       openingBalance: values.openingBalance || 0,
       openingBalanceBranchId: values.openingBalanceBranch || 0,
       supplierPaymentTerms: values.paymentTerms,
@@ -549,6 +551,64 @@ const SuppliersEdit = () => {
                   </Select>
                 </Form.Item>
                 <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.currency !== currentValues.currency
+                  }
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue("currency") &&
+                    getFieldValue("currency") !== business.baseCurrency.id ? (
+                      <Form.Item
+                        label={
+                          <FormattedMessage
+                            id="label.exchangeRate"
+                            defaultMessage="Exchange Rate"
+                          />
+                        }
+                        name="exchangeRate"
+                        labelAlign="left"
+                        labelCol={{ span: 5 }}
+                        wrapperCol={{ span: 5 }}
+                        rules={[
+                          {
+                            required: true,
+                            message: (
+                              <FormattedMessage
+                                id="label.exchangeRate.required"
+                                defaultMessage="Enter the Exchange Rate"
+                              />
+                            ),
+                          },
+
+                          () => ({
+                            validator(_, value) {
+                              if (!value) {
+                                return Promise.resolve();
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 20 ||
+                                value < 0
+                              ) {
+                                return Promise.reject(
+                                  intl.formatMessage({
+                                    id: "validation.invalidInput",
+                                    defaultMessage: "Invalid Input",
+                                  })
+                                );
+                              } else {
+                                return Promise.resolve();
+                              }
+                            },
+                          }),
+                        ]}
+                      >
+                        <Input />
+                      </Form.Item>
+                    ) : null
+                  }
+                </Form.Item>
+                <Form.Item
                   label={
                     <FormattedMessage id="label.tax" defaultMessage="Tax" />
                   }
@@ -628,7 +688,11 @@ const SuppliersEdit = () => {
                           validator(_, value) {
                             if (!value) {
                               return Promise.resolve();
-                            } else if (isNaN(value) || value.length > 20) {
+                            } else if (
+                              isNaN(value) ||
+                              value.length > 20 ||
+                              value < 0
+                            ) {
                               return Promise.reject(
                                 intl.formatMessage({
                                   id: "validation.invalidInput",

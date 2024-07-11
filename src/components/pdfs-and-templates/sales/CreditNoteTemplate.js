@@ -68,6 +68,24 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                     </span>
                     <div style={{ clear: "both", marginTop: "20px" }}>
                       <span style={{ fontSize: "0.8rem" }}>
+                        <b>Remaining Balance</b>
+                      </span>
+                      <br />
+                      <span style={{ fontSize: "1.1rem" }}>
+                        <b>
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedRecord.remainingBalance}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </b>
+                      </span>
+                    </div>
+                    {/* <div style={{ clear: "both", marginTop: "20px" }}>
+                      <span style={{ fontSize: "0.8rem" }}>
                         <b>Available Credits</b>
                       </span>
                       <br />
@@ -83,7 +101,7 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                           />
                         </b>
                       </span>
-                    </div>
+                    </div> */}
                   </td>
                 </tr>
               </tbody>
@@ -519,6 +537,98 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                           {selectedRecord.currency.symbol}{" "}
                           <FormattedNumber
                             value={selectedRecord.creditNoteTotalAmount}
+                            style="decimal"
+                            minimumFractionDigits={
+                              selectedRecord.currency.decimalPlaces
+                            }
+                          />
+                        </b>
+                      </td>
+                    </tr>
+                    {selectedRecord.creditNoteTotalUsedAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Used</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.creditNoteTotalUsedAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    {selectedRecord.creditNoteTotalRefundAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Refund</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={selectedRecord.creditNoteTotalRefundAmount}
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="text-align-right">
+                      <td
+                        style={{
+                          padding: "5px 10px 5px 0",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        <b>Remaining</b>
+                      </td>
+                      <td
+                        style={{
+                          width: "120px",
+                          verticalAlign: "middle",
+                          padding: "10px 10px 10px 5px",
+                        }}
+                      >
+                        <b>
+                          {selectedRecord.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={selectedRecord.remainingBalance}
                             style="decimal"
                             minimumFractionDigits={
                               selectedRecord.currency.decimalPlaces

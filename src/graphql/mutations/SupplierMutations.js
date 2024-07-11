@@ -314,12 +314,37 @@ const CREATE_SUPPLIER_APPLY_CREDIT = gql`
   }
 `;
 
+const DELETE_SUPPLIER_CREDIT_BILL = gql`
+  mutation DeleteSupplierCreditBill($id: ID!) {
+    deleteSupplierCreditBill(id: $id) {
+      id
+      referenceId
+      referenceType
+      supplierCreditNumber
+      branchId
+      supplierId
+      billId
+      billNumber
+      creditDate
+      amount
+      exchangeRate
+      currency {
+        id
+        decimalPlaces
+        name
+        symbol
+      }
+    }
+  }
+`;
+
 const SupplierMutations = {
   CREATE_SUPPLIER,
   UPDATE_SUPPLIER,
   DELETE_SUPPLIER,
   TOGGLE_ACTIVE_SUPPLIER,
   CREATE_SUPPLIER_APPLY_CREDIT,
+  DELETE_SUPPLIER_CREDIT_BILL,
 };
 
 export default SupplierMutations;

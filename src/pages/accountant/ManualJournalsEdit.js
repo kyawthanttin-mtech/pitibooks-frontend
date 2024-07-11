@@ -117,7 +117,27 @@ const ManualJournalsEdit = () => {
   }, [currencyData]);
 
   const accounts = useMemo(() => {
-    return accountData?.listAllAccount;
+    if (!accountData?.listAllAccount) return [];
+
+    const groupedAccounts = accountData.listAllAccount
+      .filter(
+        (a) =>
+          a.isActive === true &&
+          a.detailType !== "Cash" &&
+          a.detailType !== "Bank" &&
+          a.detailType !== "AccountsPayable" &&
+          a.detailType !== "AccountsReceivable"
+      )
+      .reduce((acc, account) => {
+        const { detailType } = account;
+        if (!acc[detailType]) {
+          acc[detailType] = { detailType, accounts: [] };
+        }
+        acc[detailType].accounts.push(account);
+        return acc;
+      }, {});
+
+    return Object.values(groupedAccounts);
   }, [accountData]);
 
   // Parse record
@@ -307,16 +327,21 @@ const ManualJournalsEdit = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            placeholder="Select an account"
+            placeholder={
+              <FormattedMessage
+                id="label.account.placeholder"
+                defaultMessage="Select an account"
+              />
+            }
           >
-            {accounts?.map((account) => (
-              <Select.Option
-                key={account.id}
-                value={account.id}
-                label={account.name}
-              >
-                {account.name}
-              </Select.Option>
+            {accounts.map((group) => (
+              <Select.OptGroup key={group.detailType} label={group.detailType}>
+                {group.accounts.map((acc) => (
+                  <Select.Option key={acc.id} value={acc.id} label={acc.name}>
+                    {acc.name}
+                  </Select.Option>
+                ))}
+              </Select.OptGroup>
             ))}
           </Select>
         </Form.Item>
@@ -360,7 +385,7 @@ const ManualJournalsEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || Number(value) < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -391,7 +416,7 @@ const ManualJournalsEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || Number(value) < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",

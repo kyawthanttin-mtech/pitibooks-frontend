@@ -104,15 +104,23 @@ const JournalPDF = ({ selectedRecord, business }) => {
           {"\n"}
           {"\n"}
         </CustomText>
-        <CustomText>Supplier {"\n"}</CustomText>
-        <CustomText style={styles.primaryColor}>
-          {selectedRecord?.supplier?.name} {"\n"}
-          {"\n"}
-        </CustomText>
-        <CustomText>Customer {"\n"}</CustomText>
-        <CustomText style={styles.primaryColor}>
-          {selectedRecord?.customer?.name}
-        </CustomText>
+        {selectedRecord?.supplier?.name && (
+          <>
+            <CustomText>Supplier {"\n"}</CustomText>
+            <CustomText style={styles.primaryColor}>
+              {selectedRecord?.supplier?.name} {"\n"}
+              {"\n"}
+            </CustomText>{" "}
+          </>
+        )}
+        {selectedRecord?.customer?.name && (
+          <>
+            <CustomText>Customer {"\n"}</CustomText>
+            <CustomText style={styles.primaryColor}>
+              {selectedRecord?.customer?.name}
+            </CustomText>
+          </>
+        )}
       </View>
       <CustomText style={styles.alignRight}>
         <CustomText style={styles.header}>JOURNAL{"\n"}</CustomText>

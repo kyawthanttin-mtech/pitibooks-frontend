@@ -42,6 +42,7 @@ const GET_PAGINATED_EXPENSES = gql`
             id
             name
           }
+          bankCharges
           expenseDate
           currency {
             id

@@ -40,6 +40,48 @@ const GET_PAGINATE_SUPPLIER = gql`
             type
             isActive
           }
+          availableCredits {
+            id
+            branch {
+              id
+              name
+            }
+            supplierCreditNumber
+            referenceNumber
+            supplierCreditDate
+            currentStatus
+            supplierCreditTotalAmount
+            supplierCreditTotalUsedAmount
+            supplierCreditTotalRefundAmount
+            remainingBalance
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+              isActive
+            }
+          }
+          availableAdvances {
+            id
+            branch {
+              id
+              name
+            }
+            date
+            amount
+            usedAmount
+            currentStatus
+            refundAmount
+            remainingBalance
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+              isActive
+            }
+          }
           openingBalanceBranchId
           openingBalance
           exchangeRate
@@ -218,10 +260,17 @@ const GET_UNUSED_SUPPLIER_CREDITS = gql`
       supplierCreditTotalTaxAmount
       supplierCreditTotalAmount
       supplierCreditTotalUsedAmount
+      remainingBalance
       supplier {
         id
         name
         isActive
+      }
+      currency {
+        id
+        decimalPlaces
+        name
+        symbol
       }
       branch {
         id
@@ -242,6 +291,7 @@ const GET_UNUSED_SUPPLIER_CREDIT_ADVANCES = gql`
     ) {
       id
       date
+      remainingBalance
       branch {
         id
         name
@@ -258,7 +308,7 @@ const GET_UNUSED_SUPPLIER_CREDIT_ADVANCES = gql`
         symbol
         decimalPlaces
       }
-      exchangeRate
+
       currentStatus
       createdAt
       updatedAt

@@ -32,8 +32,28 @@ const GET_PAGINATE_INVOICE = gql`
           invoiceTotalAmount
           invoiceTotalPaidAmount
           remainingBalance
-          # invoiceTotalAdvanceUsedAmount
-          # invoiceTotalCreditUsedAmount
+          appliedCustomerCredits {
+            id
+            businessId
+            referenceId
+            referenceType
+            customerCreditNumber
+            branchId
+            customerId
+            invoiceId
+            invoiceNumber
+            creditDate
+            amount
+            exchangeRate
+            createdAt
+            updatedAt
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
+          }
           salesPerson {
             id
             name
@@ -45,6 +65,10 @@ const GET_PAGINATE_INVOICE = gql`
             batchNumber
             name
             description
+            detailAccount {
+              id
+              name
+            }
             detailQty
             detailUnitRate
             detailTax {
@@ -66,6 +90,8 @@ const GET_PAGINATE_INVOICE = gql`
           customer {
             id
             name
+            openingBalance
+            openingBalanceBranchId
           }
           branch {
             id

@@ -42,7 +42,7 @@ import {
   CommentMutations,
 } from "../../graphql";
 import { useOutletContext } from "react-router-dom";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
   openErrorNotification,
   openSuccessMessage,
@@ -226,6 +226,17 @@ const Suppliers = () => {
 
     return pageInfo;
   };
+
+  const availableCreditAndAdvance = [
+    ...(selectedRecord?.availableCredits?.map((credit) => ({
+      ...credit,
+      type: "Credit",
+    })) || []),
+    ...(selectedRecord?.availableAdvances?.map((advance) => ({
+      ...advance,
+      type: "Advance",
+    })) || []),
+  ];
 
   const handleEdit = (record, navigate, location) => {
     // console.log("edit record", record);
@@ -668,38 +679,86 @@ const Suppliers = () => {
                 <Table
                   className="table-variant"
                   pagination={false}
-                  dataSource={[{ key: 1 }]}
+                  dataSource={availableCreditAndAdvance}
                   columns={[
                     {
-                      title: "Currency",
-                      dataIndex: "currency",
-                      key: "currency",
-                      render: (_) => (
+                      title: "Type",
+                      dataIndex: "type",
+                      key: "type",
+                    },
+                    {
+                      title: "Amount",
+                      dataIndex: "amount",
+                      key: "amount",
+                      render: (_, record) => (
                         <>
-                          {selectedRecord.currency.symbol}{" "}
-                          {selectedRecord.currency.name}
+                          {record.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={
+                              record?.type === "Credit"
+                                ? record?.supplierCreditTotalAmount
+                                : record?.amount
+                            }
+                            style="decimal"
+                            minimumFractionDigits={
+                              record.currency.decimalPlaces
+                            }
+                          />
+                          {record?.type === "Credit" && (
+                            <div
+                              style={{
+                                fontSize: "var(--small-text)",
+                                opacity: "60%",
+                              }}
+                            >
+                              Used Amount: {record.currency.symbol}{" "}
+                              <FormattedNumber
+                                value={record?.supplierCreditTotalUsedAmount}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  record.currency.decimalPlaces
+                                }
+                              />
+                            </div>
+                          )}
                         </>
                       ),
                     },
                     {
-                      title: "Outstanding Payables",
-                      dataIndex: "payables",
-                      key: "payables",
-                      render: (text) => (
+                      title: "Refund Amount",
+                      dataIndex: "refundAmount",
+                      key: "refundAmount",
+                      render: (_, record) => (
                         <>
-                          {selectedRecord.currency.symbol}{" "}
-                          {selectedRecord.prepaidCreditAmount}
+                          {record.currency?.symbol}{" "}
+                          <FormattedNumber
+                            value={
+                              record.type === "Credit"
+                                ? record.supplierCreditTotalRefundAmount
+                                : record?.refundAmount
+                            }
+                            style="decimal"
+                            minimumFractionDigits={
+                              record.currency?.decimalPlaces
+                            }
+                          />
                         </>
                       ),
                     },
                     {
-                      title: "Unused Credits",
-                      dataIndex: "unusedCredits",
-                      key: "unusedCredits",
-                      render: (text) => (
+                      title: "Remaining Balance",
+                      dataIndex: "remainingBalance",
+                      key: "remainingBalance",
+                      render: (_, record) => (
                         <>
-                          {selectedRecord.currency.symbol}{" "}
-                          {selectedRecord.unusedCreditAmount}
+                          {record.currency.symbol}{" "}
+                          <FormattedNumber
+                            value={record.remainingBalance}
+                            style="decimal"
+                            minimumFractionDigits={
+                              record.currency.decimalPlaces
+                            }
+                          />
                         </>
                       ),
                     },

@@ -41,6 +41,59 @@ const GET_PAGINATE_CUSTOMER = gql`
             isActive
           }
           openingBalanceBranchId
+          availableCredits {
+            id
+            branch {
+              id
+              name
+            }
+            creditNoteNumber
+            referenceNumber
+            creditNoteDate
+            creditNoteSubject
+            notes
+            termsAndConditions
+            exchangeRate
+            creditNoteDiscount
+            creditNoteDiscountType
+            creditNoteDiscountAmount
+            shippingCharges
+            adjustmentAmount
+            isTaxInclusive
+            creditNoteTaxAmount
+            currentStatus
+            creditNoteSubtotal
+            creditNoteTotalDiscountAmount
+            creditNoteTotalTaxAmount
+            creditNoteTotalAmount
+            creditNoteTotalUsedAmount
+            creditNoteTotalRefundAmount
+            remainingBalance
+            createdAt
+            updatedAt
+          }
+          availableAdvances {
+            id
+            branch {
+              id
+              name
+            }
+            date
+            amount
+            usedAmount
+            currentStatus
+            refundAmount
+            remainingBalance
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
+            createdAt
+            updatedAt
+          }
+
           openingBalance
           exchangeRate
           customerPaymentTerms
@@ -141,8 +194,76 @@ const GET_PAGINATE_CUSTOMER = gql`
   }
 `;
 
+const GET_UNUSED_CUSTOMER_CREDITS = gql`
+  query GetUnusedCustomerCredits($branchId: Int!, $customerId: Int!) {
+    getUnusedCustomerCredits(branchId: $branchId, customerId: $customerId) {
+      id
+      businessId
+      creditNoteNumber
+      referenceNumber
+      creditNoteDate
+      creditNoteSubject
+      notes
+      termsAndConditions
+      exchangeRate
+      creditNoteDiscount
+      creditNoteDiscountType
+      creditNoteDiscountAmount
+      shippingCharges
+      adjustmentAmount
+      isTaxInclusive
+      creditNoteTaxAmount
+      currentStatus
+      creditNoteSubtotal
+      creditNoteTotalDiscountAmount
+      creditNoteTotalTaxAmount
+      creditNoteTotalAmount
+      creditNoteTotalUsedAmount
+      creditNoteTotalRefundAmount
+      remainingBalance
+      currency {
+        id
+        decimalPlaces
+        name
+        symbol
+        isActive
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const GET_UNUSED_CUSTOMER_CREDIT_ADVANCES = gql`
+  query GetUnusedCustomerCreditAdvances($branchId: Int!, $customerId: Int!) {
+    getUnusedCustomerCreditAdvances(
+      branchId: $branchId
+      customerId: $customerId
+    ) {
+      id
+      date
+      amount
+      usedAmount
+      currentStatus
+      refundAmount
+      remainingBalance
+      createdAt
+      updatedAt
+      currency {
+        id
+        decimalPlaces
+        name
+        symbol
+        isActive
+      }
+    }
+  }
+`;
+
 const CustomerQueries = {
   GET_PAGINATE_CUSTOMER,
+  GET_UNUSED_CUSTOMER_CREDITS,
+  GET_UNUSED_CUSTOMER_CREDIT_ADVANCES,
 };
 
 export default CustomerQueries;

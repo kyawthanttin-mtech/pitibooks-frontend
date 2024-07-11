@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Row, Col, Button, Form, Input, Select, DatePicker } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -11,13 +11,20 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 import { CustomerPaymentMutations } from "../../graphql";
+import { UploadAttachment } from "../../components";
 const { CREATE_CUSTOMER_PAYMENT } = CustomerPaymentMutations;
 
 const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const intl = useIntl();
+  const [fileList, setFileList] = useState(null);
   const [form] = Form.useForm();
-  const { notiApi, msgApi, allPaymentModesQueryRef, allAccountsQueryRef } =
-    useOutletContext();
+  const {
+    notiApi,
+    msgApi,
+    allPaymentModesQueryRef,
+    allAccountsQueryRef,
+    business,
+  } = useOutletContext();
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -71,11 +78,15 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const fileUrls = fileList?.map((file) => ({
+        documentUrl: file.imageUrl,
+      }));
 
       const input = {
         branchId: values.branch,
         customerId: selectedRecord.customer.id,
         currencyId: selectedRecord.currency.id,
+        exchangeRate: values.exchangeRate,
         amount: values.amount,
         bankCharges: values.bankCharges,
         paymentDate: values.date,
@@ -83,6 +94,7 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
         depositAccountId: values.depositTo,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
+        documents: fileUrls,
         // paymentNumber: 1, //temporary
         paidInvoices: [
           {
@@ -106,8 +118,7 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
     console.log(selectedRecord);
     form.setFieldsValue({
       branch: selectedRecord?.branch.id,
-      amount:
-        selectedRecord?.remainingBalance,
+      amount: selectedRecord?.remainingBalance,
     });
   }, [form, selectedRecord]);
 
@@ -203,7 +214,7 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                   validator(_, value) {
                     if (!value) {
                       return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
+                    } else if (isNaN(value) || value.length > 20 || value < 0) {
                       return Promise.reject(
                         intl.formatMessage({
                           id: "validation.invalidInput",
@@ -295,7 +306,7 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                   validator(_, value) {
                     if (!value) {
                       return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20) {
+                    } else if (isNaN(value) || value.length > 20 || value < 0) {
                       return Promise.reject(
                         intl.formatMessage({
                           id: "validation.invalidInput",
@@ -311,6 +322,50 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
             >
               <Input></Input>
             </Form.Item>
+            {selectedRecord.currency.id !== business.baseCurrency.id && (
+              <Form.Item
+                label={
+                  <FormattedMessage
+                    id="label.exchangeRate"
+                    defaultMessage="Exchange Rate"
+                  />
+                }
+                name="exchangeRate"
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="label.exchangeRate.required"
+                        defaultMessage="Enter the Exchange Rate"
+                      />
+                    ),
+                  },
+                  () => ({
+                    validator(_, value) {
+                      if (!value) {
+                        return Promise.resolve();
+                      } else if (
+                        isNaN(value) ||
+                        value.length > 20 ||
+                        value < 0
+                      ) {
+                        return Promise.reject(
+                          intl.formatMessage({
+                            id: "validation.invalidInput",
+                            defaultMessage: "Invalid Input",
+                          })
+                        );
+                      } else {
+                        return Promise.resolve();
+                      }
+                    },
+                  }),
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            )}
           </Col>
         </Row>
         <Form.Item
@@ -320,30 +375,11 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
         >
           <Input.TextArea rows={4} maxLength={1000}></Input.TextArea>
         </Form.Item>
-        <div className="attachment-upload">
-          <p>
-            <FormattedMessage
-              id="label.attachments"
-              defaultMessage="Attachments"
-            />
-          </p>
-          <Button
-            type="dashed"
-            icon={<UploadOutlined />}
-            className="attachment-upload-button"
-          >
-            <FormattedMessage
-              id="button.uploadFile"
-              defaultMessage="Upload File"
-            />
-          </Button>
-          <p>
-            <FormattedMessage
-              id="label.uploadLimit"
-              defaultMessage="You can upload a maximum of 5 files, 5MB each"
-            />
-          </p>
-        </div>
+        <UploadAttachment
+          onCustomFileListChange={(customFileList) =>
+            setFileList(customFileList)
+          }
+        />
         <div className="page-actions-bar page-actions-bar-margin">
           <Button
             loading={createLoading}

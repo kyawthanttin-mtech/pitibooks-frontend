@@ -259,12 +259,14 @@
   "label.paymentDate": "Payment Date",
   "label.paymentDate.required": "Select the Payment Date",
   "label.supplierAdvance": "Supplier Advance",
+  "label.supplierAdvanceRefund": "Supplier Advance Refund",
   "label.transferToAnotherAccount": "Transfer To Another Account",
   "label.transferFromAnotherAccount": "Transfer From Another Account",
   "label.ownerDrawings": "Owner's Drawings",
   "label.ownerContribution": "Owner Contribution",
   "label.creditNoteRefund": "Credit Note Refund",
   "label.customerAdvance": "Customer Advance",
+  "label.customerAdvanceRefund": "Customer Advance Refund",
   "label.expenseRefund": "Expense Refund",
   "label.otherIncome": "Other Income",
   "label.supplierCreditRefund": "Supplier Credit Refund",
@@ -281,6 +283,7 @@
   "label.sourceWarehouse": "Source Warehouse",
   "label.destinationWarehouse": "Destination Warehouse",
   "label.reason": "Reason",
+  "label.reason.required": "Enter the Reason",
   "label.transferOrderNumber": "Transfer Order #",
   "label.productPrice": "Product Price",
   "label.productAmount": "Product Amount",
@@ -619,7 +622,9 @@
   "validation.requiredAtLeastOneBranch": "At least one Branch is required",
   "validation.paymentAmountCannotBeNegative": "Payment Amount cannot be negative",
   "validation.enterAtLeastOnePayment": "Enter At Least One Payment",
+  "validation.enterAtLeastOneCredit": "Enter At Least One Credit",
   "validation.sameWarehouse": "Transfers cannot be made within the same warehouse.",
+  "validation.pleaseSelectAdAdvance": "Please select an advance",
 
   "error.productIsAlreadyAdded": "Product is already added",
   "error.atLeastOneSearchCriteria": "Please fill in at least one search criteria",
@@ -627,5 +632,6 @@
 
   "variation.name.required": "Enter the Variation Name",
 
-  "transaction.recorded": "Transaction Recorded"
+  "transaction.recorded": "Transaction Recorded",
+  "refund.informationSaved": "Refund Information Saved"
 }

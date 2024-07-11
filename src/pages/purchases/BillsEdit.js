@@ -1175,7 +1175,7 @@ const BillsEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1220,7 +1220,7 @@ const BillsEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1257,7 +1257,7 @@ const BillsEdit = () => {
               validator(_, value) {
                 if (!value) {
                   return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20) {
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
                   return Promise.reject(
                     intl.formatMessage({
                       id: "validation.invalidInput",
@@ -1698,7 +1698,11 @@ const BillsEdit = () => {
                             validator(_, value) {
                               if (!value) {
                                 return Promise.resolve();
-                              } else if (isNaN(value) || value.length > 20) {
+                              } else if (
+                                isNaN(value) ||
+                                value.length > 20 ||
+                                value < 0
+                              ) {
                                 return Promise.reject(
                                   intl.formatMessage({
                                     id: "validation.invalidInput",
@@ -1959,7 +1963,8 @@ const BillsEdit = () => {
                                     return Promise.resolve();
                                   } else if (
                                     isNaN(value) ||
-                                    value.length > 20
+                                    value.length > 20 ||
+                                    value < 0
                                   ) {
                                     return Promise.reject(
                                       intl.formatMessage({
