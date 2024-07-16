@@ -1,11 +1,17 @@
-import React, { useState } from "react";
-import { Button, Form, Input, Select, DatePicker, Divider, Modal } from "antd";
+import React, { useMemo, useState } from "react";
 import {
-  UploadOutlined,
-  SearchOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
-import { FormattedMessage, useIntl } from "react-intl";
+  Button,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Divider,
+  Modal,
+  Radio,
+  Table,
+} from "antd";
+import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
@@ -14,15 +20,15 @@ import {
   openSuccessMessage,
 } from "../../utils/Notification";
 
-import { BankingTransactionMutations } from "../../graphql";
+import { RefundMutations } from "../../graphql";
 import dayjs from "dayjs";
 import { SupplierSearchModal, UploadAttachment } from "../../components";
-const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
+const { UPDATE_REFUND } = RefundMutations;
 
 const initialValues = {
-  transactionDate: dayjs(),
+  date: dayjs(),
 };
-const SupplierAdvanceRefundEdit = ({
+const SupplierAdvanceRefundNew = ({
   refetch,
   modalOpen,
   setModalOpen,
@@ -31,35 +37,38 @@ const SupplierAdvanceRefundEdit = ({
   paymentModes,
   allAccounts,
   accounts,
-  bankingAccounts,
   selectedRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const { notiApi, msgApi, business } = useOutletContext();
+  const { notiApi, msgApi } = useOutletContext();
   const [fileList, setFileList] = useState(null);
-  const [currencies, setCurrencies] = useState([
-    selectedAcc?.currency?.id > 0
-      ? selectedAcc.currency
-      : business.baseCurrency,
-  ]);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(
+    selectedRecord?.supplier
+  );
+
+  const [selectedAdvance, setSelectedAdvance] = useState(
+    selectedRecord?.supplier?.availableAdvances
+  );
+  const [toAccountCurrencyId, setToAccountCurrencyId] = useState();
+  const [selectedBranch, setSelectedBranch] = useState();
 
   if (form && modalOpen) {
     form.setFieldsValue({
-      toAccountId: selectedAcc.id,
+      toAccountId: selectedAcc?.id,
     });
   }
-  const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_BANKING_TRANSACTION,
+  console.log(selectedRecord);
+  const [updateRefund, { loading: updateLoading }] = useMutation(
+    UPDATE_REFUND,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="transaction.recorded"
-            defaultMessage="Transaction Recorded"
+            id="refund.informationSaved"
+            defaultMessage="Refund Information Saved"
           />
         );
         refetch();
@@ -67,22 +76,34 @@ const SupplierAdvanceRefundEdit = ({
     }
   );
 
-  const handleFromAccountChange = (id) => {
-    const toAccountCurrency =
-      selectedAcc?.currency?.id > 0
-        ? selectedAcc.currency
-        : business.baseCurrency;
-    let fromAccountCurrency = allAccounts?.find((a) => a.id === id)?.currency;
-    if (!fromAccountCurrency?.id || fromAccountCurrency?.id <= 0) {
-      fromAccountCurrency = business.baseCurrency;
-    }
-    let newCurrencies = [toAccountCurrency];
-    if (toAccountCurrency.id !== fromAccountCurrency.id) {
-      newCurrencies.push(fromAccountCurrency);
-    }
-    console.log(newCurrencies);
-    setCurrencies(newCurrencies);
-    form.setFieldValue("currencyId", null);
+  useMemo(() => {
+    const parsedRecord =
+      form && modalOpen && selectedRecord
+        ? {
+            branchId: selectedRecord.branch?.id || null,
+            toAccountId: selectedRecord.toAccount?.id || null,
+            currencyId: selectedRecord.currency?.id || null,
+            amount: selectedRecord.amount,
+            bankCharges: selectedRecord.bankCharges,
+            referenceNumber: selectedRecord.referenceNumber,
+            description: selectedRecord.description,
+            refundDate: dayjs(selectedRecord.refundDate),
+            paymentModeId: selectedRecord.paymentMode?.id || null,
+            supplierName: selectedRecord.supplier?.name,
+            exchangeRate: selectedRecord.exchangeRate,
+            refundAmount: selectedRecord.details[0]?.paymentAmount,
+          }
+        : {};
+    setSelectedSupplier(selectedRecord?.supplier);
+    setSelectedBranch(selectedRecord?.branch?.id);
+    setToAccountCurrencyId(selectedRecord?.toAccount?.currency?.id || null);
+    form.setFieldsValue(parsedRecord);
+  }, [form, selectedRecord, modalOpen]);
+
+  const handleToAccountChange = (id) => {
+    const selectedAccount = allAccounts.find((account) => account.id === id);
+    console.log("jd", selectedAdvance);
+    setToAccountCurrencyId(selectedAccount?.currency?.id || null);
   };
 
   const handleSubmit = async () => {
@@ -93,22 +114,162 @@ const SupplierAdvanceRefundEdit = ({
       }));
 
       const input = {
-        ...values,
+        accountId: values.toAccountId,
+        branchId: values.branchId,
+        referenceNumber: values.referenceNumber,
+        refundDate: values.date,
+        paymentModeId: values.paymentModeId,
+        exchangeRate: values.exchangeRate,
+        amount: values[`refundAmount`],
         currencyId: selectedAcc?.currency.id,
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
-        transactionType: "SupplierAdvanceRefund",
-        // isMoneyIn: false,
-        documents: fileUrls,
+        referenceType: "SA",
+        referenceId: selectedAdvance?.id,
+        // documents: fileUrls,
       };
+      if (!selectedAdvance) {
+        openErrorNotification(
+          notiApi,
+          intl.formatMessage({
+            id: "validation.pleaseSelectAnAdvance",
+            defaultMessage: "Please select an advance",
+          })
+        );
+        return;
+      }
+      if (!values[`refundAmount`] || values[`refundAmount`] < 0) {
+        openErrorNotification(
+          notiApi,
+          intl.formatMessage({
+            id: "validation.pleaseSelectAnAdvance",
+            defaultMessage: "Please select an advance",
+          })
+        );
+        return;
+      }
 
-      await createAccountTransfer({ variables: { input } });
+      await updateRefund({ variables: { id: selectedRecord?.id, input } });
       setModalOpen(false);
       form.resetFields();
     } catch (err) {
       openErrorNotification(notiApi, err.message);
     }
   };
+
+  const handleRefundAmountChange = (record) => {
+    const recordId = record?.id;
+    const refundAmount = form.getFieldValue(`refundAmount${recordId}`);
+    const remainingBalance = selectedSupplier?.availableAdvances.find(
+      (advance) => advance.id === recordId
+    )?.remainingBalance;
+
+    if (refundAmount > remainingBalance) {
+      form.setFieldsValue({
+        [`refundAmount${recordId}`]: remainingBalance,
+      });
+    }
+
+    if (selectedAdvance?.id !== recordId) {
+      form.resetFields([`refundAmount`]);
+      setSelectedAdvance(record);
+    }
+  };
+
+  const advanceColumns = [
+    // {
+    //   dataIndex: "radio",
+    //   key: "radio",
+    //   render: (_, record) => (
+    //     <Radio
+    //       value={record.id}
+    //       style={{ margin: 0 }}
+    //       onChange={() => handleRefundAmountChange(record)}
+    //     ></Radio>
+    //   ),
+    // },
+    {
+      title: "Date",
+      dataIndex: "date",
+      key: "date",
+      render: (_, record) => dayjs(record.date).format(REPORT_DATE_FORMAT),
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      align: "right",
+      render: (_, record) => (
+        <>
+          {record.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount}
+            style="decimal"
+            minimumFractionDigits={record.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      title: "Balance",
+      dataIndex: "remainingBalance",
+      align: "right",
+      key: "remainingBalance",
+      render: (_, record) => (
+        <>
+          {record?.symbol}{" "}
+          <FormattedNumber
+            value={record.remainingBalance}
+            style="decimal"
+            minimumFractionDigits={record.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      title: "Refund Amount",
+      dataIndex: "refundAmount",
+      key: "refundAmount",
+      align: "right",
+      render: (_, record) => (
+        <Form.Item
+          name={`refundAmount${record.id}`}
+          rules={[
+            {
+              required: selectedAdvance?.id === record.id,
+              message: (
+                <FormattedMessage
+                  id="label.refundAmount.required"
+                  defaultMessage="Enter The Refund Amount"
+                />
+              ),
+            },
+            () => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.resolve();
+                } else if (isNaN(value) || value.length > 20 || value < 0) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: "validation.invalidInput",
+                      defaultMessage: "Invalid Input",
+                    })
+                  );
+                } else {
+                  return Promise.resolve();
+                }
+              },
+            }),
+          ]}
+        >
+          <Input
+            style={{ textAlign: "right" }}
+            onBlur={() => handleRefundAmountChange(record)}
+          ></Input>
+        </Form.Item>
+      ),
+    },
+  ];
 
   const transferToForm = (
     <Form form={form} onFinish={handleSubmit} initialValues={initialValues}>
@@ -132,41 +293,11 @@ const SupplierAdvanceRefundEdit = ({
           },
         ]}
       >
-        <Select showSearch optionFilterProp="label" disabled>
-          {bankingAccounts?.map((acc) => (
-            <Select.Option key={acc.id} value={acc.id} label={acc.name}>
-              {acc.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.fromAccount"
-            defaultMessage="From Account"
-          />
-        }
-        name="fromAccountId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        // wrapperCol={{ span: 15 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.account.required"
-                defaultMessage="Select the Account"
-              />
-            ),
-          },
-        ]}
-      >
         <Select
           showSearch
           optionFilterProp="label"
-          onChange={handleFromAccountChange}
+          onChange={handleToAccountChange}
+          disabled
         >
           {accounts.map((group) => (
             <Select.OptGroup key={group.detailType} label={group.detailType}>
@@ -179,6 +310,7 @@ const SupplierAdvanceRefundEdit = ({
           ))}
         </Select>
       </Form.Item>
+
       <Form.Item
         label={
           <FormattedMessage id="label.supplier" defaultMessage="Supplier" />
@@ -200,6 +332,7 @@ const SupplierAdvanceRefundEdit = ({
         ]}
       >
         <Input
+          disabled
           readOnly
           onClick={setSupplierSearchModalOpen}
           className="search-input"
@@ -212,11 +345,15 @@ const SupplierAdvanceRefundEdit = ({
                   onClick={() => {
                     setSelectedSupplier(null);
                     form.resetFields(["supplierName"]);
+                    form.setFieldsValue({
+                      [`refundAmount`]: null,
+                    });
                   }}
                 />
               )}
 
               <Button
+                disabled
                 style={{ width: "2.5rem" }}
                 type="primary"
                 icon={<SearchOutlined />}
@@ -245,7 +382,12 @@ const SupplierAdvanceRefundEdit = ({
           },
         ]}
       >
-        <Select showSearch optionFilterProp="label">
+        <Select
+          disabled
+          showSearch
+          optionFilterProp="label"
+          onSelect={(value) => setSelectedBranch(value)}
+        >
           {branches?.map((branch) => (
             <Select.Option
               key={branch.id}
@@ -257,35 +399,17 @@ const SupplierAdvanceRefundEdit = ({
           ))}
         </Select>
       </Form.Item>
-
-      <Form.Item
-        label={<FormattedMessage id="label.date" defaultMessage="date" />}
-        name="transactionDate"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.date.required"
-                defaultMessage="Select the Date"
-              />
-            ),
-          },
-        ]}
+      <Divider />
+      <div
+        className={
+          selectedSupplier && toAccountCurrencyId && selectedBranch
+            ? ""
+            : "form-mask"
+        }
       >
-        <DatePicker format={REPORT_DATE_FORMAT} />
-      </Form.Item>
-      {selectedAcc?.currency.id !== business.baseCurrency.id && (
         <Form.Item
-          label={
-            <FormattedMessage
-              id="label.exchangeRate"
-              defaultMessage="Exchange Rate"
-            />
-          }
-          name="exchangeRate"
+          label={<FormattedMessage id="label.date" defaultMessage="date" />}
+          name="date"
           labelAlign="left"
           labelCol={{ span: 8 }}
           rules={[
@@ -293,181 +417,137 @@ const SupplierAdvanceRefundEdit = ({
               required: true,
               message: (
                 <FormattedMessage
-                  id="label.exchangeRate.required"
-                  defaultMessage="Enter the Exchange Rate"
+                  id="label.date.required"
+                  defaultMessage="Select the Date"
                 />
               ),
             },
-
-            () => ({
-              validator(_, value) {
-                if (!value) {
-                  return Promise.resolve();
-                } else if (isNaN(value) || value.length > 20 || value < 0) {
-                  return Promise.reject(
-                    intl.formatMessage({
-                      id: "validation.invalidInput",
-                      defaultMessage: "Invalid Input",
-                    })
-                  );
-                } else {
-                  return Promise.resolve();
-                }
-              },
-            }),
           ]}
         >
-          <Input />
+          <DatePicker format={REPORT_DATE_FORMAT} />
         </Form.Item>
-      )}
-      <Form.Item
-        label={<FormattedMessage id="label.amount" defaultMessage="Amount" />}
-        name="amount"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.amount.required"
-                defaultMessage="Enter the Amount"
-              />
-            ),
-          },
-          () => ({
-            validator(_, value) {
-              if (!value) {
-                return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20 || value < 0) {
-                return Promise.reject(
-                  intl.formatMessage({
-                    id: "validation.invalidInput",
-                    defaultMessage: "Invalid Input",
-                  })
-                );
-              } else {
-                return Promise.resolve();
-              }
-            },
-          }),
-        ]}
-      >
-        <Input />
-      </Form.Item>
-      {/* <Form.Item
-        label={
-          <FormattedMessage id="label.currency" defaultMessage="Currency" />
-        }
-        name="currencyId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="label.currency.required"
-                defaultMessage="Select the Currency"
-              />
-            ),
-          },
-        ]}
-      >
-        <Select
-          //   onChange={(value) => setSelectedCurrency(value)}
-          showSearch
-          optionFilterProp="label"
+
+        <Form.Item
+          label={
+            <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
+          }
+          name="paymentModeId"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
         >
-          {currencies?.map((currency) => (
-            <Select.Option
-              key={currency.id}
-              value={currency.id}
-              label={currency.name + currency.symbol}
-            >
-              {currency.name} ({currency.symbol})
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item> */}
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.bankCharges"
-            defaultMessage="Bank Charges"
-          />
-        }
-        name="bankCharges"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-        rules={[
-          () => ({
-            validator(_, value) {
-              if (!value) {
-                return Promise.resolve();
-              } else if (isNaN(value) || value.length > 20 || value < 0) {
-                return Promise.reject(
-                  intl.formatMessage({
-                    id: "validation.invalidInput",
-                    defaultMessage: "Invalid Input",
-                  })
-                );
-              } else {
-                return Promise.resolve();
+          <Select showSearch optionFilterProp="label">
+            {paymentModes?.map((p) => (
+              <Select.Option key={p.id} value={p.id} label={p.name}>
+                {p.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.referenceNumber"
+              defaultMessage="Reference #"
+            />
+          }
+          name="referenceNumber"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+        >
+          <Input maxLength={255}></Input>
+        </Form.Item>
+        <label htmlFor="refundAmount">
+          <span
+            style={{
+              fontSize: "14px",
+              lineHeight: 1,
+              display: "inline-block",
+              marginInlineEnd: "4px",
+              fontFamily: "SimSun, sans-serif",
+              color: "#ff4d4f",
+            }}
+          >
+            *
+          </span>
+          Select an advance
+        </label>
+        <Radio.Group value={selectedAdvance?.id} style={{ width: "100%" }}>
+          <Table
+            style={{ marginBottom: "24px" }}
+            className="payment-table"
+            rowKey={(record) => record.id}
+            columns={advanceColumns}
+            dataSource={selectedSupplier?.availableAdvances?.filter(
+              (a) => a.branch.id === selectedBranch
+            )}
+            pagination={false}
+          ></Table>
+        </Radio.Group>
+        {selectedAdvance &&
+          selectedSupplier &&
+          toAccountCurrencyId !== selectedAdvance?.currency?.id && (
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.exchangeRate"
+                  defaultMessage="Exchange Rate"
+                />
               }
-            },
-          }),
-        ]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage id="label.paidVia" defaultMessage="Paid Via" />
-        }
-        name="paymentModeId"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-      >
-        <Select showSearch optionFilterProp="label">
-          {paymentModes?.map((p) => (
-            <Select.Option key={p.id} value={p.id} label={p.name}>
-              {p.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.referenceNumber"
-            defaultMessage="Reference #"
-          />
-        }
-        name="referenceNumber"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-      >
-        <Input maxLength={255}></Input>
-      </Form.Item>
-      <Form.Item
-        label={
-          <FormattedMessage
-            id="label.description"
-            defaultMessage="Description"
-          />
-        }
-        name="description"
-        labelAlign="left"
-        labelCol={{ span: 8 }}
-      >
-        <Input.TextArea maxLength={1000}></Input.TextArea>
-      </Form.Item>
-      <Divider />
-      <UploadAttachment
-        onCustomFileListChange={(customFileList) => setFileList(customFileList)}
-        files={selectedRecord?.documents}
-      />
+              name="exchangeRate"
+              labelAlign="left"
+              labelCol={{ span: 8 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.exchangeRate.required"
+                      defaultMessage="Enter the Exchange Rate"
+                    />
+                  ),
+                },
+
+                () => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    } else if (isNaN(value) || value.length > 20) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: "validation.invalidInput",
+                          defaultMessage: "Invalid Input",
+                        })
+                      );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  },
+                }),
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          )}
+        <Form.Item
+          label={
+            <FormattedMessage
+              id="label.description"
+              defaultMessage="Description"
+            />
+          }
+          name="description"
+          labelAlign="left"
+          labelCol={{ span: 8 }}
+        >
+          <Input.TextArea maxLength={1000}></Input.TextArea>
+        </Form.Item>
+        <Divider />
+        <UploadAttachment
+          onCustomFileListChange={(customFileList) =>
+            setFileList(customFileList)
+          }
+        />
+      </div>
     </Form>
   );
 
@@ -489,7 +569,7 @@ const SupplierAdvanceRefundEdit = ({
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={form.submit}
-        confirmLoading={createLoading}
+        confirmLoading={updateLoading}
       >
         {transferToForm}
       </Modal>
@@ -498,6 +578,7 @@ const SupplierAdvanceRefundEdit = ({
         setModalOpen={setSupplierSearchModalOpen}
         onRowSelect={(record) => {
           setSelectedSupplier(record);
+          setSelectedAdvance(null);
           form.setFieldsValue({ supplierName: record.name });
         }}
       />
@@ -505,4 +586,4 @@ const SupplierAdvanceRefundEdit = ({
   );
 };
 
-export default SupplierAdvanceRefundEdit;
+export default SupplierAdvanceRefundNew;

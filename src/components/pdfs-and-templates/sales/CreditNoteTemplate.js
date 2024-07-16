@@ -488,7 +488,7 @@ const CreditNoteTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{

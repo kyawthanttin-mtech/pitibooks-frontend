@@ -19,7 +19,6 @@ import {
 import {
   CloseCircleOutlined,
   PlusCircleFilled,
-  UploadOutlined,
   CloseOutlined,
   DownOutlined,
   SearchOutlined,
@@ -179,6 +178,7 @@ const InvoicesEdit = () => {
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [fileList, setFileList] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState(record?.branch?.id);
 
   // const initialValues = {
   //   currency: business.baseCurrency.id,
@@ -286,8 +286,10 @@ const InvoicesEdit = () => {
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse;
-  }, [warehouseData]);
+    return warehouseData?.listAllWarehouse?.filter(
+      (w) => w.isActive === true && w.branchId === selectedBranchId
+    );
+  }, [warehouseData, selectedBranchId]);
 
   const products = useMemo(() => {
     return productData?.listAllProduct;
@@ -1502,7 +1504,15 @@ const InvoicesEdit = () => {
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={(value) => {
+                      setSelectedBranchId(value);
+                      setSelectedWarehouse(null);
+                      form.setFieldsValue({ warehouse: null });
+                    }}
+                  >
                     {branches?.map((branch) => (
                       <Select.Option
                         key={branch.id}
@@ -1837,6 +1847,7 @@ const InvoicesEdit = () => {
                     loading={stockLoading}
                     onChange={(value) => setSelectedWarehouse(value)}
                     optionFilterProp="label"
+                    disabled={!selectedBranchId}
                   >
                     {warehouses?.map((w) => (
                       <Select.Option key={w.id} value={w.id} label={w.name}>

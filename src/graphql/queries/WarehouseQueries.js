@@ -5,6 +5,7 @@ const GET_ALL_WAREHOUSES = gql`
     listAllWarehouse {
       id
       name
+      branchId
       isActive
     }
   }

@@ -85,11 +85,15 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                     <span>{business.email}</span>
                     <br />
                     <br />
-                    <span>Supplier:</span>
-                    <br />
-                    <span style={{ color: "var(--primary-color)" }}>
-                      {selectedRecord.supplier.name}
-                    </span>
+                    {selectedRecord.supplier?.name && (
+                      <>
+                        <span>Supplier:</span>
+                        <br />
+                        <span style={{ color: "var(--primary-color)" }}>
+                          {selectedRecord.supplier.name}
+                        </span>
+                      </>
+                    )}
                   </td>
                   <td className="text-align-right">
                     <span style={{ fontSize: "2.2rem" }}>PURCHASE ORDER</span>
@@ -483,8 +487,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Tax{" "}
-                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                          Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
                         </td>
                         <td
                           style={{
@@ -505,7 +508,7 @@ const PurchaseOrderTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{

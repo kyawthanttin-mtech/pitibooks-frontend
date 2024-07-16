@@ -115,6 +115,13 @@ const GET_PAGINATE_PURCHASE_ORDER = gql`
             currentStatus
             billTotalAmount
             billTotalPaidAmount
+            remainingBalance
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
           }
           warehouse {
             id

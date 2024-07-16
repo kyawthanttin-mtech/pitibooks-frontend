@@ -18,13 +18,9 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const intl = useIntl();
   const [fileList, setFileList] = useState(null);
   const [form] = Form.useForm();
-  const {
-    notiApi,
-    msgApi,
-    allPaymentModesQueryRef,
-    allAccountsQueryRef,
-    business,
-  } = useOutletContext();
+  const { notiApi, msgApi, allPaymentModesQueryRef, allAccountsQueryRef } =
+    useOutletContext();
+  const [accountCurrencyId, setAccountCurrencyId] = useState(null);
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
   const { data: accountData } = useReadQuery(allAccountsQueryRef);
@@ -95,7 +91,6 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
         referenceNumber: values.referenceNumber,
         notes: values.notes,
         documents: fileUrls,
-        // paymentNumber: 1, //temporary
         paidInvoices: [
           {
             paidInvoiceId: 0,
@@ -111,6 +106,24 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
       form.resetFields();
     } catch (err) {
       openErrorNotification(notiApi, err.message);
+    }
+  };
+
+  const handleAccountChange = (id) => {
+    let selectedAccount;
+    accounts.forEach((group) => {
+      const account = group.accounts.find((acc) => acc.id === id);
+      if (account) {
+        selectedAccount = account;
+      }
+    });
+    setAccountCurrencyId(selectedAccount?.currency?.id || null);
+  };
+
+  const handleAmountChange = () => {
+    const amount = form.getFieldValue("amount");
+    if (amount > selectedRecord.remainingBalance) {
+      form.setFieldsValue({ amount: selectedRecord.remainingBalance });
     }
   };
 
@@ -176,7 +189,11 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 },
               ]}
             >
-              <Select showSearch optionFilterProp="label">
+              <Select
+                showSearch
+                optionFilterProp="label"
+                onChange={handleAccountChange}
+              >
                 {accounts.map((group) => (
                   <Select.OptGroup
                     key={group.detailType}
@@ -228,7 +245,10 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 }),
               ]}
             >
-              <Input addonBefore={selectedRecord.currency.symbol}></Input>
+              <Input
+                addonBefore={selectedRecord.currency.symbol}
+                onBlur={handleAmountChange}
+              ></Input>
             </Form.Item>
             <Form.Item
               label={
@@ -322,50 +342,51 @@ const RecordPayment = ({ refetch, branches, selectedRecord, onClose }) => {
             >
               <Input></Input>
             </Form.Item>
-            {selectedRecord.currency.id !== business.baseCurrency.id && (
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.exchangeRate"
-                    defaultMessage="Exchange Rate"
-                  />
-                }
-                name="exchangeRate"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.exchangeRate.required"
-                        defaultMessage="Enter the Exchange Rate"
-                      />
-                    ),
-                  },
-                  () => ({
-                    validator(_, value) {
-                      if (!value) {
-                        return Promise.resolve();
-                      } else if (
-                        isNaN(value) ||
-                        value.length > 20 ||
-                        value < 0
-                      ) {
-                        return Promise.reject(
-                          intl.formatMessage({
-                            id: "validation.invalidInput",
-                            defaultMessage: "Invalid Input",
-                          })
-                        );
-                      } else {
-                        return Promise.resolve();
-                      }
+            {accountCurrencyId &&
+              selectedRecord.currency.id !== accountCurrencyId && (
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.exchangeRate"
+                      defaultMessage="Exchange Rate"
+                    />
+                  }
+                  name="exchangeRate"
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.exchangeRate.required"
+                          defaultMessage="Enter the Exchange Rate"
+                        />
+                      ),
                     },
-                  }),
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            )}
+                    () => ({
+                      validator(_, value) {
+                        if (!value) {
+                          return Promise.resolve();
+                        } else if (
+                          isNaN(value) ||
+                          value.length > 20 ||
+                          value < 0
+                        ) {
+                          return Promise.reject(
+                            intl.formatMessage({
+                              id: "validation.invalidInput",
+                              defaultMessage: "Invalid Input",
+                            })
+                          );
+                        } else {
+                          return Promise.resolve();
+                        }
+                      },
+                    }),
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
           </Col>
         </Row>
         <Form.Item

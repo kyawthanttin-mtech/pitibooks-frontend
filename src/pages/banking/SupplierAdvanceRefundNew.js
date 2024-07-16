@@ -26,7 +26,7 @@ import { SupplierSearchModal, UploadAttachment } from "../../components";
 const { CREATE_REFUND } = RefundMutations;
 
 const initialValues = {
-  transactionDate: dayjs(),
+  date: dayjs(),
 };
 const SupplierAdvanceRefundNew = ({
   refetch,
@@ -37,19 +37,20 @@ const SupplierAdvanceRefundNew = ({
   paymentModes,
   allAccounts,
   accounts,
-  bankingAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const { notiApi, msgApi, business } = useOutletContext();
+  const { notiApi, msgApi } = useOutletContext();
   const [fileList, setFileList] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [selectedAdvance, setSelectedAdvance] = useState(null);
   const [toAccountCurrencyId, setToAccountCurrencyId] = useState(
     selectedAcc?.currency?.id || null
   );
+
+  console.log(selectedSupplier);
 
   if (form && modalOpen) {
     form.setFieldsValue({
@@ -87,19 +88,18 @@ const SupplierAdvanceRefundNew = ({
       }));
 
       const input = {
-        fromAccountId: values.fromAccountId,
-        toAccountId: values.toAccountId,
+        accountId: values.toAccountId,
         branchId: values.branchId,
         referenceNumber: values.referenceNumber,
-        transactionDate: values.transactionDate,
+        refundDate: values.date,
         paymentModeId: values.paymentModeId,
         exchangeRate: values.exchangeRate,
         amount: values[`refundAmount${selectedAdvance?.id}`],
         currencyId: selectedAcc?.currency.id,
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
-        transactionType: "SA",
-        // isMoneyIn: false,
+        referenceType: "SA",
+        referenceId: selectedAdvance?.id,
         documents: fileUrls,
       };
       if (!selectedAdvance) {
@@ -194,7 +194,7 @@ const SupplierAdvanceRefundNew = ({
       key: "remainingBalance",
       render: (_, record) => (
         <>
-          {record?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
             value={record.remainingBalance}
             style="decimal"
@@ -383,7 +383,7 @@ const SupplierAdvanceRefundNew = ({
       >
         <Form.Item
           label={<FormattedMessage id="label.date" defaultMessage="date" />}
-          name="transactionDate"
+          name="date"
           labelAlign="left"
           labelCol={{ span: 8 }}
           rules={[

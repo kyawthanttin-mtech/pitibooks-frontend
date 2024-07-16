@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Row, Col, Button, Form, Input, Select, DatePicker } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useOutletContext } from "react-router-dom";
 import { useMutation, useReadQuery } from "@apollo/client";
@@ -9,10 +8,10 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { BankingTransactionMutations } from "../../graphql";
+import { RefundMutations } from "../../graphql";
 import dayjs from "dayjs";
 import { UploadAttachment } from "../../components";
-const { CREATE_BANKING_TRANSACTION } = BankingTransactionMutations;
+const { CREATE_REFUND } = RefundMutations;
 
 const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
   const intl = useIntl();
@@ -21,11 +20,11 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
   const {
     notiApi,
     msgApi,
-    business,
     allPaymentModesQueryRef,
     allBranchesQueryRef,
     allAccountsQueryRef,
   } = useOutletContext();
+  const [accountCurrencyId, setAccountCurrencyId] = useState(null);
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -65,8 +64,8 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
     return branchData?.listAllBranch?.filter((b) => b.isActive === true);
   }, [branchData]);
 
-  const [createAccountTransfer, { loading: createLoading }] = useMutation(
-    CREATE_BANKING_TRANSACTION,
+  const [createRefund, { loading: createLoading }] = useMutation(
+    CREATE_REFUND,
     {
       onCompleted() {
         openSuccessMessage(
@@ -90,33 +89,42 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
 
       const input = {
         branchId: values.branch,
-        supplierId: selectedRecord.supplier.id,
         currencyId: selectedRecord.currency.id,
-        fromAccountId: selectedRecord.fromAccount,
-        toAccountId: selectedRecord.expenseAccount?.id,
         exchangeRate: values.exchangeRate,
         amount: values.amount,
-        transactionDate: values.date,
+        refundDate: values.date,
         paymentModeId: values.paymentMode,
         referenceNumber: values.referenceNumber,
         description: values.description,
-        transactionType: "ExpenseRefund",
-        // isMoneyIn: true,
+        accountId: values.fromAccountId,
+        referenceId: selectedRecord.id,
+        referenceType: "E",
         documents: fileUrls,
-        // paidBills: [
-        //   {
-        //     paidBillId: 0,
-        //     billId: selectedRecord.id,
-        //     paidAmount: values.amount,
-        //   },
-        // ],
       };
 
-      await createAccountTransfer({ variables: { input: input } });
+      await createRefund({ variables: { input: input } });
       onClose();
       form.resetFields();
     } catch (err) {
       openErrorNotification(notiApi, err.message);
+    }
+  };
+
+  const handleAccountChange = (id) => {
+    let selectedAccount;
+    accounts.forEach((group) => {
+      const account = group.accounts.find((acc) => acc.id === id);
+      if (account) {
+        selectedAccount = account;
+      }
+    });
+    setAccountCurrencyId(selectedAccount?.currency?.id || null);
+  };
+
+  const handleAmountChange = () => {
+    const amount = form.getFieldValue("amount");
+    if (amount > selectedRecord.totalAmount) {
+      form.setFieldsValue({ amount: selectedRecord.totalAmount });
     }
   };
 
@@ -222,8 +230,52 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
                 }),
               ]}
             >
-              <Input addonBefore={selectedRecord.currency.symbol}></Input>
+              <Input
+                addonBefore={selectedRecord.currency.symbol}
+                onBlur={handleAmountChange}
+              ></Input>
             </Form.Item>
+            {accountCurrencyId &&
+              selectedRecord.currency.id !== accountCurrencyId && (
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.exchangeRate"
+                      defaultMessage="Exchange Rate"
+                    />
+                  }
+                  name="exchangeRate"
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.exchangeRate.required"
+                          defaultMessage="Enter the Exchange Rate"
+                        />
+                      ),
+                    },
+                    () => ({
+                      validator(_, value) {
+                        if (!value) {
+                          return Promise.resolve();
+                        } else if (isNaN(value) || value.length > 20) {
+                          return Promise.reject(
+                            intl.formatMessage({
+                              id: "validation.invalidInput",
+                              defaultMessage: "Invalid Input",
+                            })
+                          );
+                        } else {
+                          return Promise.resolve();
+                        }
+                      },
+                    }),
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
           </Col>
           <Col span={7} offset={1}>
             <Form.Item
@@ -251,20 +303,24 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
                   defaultMessage="From Account"
                 />
               }
-              name="fromAccount"
+              name="fromAccountId"
               rules={[
                 {
                   required: true,
                   message: (
                     <FormattedMessage
-                      id="label.paidThrough.required"
-                      defaultMessage="Select the Paid Through"
+                      id="label.account.required"
+                      defaultMessage="Select the Account"
                     />
                   ),
                 },
               ]}
             >
-              <Select showSearch optionFilterProp="label">
+              <Select
+                showSearch
+                optionFilterProp="label"
+                onChange={handleAccountChange}
+              >
                 {accounts.map((group) => (
                   <Select.OptGroup
                     key={group.detailType}
@@ -294,47 +350,6 @@ const ExpenseRefund = ({ refetch, selectedRecord, onClose }) => {
             >
               <Input maxLength={255}></Input>
             </Form.Item>
-
-            {selectedRecord.currency.id !== business.baseCurrency.id && (
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.exchangeRate"
-                    defaultMessage="Exchange Rate"
-                  />
-                }
-                name="exchangeRate"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.exchangeRate.required"
-                        defaultMessage="Enter the Exchange Rate"
-                      />
-                    ),
-                  },
-                  () => ({
-                    validator(_, value) {
-                      if (!value) {
-                        return Promise.resolve();
-                      } else if (isNaN(value) || value.length > 20) {
-                        return Promise.reject(
-                          intl.formatMessage({
-                            id: "validation.invalidInput",
-                            defaultMessage: "Invalid Input",
-                          })
-                        );
-                      } else {
-                        return Promise.resolve();
-                      }
-                    },
-                  }),
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            )}
           </Col>
         </Row>
         <Form.Item

@@ -100,7 +100,7 @@ const modalTableDataSource = [
 
 const TransactionNumberSeries = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
-  const {notiApi, msgApi} = useOutletContext();
+  const { notiApi, msgApi } = useOutletContext();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createFormRef] = Form.useForm();
   const [editRecord, setEditRecord] = useState(null);
@@ -338,7 +338,7 @@ const TransactionNumberSeries = () => {
           },
         ]}
       >
-        <Input maxLength={100}/>
+        <Input maxLength={100} />
       </Form.Item>
       <Table
         columns={modalTableColumns}
@@ -371,7 +371,7 @@ const TransactionNumberSeries = () => {
           },
         ]}
       >
-        <Input maxLength={100}/>
+        <Input maxLength={100} />
       </Form.Item>
       <Table
         columns={modalTableColumns}

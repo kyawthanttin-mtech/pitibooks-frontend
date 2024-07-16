@@ -309,7 +309,7 @@ const PaymentReceivedPDF = ({ selectedRecord, business }) => {
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>Adjustment{"\n"}</CustomText>
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
@@ -344,7 +344,7 @@ const PaymentReceivedPDF = ({ selectedRecord, business }) => {
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>
             <FormattedNumber
               value={selectedRecord.adjustmentAmount}

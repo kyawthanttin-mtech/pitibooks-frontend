@@ -43,8 +43,6 @@ const TransferFromAnotherAccEdit = ({
         ]
       : []
   );
-
-  console.log(currencies);
   const handleFromAccountChange = useCallback(
     (id) => {
       const toAccountCurrency =

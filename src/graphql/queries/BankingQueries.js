@@ -3,102 +3,75 @@ import { gql } from "@apollo/client";
 const GET_BANKING_ACCOUNTS = gql`
   query ListBankingAccount {
     listBankingAccount {
-      id
-      name
-      code
-      detailType
-      mainType
-      isActive
-      systemDefaultCode
-      balance
-      accountNumber
-      description
-      currency {
+      listBankingAccount {
         id
-        decimalPlaces
         name
-        symbol
+        code
+        detailType
+        mainType
         isActive
-      }
-      recentTransactions {
-        id
-        transactionDate
-        amount
-        referenceNumber
-        description
-        transactionType
-        exchangeRate
-        taxAmount
-        bankCharges
-        branch {
+        systemDefaultCode
+        balance
+        recentTransactions {
           id
-          name
-          isActive
-        }
-        fromAccount {
-          id
-          name
-          code
-          detailType
-          mainType
-          isActive
-          systemDefaultCode
-          currency {
+          transactionDate
+          amount
+          referenceNumber
+          description
+          transactionType
+          exchangeRate
+          taxAmount
+          bankCharges
+          fromAccount {
             id
-            decimalPlaces
             name
-            symbol
+            code
           }
-        }
-        toAccount {
-          id
-          name
-          code
-          detailType
-          mainType
-          isActive
-          systemDefaultCode
-          currency {
+          toAccount {
             id
-            decimalPlaces
             name
-            symbol
+            code
           }
-        }
-        paymentMode {
-          id
-          name
+          paymentMode {
+            id
+            name
+            isActive
+          }
+          supplier {
+            id
+            name
+            phone
+            mobile
+          }
+          customer {
+            id
+            name
+            email
+            phone
+          }
+          details {
+            id
+            invoiceNo
+            bankingTransactionId
+            dueAmount
+            paymentAmount
+            dueDate
+          }
         }
         currency {
           id
           decimalPlaces
           name
           symbol
+          isActive
         }
-        supplier {
-          id
-          name
-        }
-        customer {
-          id
-          name
-        }
-        # documents {
-        #   id
-        #   documentUrl
-        #   referenceType
-        #   referenceID
-        # }
-        details {
-          id
-          invoiceNo
-          bankingTransactionId
-          dueAmount
-          paymentAmount
-          dueDate
-        }
+        branches
       }
-      branches
+      totalSummary {
+        detailType
+        currencySymbol
+        totalBalance
+      }
     }
   }
 `;

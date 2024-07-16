@@ -383,6 +383,7 @@ const SupplierPaymentTemplate = ({ selectedRecord }) => {
           </div>
 
           <div style={{ clear: "both" }}></div>
+          <br />
           {selectedRecord?.notes && (
             <div
               style={{

@@ -51,6 +51,8 @@ const allowedTransactionTypes = [
   "CustomerAdvance",
   "OtherIncome",
   "InterestIncome",
+  "CustomerAdvanceRefund",
+  "SupplierAdvanceRefund",
 ];
 
 const TxnDetailColumn = ({
@@ -70,8 +72,6 @@ const TxnDetailColumn = ({
   const isAllowedTransactionType = allowedTransactionTypes.includes(
     transactionRecord?.transactionType
   );
-
-  console.log(!transactionRecord, activeTab !== "cmt&his");
 
   // Queries
   const {

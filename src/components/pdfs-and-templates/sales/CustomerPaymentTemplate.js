@@ -368,6 +368,30 @@ const CustomerPaymentTemplate = ({ selectedRecord }) => {
           </div>
 
           <div style={{ clear: "both" }}></div>
+          <div style={{ clear: "both" }}></div>
+          <br />
+          {selectedRecord?.notes && (
+            <div
+              style={{
+                clear: "both",
+                paddingLeft: "3.3rem",
+                width: "100%",
+              }}
+            >
+              <label>Notes</label>
+              <br />
+              <p
+                style={{
+                  marginTop: "7px",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {selectedRecord?.notes}
+              </p>
+            </div>
+          )}
           <div
             className="template-footer"
             style={{

@@ -32,6 +32,8 @@ const GET_PAGINATE_INVOICE = gql`
           invoiceTotalAmount
           invoiceTotalPaidAmount
           remainingBalance
+          invoiceTotalCreditUsedAmount
+          invoiceTotalAdvanceUsedAmount
           appliedCustomerCredits {
             id
             businessId

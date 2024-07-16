@@ -1087,7 +1087,7 @@
 
 .bill-table .ant-table-tbody > tr > td,
 .bill-table .ant-table-thead > tr > th {
-  padding: 0;
+  padding: 0 1rem;
 }
 
 .bill-table .ant-table-tbody > tr:last-child > td {
@@ -1177,10 +1177,15 @@
   min-width: 8rem;
 }
 
-.delete-icon {
+.delete-icon,
+.edit-icon {
   font-size: 0.813rem;
 }
 
 .delete-icon:hover {
   color: var(--red);
+}
+
+.edit-icon:hover {
+  color: var(--primary-color);
 }

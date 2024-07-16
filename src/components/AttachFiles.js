@@ -35,7 +35,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
   const extractFilename = (url) => {
     return url?.substring(url?.lastIndexOf("/") + 1);
   };
-  console.log(files);
+
   const initializeFileList = (files) => {
     return files?.map((file) => ({
       ...file,
@@ -316,7 +316,6 @@ const AttachFiles = ({ files, iconButton = false }) => {
         className="preview-nav-container"
       >
         {customFileList.map((slide, slideIndex) => {
-          console.log("File type:", slide.__typename);
           return (
             <div
               className={`preview-nav-indicator ${
@@ -337,7 +336,6 @@ const AttachFiles = ({ files, iconButton = false }) => {
     </div>
   );
 
-  console.log("selected file", selectedFile);
   return (
     <>
       <Modal

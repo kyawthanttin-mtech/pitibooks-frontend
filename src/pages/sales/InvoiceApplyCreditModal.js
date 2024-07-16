@@ -73,7 +73,7 @@ const InvoiceApplyCreditModal = ({
         const existingData = cache.readQuery({
           query: GET_PAGINATE_INVOICE,
         });
-      
+
         if (existingData) {
           const newEdges = existingData.paginateInvoice.edges.map((edge) => {
             if (edge.node.id === selectedRecord.id) {
@@ -82,7 +82,9 @@ const InvoiceApplyCreditModal = ({
                 node: {
                   ...edge.node,
                   appliedCustomerCredits: [
-                    ...(Array.isArray(edge.node.appliedCustomerCredits) ? edge.node.appliedCustomerCredits : []),
+                    ...(Array.isArray(edge.node.appliedCustomerCredits)
+                      ? edge.node.appliedCustomerCredits
+                      : []),
                     ...createCustomerApplyCredit,
                   ],
                 },
@@ -90,7 +92,7 @@ const InvoiceApplyCreditModal = ({
             }
             return edge;
           });
-      
+
           cache.writeQuery({
             query: GET_PAGINATE_INVOICE,
             data: {
@@ -100,9 +102,12 @@ const InvoiceApplyCreditModal = ({
               },
             },
           });
-      
+
           // Update selectedRecord state if necessary
-          if (selectedRecord && Array.isArray(selectedRecord.appliedCustomerCredits)) {
+          if (
+            selectedRecord &&
+            Array.isArray(selectedRecord.appliedCustomerCredits)
+          ) {
             const updatedSelectedRecord = {
               ...selectedRecord,
               appliedCustomerCredits: [
@@ -110,18 +115,18 @@ const InvoiceApplyCreditModal = ({
                 ...createCustomerApplyCredit,
               ],
             };
-      
+
             setSelectedRecord(updatedSelectedRecord);
           } else {
             const updatedSelectedRecord = {
               ...selectedRecord,
               appliedCustomerCredits: createCustomerApplyCredit,
             };
-      
+
             setSelectedRecord(updatedSelectedRecord);
           }
         }
-      }    
+      },
     }
   );
 
@@ -159,10 +164,10 @@ const InvoiceApplyCreditModal = ({
         key: "C" + credit.id,
         id: "C" + credit.id,
         type: "Credit",
-        amount: credit.customerCreditTotalAmount,
+        amount: credit.creditNoteTotalAmount,
         availableBalance: credit.remainingBalance,
-        creditDetails: credit.customerCreditNumber,
-        creditDate: credit.customerCreditDate,
+        creditDetails: credit.creditNoteNumber,
+        creditDate: credit.creditNoteDate,
       })),
       ...(advanceData?.getUnusedCustomerCreditAdvances || []).map(
         (advance) => ({
@@ -172,7 +177,7 @@ const InvoiceApplyCreditModal = ({
           type: "Advance",
           amount: advance.amount,
           availableBalance: advance.remainingBalance,
-          creditDetails: advance.customer?.name,
+          creditDetails: "Advance",
           creditDate: advance.date,
         })
       ),
@@ -286,7 +291,8 @@ const InvoiceApplyCreditModal = ({
 
   const handleSubmit = async (values) => {
     if (totalAmountApplied <= 0) {
-      openErrorNotification(notiApi, 
+      openErrorNotification(
+        notiApi,
         intl.formatMessage({
           id: "validation.enterAtLeastOneCredit",
           defaultMessage: "Enter At Least One Credit",
@@ -529,9 +535,7 @@ const InvoiceApplyCreditModal = ({
           <b>
             {selectedRecord?.currency?.symbol}{" "}
             <FormattedNumber
-              value={
-                selectedRecord?.remainingBalance
-              }
+              value={selectedRecord?.remainingBalance}
               style="decimal"
               minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
             />

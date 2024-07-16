@@ -159,9 +159,6 @@ const PaginatedSelectionTable = ({
   }
 
   const pageData = paginateArray(allData, QUERY_DATA_LIMIT, currentPage);
-  console.log("all data", allData);
-  console.log("page data", pageData);
-  console.log("total", totalPages);
 
   const searchPageData = paginateArray(
     searchResults,

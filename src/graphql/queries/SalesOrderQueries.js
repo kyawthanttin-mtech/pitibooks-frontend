@@ -65,6 +65,22 @@ const GET_PAGINATE_SALES_ORDER = gql`
           orderTotalDiscountAmount
           orderTotalTaxAmount
           orderTotalAmount
+          salesInvoice {
+            id
+            invoiceNumber
+            invoiceDate
+            invoiceDueDate
+            currentStatus
+            invoiceTotalAmount
+            invoiceTotalPaidAmount
+            remainingBalance
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
+          }
           details {
             id
             productId
@@ -76,6 +92,7 @@ const GET_PAGINATE_SALES_ORDER = gql`
               id
               name
             }
+
             detailQty
             detailUnitRate
             detailDiscount

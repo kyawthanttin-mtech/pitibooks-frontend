@@ -111,6 +111,7 @@ const ManualJournals = () => {
           supplier: node.supplier,
           customer: node.customer,
           exchangeRate: node.exchangeRate,
+          documents: node.documents,
         });
       }
     });

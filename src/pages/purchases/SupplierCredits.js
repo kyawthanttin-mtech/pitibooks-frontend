@@ -17,14 +17,15 @@ import {
 import {
   PlusOutlined,
   MoreOutlined,
-  CaretRightFilled,
   FilePdfOutlined,
   CloseOutlined,
   EditOutlined,
   CommentOutlined,
   SearchOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import {
+  AccordionTabs,
   AttachFiles,
   CommentColumn,
   PDFPreviewModal,
@@ -34,7 +35,11 @@ import {
   SupplierSearchModal,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
-import { SupplierCreditQueries, SupplierCreditMutations } from "../../graphql";
+import {
+  SupplierCreditQueries,
+  SupplierCreditMutations,
+  RefundMutations,
+} from "../../graphql";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
@@ -45,10 +50,12 @@ import dayjs from "dayjs";
 import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useHistoryState } from "../../utils/HelperFunctions";
-import SupplierCreditRefund from "./SupplierCreditRefund";
+import SupplierCreditRefundNew from "./SupplierCreditRefundNew";
 import { SupplierCreditPDF } from "../../components/pdfs-and-templates";
+import SupplierCreditRefundEdit from "./SupplierCreditRefundEdit";
 const { GET_PAGINATE_SUPPLIER_CREDIT } = SupplierCreditQueries;
 const { DELETE_SUPPLIER_CREDIT } = SupplierCreditMutations;
+const { DELETE_REFUND } = RefundMutations;
 
 const draftActionItems = [
   {
@@ -109,14 +116,13 @@ const SupplierCredits = () => {
     null
   );
   const [currentPage, setCurrentPage] = useHistoryState("creditCurrentPage", 1);
-  const [activeTab, setActiveTab] = useState("bill");
-  const [isContentExpanded, setContentExpanded] = useState(false);
-  const [caretRotation, setCaretRotation] = useState(0);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearchModalOpen, setSupplierSearchModalOpen] = useState(false);
-  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [showRefundFormNew, setShowRefundFormNew] = useState(false);
+  const [showRefundFormEdit, setShowRefundFormEdit] = useState(false);
   const [pdfModalOpen, setPDFModalOpen] = useState(false);
   const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
+  const [selectedRefundRecord, setSelectedRefundRecord] = useState(null);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -171,6 +177,21 @@ const SupplierCredits = () => {
     }
   );
 
+  const [deleteRefund, { loading: deleteRefundLoading }] = useMutation(
+    DELETE_REFUND,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="refundInformation.deleted"
+            defaultMessage="Refund Information Deleted"
+          />
+        );
+      },
+    }
+  );
+
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
       (branch) => branch.isActive === true
@@ -199,17 +220,10 @@ const SupplierCredits = () => {
     return Object.values(groupedAccounts);
   }, [accountData]);
 
-  const accountsPayable = useMemo(() => {
-    if (!accountData?.listAllAccount) return null;
-    const account = accountData.listAllAccount.filter(
-      (acc) => acc.detailType === "AccountsPayable"
-    );
-    return account;
-  }, [accountData]);
-
   useEffect(() => {
     if (selectedRecord && selectedRowIndex) {
-      setShowRefundForm(false);
+      setShowRefundFormNew(false);
+      setShowRefundFormEdit(false);
     }
   }, [selectedRecord, selectedRowIndex]);
 
@@ -276,9 +290,72 @@ const SupplierCredits = () => {
     }
   };
 
-  const toggleContent = () => {
-    setContentExpanded(!isContentExpanded);
-    setCaretRotation(caretRotation === 0 ? 90 : 0);
+  const handleDeleteRefund = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteRefund({
+          variables: {
+            id,
+          },
+          update: (cache) => {
+            const existingData = cache.readQuery({
+              query: GET_PAGINATE_SUPPLIER_CREDIT,
+            });
+
+            if (existingData) {
+              const newEdges = existingData.paginateSupplierCredit.edges.map(
+                (edge) => {
+                  if (edge.node.refunds) {
+                    return {
+                      ...edge,
+                      node: {
+                        ...edge.node,
+                        refunds: edge.node.refunds.filter(
+                          (refund) => refund.id !== id
+                        ),
+                      },
+                    };
+                  }
+                  return edge;
+                }
+              );
+
+              cache.writeQuery({
+                query: GET_PAGINATE_SUPPLIER_CREDIT,
+                data: {
+                  paginateSupplierCredit: {
+                    ...existingData.paginateSupplierCredit,
+                    edges: newEdges,
+                  },
+                },
+              });
+
+              // Update selectedRecord state
+              if (selectedRecord && selectedRecord.refunds) {
+                const updatedSelectedRecord = {
+                  ...selectedRecord,
+                  refunds: selectedRecord.refunds.filter(
+                    (refund) => refund.id !== id
+                  ),
+                };
+
+                setSelectedRecord(updatedSelectedRecord);
+              }
+            }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
   };
 
   const handleModalRowSelect = (record) => {
@@ -303,6 +380,20 @@ const SupplierCredits = () => {
       },
       replace: true,
     });
+  };
+
+  const getStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Draft" || status === "Cancelled") {
+      color = "gray";
+    } else if (status === "Closed") {
+      color = "var(--dark-green)";
+    } else {
+      color = "var(--blue)";
+    }
+
+    return color;
   };
 
   const columns = [
@@ -347,13 +438,7 @@ const SupplierCredits = () => {
       dataIndex: "currentStatus",
       key: "currentStatus",
       render: (text) => (
-        <span
-          style={{
-            color: text === "Open" ? "var(--blue)" : "var(--primary-color)",
-          }}
-        >
-          {text}
-        </span>
+        <span style={{ color: getStatusColor(text) }}>{text}</span>
       ),
     },
     {
@@ -421,10 +506,7 @@ const SupplierCredits = () => {
               </span>
               <span
                 style={{
-                  color:
-                    record.currentStatus === "Open"
-                      ? "var(--blue)"
-                      : "var(--primary-color)",
+                  color: getStatusColor(record.currentStatus),
                 }}
               >
                 {record.currentStatus}
@@ -444,14 +526,62 @@ const SupplierCredits = () => {
     },
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "creditDate",
+      key: "creditDate",
       render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
       title: "Amount Credited",
       dataIndex: "amount",
       key: "amount",
+    },
+  ];
+
+  const refundColumns = [
+    {
+      title: "Date",
+      dataIndex: "refundDate",
+      key: "refundDate",
+      render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Payment Mode",
+      dataIndex: "paymentMode",
+      key: "paymentMode",
+      render: (_, record) => <>{record.paymentMode?.name}</>,
+    },
+    {
+      title: "Amount Refunded",
+      dataIndex: "amount",
+      key: "amount",
+      render: (_, record) => (
+        <>
+          {record?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount || 0}
+            style="decimal"
+            minimumFractionDigits={record?.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      width: "5%",
+      dataIndex: "actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space size="middle">
+          <span className="edit-icon" onClick={setShowRefundFormEdit}>
+            <EditOutlined />
+          </span>
+          <span
+            className="delete-icon"
+            onClick={() => handleDeleteRefund(record.id)}
+          >
+            <DeleteOutlined />
+          </span>
+        </Space>
+      ),
     },
   ];
 
@@ -764,7 +894,7 @@ const SupplierCredits = () => {
             />
           </div>
         </div>
-        {selectedRecord && !showRefundForm && (
+        {selectedRecord && !showRefundFormNew && !showRefundFormEdit && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
@@ -822,7 +952,7 @@ const SupplierCredits = () => {
                 menu={{
                   onClick: ({ key }) => {
                     if (key === "0") console.log("clone");
-                    else if (key === "1") setShowRefundForm(true);
+                    else if (key === "1") setShowRefundFormNew(true);
                     else if (key === "2") handleDelete(selectedRecord.id);
                   },
                   items:
@@ -840,58 +970,50 @@ const SupplierCredits = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              <div className="bill-receives-container">
-                <div
-                  className={`nav-bar ${!isContentExpanded && "collapsed"}`}
-                  onClick={toggleContent}
-                >
-                  <ul className="nav-tabs">
-                    <li
-                      className={`nav-link ${
-                        activeTab === "bill" && isContentExpanded && "active"
-                      }`}
-                      onClick={(event) => {
-                        setActiveTab("bill");
-                        isContentExpanded && event.stopPropagation();
-                      }}
-                    >
-                      <span>Bills Credited</span>
-                      <span className="bill">{selectedRecord?.creditedBills?.length || 0}</span>
-                    </li>
-                  </ul>
-                  <CaretRightFilled
-                    style={{
-                      transform: `rotate(${caretRotation}deg)`,
-                      transition: "0.4s",
-                    }}
-                  />
-                </div>
+              {(selectedRecord?.creditedBills?.length > 0 ||
+                selectedRecord?.refunds?.length > 0) && (
+                <AccordionTabs
+                  key={selectedRecord.id}
+                  tabs={[
+                    {
+                      key: "bill",
+                      title: "Credited Bills",
+                      data: selectedRecord?.creditedBills,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={billTableColumns}
+                          dataSource={selectedRecord?.creditedBills}
+                          pagination={false}
+                        />
+                      ),
+                    },
 
-                <div
-                  className={`content-wrapper ${isContentExpanded && "show"}`}
-                >
-                  {activeTab === "bill" && (
-                    <div className="bill-tab">
-                      <Table
-                        className="bill-table"
-                        columns={billTableColumns}
-                        dataSource={selectedRecord.creditedBills}
-                        pagination={false}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "receives" && (
-                    <div className="receive-tab">
-                      <Space>
-                        <span>No items have been received yet!</span>
-                        <span>
-                          <a>New Purchase Receive</a>
-                        </span>
-                      </Space>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    {
+                      key: "refundHistory",
+                      title: "Refund History",
+                      data: selectedRecord?.refunds,
+                      content: (
+                        <Table
+                          loading={deleteRefundLoading}
+                          className="bill-table"
+                          columns={refundColumns}
+                          dataSource={selectedRecord?.refunds}
+                          pagination={false}
+                          onRow={(record) => {
+                            return {
+                              onClick: () => {
+                                setSelectedRefundRecord(record);
+                              },
+                            };
+                          }}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              )}
+
               <SupplierCreditTemplate selectedRecord={selectedRecord} />
             </div>
             <CommentColumn
@@ -902,17 +1024,12 @@ const SupplierCredits = () => {
             />
           </div>
         )}
-        {showRefundForm && (
+        {showRefundFormNew && (
           <div className="content-column">
             <Row className="content-column-header-row">
-              <p className="page-header-text">
-                Credit Refund For
-                {selectedRecord.supplierCreditNumber &&
-                  ` - ${selectedRecord.supplierCreditNumber}`}
-              </p>
+              <p className="page-header-text">Supplier Credit Refund</p>
             </Row>
-            <SupplierCreditRefund
-              accountsPayable={accountsPayable}
+            <SupplierCreditRefundNew
               accounts={cashBankAccounts}
               refetch={() => {
                 refetch();
@@ -921,7 +1038,27 @@ const SupplierCredits = () => {
               }}
               branches={branches}
               selectedRecord={selectedRecord}
-              onClose={() => setShowRefundForm(false)}
+              onClose={() => setShowRefundFormNew(false)}
+            />
+          </div>
+        )}
+        {showRefundFormEdit && (
+          <div className="content-column">
+            <Row className="content-column-header-row">
+              <p className="page-header-text">Supplier Credit Refund</p>
+            </Row>
+            <SupplierCreditRefundEdit
+              accounts={cashBankAccounts}
+              refetch={() => {
+                refetch();
+                setCurrentPage(1);
+                setSelectedRecord(null);
+                setSelectedRefundRecord(null);
+              }}
+              branches={branches}
+              selectedRecord={selectedRecord}
+              selectedRefundRecord={selectedRefundRecord}
+              onClose={() => setShowRefundFormEdit(false)}
             />
           </div>
         )}

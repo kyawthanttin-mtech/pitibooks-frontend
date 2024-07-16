@@ -330,7 +330,7 @@ const Banking = () => {
   }, [currencyData]);
 
   const parsedData = useMemo(() => {
-    return data?.listBankingAccount?.map((item) => ({
+    return data?.listBankingAccount?.listBankingAccount?.map((item) => ({
       ...item,
       key: item.id,
     }));

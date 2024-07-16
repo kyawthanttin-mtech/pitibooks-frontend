@@ -154,6 +154,9 @@ const CreditNotesNew = () => {
   const [saveStatus, setSaveStatus] = useState("Draft");
   const intl = useIntl();
   const [fileList, setFileList] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState(
+    business?.primaryBranch?.id
+  );
 
   const initialValues = {
     currency: business.baseCurrency.id,
@@ -226,8 +229,10 @@ const CreditNotesNew = () => {
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse?.filter((w) => w.isActive === true);
-  }, [warehouseData]);
+    return warehouseData?.listAllWarehouse?.filter(
+      (w) => w.isActive === true && w.branchId === selectedBranchId
+    );
+  }, [warehouseData, selectedBranchId]);
 
   const products = useMemo(() => {
     return productData?.listAllProduct?.filter((p) => p.isActive === true);
@@ -1350,7 +1355,15 @@ const CreditNotesNew = () => {
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={(value) => {
+                      setSelectedBranchId(value);
+                      setSelectedWarehouse(null);
+                      form.setFieldsValue({ warehouse: null });
+                    }}
+                  >
                     {branches?.map((branch) => (
                       <Select.Option
                         key={branch.id}
@@ -1570,6 +1583,7 @@ const CreditNotesNew = () => {
                     loading={stockLoading}
                     onChange={(value) => setSelectedWarehouse(value)}
                     optionFilterProp="label"
+                    disabled={!selectedBranchId}
                   >
                     {warehouses?.map((w) => (
                       <Select.Option key={w.id} value={w.id} label={w.name}>

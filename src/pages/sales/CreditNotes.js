@@ -17,7 +17,7 @@ import {
 import {
   PlusOutlined,
   MoreOutlined,
-  CaretRightFilled,
+  DeleteOutlined,
   FilePdfOutlined,
   CommentOutlined,
   CloseOutlined,
@@ -32,9 +32,14 @@ import {
   AttachFiles,
   PDFPreviewModal,
   CommentColumn,
+  AccordionTabs,
 } from "../../components";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CreditNoteMutations, CreditNoteQueries } from "../../graphql";
+import {
+  CreditNoteMutations,
+  CreditNoteQueries,
+  RefundMutations,
+} from "../../graphql";
 import { useOutletContext } from "react-router-dom";
 import { FormattedMessage, FormattedNumber } from "react-intl";
 import {
@@ -45,10 +50,12 @@ import dayjs from "dayjs";
 import { useMutation, useReadQuery, useQuery } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useHistoryState } from "../../utils/HelperFunctions";
-import CreditNoteRefund from "./CreditNoteRefund";
+import CreditNoteRefund from "./CreditNoteRefundNew";
 import { CreditNotePDF } from "../../components/pdfs-and-templates";
+import CreditNoteRefundEdit from "./CreditNoteRefundEdit";
 const { GET_PAGINATE_CREDIT_NOTE } = CreditNoteQueries;
 const { DELETE_CREDIT_NOTE } = CreditNoteMutations;
+const { DELETE_REFUND } = RefundMutations;
 
 const draftActionItems = [
   {
@@ -88,7 +95,6 @@ const closedActionItems = [
   },
 ];
 
-
 const CreditNotes = () => {
   const [deleteModal, contextHolder] = Modal.useModal();
   const {
@@ -113,14 +119,15 @@ const CreditNotes = () => {
     "creditNoteCurrentPage",
     1
   );
-  const [activeTab, setActiveTab] = useState("bill");
   const [isContentExpanded, setContentExpanded] = useState(false);
   const [caretRotation, setCaretRotation] = useState(0);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
-  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [showRefundFormNew, setShowRefundFormNew] = useState(false);
+  const [showRefundFormEdit, setShowRefundFormEdit] = useState(false);
   const [pdfModalOpen, setPDFModalOpen] = useState(false);
   const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
+  const [selectedRefundRecord, setSelectedRefundRecord] = useState(null);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -175,6 +182,21 @@ const CreditNotes = () => {
     }
   );
 
+  const [deleteRefund, { loading: deleteRefundLoading }] = useMutation(
+    DELETE_REFUND,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="refundInformation.deleted"
+            defaultMessage="Refund Information Deleted"
+          />
+        );
+      },
+    }
+  );
+
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
       (branch) => branch.isActive === true
@@ -215,7 +237,8 @@ const CreditNotes = () => {
 
   useEffect(() => {
     if (selectedRecord && selectedRowIndex) {
-      setShowRefundForm(false);
+      setShowRefundFormNew(false);
+      setShowRefundFormEdit(false);
     }
   }, [selectedRecord, selectedRowIndex]);
 
@@ -282,9 +305,72 @@ const CreditNotes = () => {
     }
   };
 
-  const toggleContent = () => {
-    setContentExpanded(!isContentExpanded);
-    setCaretRotation(caretRotation === 0 ? 90 : 0);
+  const handleDeleteRefund = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteRefund({
+          variables: {
+            id,
+          },
+          update: (cache) => {
+            const existingData = cache.readQuery({
+              query: GET_PAGINATE_CREDIT_NOTE,
+            });
+
+            if (existingData) {
+              const newEdges = existingData.paginateCreditNote.edges.map(
+                (edge) => {
+                  if (edge.node.refunds) {
+                    return {
+                      ...edge,
+                      node: {
+                        ...edge.node,
+                        refunds: edge.node.refunds.filter(
+                          (refund) => refund.id !== id
+                        ),
+                      },
+                    };
+                  }
+                  return edge;
+                }
+              );
+
+              cache.writeQuery({
+                query: GET_PAGINATE_CREDIT_NOTE,
+                data: {
+                  paginateCreditNote: {
+                    ...existingData.paginateCreditNote,
+                    edges: newEdges,
+                  },
+                },
+              });
+
+              // Update selectedRecord state
+              if (selectedRecord && selectedRecord.refunds) {
+                const updatedSelectedRecord = {
+                  ...selectedRecord,
+                  refunds: selectedRecord.refunds.filter(
+                    (refund) => refund.id !== id
+                  ),
+                };
+
+                setSelectedRecord(updatedSelectedRecord);
+              }
+            }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
   };
 
   const handleModalRowSelect = (record) => {
@@ -309,6 +395,20 @@ const CreditNotes = () => {
       },
       replace: true,
     });
+  };
+
+  const getStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Draft" || status === "Cancelled") {
+      color = "gray";
+    } else if (status === "Closed") {
+      color = "var(--dark-green)";
+    } else {
+      color = "var(--blue)";
+    }
+
+    return color;
   };
 
   const columns = [
@@ -353,14 +453,7 @@ const CreditNotes = () => {
       dataIndex: "currentStatus",
       key: "currentStatus",
       render: (text) => (
-        <span
-          style={{
-            color:
-              text === "Confirmed" ? "var(--blue)" : "var(--primary-color)",
-          }}
-        >
-          {text}
-        </span>
+        <span style={{ color: getStatusColor(text) }}>{text}</span>
       ),
     },
     {
@@ -428,10 +521,7 @@ const CreditNotes = () => {
               </span>
               <span
                 style={{
-                  color:
-                    record.currentStatus === "Confirmed"
-                      ? "var(--blue)"
-                      : "var(--primary-color)",
+                  color: getStatusColor(record.currentStatus),
                 }}
               >
                 {record.currentStatus}
@@ -443,7 +533,7 @@ const CreditNotes = () => {
     },
   ];
 
-  const billTableColumns = [
+  const invoiceTableColumns = [
     {
       title: "#Invoice",
       dataIndex: "invoiceNumber",
@@ -451,14 +541,62 @@ const CreditNotes = () => {
     },
     {
       title: "Date",
-      dataIndex: "invoiceDate",
-      key: "invoiceDate",
+      dataIndex: "creditDate",
+      key: "creditDate",
       render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
       title: "Amount Credited",
       dataIndex: "amount",
       key: "amount",
+    },
+  ];
+
+  const refundColumns = [
+    {
+      title: "Date",
+      dataIndex: "refundDate",
+      key: "refundDate",
+      render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
+    },
+    {
+      title: "Payment Mode",
+      dataIndex: "paymentMode",
+      key: "paymentMode",
+      render: (_, record) => <>{record.paymentMode?.name}</>,
+    },
+    {
+      title: "Amount Refunded",
+      dataIndex: "amount",
+      key: "amount",
+      render: (_, record) => (
+        <>
+          {record?.currency?.symbol}{" "}
+          <FormattedNumber
+            value={record.amount || 0}
+            style="decimal"
+            minimumFractionDigits={record?.currency?.decimalPlaces}
+          />
+        </>
+      ),
+    },
+    {
+      width: "5%",
+      dataIndex: "actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space size="middle">
+          <span className="edit-icon" onClick={setShowRefundFormEdit}>
+            <EditOutlined />
+          </span>
+          <span
+            className="delete-icon"
+            onClick={() => handleDeleteRefund(record.id)}
+          >
+            <DeleteOutlined />
+          </span>
+        </Space>
+      ),
     },
   ];
 
@@ -491,8 +629,8 @@ const CreditNotes = () => {
               format={REPORT_DATE_FORMAT}
               onChange={(value) => {
                 searchFormRef.setFieldsValue({
-                  startBillDate: value && value[0],
-                  endBillDate: value && value[1],
+                  startInvoiceDate: value && value[0],
+                  endInvoiceDate: value && value[1],
                 });
               }}
               onClear={() =>
@@ -773,7 +911,7 @@ const CreditNotes = () => {
             />
           </div>
         </div>
-        {selectedRecord && !showRefundForm && (
+        {selectedRecord && !showRefundFormNew && !showRefundFormEdit && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <div className="content-column-header-row-text content-column-header-row-text">
@@ -831,7 +969,7 @@ const CreditNotes = () => {
                 menu={{
                   onClick: ({ key }) => {
                     if (key === "0") console.log("clone");
-                    else if (key === "1") setShowRefundForm(true);
+                    else if (key === "1") setShowRefundFormNew(true);
                     else if (key === "2") handleDelete(selectedRecord.id);
                   },
                   items:
@@ -849,58 +987,50 @@ const CreditNotes = () => {
               </Dropdown>
             </Row>
             <div className="content-column-full-row">
-              <div className="bill-receives-container">
-                <div
-                  className={`nav-bar ${!isContentExpanded && "collapsed"}`}
-                  onClick={toggleContent}
-                >
-                  <ul className="nav-tabs">
-                    <li
-                      className={`nav-link ${
-                        activeTab === "bill" && isContentExpanded && "active"
-                      }`}
-                      onClick={(event) => {
-                        setActiveTab("bill");
-                        isContentExpanded && event.stopPropagation();
-                      }}
-                    >
-                      <span>Refund History</span>
-                      <span className="bill">1</span>
-                    </li>
-                  </ul>
-                  <CaretRightFilled
-                    style={{
-                      transform: `rotate(${caretRotation}deg)`,
-                      transition: "0.4s",
-                    }}
-                  />
-                </div>
+              {(selectedRecord?.creditedInvoices?.length > 0 ||
+                selectedRecord?.refunds?.length > 0) && (
+                <AccordionTabs
+                  key={selectedRecord.id}
+                  tabs={[
+                    {
+                      key: "bill",
+                      title: "Credited Invoices",
+                      data: selectedRecord?.creditedInvoices,
+                      content: (
+                        <Table
+                          className="bill-table"
+                          columns={invoiceTableColumns}
+                          dataSource={selectedRecord?.creditedInvoices}
+                          pagination={false}
+                        />
+                      ),
+                    },
 
-                <div
-                  className={`content-wrapper ${isContentExpanded && "show"}`}
-                >
-                  {activeTab === "bill" && (
-                    <div className="bill-tab">
-                      <Table
-                        className="bill-table"
-                        columns={billTableColumns}
-                        dataSource={selectedRecord.creditedInvoices}
-                        pagination={false}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "receives" && (
-                    <div className="receive-tab">
-                      <Space>
-                        <span>No items have been received yet!</span>
-                        <span>
-                          <a>New Purchase Receive</a>
-                        </span>
-                      </Space>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    {
+                      key: "refundHistory",
+                      title: "Refund History",
+                      data: selectedRecord?.refunds,
+                      content: (
+                        <Table
+                          loading={deleteRefundLoading}
+                          className="bill-table"
+                          columns={refundColumns}
+                          dataSource={selectedRecord?.refunds}
+                          pagination={false}
+                          onRow={(record) => {
+                            return {
+                              onClick: () => {
+                                setSelectedRefundRecord(record);
+                              },
+                            };
+                          }}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              )}
+
               <CreditNoteTemplate selectedRecord={selectedRecord} />
             </div>
             <CommentColumn
@@ -911,7 +1041,7 @@ const CreditNotes = () => {
             />
           </div>
         )}
-        {showRefundForm && (
+        {showRefundFormNew && (
           <div className="content-column">
             <Row className="content-column-header-row">
               <p className="page-header-text">
@@ -930,7 +1060,27 @@ const CreditNotes = () => {
               accounts={cashBankAccounts}
               branches={branches}
               selectedRecord={selectedRecord}
-              onClose={() => setShowRefundForm(false)}
+              onClose={() => setShowRefundFormNew(false)}
+            />
+          </div>
+        )}
+        {showRefundFormEdit && (
+          <div className="content-column">
+            <Row className="content-column-header-row">
+              <p className="page-header-text">Supplier Credit Refund</p>
+            </Row>
+            <CreditNoteRefundEdit
+              accounts={cashBankAccounts}
+              refetch={() => {
+                refetch();
+                setCurrentPage(1);
+                setSelectedRecord(null);
+                setSelectedRefundRecord(null);
+              }}
+              branches={branches}
+              selectedRecord={selectedRecord}
+              selectedRefundRecord={selectedRefundRecord}
+              onClose={() => setShowRefundFormEdit(false)}
             />
           </div>
         )}

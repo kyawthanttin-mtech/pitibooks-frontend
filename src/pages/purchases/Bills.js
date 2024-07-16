@@ -51,13 +51,19 @@ import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { BillTemplate } from "../../components";
 import { useMutation, useReadQuery, useQuery, gql } from "@apollo/client";
 import { useHistoryState } from "../../utils/HelperFunctions";
-import { BillQueries, BillMutations, SupplierMutations } from "../../graphql";
+import {
+  BillQueries,
+  BillMutations,
+  SupplierMutations,
+  SupplierPaymentMutations,
+} from "../../graphql";
 import BillApplyCreditModal from "./BillApplyCreditModal";
 import { BillPDF } from "../../components/pdfs-and-templates";
 
 const { GET_PAGINATE_BILL } = BillQueries;
 const { CONFIRM_BILL, DELETE_BILL, VOID_BILL } = BillMutations;
 const { DELETE_SUPPLIER_CREDIT_BILL } = SupplierMutations;
+const { DELETE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
 
 const draftActionItems = [
   {
@@ -143,7 +149,7 @@ const partialPaidActionItems = [
     ),
     key: "3",
   },
-]
+];
 
 const paidActionItems = [
   {
@@ -310,6 +316,23 @@ const Bills = () => {
       },
     });
 
+  const [deleteSupplierPayment, { loading: deletePaymentLoading }] =
+    useMutation(DELETE_SUPPLIER_PAYMENT, {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="supplierPayment.deleted"
+            defaultMessage="Supplier Payment Deleted"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+    });
+
   const loading =
     queryLoading || deleteLoading || confirmLoading || voidLoading;
 
@@ -390,6 +413,20 @@ const Bills = () => {
       color = "var(--blue)";
     } else {
       color = "gray";
+    }
+
+    return color;
+  };
+
+  const getPOStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Draft" || status === "Cancelled") {
+      color = "gray";
+    } else if (status === "Closed") {
+      color = "var(--dark-green)";
+    } else {
+      color = "var(--blue)";
     }
 
     return color;
@@ -566,6 +603,73 @@ const Bills = () => {
     }
   };
 
+  const handleDeletePayment = async (id) => {
+    console.log(id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await deleteSupplierPayment({
+          variables: {
+            id: id,
+          },
+          update: (cache) => {
+            const existingData = cache.readQuery({
+              query: GET_PAGINATE_BILL,
+            });
+
+            if (existingData) {
+              const newEdges = existingData.paginateBill.edges.map((edge) => {
+                if (edge.node.billPayment) {
+                  return {
+                    ...edge,
+                    node: {
+                      ...edge.node,
+                      billPayment: edge.node.billPayment.filter(
+                        (credit) => credit.id !== id
+                      ),
+                    },
+                  };
+                }
+                return edge;
+              });
+
+              cache.writeQuery({
+                query: GET_PAGINATE_BILL,
+                data: {
+                  paginateBill: {
+                    ...existingData.paginateBill,
+                    edges: newEdges,
+                  },
+                },
+              });
+
+              // Update selectedRecord state
+              if (selectedRecord && selectedRecord.billPayment) {
+                const updatedSelectedRecord = {
+                  ...selectedRecord,
+                  billPayment: selectedRecord.billPayment.filter(
+                    (credit) => credit.id !== id
+                  ),
+                };
+
+                setSelectedRecord(updatedSelectedRecord);
+              }
+            }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
   const compactColumns = [
     {
       title: "",
@@ -723,6 +827,18 @@ const Bills = () => {
         </>
       ),
     },
+    // {
+    //   dataIndex: "action",
+    //   key: "action",
+    //   render: (_, record) => (
+    //     <span>
+    //       <DeleteOutlined
+    //         className="delete-icon"
+    //         onClick={() => handleDeletePayment(record.id)}
+    //       />
+    //     </span>
+    //   ),
+    // },
   ];
 
   const purchaseOrderColumns = [
@@ -741,6 +857,11 @@ const Bills = () => {
       title: "Status",
       dataIndex: "currentStatus",
       key: "currentStatus",
+      render: (text, record) => (
+        <span style={{ color: getPOStatusColor(text) }}>
+          {record.currentStatus}
+        </span>
+      ),
     },
   ];
 
@@ -1377,6 +1498,7 @@ const Bills = () => {
               {(selectedRecord.status === "Paid" ||
                 selectedRecord.status === "Partial Paid") && (
                 <AccordionTabs
+                  key={selectedRecord.id}
                   tabs={[
                     {
                       key: "bill",
@@ -1392,8 +1514,8 @@ const Bills = () => {
                       ),
                     },
                     {
-                      key: "purchaseOrders",
-                      title: "Purchase Orders",
+                      key: "purchaseOrder",
+                      title: "Purchase Order",
                       data: selectedRecord?.purchaseOrder,
                       content: (
                         <Table

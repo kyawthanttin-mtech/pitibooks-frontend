@@ -10,8 +10,9 @@ import moment from "moment";
 import { REPORT_DATE_FORMAT } from "../../../config/Constants";
 import { ReportFilterBar } from "../../../components";
 import ReportLayout from "../ReportLayout";
+import dayjs from "dayjs";
 
-const { GET_AR_AGING_SUMMARY_REPORT } = ReportQueries;
+const { GET_AR_AGING_DETAIL_REPORT } = ReportQueries;
 
 const ARAgingDetails = () => {
   const { notiApi, business } = useOutletContext();
@@ -24,7 +25,7 @@ const ARAgingDetails = () => {
     data,
     loading: queryLoading,
     refetch,
-  } = useQuery(GET_AR_AGING_SUMMARY_REPORT, {
+  } = useQuery(GET_AR_AGING_DETAIL_REPORT, {
     errorPolicy: "all",
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
@@ -37,30 +38,60 @@ const ARAgingDetails = () => {
       openErrorNotification(notiApi, err.message);
     },
   });
-  const queryData = useMemo(() => data?.getARAgingSummaryReport, [data]);
+  const queryData = useMemo(() => data?.getARAgingDetailReport, [data]);
 
   // Calculate totals
   const totals = useMemo(() => {
     return queryData?.reduce(
       (acc, curr) => {
-        acc.current += curr.current || 0;
-        acc.int1to15 += curr.int1to15 || 0;
-        acc.int16to30 += curr.int16to30 || 0;
-        acc.int31to45 += curr.int31to45 || 0;
-        acc.int46plus += curr.int46plus || 0;
-        acc.total += curr.total || 0;
+        acc.amount += curr.amount || 0;
+        acc.balanceDue += curr.balanceDue || 0;
         return acc;
       },
       {
-        current: 0,
-        int1to15: 0,
-        int16to30: 0,
-        int31to45: 0,
-        int46plus: 0,
-        total: 0,
+        amount: 0,
+        balanceDue: 0,
       }
     );
   }, [queryData]);
+
+  const getIntervalTitle = (interval) => {
+    let title;
+    switch (interval) {
+      case "int46plus":
+        title = "> 45 Days";
+        break;
+      case "int31to45":
+        title = "31-45 Days";
+        break;
+      case "int16to30":
+        title = "16-30 Days";
+        break;
+      case "int1to15":
+        title = "1-15 Days";
+        break;
+      case "current":
+        title = "Current";
+        break;
+      default:
+        title = "";
+    }
+    return title;
+  };
+
+  const getStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Paid") {
+      color = "var(--dark-green)";
+    } else if (status === "Confirmed") {
+      color = "var(--blue)";
+    } else if (status === "Overdue") {
+      color = "var(--orange)";
+    }
+
+    return color;
+  };
 
   return (
     <ReportLayout>
@@ -95,39 +126,55 @@ const ARAgingDetails = () => {
                 <thead>
                   <tr>
                     <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage id="label.date" defaultMessage="Date" />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.transactionNumber"
+                        defaultMessage="Transaction #"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage id="label.type" defaultMessage="Type" />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.status"
+                        defaultMessage="Status"
+                      />
+                    </th>
+                    <th className="text-align-left" style={{ width: "150px" }}>
                       <FormattedMessage
                         id="label.customerName"
                         defaultMessage="Customer Name"
                       />
                     </th>
                     <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage id="label.age" defaultMessage="Age" />
+                    </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
                       <FormattedMessage
-                        id="label.totalFcy"
-                        defaultMessage="Total (FCY)"
+                        id="label.amountFcy"
+                        defaultMessage="Amount (FCY)"
                       />
                     </th>
                     <th className="text-align-right" style={{ width: "150px" }}>
                       <FormattedMessage
-                        id="label.current"
-                        defaultMessage="Current"
+                        id="label.balanceDueFcy"
+                        defaultMessage="Balance Due (FCY)"
                       />
                     </th>
                     <th className="text-align-right" style={{ width: "150px" }}>
-                      1-15 Days
+                      <FormattedMessage
+                        id="label.amount"
+                        defaultMessage="Amount"
+                      />
                     </th>
-                    <th className="text-align-right" style={{ width: "150px" }}>
-                      16-30 Days
-                    </th>
-                    <th className="text-align-right" style={{ width: "150px" }}>
-                      31-45 Days
-                    </th>
-                    <th className="text-align-right" style={{ width: "150px" }}>
-                      &gt; 45 Days
-                    </th>
+
                     <th className="text-align-right" style={{ width: "150px" }}>
                       <FormattedMessage
-                        id="label.total"
-                        defaultMessage="Total"
+                        id="label.balanceDue"
+                        defaultMessage="Balance Due"
                       />
                     </th>
                   </tr>
@@ -136,79 +183,102 @@ const ARAgingDetails = () => {
                   {queryData?.length > 0 ? (
                     queryData?.map((data, index) => {
                       return (
-                        <tr key={index}>
-                          <td>{data.customerName}</td>
-                          <td className="text-align-right">
-                            {data.currencySymbol}{" "}
-                            <FormattedNumber
-                              value={data.totalFcy}
-                              style="decimal"
-                              //   minimumFractionDigits={
-                              //     business.baseCurrency.decimalPlaces
-                              //   }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.current}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.int1to15}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.int16to30}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.int31to45}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.int46plus}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                          <td className="text-align-right">
-                            <FormattedNumber
-                              value={data.total}
-                              style="decimal"
-                              minimumFractionDigits={
-                                business.baseCurrency.decimalPlaces
-                              }
-                            />
-                          </td>
-                        </tr>
+                        <React.Fragment key={index}>
+                          <tr className="row-header">
+                            <td colSpan={8}>
+                              <b>{getIntervalTitle(data.interval)}</b>
+                            </td>
+                            <td className="text-align-right">
+                              <FormattedNumber
+                                value={data.amount}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            </td>
+                            <td className="text-align-right">
+                              <FormattedNumber
+                                value={data.balanceDue}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            </td>
+                          </tr>
+                          {data.details?.map((detail, index) => (
+                            <tr key={index}>
+                              <td>
+                                {dayjs(detail.invoiceDate).format(
+                                  REPORT_DATE_FORMAT
+                                )}
+                              </td>
+                              <td className="text-align-left">
+                                {detail.invoiceNumber}
+                              </td>
+                              <td className="text-align-left">Invoice</td>
+                              <td
+                                className="text-align-left"
+                                style={{
+                                  color: getStatusColor(detail.invoiceStatus),
+                                }}
+                              >
+                                {detail.invoiceStatus}
+                              </td>
+                              <td className="text-align-left">
+                                {detail.customerName}
+                              </td>
+                              <td className="text-align-right">
+                                {detail.age} Day{detail.age > 1 && "s"}
+                              </td>
+                              <td className="text-align-right">
+                                {detail.currencySymbol}{" "}
+                                <FormattedNumber
+                                  value={detail.totalAmountFcy}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              </td>
+                              <td className="text-align-right">
+                                {detail.currencySymbol}{" "}
+                                <FormattedNumber
+                                  value={detail.remainingBalanceFcy}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              </td>
+                              <td className="text-align-right">
+                                <FormattedNumber
+                                  value={detail.totalAmount}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              </td>
+                              <td className="text-align-right">
+                                <FormattedNumber
+                                  value={detail.remainingBalance}
+                                  style="decimal"
+                                  minimumFractionDigits={
+                                    business.baseCurrency.decimalPlaces
+                                  }
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
                       );
                     })
                   ) : (
                     <tr className="empty-row">
                       <td
-                        colSpan={8}
+                        colSpan={10}
                         style={{
                           border: "none",
                           borderBottom: "1px solid var(--border-color)",
@@ -219,7 +289,7 @@ const ARAgingDetails = () => {
                     </tr>
                   )}
                   <tr>
-                    <td>
+                    <td colSpan={8}>
                       <b>
                         <FormattedMessage
                           id="label.total"
@@ -227,11 +297,10 @@ const ARAgingDetails = () => {
                         ></FormattedMessage>
                       </b>
                     </td>
-                    <td></td>
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.current || 0}
+                          value={totals?.amount || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces
@@ -242,51 +311,7 @@ const ARAgingDetails = () => {
                     <td className="text-align-right">
                       <b>
                         <FormattedNumber
-                          value={totals?.int1to15 || 0}
-                          style="decimal"
-                          minimumFractionDigits={
-                            business.baseCurrency.decimalPlaces
-                          }
-                        />
-                      </b>
-                    </td>
-                    <td className="text-align-right">
-                      <b>
-                        <FormattedNumber
-                          value={totals?.int16to30 || 0}
-                          style="decimal"
-                          minimumFractionDigits={
-                            business.baseCurrency.decimalPlaces
-                          }
-                        />
-                      </b>
-                    </td>
-                    <td className="text-align-right">
-                      <b>
-                        <FormattedNumber
-                          value={totals?.int31to45 || 0}
-                          style="decimal"
-                          minimumFractionDigits={
-                            business.baseCurrency.decimalPlaces
-                          }
-                        />
-                      </b>
-                    </td>
-                    <td className="text-align-right">
-                      <b>
-                        <FormattedNumber
-                          value={totals?.int46plus || 0}
-                          style="decimal"
-                          minimumFractionDigits={
-                            business.baseCurrency.decimalPlaces
-                          }
-                        />
-                      </b>
-                    </td>
-                    <td className="text-align-right">
-                      <b>
-                        <FormattedNumber
-                          value={totals?.total || 0}
+                          value={totals?.balanceDue || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces

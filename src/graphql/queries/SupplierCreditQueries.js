@@ -71,6 +71,35 @@ const GET_PAGINATE_SUPPLIER_CREDIT = gql`
             referenceType
             referenceID
           }
+          refunds {
+            id
+            paymentMode {
+              id
+              name
+            }
+            refundDate
+            amount
+            exchangeRate
+            referenceNumber
+            description
+            account {
+              id
+              name
+              currency {
+                id
+              }
+            }
+            branch {
+              id
+              name
+            }
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
+          }
           details {
             id
             productId
@@ -106,6 +135,7 @@ const GET_PAGINATE_SUPPLIER_CREDIT = gql`
           creditedBills {
             billNumber
             amount
+            creditDate
           }
         }
       }

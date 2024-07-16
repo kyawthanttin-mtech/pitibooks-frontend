@@ -168,7 +168,11 @@ const PurchaseOrdersNew = () => {
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
   const [totalAmount, setTotalAmount] = useState(
-    record?.orderTotalAmount - record?.adjustmentAmount
+    record?.isTaxInclusive
+      ? record?.orderTotalAmount -
+          record?.adjustmentAmount +
+          record?.orderTotalTaxAmount
+      : record?.orderTotalAmount - record?.adjustmentAmount
   );
   const client = useApolloClient();
   // const [tableKeyCounter, setTableKeyCounter] = useState(
@@ -184,14 +188,13 @@ const PurchaseOrdersNew = () => {
   const [discountAmount, setDiscountAmount] = useState(
     record?.orderDiscountAmount || 0
   );
-  const [isTaxInclusive, setIsTaxInclusive] = useState(
-    record?.isDetailTaxInclusive
-  );
+  const [isTaxInclusive, setIsTaxInclusive] = useState(record?.isTaxInclusive);
   const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
     discountPreference.key === "0"
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [fileList, setFileList] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState(record?.branch?.id);
 
   // const initialValues = {
   //   currency: business.baseCurrency.id,
@@ -199,8 +202,6 @@ const PurchaseOrdersNew = () => {
   //   date: dayjs(),
   //   branch: business.primaryBranch.id,
   // };
-
-  console.log("record", record);
 
   // Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -264,8 +265,10 @@ const PurchaseOrdersNew = () => {
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse;
-  }, [warehouseData]);
+    return warehouseData?.listAllWarehouse?.filter(
+      (w) => w.isActive === true && w.branchId === selectedBranchId
+    );
+  }, [warehouseData, selectedBranchId]);
 
   const products = useMemo(() => {
     return productData?.listAllProduct;
@@ -1601,7 +1604,15 @@ const PurchaseOrdersNew = () => {
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={(value) => {
+                      setSelectedBranchId(value);
+                      setSelectedWarehouse(null);
+                      form.setFieldsValue({ warehouse: null });
+                    }}
+                  >
                     {branches?.map((branch) => (
                       <Select.Option
                         key={branch.id}
@@ -1965,6 +1976,7 @@ const PurchaseOrdersNew = () => {
                     // allowClear
                     onChange={(value) => setSelectedWarehouse(value)}
                     optionFilterProp="label"
+                    disabled={!selectedBranchId}
                   >
                     {warehouses?.map((w) => (
                       <Select.Option key={w.id} value={w.id} label={w.name}>

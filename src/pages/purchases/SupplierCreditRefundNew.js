@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Row, Col, Button, Form, Input, Select, DatePicker } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useOutletContext } from "react-router-dom";
 import { useMutation, useReadQuery } from "@apollo/client";
@@ -8,21 +9,25 @@ import {
   openErrorNotification,
   openSuccessMessage,
 } from "../../utils/Notification";
-import { SupplierPaymentMutations } from "../../graphql";
+import { RefundMutations } from "../../graphql";
 import dayjs from "dayjs";
 import { UploadAttachment } from "../../components";
-const { CREATE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
+const { CREATE_REFUND } = RefundMutations;
 
-const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
+const SupplierCreditRefundNew = ({
+  refetch,
+  branches,
+  selectedRecord,
+  onClose,
+  accounts,
+}) => {
   const intl = useIntl();
   const [form] = Form.useForm();
+  const { notiApi, msgApi, allPaymentModesQueryRef } = useOutletContext();
   const [fileList, setFileList] = useState(null);
-  const { notiApi, msgApi, allPaymentModesQueryRef, allAccountsQueryRef } =
-    useOutletContext();
   const [accountCurrencyId, setAccountCurrencyId] = useState(null);
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
-  const { data: accountData } = useReadQuery(allAccountsQueryRef);
 
   const paymentModes = useMemo(() => {
     return paymentModeData?.listAllPaymentMode?.filter(
@@ -30,39 +35,15 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
     );
   }, [paymentModeData]);
 
-  const accounts = useMemo(() => {
-    if (!accountData?.listAllAccount) return [];
-
-    const groupedAccounts = accountData.listAllAccount
-      .filter(
-        (account) =>
-          account.detailType === "Cash" ||
-          account.detailType === "Bank" ||
-          account.detailType === "OtherAsset" ||
-          account.detailType === "OtherCurrentAsset" ||
-          account.detailType === "Equity"
-      )
-      .reduce((acc, account) => {
-        const { detailType } = account;
-        if (!acc[detailType]) {
-          acc[detailType] = { detailType, accounts: [] };
-        }
-        acc[detailType].accounts.push(account);
-        return acc;
-      }, {});
-
-    return Object.values(groupedAccounts);
-  }, [accountData]);
-
-  const [createSupplierPayment, { loading: createLoading }] = useMutation(
-    CREATE_SUPPLIER_PAYMENT,
+  const [createRefund, { loading: createLoading }] = useMutation(
+    CREATE_REFUND,
     {
       onCompleted() {
         openSuccessMessage(
           msgApi,
           <FormattedMessage
-            id="supplierPayment.created"
-            defaultMessage="New Supplier Payment Created"
+            id="refund.informationSaved"
+            defaultMessage="Refund Information Saved"
           />
         );
         refetch();
@@ -83,24 +64,17 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
         currencyId: selectedRecord.currency.id,
         exchangeRate: values.exchangeRate,
         amount: values.amount,
-        bankCharges: values.bankCharges,
-        paymentDate: values.date,
+        refundDate: values.date,
         paymentModeId: values.paymentMode,
-        withdrawAccountId: values.paidThrough,
         referenceNumber: values.referenceNumber,
-        notes: values.notes,
+        description: values.description,
+        accountId: values.toAccountId,
+        referenceId: selectedRecord.id,
+        referenceType: "SC",
         documents: fileUrls,
-        paidBills: [
-          {
-            paidBillId: 0,
-            billId: selectedRecord.id,
-            paidAmount: values.amount,
-          },
-        ],
       };
 
-      await createSupplierPayment({ variables: { input: input } });
-      refetch();
+      await createRefund({ variables: { input: input } });
       onClose();
       form.resetFields();
     } catch (err) {
@@ -128,7 +102,7 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
 
   useMemo(() => {
     form.setFieldsValue({
-      branch: selectedRecord?.branch.id,
+      branch: selectedRecord?.branch?.id,
       amount: selectedRecord?.remainingBalance,
     });
   }, [form, selectedRecord]);
@@ -170,51 +144,8 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
             <Form.Item
               label={
                 <FormattedMessage
-                  id="label.paidThrough"
-                  defaultMessage="Paid Through"
-                />
-              }
-              name="paidThrough"
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.paidThrough.required"
-                      defaultMessage="Select the Paid Through"
-                    />
-                  ),
-                },
-              ]}
-            >
-              <Select
-                showSearch
-                optionFilterProp="label"
-                onChange={handleAccountChange}
-              >
-                {accounts.map((group) => (
-                  <Select.OptGroup
-                    key={group.detailType}
-                    label={group.detailType}
-                  >
-                    {group.accounts.map((acc) => (
-                      <Select.Option
-                        key={acc.id}
-                        value={acc.id}
-                        label={acc.name}
-                      >
-                        {acc.name}
-                      </Select.Option>
-                    ))}
-                  </Select.OptGroup>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.paymentMode"
-                  defaultMessage="Payment Mode"
+                  id="label.paidVia"
+                  defaultMessage="Paid Via"
                 />
               }
               name="paymentMode"
@@ -231,6 +162,7 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 ))}
               </Select>
             </Form.Item>
+
             <Form.Item
               label={
                 <FormattedMessage id="label.amount" defaultMessage="Amount" />
@@ -268,66 +200,6 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 addonBefore={selectedRecord.currency.symbol}
                 onBlur={handleAmountChange}
               ></Input>
-            </Form.Item>
-          </Col>
-          <Col span={7} offset={1}>
-            <Form.Item
-              label={<FormattedMessage id="label.date" defaultMessage="date" />}
-              name="date"
-              initialValue={dayjs()}
-              rules={[
-                {
-                  required: true,
-                  message: (
-                    <FormattedMessage
-                      id="label.date.required"
-                      defaultMessage="Select the Date"
-                    />
-                  ),
-                },
-              ]}
-            >
-              <DatePicker format={REPORT_DATE_FORMAT} />
-            </Form.Item>
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.referenceNumber"
-                  defaultMessage="Reference #"
-                />
-              }
-              name="referenceNumber"
-            >
-              <Input maxLength={255}></Input>
-            </Form.Item>
-            <Form.Item
-              label={
-                <FormattedMessage
-                  id="label.bankCharges"
-                  defaultMessage="Bank Charges"
-                />
-              }
-              name="bankCharges"
-              rules={[
-                () => ({
-                  validator(_, value) {
-                    if (!value) {
-                      return Promise.resolve();
-                    } else if (isNaN(value) || value.length > 20 || value < 0) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: "validation.invalidInput",
-                          defaultMessage: "Invalid Input",
-                        })
-                      );
-                    } else {
-                      return Promise.resolve();
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input></Input>
             </Form.Item>
             {accountCurrencyId &&
               selectedRecord.currency.id !== accountCurrencyId && (
@@ -375,10 +247,92 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
                 </Form.Item>
               )}
           </Col>
+          <Col span={7} offset={1}>
+            <Form.Item
+              label={<FormattedMessage id="label.date" defaultMessage="date" />}
+              name="date"
+              initialValue={dayjs()}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.date.required"
+                      defaultMessage="Select the Date"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <DatePicker format={REPORT_DATE_FORMAT} />
+            </Form.Item>
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.referenceNumber"
+                  defaultMessage="Reference #"
+                />
+              }
+              name="referenceNumber"
+            >
+              <Input maxLength={255}></Input>
+            </Form.Item>{" "}
+            <Form.Item
+              label={
+                <FormattedMessage
+                  id="label.depositTo"
+                  defaultMessage="Deposit To"
+                />
+              }
+              name="toAccountId"
+              labelAlign="left"
+              labelCol={{ span: 8 }}
+              // wrapperCol={{ span: 15 }}
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="label.account.required"
+                      defaultMessage="Select the Account"
+                    />
+                  ),
+                },
+              ]}
+            >
+              <Select
+                showSearch
+                optionFilterProp="label"
+                onChange={(value) => handleAccountChange(value)}
+              >
+                {accounts.map((group) => (
+                  <Select.OptGroup
+                    key={group.detailType}
+                    label={group.detailType}
+                  >
+                    {group.accounts.map((acc) => (
+                      <Select.Option
+                        key={acc.id}
+                        value={acc.id}
+                        label={acc.name}
+                      >
+                        {acc.name}
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
         </Row>
         <Form.Item
-          label={<FormattedMessage id="label.notes" defaultMessage="Notes" />}
-          name="notes"
+          label={
+            <FormattedMessage
+              id="label.description"
+              defaultMessage="Description"
+            />
+          }
+          name="description"
           wrapperCol={{ span: 15 }}
         >
           <Input.TextArea rows={4} maxLength={1000}></Input.TextArea>
@@ -410,4 +364,4 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   );
 };
 
-export default RecordBillPayment;
+export default SupplierCreditRefundNew;

@@ -235,7 +235,6 @@ const PaginatedJournal = ({
 
   return (
     <>
-      {" "}
       <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
         <JournalPDF selectedRecord={selectedRecord} business={business} />
       </PDFPreviewModal>
@@ -458,7 +457,7 @@ const PaginatedJournal = ({
               <div className="content-column-header-row-actions">
                 <AttachFiles
                   files={selectedRecord?.documents}
-                  key={selectedRecord?.key}
+                  key={selectedRecord?.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button

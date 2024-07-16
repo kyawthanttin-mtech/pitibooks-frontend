@@ -44,7 +44,6 @@ const DepositFromAnotherAccEdit = ({
       : []
   );
 
-  console.log(currencies);
   const handleFromAccountChange = useCallback(
     (id) => {
       const toAccountCurrency =

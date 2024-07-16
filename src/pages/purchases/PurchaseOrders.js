@@ -50,6 +50,7 @@ import { useHistoryState } from "../../utils/HelperFunctions";
 import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { PurchaseOrderPDF } from "../../components/pdfs-and-templates";
+import { render } from "@testing-library/react";
 const { GET_PAGINATE_PURCHASE_ORDER } = PurchaseOrderQueries;
 const { CONFIRM_PURCHASE_ORDER, CANCEL_PURCHASE_ORDER, DELETE_PURCHASE_ORDER } =
   PurchaseOrderMutations;
@@ -324,12 +325,26 @@ const PurchaseOrders = () => {
   const getStatusColor = (status) => {
     let color = "";
 
-    if (status === "Draft") {
+    if (status === "Draft" || status === "Cancelled") {
       color = "gray";
     } else if (status === "Closed") {
-      color = "var(--primary-color)";
+      color = "var(--dark-green)";
     } else {
       color = "var(--blue)";
+    }
+
+    return color;
+  };
+
+  const getBillStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Paid") {
+      color = "var(--dark-green)";
+    } else if (status === "Confirmed") {
+      color = "var(--blue)";
+    } else {
+      color = "gray";
     }
 
     return color;
@@ -598,6 +613,11 @@ const PurchaseOrders = () => {
       title: "Status",
       dataIndex: "currentStatus",
       key: "currentStatus",
+      render: (text, record) => (
+        <span style={{ color: getBillStatusColor(text) }}>
+          {record.currentStatus}
+        </span>
+      ),
     },
     {
       title: "Due Date",
@@ -612,11 +632,11 @@ const PurchaseOrders = () => {
       align: "right",
       render: (_, record) => (
         <>
-          {selectedRecord?.currency?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
             value={record.billTotalAmount}
             style="decimal"
-            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            minimumFractionDigits={record?.currency?.decimalPlaces}
           />
         </>
       ),
@@ -628,11 +648,11 @@ const PurchaseOrders = () => {
       align: "right",
       render: (_, record) => (
         <>
-          {selectedRecord?.currency?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
-            value={record.billTotalAmount - record.billTotalPaidAmount}
+            value={record.remainingBalance}
             style="decimal"
-            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            minimumFractionDigits={record?.currency?.decimalPlaces}
           />
         </>
       ),

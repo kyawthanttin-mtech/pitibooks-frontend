@@ -26,6 +26,10 @@ const GET_PAGINATE_BANKING_TRANSACTION = gql`
           details {
             id
             invoiceNo
+            bankingTransactionId
+            dueAmount
+            paymentAmount
+            dueDate
           }
           fromAccount {
             id
@@ -52,10 +56,34 @@ const GET_PAGINATE_BANKING_TRANSACTION = gql`
           supplier {
             id
             name
+            availableAdvances {
+              id
+              date
+              amount
+              usedAmount
+              currentStatus
+              refundAmount
+              remainingBalance
+              branch {
+                id
+              }
+            }
           }
           customer {
             id
             name
+            availableAdvances {
+              id
+              date
+              amount
+              usedAmount
+              currentStatus
+              refundAmount
+              remainingBalance
+              branch {
+                id
+              }
+            }
           }
           branch {
             id

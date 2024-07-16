@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CaretRightFilled } from "@ant-design/icons";
 import { Divider } from "antd";
 
@@ -9,15 +9,6 @@ const AccordionTabs = ({ tabs }) => {
   );
   const [activeTab, setActiveTab] = useState(filteredTabs[0]?.key);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
-  // useEffect(() => {
-  //   setActiveTab(filteredTabs[0]?.key);
-  // }, [filteredTabs]);
-
-  useEffect(() => {
-    if (tabs) {
-      setIsContentExpanded(false);
-    }
-  }, [tabs]);
 
   const toggleContent = () => {
     setIsContentExpanded(!isContentExpanded);
@@ -37,26 +28,25 @@ const AccordionTabs = ({ tabs }) => {
         onClick={toggleContent}
       >
         <ul className="nav-tabs">
-          {tabs.map(
-            (tab, index) =>
-              (tab.data?.length > 0 || tab.data?.id > 0) && (
-                <React.Fragment key={tab.key}>
-                  <li
-                    key={tab.key}
-                    className={`nav-link ${
-                      activeTab === tab.key && isContentExpanded && "active"
-                    }`}
-                    onClick={(event) => handleTabClick(tab.key, event)}
-                  >
-                    <span>{tab.title}</span>
-                    <span className="bill">
-                      {tab.data || tab.data?.id > 0 ? tab.data?.length || 1 : 0}
-                    </span>
-                  </li>
-                  <Divider type="vertical" className="tab-divider" />
-                </React.Fragment>
-              )
-          )}
+          {filteredTabs.map((tab, index) => (
+            <React.Fragment key={tab.key}>
+              <li
+                key={tab.key}
+                className={`nav-link ${
+                  activeTab === tab.key && isContentExpanded && "active"
+                }`}
+                onClick={(event) => handleTabClick(tab.key, event)}
+              >
+                <span>{tab.title}</span>
+                <span className="bill">
+                  {tab.data || tab.data?.id > 0 ? tab.data?.length || 1 : 0}
+                </span>
+              </li>
+              {index + 1 < filteredTabs.length && (
+                <Divider type="vertical" className="tab-divider" />
+              )}
+            </React.Fragment>
+          ))}
         </ul>
         <CaretRightFilled
           style={{

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   Button,
   Form,
@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
 import { useOutletContext } from "react-router-dom";
 import {
@@ -26,7 +26,7 @@ import { CustomerSearchModal, UploadAttachment } from "../../components";
 const { CREATE_REFUND } = RefundMutations;
 
 const initialValues = {
-  transactionDate: dayjs(),
+  date: dayjs(),
 };
 
 const CustomerAdvanceRefundNew = ({
@@ -38,16 +38,10 @@ const CustomerAdvanceRefundNew = ({
   paymentModes,
   allAccounts,
   accounts,
-  bankingAccounts,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
-  const { notiApi, msgApi, business } = useOutletContext();
-  const [currencies, setCurrencies] = useState([
-    selectedAcc?.currency?.id > 0
-      ? selectedAcc.currency
-      : business.baseCurrency,
-  ]);
+  const { notiApi, msgApi } = useOutletContext();
   const [customerSearchModalOpen, setCustomerSearchModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [fileList, setFileList] = useState(null);
@@ -56,6 +50,8 @@ const CustomerAdvanceRefundNew = ({
     selectedAcc?.currency?.id || null
   );
   const [selectedBranch, setSelectedBranch] = useState(null);
+
+  console.log(fromAccountCurrencyId && selectedBranch && selectedCustomer);
 
   if (form && modalOpen) {
     form.setFieldsValue({
@@ -81,7 +77,6 @@ const CustomerAdvanceRefundNew = ({
 
   const handleFromAccountChange = (id) => {
     const selectedAccount = allAccounts.find((account) => account.id === id);
-    console.log("jd", selectedAdvance);
     setFromAccountCurrencyId(selectedAccount?.currency?.id || null);
   };
 
@@ -112,19 +107,19 @@ const CustomerAdvanceRefundNew = ({
       }));
 
       const input = {
-        fromAccountId: values.fromAccountId,
+        accountId: values.fromAccountId,
         branchId: values.branchId,
         referenceNumber: values.referenceNumber,
-        transactionDate: values.transactionDate,
+        refundDate: values.date,
         paymentModeId: values.paymentModeId,
         exchangeRate: values.exchangeRate,
         amount: values[`refundAmount${selectedAdvance?.id}`],
         currencyId: selectedAcc?.currency.id,
         customerName: undefined,
         customerId: selectedCustomer?.id,
-        transactionType: "CustomerAdvanceRefund",
-        // isMoneyIn: true,
-        documents: fileUrls,
+        referenceType: "CA",
+        referenceId: selectedAdvance?.id,
+        // documents: fileUrls,
       };
 
       if (!selectedAdvance) {
@@ -391,7 +386,7 @@ const CustomerAdvanceRefundNew = ({
       >
         <Form.Item
           label={<FormattedMessage id="label.date" defaultMessage="date" />}
-          name="transactionDate"
+          name="date"
           labelAlign="left"
           labelCol={{ span: 8 }}
           rules={[

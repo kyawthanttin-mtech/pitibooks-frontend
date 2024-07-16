@@ -480,8 +480,7 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Tax{" "}
-                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                          Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
                         </td>
                         <td
                           style={{
@@ -502,7 +501,7 @@ const SalesOrderTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{

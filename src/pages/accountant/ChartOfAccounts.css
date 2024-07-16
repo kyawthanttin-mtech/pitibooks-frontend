@@ -6,6 +6,7 @@
 
 .content-column-balance-detail {
   height: 7.938rem;
+  min-height: 7.938rem;
   background-color: rgba(89, 166, 53, 0.05);
   display: flex;
   flex-direction: column;

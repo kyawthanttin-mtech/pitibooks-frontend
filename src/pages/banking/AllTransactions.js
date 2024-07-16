@@ -25,6 +25,7 @@ import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import {
   BankingTransactionQueries,
   BankingTransactionMutations,
+  RefundMutations,
 } from "../../graphql";
 import { paginateArray, useHistoryState } from "../../utils/HelperFunctions";
 import dayjs from "dayjs";
@@ -44,11 +45,7 @@ import {
   TransferFromAnotherAccNew,
   TransferToAnotherAccNew,
   OwnerContributionNew,
-  PaymentRefund,
-  CreditNoteRefund,
   SupplierAdvanceNew,
-  SupplierCreditRefund,
-  ExpenseRefundNew,
   OtherIncomeNew,
   OtherIncomeEdit,
   TransferToAnotherAccEdit,
@@ -57,14 +54,13 @@ import {
   OwnerContributionEdit,
   ExpenseNew,
   ExpenseEdit,
-  ExpenseRefundEdit,
   SupplierAdvanceEdit,
   CustomerAdvanceNew,
   CustomerAdvanceEdit,
   InterestIncomeNew,
   InterestIncomeEdit,
-  SupplierAdvanceRefundNew,
   SupplierAdvanceRefundEdit,
+  SupplierAdvanceRefundNew,
   CustomerAdvanceRefundNew,
   CustomerAdvanceRefundEdit,
   DepositToAnotherAccNew,
@@ -75,6 +71,7 @@ import {
 import OwnerDrawingsEdit from "./OwnerDrawingsEdit";
 const { GET_PAGINATE_BANKING_TRANSACTION } = BankingTransactionQueries;
 const { DELETE_BANKING_TRANSACTION } = BankingTransactionMutations;
+const { DELETE_REFUND } = RefundMutations;
 
 const addTransactionItems = [
   {
@@ -310,6 +307,24 @@ const AllTransactions = () => {
           <FormattedMessage
             id="transaction.deleted"
             defaultMessage="Transaction Deleted"
+          />
+        );
+        setSelectedRecord(null);
+        setSelectedRowIndex(0);
+        refetch();
+      },
+    }
+  );
+
+  const [deleteRefund, { loading: deleteRefundLoading }] = useMutation(
+    DELETE_REFUND,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="refundInformation.deleted"
+            defaultMessage="Refund Information Deleted"
           />
         );
         setSelectedRecord(null);
@@ -625,7 +640,8 @@ const AllTransactions = () => {
     currentPage
   );
 
-  const loading = queryLoading || searchLoading || deleteLoading;
+  const loading =
+    queryLoading || searchLoading || deleteLoading || deleteRefundLoading;
   //==================================================
 
   const handleAccountChange = (key) => {
@@ -647,11 +663,22 @@ const AllTransactions = () => {
     });
     if (confirmed) {
       try {
-        await deleteTransaction({
-          variables: {
-            id,
-          },
-        });
+        if (
+          selectedRecord.transactionType === "CustomerAdvanceRefund" ||
+          selectedRecord.transactionType === "SupplierAdvanceRefund"
+        ) {
+          await deleteRefund({
+            variables: {
+              id,
+            },
+          });
+        } else {
+          await deleteTransaction({
+            variables: {
+              id,
+            },
+          });
+        }
       } catch (err) {
         openErrorNotification(notiApi, err.message);
       }
@@ -1071,6 +1098,7 @@ const AllTransactions = () => {
         bankingAccounts={bankingAccounts}
         refetch={refetch}
       />
+
       <SupplierAdvanceRefundEdit
         modalOpen={supplierAdvanceRefundEditModalOpen}
         setModalOpen={setSupplierAdvanceRefundEditModalOpen}

@@ -485,8 +485,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Tax{" "}
-                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                          Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
                         </td>
                         <td
                           style={{
@@ -507,7 +506,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -572,7 +571,7 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          <b>Payments Made</b>
+                          <b>Payments Received</b>
                         </td>
                         <td
                           style={{

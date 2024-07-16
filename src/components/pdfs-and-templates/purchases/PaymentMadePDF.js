@@ -309,11 +309,11 @@ const PaymentMadePDF = ({ selectedRecord, business }) => {
         )}
         {selectedRecord.supplierPaymentTotalTaxAmount > 0 && (
           <CustomText>
-            Tax {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+            Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>Adjustment{"\n"}</CustomText>
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
@@ -348,7 +348,7 @@ const PaymentMadePDF = ({ selectedRecord, business }) => {
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>
             <FormattedNumber
               value={selectedRecord.adjustmentAmount}

@@ -12,21 +12,21 @@ import {
 import { RefundMutations } from "../../graphql";
 import dayjs from "dayjs";
 import { UploadAttachment } from "../../components";
-const { CREATE_REFUND } = RefundMutations;
+const { UPDATE_REFUND } = RefundMutations;
 
-const CreditNoteRefund = ({
+const SupplierCreditRefundEdit = ({
   refetch,
   branches,
   selectedRecord,
   onClose,
   accounts,
-  accountsReceivable,
+  selectedRefundRecord,
 }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
+  const { notiApi, msgApi, allPaymentModesQueryRef } = useOutletContext();
   const [fileList, setFileList] = useState(null);
-  const { notiApi, msgApi, business, allPaymentModesQueryRef } =
-    useOutletContext();
+  const [accountCurrencyId, setAccountCurrencyId] = useState(null);
 
   const { data: paymentModeData } = useReadQuery(allPaymentModesQueryRef);
 
@@ -36,8 +36,8 @@ const CreditNoteRefund = ({
     );
   }, [paymentModeData]);
 
-  const [createRefund, { loading: createLoading }] = useMutation(
-    CREATE_REFUND,
+  const [updateRefund, { loading: updateLoading }] = useMutation(
+    UPDATE_REFUND,
     {
       onCompleted() {
         openSuccessMessage(
@@ -52,6 +52,24 @@ const CreditNoteRefund = ({
     }
   );
 
+  useMemo(() => {
+    const parsedRecord =
+      form && selectedRecord && selectedRefundRecord
+        ? {
+            date: dayjs(selectedRefundRecord.refundDate),
+            paymentMode: selectedRefundRecord.paymentMode?.id || null,
+            referenceNumber: selectedRefundRecord.referenceNumber,
+            amount: selectedRefundRecord.amount,
+            branch: selectedRefundRecord.branch?.id || null,
+            toAccountId: selectedRefundRecord.account?.id || null,
+            exchangeRate: selectedRefundRecord.exchangeRate,
+            description: selectedRefundRecord.description,
+          }
+        : {};
+    setAccountCurrencyId(selectedRefundRecord.account?.currency?.id || null);
+    form.setFieldsValue(parsedRecord);
+  }, [form, selectedRecord, selectedRefundRecord]);
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -61,8 +79,8 @@ const CreditNoteRefund = ({
 
       const input = {
         branchId: values.branch,
-        customerId: selectedRecord.customer.id,
-        currencyId: selectedRecord.currency.id,
+        supplierId: selectedRecord.supplier.id,
+        currencyId: selectedRefundRecord.currency.id,
         exchangeRate: values.exchangeRate,
         amount: values.amount,
         refundDate: values.date,
@@ -71,11 +89,13 @@ const CreditNoteRefund = ({
         description: values.description,
         accountId: values.toAccountId,
         referenceId: selectedRecord.id,
-        transactionType: "CN",
+        referenceType: "SC",
         documents: fileUrls,
       };
 
-      await createRefund({ variables: { input: input } });
+      await updateRefund({
+        variables: { id: selectedRefundRecord.id, input: input },
+      });
       onClose();
       form.resetFields();
     } catch (err) {
@@ -83,13 +103,27 @@ const CreditNoteRefund = ({
     }
   };
 
-  useMemo(() => {
-    console.log(selectedRecord);
-    form.setFieldsValue({
-      branch: selectedRecord?.branch.id,
-      amount: selectedRecord?.remainingAmount,
+  const handleAccountChange = (id) => {
+    let selectedAccount;
+    accounts.forEach((group) => {
+      const account = group.accounts.find((acc) => acc.id === id);
+      if (account) {
+        selectedAccount = account;
+      }
     });
-  }, [form, selectedRecord]);
+    setAccountCurrencyId(selectedAccount?.currency?.id || null);
+  };
+
+  const handleAmountChange = () => {
+    const amount = form.getFieldValue("amount");
+    let maxAmount =
+      selectedRefundRecord.amount + selectedRecord.remainingBalance;
+    if (amount > maxAmount) {
+      form.setFieldsValue({
+        amount: maxAmount,
+      });
+    }
+  };
 
   return (
     <div className="content-column-full-row page-content-with-form-buttons">
@@ -180,52 +214,56 @@ const CreditNoteRefund = ({
                 }),
               ]}
             >
-              <Input addonBefore={selectedRecord.currency.symbol}></Input>
+              <Input
+                addonBefore={selectedRecord.currency.symbol}
+                onBlur={handleAmountChange}
+              ></Input>
             </Form.Item>
-            {selectedRecord.currency.id !== business.baseCurrency.id && (
-              <Form.Item
-                label={
-                  <FormattedMessage
-                    id="label.exchangeRate"
-                    defaultMessage="Exchange Rate"
-                  />
-                }
-                name="exchangeRate"
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="label.exchangeRate.required"
-                        defaultMessage="Enter the Exchange Rate"
-                      />
-                    ),
-                  },
-                  () => ({
-                    validator(_, value) {
-                      if (!value) {
-                        return Promise.resolve();
-                      } else if (
-                        isNaN(value) ||
-                        value.length > 20 ||
-                        value < 0
-                      ) {
-                        return Promise.reject(
-                          intl.formatMessage({
-                            id: "validation.invalidInput",
-                            defaultMessage: "Invalid Input",
-                          })
-                        );
-                      } else {
-                        return Promise.resolve();
-                      }
+            {accountCurrencyId &&
+              selectedRecord.currency.id !== accountCurrencyId && (
+                <Form.Item
+                  label={
+                    <FormattedMessage
+                      id="label.exchangeRate"
+                      defaultMessage="Exchange Rate"
+                    />
+                  }
+                  name="exchangeRate"
+                  rules={[
+                    {
+                      required: true,
+                      message: (
+                        <FormattedMessage
+                          id="label.exchangeRate.required"
+                          defaultMessage="Enter the Exchange Rate"
+                        />
+                      ),
                     },
-                  }),
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            )}
+                    () => ({
+                      validator(_, value) {
+                        if (!value) {
+                          return Promise.resolve();
+                        } else if (
+                          isNaN(value) ||
+                          value.length > 20 ||
+                          value < 0
+                        ) {
+                          return Promise.reject(
+                            intl.formatMessage({
+                              id: "validation.invalidInput",
+                              defaultMessage: "Invalid Input",
+                            })
+                          );
+                        } else {
+                          return Promise.resolve();
+                        }
+                      },
+                    }),
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
           </Col>
           <Col span={7} offset={1}>
             <Form.Item
@@ -256,15 +294,15 @@ const CreditNoteRefund = ({
               name="referenceNumber"
             >
               <Input maxLength={255}></Input>
-            </Form.Item>
+            </Form.Item>{" "}
             <Form.Item
               label={
                 <FormattedMessage
-                  id="label.fromAccount"
-                  defaultMessage="From Account"
+                  id="label.depositTo"
+                  defaultMessage="Deposit To"
                 />
               }
-              name="fromAccountId"
+              name="toAccountId"
               labelAlign="left"
               labelCol={{ span: 8 }}
               // wrapperCol={{ span: 15 }}
@@ -283,7 +321,7 @@ const CreditNoteRefund = ({
               <Select
                 showSearch
                 optionFilterProp="label"
-                // onChange={handleFromAccountChange}
+                onChange={(value) => handleAccountChange(value)}
               >
                 {accounts.map((group) => (
                   <Select.OptGroup
@@ -324,7 +362,7 @@ const CreditNoteRefund = ({
         />
         <div className="page-actions-bar page-actions-bar-margin">
           <Button
-            loading={createLoading}
+            loading={updateLoading}
             type="primary"
             htmlType="submit"
             className="page-actions-btn"
@@ -332,7 +370,7 @@ const CreditNoteRefund = ({
             <FormattedMessage id="button.save" defaultMessage="Save" />
           </Button>
           <Button
-            loading={createLoading}
+            loading={updateLoading}
             className="page-actions-btn"
             onClick={onClose}
           >
@@ -344,4 +382,4 @@ const CreditNoteRefund = ({
   );
 };
 
-export default CreditNoteRefund;
+export default SupplierCreditRefundEdit;

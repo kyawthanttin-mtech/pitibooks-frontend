@@ -121,10 +121,14 @@ const PurchaseOrderPDF = ({ selectedRecord, business }) => {
           {"\n"}
           {"\n"}
         </CustomText>
-        <CustomText>Supplier {"\n"}</CustomText>
-        <CustomText style={styles.primaryColor}>
-          {selectedRecord?.supplier?.name}
-        </CustomText>
+        {selectedRecord?.supplier?.name && (
+          <>
+            <CustomText>Supplier {"\n"}</CustomText>
+            <CustomText style={styles.primaryColor}>
+              {selectedRecord?.supplier?.name}
+            </CustomText>
+          </>
+        )}
       </View>
       <CustomText style={styles.alignRight}>
         <CustomText style={styles.header}>PURCHASE ORDER{"\n"}</CustomText>
@@ -349,11 +353,11 @@ const PurchaseOrderPDF = ({ selectedRecord, business }) => {
         )}
         {selectedRecord.orderTotalTaxAmount > 0 && (
           <CustomText>
-            Tax {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+            Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>Adjustment{"\n"}</CustomText>
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
@@ -388,7 +392,7 @@ const PurchaseOrderPDF = ({ selectedRecord, business }) => {
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>
             <FormattedNumber
               value={selectedRecord.adjustmentAmount}

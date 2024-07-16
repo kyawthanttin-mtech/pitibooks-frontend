@@ -69,7 +69,7 @@ const BillApplyCreditModal = ({
         const existingData = cache.readQuery({
           query: GET_PAGINATE_BILL,
         });
-      
+
         if (existingData) {
           const newEdges = existingData.paginateBill.edges.map((edge) => {
             if (edge.node.id === selectedRecord.id) {
@@ -78,7 +78,9 @@ const BillApplyCreditModal = ({
                 node: {
                   ...edge.node,
                   appliedSupplierCredits: [
-                    ...(Array.isArray(edge.node.appliedSupplierCredits) ? edge.node.appliedSupplierCredits : []),
+                    ...(Array.isArray(edge.node.appliedSupplierCredits)
+                      ? edge.node.appliedSupplierCredits
+                      : []),
                     ...createSupplierApplyCredit,
                   ],
                 },
@@ -86,7 +88,7 @@ const BillApplyCreditModal = ({
             }
             return edge;
           });
-      
+
           cache.writeQuery({
             query: GET_PAGINATE_BILL,
             data: {
@@ -96,9 +98,12 @@ const BillApplyCreditModal = ({
               },
             },
           });
-      
+
           // Update selectedRecord state if necessary
-          if (selectedRecord && Array.isArray(selectedRecord.appliedSupplierCredits)) {
+          if (
+            selectedRecord &&
+            Array.isArray(selectedRecord.appliedSupplierCredits)
+          ) {
             const updatedSelectedRecord = {
               ...selectedRecord,
               appliedSupplierCredits: [
@@ -106,18 +111,18 @@ const BillApplyCreditModal = ({
                 ...createSupplierApplyCredit,
               ],
             };
-      
+
             setSelectedRecord(updatedSelectedRecord);
           } else {
             const updatedSelectedRecord = {
               ...selectedRecord,
               appliedSupplierCredits: createSupplierApplyCredit,
             };
-      
+
             setSelectedRecord(updatedSelectedRecord);
           }
         }
-      }      
+      },
     }
   );
 
@@ -281,7 +286,8 @@ const BillApplyCreditModal = ({
 
   const handleSubmit = async (values) => {
     if (totalAmountApplied <= 0) {
-      openErrorNotification(notiApi, 
+      openErrorNotification(
+        notiApi,
         intl.formatMessage({
           id: "validation.enterAtLeastOneCredit",
           defaultMessage: "Enter At Least One Credit",
@@ -509,7 +515,7 @@ const BillApplyCreditModal = ({
       title={
         <FormattedMessage
           id="label.applyCredits"
-          defaultMessage="Apply credits for"
+          defaultMessage="Apply Credits"
         />
       }
       okText={<FormattedMessage id="button.save" defaultMessage="Save" />}
@@ -526,9 +532,7 @@ const BillApplyCreditModal = ({
           <b>
             {selectedRecord?.currency?.symbol}{" "}
             <FormattedNumber
-              value={
-                selectedRecord?.remainingBalance
-              }
+              value={selectedRecord?.remainingBalance}
               style="decimal"
               minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
             />

@@ -152,11 +152,14 @@ const SalesOrdersEdit = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
     record?.orderTotalDiscountAmount || 0
   );
-  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount || 0);
-  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
-  const [tableKeyCounter, setTableKeyCounter] = useState(
-    record?.details?.length
+  const [totalAmount, setTotalAmount] = useState(
+    record?.isTaxInclusive
+      ? record?.orderTotalAmount +
+          record?.orderTotalTaxAmount -
+          record?.adjustmentAmount
+      : record?.orderTotalAmount - record?.adjustmentAmount
   );
+  const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
@@ -175,6 +178,7 @@ const SalesOrdersEdit = () => {
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [fileList, setFileList] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState(record?.branch?.id);
 
   //   const initialValues = {
   //     currency: business.baseCurrency.id,
@@ -238,8 +242,10 @@ const SalesOrdersEdit = () => {
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse;
-  }, [warehouseData]);
+    return warehouseData?.listAllWarehouse?.filter(
+      (w) => w.isActive === true && w.branchId === selectedBranchId
+    );
+  }, [warehouseData, selectedBranchId]);
 
   const products = useMemo(() => {
     return productData?.listAllProduct;
@@ -1382,7 +1388,15 @@ const SalesOrdersEdit = () => {
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={(value) => {
+                      setSelectedBranchId(value);
+                      setSelectedWarehouse(null);
+                      form.setFieldsValue({ warehouse: null });
+                    }}
+                  >
                     {branches?.map((branch) => (
                       <Select.Option
                         key={branch.id}
@@ -1706,6 +1720,7 @@ const SalesOrdersEdit = () => {
                     loading={stockLoading}
                     onChange={(value) => setSelectedWarehouse(value)}
                     optionFilterProp="label"
+                    disabled={!selectedBranchId}
                   >
                     {warehouses?.map((w) => (
                       <Select.Option key={w.id} value={w.id} label={w.name}>

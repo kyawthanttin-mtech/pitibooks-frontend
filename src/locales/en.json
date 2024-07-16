@@ -633,5 +633,7 @@
   "variation.name.required": "Enter the Variation Name",
 
   "transaction.recorded": "Transaction Recorded",
-  "refund.informationSaved": "Refund Information Saved"
+  "refund.informationSaved": "Refund Information Saved",
+  "refund.informationUpdated": "Refund Information Updated",
+  "refund.informationDeleted": "Refund Information Deleted"
 }

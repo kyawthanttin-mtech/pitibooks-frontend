@@ -116,7 +116,7 @@ const SupplierCreditsEdit = () => {
     record?.warehouse?.id > 0 ? record?.warehouse?.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
-    record?.orderDiscount > 0
+    record?.supplierCreditDiscount > 0
       ? {
           key: "0",
           label: "At Transaction Level",
@@ -141,7 +141,11 @@ const SupplierCreditsEdit = () => {
     record?.supplierCreditTotalDiscountAmount
   );
   const [totalAmount, setTotalAmount] = useState(
-    record?.supplierCreditTotalAmount
+    record?.isTaxInclusive
+      ? record?.supplierCreditTotalAmount +
+          record?.supplierCreditTotalTaxAmount -
+          record?.adjustmentAmount
+      : record?.supplierCreditTotalAmount - record?.adjustmentAmount
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
   // const [tableKeyCounter, setTableKeyCounter] = useState(
@@ -163,6 +167,7 @@ const SupplierCreditsEdit = () => {
   );
   const [saveStatus, setSaveStatus] = useState("Draft");
   const [fileList, setFileList] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState(record?.branch?.id);
 
   const initialValues = {
     currency: business.baseCurrency.id,
@@ -263,8 +268,10 @@ const SupplierCreditsEdit = () => {
   }, [currencyData]);
 
   const warehouses = useMemo(() => {
-    return warehouseData?.listAllWarehouse;
-  }, [warehouseData]);
+    return warehouseData?.listAllWarehouse?.filter(
+      (w) => w.isActive === true && w.branchId === selectedBranchId
+    );
+  }, [warehouseData, selectedBranchId]);
 
   const products = useMemo(() => {
     return productData?.listAllProduct;
@@ -312,8 +319,6 @@ const SupplierCreditsEdit = () => {
     });
   }, [allProducts, stocks]);
 
-  console.log("products", data);
-
   useEffect(() => {
     if (selectedWarehouse) {
       setData((prevData) => {
@@ -358,7 +363,6 @@ const SupplierCreditsEdit = () => {
   ).decimalPlaces;
 
   const onFinish = async (values) => {
-    console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
       if ((!item.name || item.amount === 0) && !item.isDeletedItem) {
@@ -410,7 +414,6 @@ const SupplierCreditsEdit = () => {
       id: file.id,
     }));
 
-    console.log("details", details);
     const input = {
       branchId: values.branch,
       supplierId: selectedSupplier.id,
@@ -430,8 +433,7 @@ const SupplierCreditsEdit = () => {
       warehouseId: values.warehouse,
       details,
     };
-    // console.log("Transactions", transactions);
-    console.log("Input", input);
+
     await updateSupplierCredit({
       variables: { id: record.id, input },
       update(cache, { data: { updateSupplierCredit } }) {
@@ -479,7 +481,6 @@ const SupplierCreditsEdit = () => {
       },
     ]);
   };
-  console.log("record", record);
   const handleRemoveRow = (keyToRemove) => {
     let newData = [...data];
 
@@ -692,7 +693,7 @@ const SupplierCreditsEdit = () => {
       newData.amount = amount;
       newData.discountAmount = discountAmount;
       newData.taxAmount = taxAmount;
-      console.log(newData);
+
       const updatedData = [...data];
       updatedData[dataIndex] = newData;
       recalculateTotalAmount(updatedData, isTaxInclusive, isAtTransactionLevel);
@@ -1430,7 +1431,15 @@ const SupplierCreditsEdit = () => {
                     },
                   ]}
                 >
-                  <Select showSearch optionFilterProp="label">
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    onChange={(value) => {
+                      setSelectedBranchId(value);
+                      setSelectedWarehouse(null);
+                      form.setFieldsValue({ warehouse: null });
+                    }}
+                  >
                     {branches?.map((branch) => (
                       <Select.Option
                         key={branch.id}
@@ -1470,12 +1479,7 @@ const SupplierCreditsEdit = () => {
                     },
                   ]}
                 >
-                  <DatePicker
-                    onChange={(date, dateString) =>
-                      console.log(date, dateString)
-                    }
-                    format={REPORT_DATE_FORMAT}
-                  ></DatePicker>
+                  <DatePicker format={REPORT_DATE_FORMAT}></DatePicker>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -1649,6 +1653,7 @@ const SupplierCreditsEdit = () => {
                     loading={stockLoading}
                     onChange={(value) => setSelectedWarehouse(value)}
                     optionFilterProp="label"
+                    disabled={!selectedBranchId}
                   >
                     {warehouses?.map((w) => (
                       <Select.Option key={w.id} value={w.id} label={w.name}>

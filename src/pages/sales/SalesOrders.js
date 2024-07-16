@@ -295,7 +295,6 @@ const SalesOrders = () => {
           ...node,
           branchName: node.branch?.name,
           customerName: node.customer?.name,
-          status: node.bills?.currentStatus,
         });
       }
     });
@@ -321,12 +320,26 @@ const SalesOrders = () => {
   const getStatusColor = (status) => {
     let color = "";
 
-    if (status === "Draft") {
+    if (status === "Draft" || status === "Cancelled") {
       color = "gray";
     } else if (status === "Closed") {
-      color = "var(--primary-color)";
+      color = "var(--dark-green)";
     } else {
       color = "var(--blue)";
+    }
+
+    return color;
+  };
+
+  const getInvoiceStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Paid") {
+      color = "var(--dark-green)";
+    } else if (status === "Confirmed") {
+      color = "var(--blue)";
+    } else {
+      color = "gray";
     }
 
     return color;
@@ -581,24 +594,29 @@ const SalesOrders = () => {
   const billTableColumns = [
     {
       title: "Invoice#",
-      dataIndex: "billNumber",
-      key: "billNumber",
+      dataIndex: "invoiceNumber",
+      key: "invoiceNumber",
     },
     {
       title: "Date",
-      dataIndex: "billDate",
-      key: "billDate",
+      dataIndex: "invoiceDate",
+      key: "invoiceDate",
       render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
       title: "Status",
       dataIndex: "currentStatus",
       key: "currentStatus",
+      render: (text, record) => (
+        <span style={{ color: getInvoiceStatusColor(text) }}>
+          {record.currentStatus}
+        </span>
+      ),
     },
     {
       title: "Due Date",
-      dataIndex: "billDueDate",
-      key: "billDueDate",
+      dataIndex: "invoiceDueDate",
+      key: "invoiceDueDate",
       render: (text) => <> {dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
@@ -608,11 +626,11 @@ const SalesOrders = () => {
       align: "right",
       render: (_, record) => (
         <>
-          {selectedRecord?.currency?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
             value={record?.invoiceTotalAmount || 0}
             style="decimal"
-            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            minimumFractionDigits={record?.currency?.decimalPlaces}
           />
         </>
       ),
@@ -624,13 +642,11 @@ const SalesOrders = () => {
       align: "right",
       render: (_, record) => (
         <>
-          {selectedRecord?.currency?.symbol}{" "}
+          {record?.currency?.symbol}{" "}
           <FormattedNumber
-            value={
-              record?.invoiceTotalAmount - record?.invoiceTotalPaidAmount || 0
-            }
+            value={record.remainingBalance}
             style="decimal"
-            minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            minimumFractionDigits={record?.currency?.decimalPlaces}
           />
         </>
       ),
@@ -1119,22 +1135,10 @@ const SalesOrders = () => {
                       }}
                     >
                       <span>Invoice</span>
-                      <span className="bill">1</span>
+                      {selectedRecord?.salesInvoice?.id > 0 ? (
+                        <span className="bill">1</span>
+                      ) : null}
                     </li>
-                    {/* <Divider type="vertical" className="tab-divider" />
-                    <li
-                      className={`nav-link ${
-                        activeTab === "receives" &&
-                        isContentExpanded &&
-                        "active"
-                      }`}
-                      onClick={(event) => {
-                        setActiveTab("receives");
-                        isContentExpanded && event.stopPropagation();
-                      }}
-                    >
-                      <span>Receives</span>
-                    </li> */}
                   </ul>
                   <CaretRightFilled
                     style={{
@@ -1147,20 +1151,25 @@ const SalesOrders = () => {
                 <div
                   className={`content-wrapper ${isContentExpanded && "show"}`}
                 >
-                  {activeTab === "bill" && (
+                  {activeTab === "bill" &&
+                  selectedRecord?.salesInvoice?.id > 0 ? (
                     <div className="bill-tab">
                       <Table
                         className="bill-table"
                         columns={billTableColumns}
-                        dataSource={[selectedRecord.invoice]}
+                        dataSource={[selectedRecord.salesInvoice]}
                         pagination={false}
                       />
+                    </div>
+                  ) : (
+                    <div className="bill-tab">
+                      <span>No invoice yet!</span>
                     </div>
                   )}
                   {activeTab === "receives" && (
                     <div className="receive-tab">
                       <Space>
-                        <span>No items have been received yet!</span>
+                        <span>No items invoice yet!</span>
                         <span>
                           <a>New Sales Receive</a>
                         </span>
@@ -1171,13 +1180,10 @@ const SalesOrders = () => {
               </div>
               <div className="toggle-pdf-view">
                 <div>
-                  <span>Order Status: </span>
+                  <span>SO Status: </span>
                   <span
                     style={{
-                      color:
-                        selectedRecord.currentStatus === "Draft"
-                          ? "gray"
-                          : "var(--primary-color)",
+                      color: getStatusColor(selectedRecord.currentStatus),
                     }}
                   >
                     {selectedRecord.currentStatus}

@@ -492,7 +492,7 @@ const SupplierCreditTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -571,7 +571,9 @@ const SupplierCreditTemplate = ({ selectedRecord }) => {
                             {/* {selectedRecord.currency.symbol}{" "} */}
                             {"(-) "}
                             <FormattedNumber
-                              value={selectedRecord.supplierCreditTotalUsedAmount}
+                              value={
+                                selectedRecord.supplierCreditTotalUsedAmount
+                              }
                               style="decimal"
                               minimumFractionDigits={
                                 selectedRecord.currency.decimalPlaces
@@ -603,7 +605,9 @@ const SupplierCreditTemplate = ({ selectedRecord }) => {
                             {/* {selectedRecord.currency.symbol}{" "} */}
                             {"(-) "}
                             <FormattedNumber
-                              value={selectedRecord.supplierCreditTotalRefundAmount}
+                              value={
+                                selectedRecord.supplierCreditTotalRefundAmount
+                              }
                               style="decimal"
                               minimumFractionDigits={
                                 selectedRecord.currency.decimalPlaces

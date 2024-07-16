@@ -24,6 +24,7 @@
   contain: content;
   overflow: auto;
   padding-bottom: 3rem;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .report-header {

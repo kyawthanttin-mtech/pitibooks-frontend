@@ -552,23 +552,70 @@ const GET_STOCK_SUMMARY_REPORT = gql`
 `;
 
 const GET_AP_AGING_SUMMARY_REPORT = gql`
-query GetAPAgingSummaryReport($currentDate: Time!, $branchId: Int) {
+  query GetAPAgingSummaryReport($currentDate: Time!, $branchId: Int) {
     getAPAgingSummaryReport(currentDate: $currentDate, branchId: $branchId) {
+      supplierId
+      supplierName
+      current
+      int31to45
+      int1to15
+      int16to30
+      int46plus
+      currencySymbol
+      total
+      totalFcy
+      billCount
+    }
+  }
+`;
+
+const GET_AP_AGING_DETAIL_REPORT = gql`
+  query GetAPAgingDetailReport($currentDate: Time!) {
+    getAPAgingDetailReport(currentDate: $currentDate) {
+      interval
+      amount
+      balanceDue
+      details {
+        billId
+        billDate
+        billNumber
+        billStatus
         supplierId
         supplierName
-        current
-        int31to45
-        int1to15
-        int16to30
-        int46plus
+        age
         currencySymbol
-        total
-        totalFcy
-        billCount
+        totalAmount
+        remainingBalance
+        totalAmountFcy
+        remainingBalanceFcy
+      }
     }
-}
+  }
+`;
 
-`
+const GET_AR_AGING_DETAIL_REPORT = gql`
+  query GetARAgingDetailReport($currentDate: Time!) {
+    getARAgingDetailReport(currentDate: $currentDate, warehouseId: 1) {
+      interval
+      amount
+      balanceDue
+      details {
+        invoiceId
+        invoiceDate
+        invoiceNumber
+        invoiceStatus
+        customerId
+        customerName
+        age
+        currencySymbol
+        totalAmount
+        remainingBalance
+        totalAmountFcy
+        remainingBalanceFcy
+      }
+    }
+  }
+`;
 
 const ReportQueries = {
   GET_PAGINATED_JOURNAL_REPORTS,
@@ -589,7 +636,9 @@ const ReportQueries = {
   GET_PRODUCT_SALES_REPORT,
   GET_AR_AGING_SUMMARY_REPORT,
   GET_STOCK_SUMMARY_REPORT,
-  GET_AP_AGING_SUMMARY_REPORT
+  GET_AP_AGING_SUMMARY_REPORT,
+  GET_AP_AGING_DETAIL_REPORT,
+  GET_AR_AGING_DETAIL_REPORT,
 };
 
 export default ReportQueries;

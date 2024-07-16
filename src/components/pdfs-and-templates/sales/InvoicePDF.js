@@ -356,16 +356,18 @@ const InvoicePDF = ({ selectedRecord, business }) => {
         )}
         {selectedRecord.orderTotalTaxAmount > 0 && (
           <CustomText>
-            Tax {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+            Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>Adjustment{"\n"}</CustomText>
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
         {selectedRecord.invoiceTotalPaidAmount > 0 && (
-          <CustomText style={[styles.boldText]}>Payments Made{"\n"}</CustomText>
+          <CustomText style={[styles.boldText]}>
+            Payments Received{"\n"}
+          </CustomText>
         )}
         {selectedRecord.invoiceTotalCreditUsedAmount > 0 && (
           <CustomText style={[styles.boldText, styles.red]}>
@@ -409,7 +411,7 @@ const InvoicePDF = ({ selectedRecord, business }) => {
             {"\n"}
           </CustomText>
         )}
-        {selectedRecord.adjustmentAmount > 0 && (
+        {selectedRecord.adjustmentAmount !== 0 && (
           <CustomText>
             <FormattedNumber
               value={selectedRecord.adjustmentAmount}

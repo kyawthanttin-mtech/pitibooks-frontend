@@ -15,7 +15,6 @@ const BillTemplate = ({ selectedRecord }) => {
       hasDetailDiscount = true;
     }
   });
-  console.log(details);
   return (
     <div className="details-page">
       <div className="details-container">
@@ -31,7 +30,7 @@ const BillTemplate = ({ selectedRecord }) => {
           </div>
         </div> */}
         <div className="template">
-          ,<div className="template-header header-content"></div>
+          <div className="template-header header-content"></div>
           <div className="template-body">
             <table className="title-section" id="title-table">
               <tbody style={{ lineHeight: "1.5rem" }}>
@@ -435,7 +434,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         </span>
                       </td>
                     </tr>
-                    {selectedRecord.orderDiscountAmount > 0 && (
+                    {selectedRecord.billDiscountAmount > 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -444,8 +443,8 @@ const BillTemplate = ({ selectedRecord }) => {
                           }}
                         >
                           Discount{" "}
-                          {selectedRecord.orderDiscountType === "P" &&
-                            "(" + selectedRecord.orderDiscount + "%)"}
+                          {selectedRecord.billDiscountType === "P" &&
+                            "(" + selectedRecord.billDiscount + "%)"}
                         </td>
                         <td
                           style={{
@@ -457,7 +456,7 @@ const BillTemplate = ({ selectedRecord }) => {
                           <span>
                             -
                             <FormattedNumber
-                              value={selectedRecord.orderDiscountAmount}
+                              value={selectedRecord.billDiscountAmount}
                               style="decimal"
                               minimumFractionDigits={
                                 selectedRecord.currency.decimalPlaces
@@ -467,7 +466,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.orderTotalTaxAmount > 0 && (
+                    {selectedRecord.billTotalTaxAmount > 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{
@@ -475,8 +474,7 @@ const BillTemplate = ({ selectedRecord }) => {
                             verticalAlign: "middle",
                           }}
                         >
-                          Tax{" "}
-                          {selectedRecord.isDetailTaxInclusive && "(Inclusive)"}
+                          Tax {selectedRecord.isTaxInclusive && "(Inclusive)"}
                         </td>
                         <td
                           style={{
@@ -487,7 +485,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         >
                           <span>
                             <FormattedNumber
-                              value={selectedRecord.orderTotalTaxAmount}
+                              value={selectedRecord.billTotalTaxAmount}
                               style="decimal"
                               minimumFractionDigits={
                                 selectedRecord.currency.decimalPlaces
@@ -497,7 +495,7 @@ const BillTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
-                    {selectedRecord.adjustmentAmount > 0 && (
+                    {selectedRecord.adjustmentAmount !== 0 && (
                       <tr className="text-align-right">
                         <td
                           style={{

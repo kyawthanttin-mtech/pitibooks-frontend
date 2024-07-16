@@ -401,6 +401,20 @@ const Invoices = () => {
     return color;
   };
 
+  const getSOStatusColor = (status) => {
+    let color = "";
+
+    if (status === "Draft" || status === "Cancelled") {
+      color = "gray";
+    } else if (status === "Closed") {
+      color = "var(--dark-green)";
+    } else {
+      color = "var(--blue)";
+    }
+
+    return color;
+  };
+
   const toggleContent = () => {
     setContentExpanded(!isContentExpanded);
     setCaretRotation(caretRotation === 0 ? 90 : 0);
@@ -592,7 +606,7 @@ const Invoices = () => {
               <span>
                 {record.currency.symbol}{" "}
                 <FormattedNumber
-                  value={record.remainingAmount}
+                  value={record.remainingBalance}
                   style="decimal"
                   minimumFractionDigits={record.currency.decimalPlaces}
                 />
@@ -747,7 +761,7 @@ const Invoices = () => {
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
-      title: "Payment Order #",
+      title: "Sales Order #",
       dataIndex: "orderNumber",
       key: "orderNumber",
     },
@@ -755,6 +769,11 @@ const Invoices = () => {
       title: "Status",
       dataIndex: "currentStatus",
       key: "currentStatus",
+      render: (text, record) => (
+        <span style={{ color: getSOStatusColor(text) }}>
+          {record.currentStatus}
+        </span>
+      ),
     },
   ];
 
@@ -1396,7 +1415,7 @@ const Invoices = () => {
               {(selectedRecord.status === "Paid" ||
                 selectedRecord.status === "Partial Paid") && (
                 <AccordionTabs
-                  key="invoiceAccordion"
+                  key={selectedRecord.id}
                   tabs={[
                     {
                       key: "invoice",
@@ -1412,8 +1431,8 @@ const Invoices = () => {
                       ),
                     },
                     {
-                      key: "salesOrders",
-                      title: "Sales Orders",
+                      key: "salesOrder",
+                      title: "Sales Order",
                       data: selectedRecord?.salesOrder,
                       content: (
                         <Table

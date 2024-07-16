@@ -78,6 +78,7 @@ import {
   CustomerBalanceSummary,
   ARAgingSummary,
   ARAgingDetails,
+  APAgingDetails,
 } from "./pages/reports";
 import {
   Profile,
@@ -490,6 +491,10 @@ const router = createHashRouter([
       {
         path: "reports/arAgingDetails",
         Component: ARAgingDetails,
+      },
+      {
+        path: "reports/apAgingDetails",
+        Component: APAgingDetails,
       },
       //Settings
       {

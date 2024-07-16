@@ -3,22 +3,12 @@ import { gql } from "@apollo/client";
 const GET_PAGINATE_CREDIT_NOTE = gql`
   query GetPaginateCreditNote(
     $limit: Int = 10
-    $after: String # $billNumber: String # $referenceNumber: String # $branchId: Int # $warehouseId: Int # $supplierId: Int # $currentStatus: BillStatus
-  ) # $startBillDate: Time
-  # $endBillDate: Time
-  # $startBillDueDate: Time
-  # $endBillDueDate: Time
-  {
+    $after: String # $billNumber: String # $referenceNumber: String # $branchId: Int # $warehouseId: Int # $supplierId: Int # $currentStatus: BillStatus # $startBillDate: Time # $endBillDate: Time # $startBillDueDate: Time # $endBillDueDate: Time
+  ) {
     paginateCreditNote(
       limit: $limit
-      after: $after # billNumber: $billNumber # referenceNumber: $referenceNumber # branchId: $branchId # warehouseId: $warehouseId
-    ) # supplierId: $supplierId
-    # currentStatus: $currentStatus
-    # startBillDate: $startBillDate
-    # endBillDate: $endBillDate
-    # startBillDueDate: $startBillDueDate
-    # endBillDueDate: $endBillDueDate
-    {
+      after: $after # billNumber: $billNumber # referenceNumber: $referenceNumber # branchId: $branchId # warehouseId: $warehouseId # supplierId: $supplierId # currentStatus: $currentStatus # startBillDate: $startBillDate # endBillDate: $endBillDate # startBillDueDate: $startBillDueDate # endBillDueDate: $endBillDueDate
+    ) {
       edges {
         cursor
         node {
@@ -72,9 +62,40 @@ const GET_PAGINATE_CREDIT_NOTE = gql`
           creditNoteTotalUsedAmount
           creditNoteTotalRefundAmount
           remainingBalance
-          creditedInvoice {
+          refunds {
+            id
+            paymentMode {
+              id
+              name
+            }
+            refundDate
+            amount
+            exchangeRate
+            referenceNumber
+            description
+            account {
+              id
+              name
+              currency {
+                id
+              }
+            }
+            branch {
+              id
+              name
+            }
+
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
+          }
+          creditedInvoices {
             invoiceNumber
             amount
+            creditDate
           }
           details {
             id
