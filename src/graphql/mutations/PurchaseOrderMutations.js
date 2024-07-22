@@ -38,7 +38,7 @@ const CREATE_PURCHASE_ORDER = gql`
       orderDiscountType
       orderDiscountAmount
       adjustmentAmount
-      isDetailTaxInclusive
+      isTaxInclusive
       orderTax {
         id
         name
@@ -85,7 +85,7 @@ const CREATE_PURCHASE_ORDER = gql`
       orderSubtotal
       orderTotalDiscountAmount
       orderTotalTaxAmount
-      orderTotalAmount 
+      orderTotalAmount
     }
   }
 `;
@@ -128,7 +128,7 @@ const UPDATE_PURCHASE_ORDER = gql`
       orderDiscountType
       orderDiscountAmount
       adjustmentAmount
-      isDetailTaxInclusive
+      isTaxInclusive
       orderTax {
         id
         name
@@ -217,7 +217,7 @@ const DELETE_PURCHASE_ORDER = gql`
       orderDiscountType
       orderDiscountAmount
       adjustmentAmount
-      isDetailTaxInclusive
+      isTaxInclusive
       orderTax {
         id
         name
@@ -306,7 +306,7 @@ const CONFIRM_PURCHASE_ORDER = gql`
       orderDiscountType
       orderDiscountAmount
       adjustmentAmount
-      isDetailTaxInclusive
+      isTaxInclusive
       orderTax {
         id
         name
@@ -395,7 +395,7 @@ const CANCEL_PURCHASE_ORDER = gql`
       orderDiscountType
       orderDiscountAmount
       adjustmentAmount
-      isDetailTaxInclusive
+      isTaxInclusive
       orderTax {
         id
         name

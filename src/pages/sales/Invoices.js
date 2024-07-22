@@ -57,8 +57,15 @@ import {
   CustomerMutations,
 } from "../../graphql";
 import InvoiceApplyCreditModal from "./InvoiceApplyCreditModal";
+import WriteOffInvoiceModal from "./WriteOffInvoiceModal";
 const { GET_PAGINATE_INVOICE } = InvoiceQueries;
-const { DELETE_INVOICE, CONFIRM_INVOICE, VOID_INVOICE } = InvoiceMutations;
+const {
+  DELETE_INVOICE,
+  CONFIRM_INVOICE,
+  VOID_INVOICE,
+  WRITE_OFF_INVOICE,
+  CANCEL_WRITE_OFF_INVOICE,
+} = InvoiceMutations;
 const { DELETE_CUSTOMER_CREDIT_INVOICE } = CustomerMutations;
 
 const draftActionItems = [
@@ -86,29 +93,33 @@ const confirmedActionItems = [
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
-  {
-    label: (
-      <FormattedMessage
-        id="button.recordPayment"
-        defaultMessage="Record Payment"
-      />
-    ),
-    key: "2",
-  },
-  {
-    label: (
-      <FormattedMessage
-        id="button.applyCredits"
-        defaultMessage="Apply Credits"
-      />
-    ),
-    key: "3",
-  },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.recordPayment"
+  //       defaultMessage="Record Payment"
+  //     />
+  //   ),
+  //   key: "2",
+  // },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.applyCredits"
+  //       defaultMessage="Apply Credits"
+  //     />
+  //   ),
+  //   key: "3",
+  // },
   {
     label: (
       <FormattedMessage id="button.voidInvoice" defaultMessage="Void Invoice" />
     ),
     key: "4",
+  },
+  {
+    label: <FormattedMessage id="button.writeOff" defaultMessage="Write Off" />,
+    key: "6",
   },
   {
     label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
@@ -127,7 +138,7 @@ const voidActionItems = [
   },
 ];
 
-const partialPaidActionItems = [
+const writeOffActionItems = [
   {
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
@@ -135,20 +146,40 @@ const partialPaidActionItems = [
   {
     label: (
       <FormattedMessage
-        id="button.recordPayment"
-        defaultMessage="Record Payment"
+        id="button.cancelWriteOff"
+        defaultMessage="Cancel Write-Off"
       />
     ),
-    key: "2",
+    key: "7",
   },
+];
+
+const partialPaidActionItems = [
   {
-    label: (
-      <FormattedMessage
-        id="button.applyCredits"
-        defaultMessage="Apply Credits"
-      />
-    ),
-    key: "3",
+    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+    key: "0",
+  },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.recordPayment"
+  //       defaultMessage="Record Payment"
+  //     />
+  //   ),
+  //   key: "2",
+  // },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.applyCredits"
+  //       defaultMessage="Apply Credits"
+  //     />
+  //   ),
+  //   key: "3",
+  // },
+  {
+    label: <FormattedMessage id="button.writeOff" defaultMessage="Write Off" />,
+    key: "6",
   },
 ];
 
@@ -191,6 +222,7 @@ const Invoices = () => {
   const [pdfModalOpen, setPDFModalOpen] = useState(false);
   const [cmtColumnOpen, setCmtColumnOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [writeOffModalOpen, setWriteOffModalOpen] = useState(false);
 
   //Queries
   const { data: branchData } = useReadQuery(allBranchesQueryRef);
@@ -318,6 +350,78 @@ const Invoices = () => {
     },
   });
 
+  const [writeOffInvoice, { loading: writeOffLoading }] = useMutation(
+    WRITE_OFF_INVOICE,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="invoice.writtenOff"
+            defaultMessage="Invoice Written Off"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingInvoices = cache.readQuery({
+          query: GET_PAGINATE_INVOICE,
+        });
+        const updatedInvoices =
+          existingInvoices.paginateSalesInvoice.edges.filter(
+            ({ node }) => node.id !== data.voidSalesInvoice.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVOICE,
+          data: {
+            paginateSalesInvoice: {
+              ...existingInvoices.paginateSalesInvoice,
+              edges: updatedInvoices,
+            },
+          },
+        });
+      },
+    }
+  );
+
+  const [cancelWriteOffInvoice, { loading: cancelWriteOffLoading }] =
+    useMutation(CANCEL_WRITE_OFF_INVOICE, {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="invoice.writeOffCancelled"
+            defaultMessage="Invoice Write-Off Cancelled"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingInvoices = cache.readQuery({
+          query: GET_PAGINATE_INVOICE,
+        });
+        const updatedInvoices =
+          existingInvoices.paginateSalesInvoice.edges.filter(
+            ({ node }) => node.id !== data.voidSalesInvoice.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_INVOICE,
+          data: {
+            paginateSalesInvoice: {
+              ...existingInvoices.paginateSalesInvoice,
+              edges: updatedInvoices,
+            },
+          },
+        });
+      },
+    });
+
   const [deleteAppliedCredit, { loading: deleteAppliedCreditLoading }] =
     useMutation(DELETE_CUSTOMER_CREDIT_INVOICE, {
       onCompleted() {
@@ -335,7 +439,12 @@ const Invoices = () => {
     });
 
   const loading =
-    queryLoading || deleteLoading || confirmLoading || voidLoading;
+    queryLoading ||
+    deleteLoading ||
+    confirmLoading ||
+    voidLoading ||
+    writeOffLoading ||
+    cancelWriteOffLoading;
 
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
@@ -392,6 +501,8 @@ const Invoices = () => {
 
     if (status === "Paid") {
       color = "var(--dark-green)";
+    } else if (status === "Partial Paid") {
+      color = "var(--light-green)";
     } else if (status === "Confirmed") {
       color = "var(--blue)";
     } else {
@@ -466,6 +577,28 @@ const Invoices = () => {
     if (confirmed) {
       try {
         await voidInvoice({
+          variables: {
+            id: id,
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleCancelWriteOffInvoice = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.cancelWriteOff"
+          defaultMessage="Are you sure to cancel write-off?"
+        />
+      ),
+    });
+    if (confirmed) {
+      try {
+        await cancelWriteOffInvoice({
           variables: {
             id: id,
           },
@@ -785,9 +918,16 @@ const Invoices = () => {
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
-      title: "Customer Credit#",
-      dataIndex: "customerCreditNumber",
-      key: "customerCreditNumber",
+      title: "Credit Details",
+      dataIndex: "creditDetails",
+      key: "creditDetails",
+      render: (_, record) => (
+        <>
+          {record.referenceType === "Credit"
+            ? record.customerCreditNumber
+            : "Advance"}
+        </>
+      ),
     },
     {
       title: "Amount",
@@ -1046,6 +1186,12 @@ const Invoices = () => {
           setSelectedRowIndex(null);
         }}
       />
+      <WriteOffInvoiceModal
+        modalOpen={writeOffModalOpen}
+        setModalOpen={setWriteOffModalOpen}
+        invoiceId={selectedRecord?.id}
+        setSelectedRecord={setSelectedRecord}
+      />
       <PDFPreviewModal modalOpen={pdfModalOpen} setModalOpen={setPDFModalOpen}>
         <InvoicePDF selectedRecord={selectedRecord} business={business} />
       </PDFPreviewModal>
@@ -1077,7 +1223,7 @@ const Invoices = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -1276,6 +1422,8 @@ const Invoices = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="sales_invoices"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button
@@ -1306,12 +1454,15 @@ const Invoices = () => {
             <Row className="content-column-action-row">
               <div
                 className={`actions ${
-                  selectedRecord?.invoiceNumber ===
-                    "Customer Opening Balance" && "disable"
+                  (selectedRecord?.invoiceNumber ===
+                    "Customer Opening Balance" ||
+                    selectedRecord?.currentStatus === "Paid") &&
+                  "disable"
                 }`}
                 onClick={() =>
                   selectedRecord?.invoiceNumber !==
                     "Customer Opening Balance" &&
+                  selectedRecord?.currentStatus !== "Paid" &&
                   handleEdit(selectedRecord, navigate, location)
                 }
               >
@@ -1325,7 +1476,24 @@ const Invoices = () => {
                   defaultMessage="PDF/Print"
                 />
               </div>
-
+              {(selectedRecord?.currentStatus === "Partial Paid" ||
+                selectedRecord?.currentStatus === "Confirmed") && (
+                <>
+                  <div onClick={setShowRecordInvoicePaymentForm}>
+                    {/* <SendMoneyOutlined /> */}
+                    <FormattedMessage
+                      id="button.recordPayment"
+                      defaultMessage="Record Payment"
+                    />
+                  </div>
+                  <div onClick={setCreditModalOpen}>
+                    <FormattedMessage
+                      id="button.applyCredit"
+                      defaultMessage="Apply Credits"
+                    />
+                  </div>
+                </>
+              )}
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
@@ -1353,6 +1521,12 @@ const Invoices = () => {
                     } else if (key === "5") {
                       // delete invoice
                       handleDelete(selectedRecord.id);
+                    } else if (key === "6") {
+                      // write off invoice
+                      setWriteOffModalOpen(true);
+                    } else if (key === "7") {
+                      // cancel invoice write-off
+                      handleCancelWriteOffInvoice(selectedRecord.id);
                     }
                   },
                   items:
@@ -1364,6 +1538,8 @@ const Invoices = () => {
                       ? voidActionItems
                       : selectedRecord.currentStatus === "Partial Paid"
                       ? partialPaidActionItems
+                      : selectedRecord.currentStatus === "Write Off"
+                      ? writeOffActionItems
                       : paidActionItems,
                 }}
                 trigger={["click"]}

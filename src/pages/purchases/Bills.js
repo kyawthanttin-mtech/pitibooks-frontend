@@ -59,6 +59,7 @@ import {
 } from "../../graphql";
 import BillApplyCreditModal from "./BillApplyCreditModal";
 import { BillPDF } from "../../components/pdfs-and-templates";
+import { ReactComponent as SendMoneyOutlined } from "../../assets/icons/SendMoneyOutlined.svg";
 
 const { GET_PAGINATE_BILL } = BillQueries;
 const { CONFIRM_BILL, DELETE_BILL, VOID_BILL } = BillMutations;
@@ -87,24 +88,24 @@ const confirmedActionItems = [
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
-  {
-    label: (
-      <FormattedMessage
-        id="button.recordPayment"
-        defaultMessage="Record Payment"
-      />
-    ),
-    key: "2",
-  },
-  {
-    label: (
-      <FormattedMessage
-        id="button.applyCredits"
-        defaultMessage="Apply Credits"
-      />
-    ),
-    key: "3",
-  },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.recordPayment"
+  //       defaultMessage="Record Payment"
+  //     />
+  //   ),
+  //   key: "2",
+  // },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.applyCredits"
+  //       defaultMessage="Apply Credits"
+  //     />
+  //   ),
+  //   key: "3",
+  // },
   {
     label: <FormattedMessage id="button.voidBill" defaultMessage="Void Bill" />,
     key: "4",
@@ -131,24 +132,24 @@ const partialPaidActionItems = [
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
   },
-  {
-    label: (
-      <FormattedMessage
-        id="button.recordPayment"
-        defaultMessage="Record Payment"
-      />
-    ),
-    key: "2",
-  },
-  {
-    label: (
-      <FormattedMessage
-        id="button.applyCredits"
-        defaultMessage="Apply Credits"
-      />
-    ),
-    key: "3",
-  },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.recordPayment"
+  //       defaultMessage="Record Payment"
+  //     />
+  //   ),
+  //   key: "2",
+  // },
+  // {
+  //   label: (
+  //     <FormattedMessage
+  //       id="button.applyCredits"
+  //       defaultMessage="Apply Credits"
+  //     />
+  //   ),
+  //   key: "3",
+  // },
 ];
 
 const paidActionItems = [
@@ -172,9 +173,6 @@ const Bills = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState("bill");
-  const [isContentExpanded, setContentExpanded] = useState(false);
-  const [caretRotation, setCaretRotation] = useState(0);
   const location = useLocation();
   const [searchCriteria, setSearchCriteria] = useHistoryState(
     "billSearchCriteria",
@@ -409,6 +407,8 @@ const Bills = () => {
 
     if (status === "Paid") {
       color = "var(--dark-green)";
+    } else if (status === "Partial Paid") {
+      color = "var(--light-green)";
     } else if (status === "Confirmed") {
       color = "var(--blue)";
     } else {
@@ -873,9 +873,16 @@ const Bills = () => {
       render: (text) => <>{dayjs(text).format(REPORT_DATE_FORMAT)}</>,
     },
     {
-      title: "Supplier Credit#",
-      dataIndex: "supplierCreditNumber",
-      key: "supplierCreditNumber",
+      title: "Credit Details",
+      dataIndex: "creditDetails",
+      key: "creditDetails",
+      render: (_, record) => (
+        <>
+          {record.referenceType === "Credit"
+            ? record.supplierCreditNumber
+            : "Advance"}
+        </>
+      ),
     },
     {
       title: "Amount",
@@ -1162,7 +1169,7 @@ const Bills = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -1353,6 +1360,8 @@ const Bills = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="bills"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button
@@ -1383,11 +1392,13 @@ const Bills = () => {
             <Row className="content-column-action-row">
               <div
                 className={`actions ${
-                  selectedRecord?.billNumber === "Supplier Opening Balance" &&
+                  (selectedRecord?.billNumber === "Supplier Opening Balance" ||
+                    selectedRecord?.currentStatus === "Paid") &&
                   "disable"
                 }`}
                 onClick={() =>
                   selectedRecord?.billNumber !== "Supplier Opening Balance" &&
+                  selectedRecord?.currentStatus !== "Paid" &&
                   handleEdit(selectedRecord, navigate, location)
                 }
               >
@@ -1402,7 +1413,24 @@ const Bills = () => {
                   defaultMessage="PDF/Print"
                 />
               </div>
-
+              {(selectedRecord?.currentStatus === "Partial Paid" ||
+                selectedRecord?.currentStatus === "Confirmed") && (
+                <>
+                  <div onClick={setShowRecordBillPaymentForm}>
+                    {/* <SendMoneyOutlined /> */}
+                    <FormattedMessage
+                      id="button.recordPayment"
+                      defaultMessage="Record Payment"
+                    />
+                  </div>
+                  <div onClick={setCreditModalOpen}>
+                    <FormattedMessage
+                      id="button.applyCredit"
+                      defaultMessage="Apply Credits"
+                    />
+                  </div>
+                </>
+              )}
               <Dropdown
                 menu={{
                   onClick: ({ key }) => {
@@ -1471,7 +1499,8 @@ const Bills = () => {
                       />
                     </b>
                   </span>
-                  <Divider style={{ marginBlock: "1rem" }} />
+                  {selectedRecord?.availableCredits?.map((credit) => credit)}
+           <Divider style={{ marginBlock: "1rem" }} />
                   <Flex justify="space-between" align="center">
                     <Flex vertical gap="0.5rem">
                       <b>Record Payment</b>
@@ -1491,7 +1520,7 @@ const Bills = () => {
                         Apply Credits
                       </Button>
                     </Space>
-                  </Flex>
+                  </Flex> 
                 </div>
               )}
               <br /> */}

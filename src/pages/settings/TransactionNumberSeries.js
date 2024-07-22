@@ -58,43 +58,53 @@ const modalTableColumns = [
 const modalTableDataSource = [
   {
     id: 0,
-    key: "Credit Note",
-    moduleName: "Credit Note",
-  },
-  {
-    id: 1,
-    key: "Customer Payment",
-    moduleName: "Customer Payment",
-  },
-  {
-    id: 2,
-    key: "Vendor Payment",
-    moduleName: "Vendor Payment",
-  },
-  {
-    id: 3,
-    key: "Purchase Order",
-    moduleName: "Purchase Order",
-  },
-  {
-    id: 4,
     key: "Sales Order",
     moduleName: "Sales Order",
   },
   {
-    id: 5,
-    key: "Retainer Invoice",
-    moduleName: "Retainer Invoice",
-  },
-  {
-    id: 6,
+    id: 1,
     key: "Invoice",
     moduleName: "Invoice",
   },
   {
+    id: 2,
+    key: "Customer Payment",
+    moduleName: "Customer Payment",
+  },
+  {
+    id: 3,
+    key: "Credit Note",
+    moduleName: "Credit Note",
+  },
+  {
+    id: 4,
+    key: "Expense",
+    moduleName: "Expense",
+  },
+  {
+    id: 5,
+    key: "Purchase Order",
+    moduleName: "Purchase Order",
+  },
+  {
+    id: 6,
+    key: "Bill",
+    moduleName: "Bill",
+  },
+  {
     id: 7,
-    key: "Sales Receipt",
-    moduleName: "Sales Receipt",
+    key: "Supplier Payment",
+    moduleName: "Supplier Payment",
+  },
+  {
+    id: 8,
+    key: "Supplier Credit",
+    moduleName: "Supplier Credit",
+  },
+  {
+    id: 9,
+    key: "Manual Journal",
+    moduleName: "Manual Journal",
   },
 ];
 

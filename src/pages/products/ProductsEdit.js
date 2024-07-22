@@ -41,7 +41,6 @@ const ProductsEdit = () => {
       ? true
       : false
   );
-  console.log(isInventoryTracked);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(
     record.supplier?.id ? record.supplier : ""

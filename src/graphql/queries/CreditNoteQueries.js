@@ -104,6 +104,12 @@ const GET_PAGINATE_CREDIT_NOTE = gql`
             productType
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

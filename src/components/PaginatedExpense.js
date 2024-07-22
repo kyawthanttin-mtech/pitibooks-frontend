@@ -498,6 +498,8 @@ const PaginatedExpense = ({
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="expenses"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button

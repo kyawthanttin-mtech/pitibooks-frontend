@@ -113,10 +113,14 @@ const SalesOrdersNew = () => {
           taxRate: detail.detailTax.rate,
           discount: detail.detailDiscount,
           discountType: detail.detailDiscountType,
-          id: detail.productType + detail.productId,
+          id:
+            detail.productId && detail.productId > 0
+              ? detail.productType + detail.productId
+              : null,
           detailDiscountType: detail.detailDiscountType,
           quantity: detail.detailQty,
           rate: detail.detailUnitRate,
+          inventoryAccountId: detail.product?.inventoryAccount?.id
         }))
       : [
           {
@@ -373,6 +377,7 @@ const SalesOrdersNew = () => {
           adjustment: record?.adjustmentAmount || null,
           // Map transactions to form fields
           ...record?.details?.reduce((acc, d, index) => {
+            acc[`product${index + 1}`] = d.name;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
             acc[`detailDiscount${index + 1}`] = d.detailDiscount;
@@ -400,7 +405,7 @@ const SalesOrdersNew = () => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
-      if (!item.name || item.amount === 0) {
+      if (!(item.name || values[`product${item.key}`]) || item.amount === 0) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -416,10 +421,9 @@ const SalesOrdersNew = () => {
         : 0;
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
-        productId: detailProductId,
-        productType: detailProductType,
-        // batchNumber
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name: item.id ? item.name : values[`product${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
         detailTaxId,
@@ -430,7 +434,13 @@ const SalesOrdersNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      openErrorNotification(notiApi, "Invalid Product Details");
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
@@ -673,6 +683,7 @@ const SalesOrdersNew = () => {
         newData.stockOnHand = selectedItem.stockOnHand;
         newData.currentQty = selectedItem.currentQty;
         newData.unit = selectedItem.unit;
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -927,7 +938,7 @@ const SalesOrdersNew = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -955,7 +966,8 @@ const SalesOrdersNew = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+                {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -977,15 +989,15 @@ const SalesOrdersNew = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"
-                    defaultMessage="Select the Product"
+                    defaultMessage="Select/Enter the Product"
                   />
                 ),
               },

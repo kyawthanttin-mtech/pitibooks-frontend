@@ -113,10 +113,14 @@ const PurchaseOrdersNew = () => {
       taxRate: detail.detailTax.rate,
       discount: detail.detailDiscount,
       discountType: detail.detailDiscountType,
-      id: detail.productType + detail.productId,
+      id:
+        detail.productId && detail.productId > 0
+          ? detail.productType + detail.productId
+          : null,
       detailDiscountType: detail.detailDiscountType,
       quantity: detail.detailQty,
       rate: detail.detailUnitRate,
+      inventoryAccountId: detail.product?.inventoryAccount?.id,
     }))
   );
 
@@ -150,7 +154,7 @@ const PurchaseOrdersNew = () => {
       : { key: "1", label: "At Line Item Level" }
   );
   const [taxPreference, setTaxPreference] = useState(
-    record?.isDetailTaxInclusive
+    record?.isTaxInclusive
       ? { key: "1", label: "Tax Inclusive" }
       : {
           key: "0",
@@ -391,6 +395,7 @@ const PurchaseOrdersNew = () => {
           adjustment: record?.adjustmentAmount || null,
           // Map transactions to form fields
           ...record?.details?.reduce((acc, d, index) => {
+            acc[`product${index + 1}`] = d.name;
             acc[`account${index + 1}`] = d.detailAccount.id || null;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
@@ -429,10 +434,12 @@ const PurchaseOrdersNew = () => {
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
         detailId: item.detailId || 0,
-        productId: detailProductId,
-        productType: detailProductType,
-        // batchNumber
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name:
+          item.id || item.isDeletedItem
+            ? item.name
+            : values[`product${item.key}`],
         detailAccountId: values[`account${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
@@ -479,7 +486,7 @@ const PurchaseOrdersNew = () => {
       orderDiscount: isAtTransactionLevel ? discount : 0,
       orderDiscountType: selectedDiscountType,
       adjustmentAmount: adjustment,
-      isDetailTaxInclusive: isTaxInclusive,
+      isTaxInclusive: isTaxInclusive,
       orderTaxId: 0,
       orderTaxType: "I",
       currentStatus: saveStatus,
@@ -524,7 +531,7 @@ const PurchaseOrdersNew = () => {
                       orderDiscountType
                       orderDiscountAmount
                       adjustmentAmount
-                      isDetailTaxInclusive
+                      isTaxInclusive
                       orderTax
                       orderTaxAmount
                       currentStatus
@@ -636,6 +643,7 @@ const PurchaseOrdersNew = () => {
           if (item.detailId) {
             return {
               ...item,
+              name: "deleted product",
               isDeletedItem: true,
               amount: 0,
               discount: 0,
@@ -830,7 +838,6 @@ const PurchaseOrdersNew = () => {
           );
           return;
         }
-
         newData.id = selectedItem.id;
         newData.name = selectedItem.name;
         newData.sku = selectedItem.sku;
@@ -839,6 +846,7 @@ const PurchaseOrdersNew = () => {
         newData.taxRate = selectedItem.purchaseTax?.rate;
         newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.inventoryAccount?.id;
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
         newData.unit = selectedItem.unit;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
@@ -1109,7 +1117,7 @@ const PurchaseOrdersNew = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -1119,7 +1127,7 @@ const PurchaseOrdersNew = () => {
               }}
             >
               <Flex justify="space-between">
-                {text}{" "}
+                {text} {record.inventory}
                 {!record.detailId && (
                   <CloseCircleOutlined
                     onClick={() =>
@@ -1139,7 +1147,8 @@ const PurchaseOrdersNew = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+                {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -1161,11 +1170,11 @@ const PurchaseOrdersNew = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"

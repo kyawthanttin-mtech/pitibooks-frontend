@@ -166,6 +166,14 @@ const PaginatedSelectionTable = ({
     currentPage
   );
 
+  // React.useEffect(() => {
+  //   if (currentPage < 1) {
+  //     setCurrentPage(1);
+  //   } else if (currentPage > totalPages) {
+  //     setCurrentPage(totalPages);
+  //   }
+  // }, [currentPage, totalPages, setCurrentPage]);
+
   const loading = queryLoading || searchLoading;
 
   return (

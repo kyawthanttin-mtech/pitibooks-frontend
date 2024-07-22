@@ -136,7 +136,7 @@ const CustomerAdvanceRefundEdit = ({
         paymentModeId: values.paymentModeId,
         exchangeRate: values.exchangeRate,
         amount: values[`refundAmount`],
-        currencyId: selectedAcc?.currency.id,
+        currencyId: selectedAdvance?.currency?.id,
         customerName: undefined,
         customerId: selectedCustomer?.id,
         referenceType: "CA",

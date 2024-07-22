@@ -48,9 +48,10 @@ const ProductSalesReport = () => {
         acc.soldQty += curr.soldQty || 0;
         acc.totalAmount += curr.totalAmount || 0;
         acc.totalAmountWithTax += curr.totalAmountWithTax || 0;
+        acc.totalCogs += curr.totalCogs || 0;
         return acc;
       },
-      { soldQty: 0, totalAmount: 0, totalAmountWithTax: 0 }
+      { soldQty: 0, totalAmount: 0, totalAmountWithTax: 0, totalCogs: 0 }
     );
   }, [queryData]);
 
@@ -115,6 +116,12 @@ const ProductSalesReport = () => {
                         defaultMessage="Sales With Tax"
                       />
                     </th>
+                    <th className="text-align-right" style={{ width: "150px" }}>
+                      <FormattedMessage
+                        id="label.cost"
+                        defaultMessage="Cost"
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -141,6 +148,17 @@ const ProductSalesReport = () => {
                             <a href="/">
                               <FormattedNumber
                                 value={data.totalAmountWithTax || 0}
+                                style="decimal"
+                                minimumFractionDigits={
+                                  business.baseCurrency.decimalPlaces
+                                }
+                              />
+                            </a>
+                          </td>
+                          <td className="text-align-right">
+                            <a href="/">
+                              <FormattedNumber
+                                value={data.totalCogs || 0}
                                 style="decimal"
                                 minimumFractionDigits={
                                   business.baseCurrency.decimalPlaces
@@ -200,6 +218,17 @@ const ProductSalesReport = () => {
                       <b>
                         <FormattedNumber
                           value={totals?.totalAmountWithTax || 0}
+                          style="decimal"
+                          minimumFractionDigits={
+                            business.baseCurrency.decimalPlaces
+                          }
+                        />
+                      </b>
+                    </td>
+                    <td className="text-align-right">
+                      <b>
+                        <FormattedNumber
+                          value={totals?.totalCogs || 0}
                           style="decimal"
                           minimumFractionDigits={
                             business.baseCurrency.decimalPlaces

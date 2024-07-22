@@ -480,7 +480,10 @@ const GET_INVENTORY_SUMMARY_REPORT = gql`
         precision
         id
       }
+      transferQty
+      adjustedQty
       productSku
+      openingQty
       orderQty
       receivedQty
       saleQty
@@ -507,6 +510,7 @@ const GET_PRODUCT_SALES_REPORT = gql`
       soldQty
       totalAmount
       totalAmountWithTax
+      totalCogs
       margin
     }
   }

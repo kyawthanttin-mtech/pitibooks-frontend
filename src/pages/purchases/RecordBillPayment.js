@@ -17,7 +17,7 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
   const intl = useIntl();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState(null);
-  const { notiApi, msgApi, allPaymentModesQueryRef, allAccountsQueryRef } =
+  const { notiApi, msgApi, business, allPaymentModesQueryRef, allAccountsQueryRef } =
     useOutletContext();
   const [accountCurrencyId, setAccountCurrencyId] = useState(null);
 
@@ -329,8 +329,9 @@ const RecordBillPayment = ({ refetch, branches, selectedRecord, onClose }) => {
             >
               <Input></Input>
             </Form.Item>
-            {accountCurrencyId &&
-              selectedRecord.currency.id !== accountCurrencyId && (
+            {((accountCurrencyId &&
+              selectedRecord.currency.id !== accountCurrencyId) || 
+              (selectedRecord.currency.id !== business.baseCurrency.id)) && (
                 <Form.Item
                   label={
                     <FormattedMessage

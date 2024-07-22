@@ -88,6 +88,12 @@ const GET_PAGINATE_SALES_ORDER = gql`
             batchNumber
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

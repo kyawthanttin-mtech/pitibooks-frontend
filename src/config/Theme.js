@@ -9,7 +9,7 @@
 
 const Theme = {
   colorPrimary: "#024d6c",
-  bgColor: "#fff",
+  bgColor: "#f5f6f9",
   colorInfo: "#024d6c",
   bgColorPrimary: "#F5F6F9",
   borderColor: "#d7d5e2",

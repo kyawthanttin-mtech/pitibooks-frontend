@@ -370,14 +370,15 @@ const InvoicePDF = ({ selectedRecord, business }) => {
           </CustomText>
         )}
         {selectedRecord.invoiceTotalCreditUsedAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
+          <CustomText style={[styles.boldText]}>
             Credits Applied{"\n"}
           </CustomText>
         )}
         {selectedRecord.invoiceTotalAdvanceUsedAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
-            Advance Used{"\n"}
-          </CustomText>
+          <CustomText style={[styles.boldText]}>Advance Used{"\n"}</CustomText>
+        )}
+         {selectedRecord.invoiceTotalWriteOffAmount > 0 && (
+          <CustomText style={[styles.boldText]}>Write Off Amount{"\n"}</CustomText>
         )}
         <CustomText style={[styles.boldText]}>Remaining{"\n"}</CustomText>
       </CustomText>
@@ -457,6 +458,17 @@ const InvoicePDF = ({ selectedRecord, business }) => {
             {"(-) "}
             <FormattedNumber
               value={selectedRecord?.invoiceTotalAdvanceUsedAmount}
+              style="decimal"
+              minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
+            />
+            {"\n"}
+          </CustomText>
+        )}
+         {selectedRecord.invoiceTotalWriteOffAmount > 0 && (
+          <CustomText style={[styles.boldText, styles.red]}>
+            {"(-) "}
+            <FormattedNumber
+              value={selectedRecord?.invoiceTotalWriteOffAmount}
               style="decimal"
               minimumFractionDigits={selectedRecord?.currency?.decimalPlaces}
             />

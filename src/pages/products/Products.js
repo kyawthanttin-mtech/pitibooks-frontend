@@ -430,7 +430,7 @@ const Products = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
 

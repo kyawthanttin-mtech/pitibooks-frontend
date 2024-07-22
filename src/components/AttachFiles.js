@@ -1,10 +1,6 @@
 import React, { useState } from "react";
 import {
   PaperClipOutlined,
-  CloseOutlined,
-  DeleteOutlined,
-  MoreOutlined,
-  ExportOutlined,
   UploadOutlined,
   LeftOutlined,
   RightOutlined,
@@ -15,15 +11,29 @@ import {
   FileWordOutlined,
   FileUnknownOutlined,
   ZoomOutOutlined,
+  DeleteOutlined,
   ZoomInOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { Button, Divider, Flex, Modal, Popover, Space, Upload } from "antd";
 import "./AttachFiles.css";
 import { FormattedMessage } from "react-intl";
 // import { Document, Page } from "@react-pdf/renderer";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { openErrorNotification } from "../utils/Notification";
+import { useOutletContext } from "react-router-dom";
+import { useMutation } from "@apollo/client";
+import { FileMutations } from "../graphql";
+const { CREATE_ATTACHMENT, DELETE_ATTACHMENT } = FileMutations;
 
-const AttachFiles = ({ files, iconButton = false }) => {
+const AttachFiles = ({
+  files,
+  iconButton = false,
+  referenceType,
+  referenceId,
+  GET_PAGINATE_BILL,
+}) => {
+  const { notiApi, msgApi } = useOutletContext();
   const [open, setOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   // const [openOptionsIndices, setOpenOptionsIndices] = useState([]);
@@ -31,6 +41,21 @@ const AttachFiles = ({ files, iconButton = false }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [deleteModal, contextHolder] = Modal.useModal();
+
+  const [createFile, { loading: createLoading }] = useMutation(
+    CREATE_ATTACHMENT,
+    {
+      onCompleted() {},
+    }
+  );
+
+  const [deleteFile, { loading: deleteLoading }] = useMutation(
+    DELETE_ATTACHMENT,
+    {
+      onCompleted() {},
+    }
+  );
 
   const extractFilename = (url) => {
     return url?.substring(url?.lastIndexOf("/") + 1);
@@ -54,6 +79,8 @@ const AttachFiles = ({ files, iconButton = false }) => {
   const handleOpenChange = (newOpen) => {
     setOpen(newOpen);
   };
+
+  console.log(customFileList);
 
   // const toggleOptions = (index) => {
   //   if (openOptionsIndices.includes(index)) {
@@ -101,7 +128,8 @@ const AttachFiles = ({ files, iconButton = false }) => {
   };
 
   const getFileIcon = (fileExtension) => {
-    switch (fileExtension.toLowerCase()) {
+    console.log("exx", fileExtension);
+    switch (fileExtension?.toLowerCase()) {
       case "pdf":
         return <FilePdfOutlined />;
       case "xlsx":
@@ -126,7 +154,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
   const getFileType = (fileUrl) => {
     const extension = getFileExtension(fileUrl)?.toLowerCase();
     const imageExtensions = ["png", "jpg", "jpeg", "gif", "bmp", "tiff"];
-    const documentExtensions = ["pdf", "doc", "docx", "xls", "xlsx", "txt"];
+    const documentExtensions = ["doc", "docx", "xls", "xlsx", "txt"];
 
     if (imageExtensions.includes(extension)) {
       return "image";
@@ -166,6 +194,85 @@ const AttachFiles = ({ files, iconButton = false }) => {
     }
   };
 
+  const beforeUpload = (file) => {
+    const allowedTypes = [
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      // "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/pdf",
+    ];
+
+    // if (!allowedTypes.includes(file.type)) {
+    //   openErrorNotification(
+    //     notiApi,
+    //     "You can only upload MS Word, Excel, or PDF files!"
+    //   );
+    //   return false;
+    // }
+
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      openErrorNotification(notiApi, "File size must be smaller than 5MB!");
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpload = async (options) => {
+    const { file, onSuccess, onError } = options;
+    try {
+      const { data } = await createFile({
+        variables: { file, referenceType, referenceId },
+      });
+      console.log("file", file);
+      const newFile = {
+        uid: file.uid,
+        name: file.name,
+        status: "done",
+        id: data?.createAttachment?.id,
+        documentUrl: data?.createAttachment?.documentUrl,
+      };
+
+      const updatedFileList = [...customFileList, newFile];
+      setCustomFileList(updatedFileList);
+
+      msgApi.success(`Attachment Uploaded`);
+      onSuccess(null, file);
+    } catch (error) {
+      openErrorNotification(notiApi, `File upload failed: ${error.message}`);
+      onError(error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    console.log("id", id);
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.delete"
+          defaultMessage="Are you sure to delete?"
+        />
+      ),
+    });
+
+    if (confirmed) {
+      try {
+        await deleteFile({ variables: { documentId: id } });
+
+        const updatedFileList = customFileList.filter((item) => item.id !== id);
+        setCustomFileList(updatedFileList);
+
+        msgApi.success(`Attachment Removed`);
+      } catch (error) {
+        openErrorNotification(
+          notiApi,
+          `Failed to remove attachment: ${error.message}`
+        );
+      }
+    }
+  };
+
   const title = (
     <>
       <Flex
@@ -182,6 +289,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
 
   const content = (
     <>
+      {contextHolder}
       <div className="attachment-container">
         {!customFileList?.length > 0 ? (
           <Flex
@@ -214,18 +322,6 @@ const AttachFiles = ({ files, iconButton = false }) => {
                     <span className="attachment-name">{file.name}</span>
                     {/* <span className="attachment-size">File Size</span> */}
                   </Flex>
-                  {/* {hoveredIndex === index && (
-                  <Space>
-                    <span>
-                      <DeleteOutlined
-                        style={{ color: "red", width: 14, height: 14 }}
-                      />
-                    </span>
-                    <span onClick={() => toggleOptions(index)}>
-                      <MoreOutlined style={{ width: 14, height: 14 }} />
-                    </span>
-                  </Space>
-                )} */}
                 </Flex>
                 {/* {openOptionsIndices.includes(index) && hoveredIndex === index && ( */}
                 <div className="attachment-options">
@@ -270,34 +366,61 @@ const AttachFiles = ({ files, iconButton = false }) => {
                 </div>
                 {/* )} */}
               </div>
+              {hoveredIndex === index &&
+                (deleteLoading ? (
+                  <LoadingOutlined />
+                ) : (
+                  <span
+                    className="delete-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file?.id);
+                    }}
+                  >
+                    <DeleteOutlined />
+                  </span>
+                ))}
             </Flex>
           ))
         )}
       </div>
-      {/* <Divider style={{ margin: 0 }} />
-        <div style={{ padding: "12px" }}>
-          <Upload.Dragger>
-            <Button
-              type="button"
-              // loading={uploadLoading}
-              icon={<UploadOutlined style={{ color: "var(--primary-color)" }} />}
-            >
-              <span>Upload Files</span>
-            </Button>
-          </Upload.Dragger>
-          <p
-            style={{
-              fontSize: "0.625rem",
-              textAlign: "center",
-              margin: "10px 0 0 0",
-            }}
-          >
-            <FormattedMessage
-              id="label.uploadLimit"
-              defaultMessage="You can upload a maximum of 5 files, 5MB each"
-            />
-          </p>
-        </div> */}
+      <Divider style={{ margin: 0 }} />
+      <div style={{ padding: "12px" }}>
+        <Upload.Dragger
+          customRequest={handleUpload}
+          beforeUpload={beforeUpload}
+          showUploadList={false}
+          disabled={customFileList.length >= 5 ? true : false}
+        >
+          <Space>
+            <span>
+              {createLoading ? (
+                <LoadingOutlined />
+              ) : (
+                <UploadOutlined
+                  style={{
+                    color:
+                      customFileList.length >= 5 ? "" : "var(--primary-color)",
+                  }}
+                />
+              )}
+            </span>
+            <span>Upload File</span>
+          </Space>
+        </Upload.Dragger>
+        <p
+          style={{
+            fontSize: "0.625rem",
+            textAlign: "center",
+            margin: "10px 0 0 0",
+          }}
+        >
+          <FormattedMessage
+            id="label.uploadLimit"
+            defaultMessage="You can upload a maximum of 5 files, 5MB each"
+          />
+        </p>
+      </div>
     </>
   );
 
@@ -367,11 +490,31 @@ const AttachFiles = ({ files, iconButton = false }) => {
                   </TransformComponent>
                 </TransformWrapper>
               </div>
-            ) : (
+            ) : getFileExtension(selectedFile?.documentUrl)?.toLowerCase() ===
+              "pdf" ? (
               <iframe
                 src={selectedFile?.documentUrl}
                 title={selectedFile?.name}
               />
+            ) : (
+              <Flex vertical>
+                <span
+                  style={{ fontSize: "3rem", color: "var(--primary-color)" }}
+                >
+                  {getFileIcon(getFileExtension(selectedFile?.documentUrl))}
+                </span>
+                <a
+                  href={selectedFile?.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FormattedMessage
+                    id="button.download"
+                    defaultMessage="Download"
+                  />
+                </a>
+              </Flex>
             )}
           </div>
           {selectedPreviewIndex < customFileList.length - 1 && (
@@ -399,7 +542,7 @@ const AttachFiles = ({ files, iconButton = false }) => {
                   <PaperClipOutlined
                     style={{ color: "var(--primary-color)", fontSize: "16px" }}
                   />
-                  {files?.length > 0 && files?.length}
+                  {customFileList?.length > 0 && customFileList?.length}
                 </span>
               }
             ></Button>
@@ -411,8 +554,10 @@ const AttachFiles = ({ files, iconButton = false }) => {
               }
             >
               <span>
-                {files
-                  ? `${files.length} File${files.length > 1 ? "s" : ""}`
+                {customFileList.length > 0
+                  ? `${customFileList.length} File${
+                      customFileList.length > 1 ? "s" : ""
+                    }`
                   : "Attach Files"}
               </span>
             </Button>

@@ -54,6 +54,7 @@ const AddPurchaseProductsModal = ({
           destUnit: addedItem.destUnit && addedItem.destUnit,
           account: null,
           purchasePrice: addedItem.purchasePrice,
+          inventoryAccountId: addedItem.inventoryAccount?.id
         };
 
         if (account === "purchase") {

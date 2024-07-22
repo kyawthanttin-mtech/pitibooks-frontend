@@ -22,15 +22,33 @@ const GET_BANKING_ACCOUNTS = gql`
           exchangeRate
           taxAmount
           bankCharges
+          currency {
+            id
+            name
+            symbol
+            decimalPlaces
+          }
           fromAccount {
             id
             name
             code
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
           }
           toAccount {
             id
             name
             code
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
           }
           paymentMode {
             id

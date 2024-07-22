@@ -336,6 +336,8 @@ const SalesOrders = () => {
 
     if (status === "Paid") {
       color = "var(--dark-green)";
+    } else if (status === "Partial Paid") {
+      color = "var(--light-green)";
     } else if (status === "Confirmed") {
       color = "var(--blue)";
     } else {
@@ -909,7 +911,7 @@ const SalesOrders = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -1032,6 +1034,8 @@ const SalesOrders = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="sales_orders"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button
@@ -1061,8 +1065,13 @@ const SalesOrders = () => {
             </Row>
             <Row className="content-column-action-row">
               <div
-                className="actions"
-                onClick={() => handleEdit(selectedRecord, navigate, location)}
+                className={`actions ${
+                  selectedRecord?.currentStatus === "Closed" && "disable"
+                }`}
+                onClick={() =>
+                  selectedRecord?.currentStatus !== "Closed" &&
+                  handleEdit(selectedRecord, navigate, location)
+                }
               >
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />

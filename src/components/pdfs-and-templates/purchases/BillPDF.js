@@ -421,14 +421,12 @@ const BillPDF = ({ selectedRecord, business }) => {
           <CustomText style={[styles.boldText]}>Payments Made{"\n"}</CustomText>
         )}
         {selectedRecord.billTotalCreditUsedAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
+          <CustomText style={[styles.boldText]}>
             Credits Applied{"\n"}
           </CustomText>
         )}
         {selectedRecord.billTotalAdvanceUsedAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
-            Advance Used{"\n"}
-          </CustomText>
+          <CustomText style={[styles.boldText]}>Advance Used{"\n"}</CustomText>
         )}
         <CustomText style={[styles.boldText]}>Remaining{"\n"}</CustomText>
       </CustomText>

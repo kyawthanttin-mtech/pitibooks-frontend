@@ -55,13 +55,13 @@ const InventoryAdjustmentsEdit = () => {
   } = useOutletContext();
   const [data, setData] = useState(() => {
     if (record && record.details) {
-      return record.details.map((detail, index) => {
+      return record.details?.map((detail, index) => {
         return {
           key: index + 1,
           detailId: detail.id,
           name: detail.name,
           id: detail.productType + detail.productId,
-          quantity: detail.stocks[0]?.qty,
+          quantity: detail.stocks?.[0]?.qty,
         };
       });
     } else {
@@ -212,7 +212,8 @@ const InventoryAdjustmentsEdit = () => {
           description: record.description,
 
           ...record?.details?.reduce((acc, d, index) => {
-            acc[`quantityNew${index + 1}`] = d.stocks[0]?.qty + d.adjustedValue;
+            acc[`quantityNew${index + 1}`] =
+              d.stocks?.[0]?.qty + d.adjustedValue;
             acc[`quantityAdjusted${index + 1}`] = d.adjustedValue;
             // acc[`changedValue${index + 1}`] =
             return acc;
@@ -1308,8 +1309,8 @@ const InventoryAdjustmentsEdit = () => {
                   }
                   name="description"
                   labelAlign="left"
-                  labelCol={{ span: 4 }}
-                  wrapperCol={{ span: 6 }}
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 12 }}
                 >
                   <Input.TextArea rows="4" />
                 </Form.Item>

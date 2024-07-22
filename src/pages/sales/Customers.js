@@ -444,7 +444,7 @@ const Customers = () => {
                 </span>
               )}
             </Button>
-            <Button icon={<MoreOutlined />}></Button>
+            {/* <Button icon={<MoreOutlined />}></Button> */}
           </Space>
         </div>
         <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -636,7 +636,7 @@ const Customers = () => {
                       key: "amount",
                       render: (_, record) => (
                         <>
-                          {selectedRecord.currency?.symbol}{" "}
+                          {record?.currency?.symbol}{" "}
                           <FormattedNumber
                             value={
                               record?.type === "Credit"
@@ -645,7 +645,7 @@ const Customers = () => {
                             }
                             style="decimal"
                             minimumFractionDigits={
-                              selectedRecord.currency?.decimalPlaces
+                              record?.currency?.decimalPlaces
                             }
                           />
                           {record?.type === "Credit" && (
@@ -655,12 +655,12 @@ const Customers = () => {
                                 opacity: "60%",
                               }}
                             >
-                              Used Amount: {selectedRecord.currency?.symbol}{" "}
+                              Used Amount: {record?.currency?.symbol}{" "}
                               <FormattedNumber
                                 value={record?.creditNoteTotalUsedAmount}
                                 style="decimal"
                                 minimumFractionDigits={
-                                  selectedRecord.currency?.decimalPlaces
+                                  record?.currency?.decimalPlaces
                                 }
                               />
                             </div>
@@ -674,7 +674,7 @@ const Customers = () => {
                       key: "refundAmount",
                       render: (_, record) => (
                         <>
-                          {selectedRecord.currency?.symbol}{" "}
+                          {record?.currency?.symbol}{" "}
                           <FormattedNumber
                             value={
                               record.type === "Credit"
@@ -683,7 +683,7 @@ const Customers = () => {
                             }
                             style="decimal"
                             minimumFractionDigits={
-                              selectedRecord.currency?.decimalPlaces
+                              record?.currency?.decimalPlaces
                             }
                           />
                         </>
@@ -695,12 +695,12 @@ const Customers = () => {
                       key: "remainingBalance",
                       render: (_, record) => (
                         <>
-                          {selectedRecord.currency?.symbol}{" "}
+                          {record?.currency?.symbol}{" "}
                           <FormattedNumber
                             value={record.remainingBalance}
                             style="decimal"
                             minimumFractionDigits={
-                              selectedRecord.currency?.decimalPlaces
+                              record?.currency?.decimalPlaces
                             }
                           />
                         </>

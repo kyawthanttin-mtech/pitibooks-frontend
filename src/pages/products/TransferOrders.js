@@ -644,7 +644,7 @@ const TransferOrders = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -707,6 +707,8 @@ const TransferOrders = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="transfer_orders"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button

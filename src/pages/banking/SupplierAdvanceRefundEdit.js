@@ -121,7 +121,7 @@ const SupplierAdvanceRefundNew = ({
         paymentModeId: values.paymentModeId,
         exchangeRate: values.exchangeRate,
         amount: values[`refundAmount`],
-        currencyId: selectedAcc?.currency.id,
+        currencyId: selectedAdvance?.currency?.id,
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         referenceType: "SA",

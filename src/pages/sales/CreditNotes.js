@@ -586,9 +586,9 @@ const CreditNotes = () => {
       key: "actions",
       render: (_, record) => (
         <Space size="middle">
-          <span className="edit-icon" onClick={setShowRefundFormEdit}>
+          {/* <span className="edit-icon" onClick={setShowRefundFormEdit}>
             <EditOutlined />
-          </span>
+          </span> */}
           <span
             className="delete-icon"
             onClick={() => handleDeleteRefund(record.id)}
@@ -808,7 +808,7 @@ const CreditNotes = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -922,6 +922,8 @@ const CreditNotes = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="credit_notes"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button
@@ -951,8 +953,13 @@ const CreditNotes = () => {
             </Row>
             <Row className="content-column-action-row">
               <div
-                className="actions"
-                onClick={() => handleEdit(selectedRecord, navigate, location)}
+                className={`actions ${
+                  selectedRecord?.currentStatus === "Closed" && "disable"
+                }`}
+                onClick={() =>
+                  selectedRecord?.currentStatus !== "Closed" &&
+                  handleEdit(selectedRecord, navigate, location)
+                }
               >
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />

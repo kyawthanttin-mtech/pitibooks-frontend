@@ -185,12 +185,16 @@ const BillApplyCreditModal = ({
           return true;
         } else {
           return (
-            item.currency.id === business.baseCurrency.id ||
-            item.currency.id === selectedRecord.currency.id
+            item.currentStatus === "Confirmed" &&
+            (item.currency.id === business.baseCurrency.id ||
+              item.currency.id === selectedRecord.currency.id)
           );
         }
       } else if (item.type === "Credit") {
-        return item.currency.id === selectedRecord.currency.id;
+        return (
+          item.currentStatus === "Confirmed" &&
+          item.currency.id === selectedRecord.currency.id
+        );
       }
       return true;
     });

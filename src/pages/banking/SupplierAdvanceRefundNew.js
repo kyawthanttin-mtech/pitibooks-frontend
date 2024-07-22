@@ -95,12 +95,12 @@ const SupplierAdvanceRefundNew = ({
         paymentModeId: values.paymentModeId,
         exchangeRate: values.exchangeRate,
         amount: values[`refundAmount${selectedAdvance?.id}`],
-        currencyId: selectedAcc?.currency.id,
+        currencyId: selectedAdvance?.currency?.id,
         supplierName: undefined,
         supplierId: selectedSupplier?.id,
         referenceType: "SA",
         referenceId: selectedAdvance?.id,
-        documents: fileUrls,
+        // documents: fileUrls,
       };
       if (!selectedAdvance) {
         openErrorNotification(

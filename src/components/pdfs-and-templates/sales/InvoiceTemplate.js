@@ -663,6 +663,40 @@ const InvoiceTemplate = ({ selectedRecord }) => {
                         </td>
                       </tr>
                     )}
+                       {selectedRecord.invoiceTotalWriteOffAmount > 0 && (
+                      <tr className="text-align-right">
+                        <td
+                          style={{
+                            padding: "5px 10px 5px 0",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <b>Write Off Amount</b>
+                        </td>
+                        <td
+                          style={{
+                            width: "120px",
+                            verticalAlign: "middle",
+                            padding: "10px 10px 10px 5px",
+                            color: "var(--red)",
+                          }}
+                        >
+                          <b>
+                            {/* {selectedRecord.currency.symbol}{" "} */}
+                            {"(-) "}
+                            <FormattedNumber
+                              value={
+                                selectedRecord.invoiceTotalWriteOffAmount
+                              }
+                              style="decimal"
+                              minimumFractionDigits={
+                                selectedRecord.currency.decimalPlaces
+                              }
+                            />
+                          </b>
+                        </td>
+                      </tr>
+                    )}
                     <tr className="text-align-right">
                       <td
                         style={{

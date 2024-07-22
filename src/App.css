@@ -13,7 +13,7 @@
   justify-content: center;
   align-items: center;
   height: 5rem;
-  background-color: #fff;
+  background-color: var(--primary-color);
 }
 
 .business-logo {
@@ -136,12 +136,16 @@
   overflow: auto;
   padding-block: 1rem;
   scrollbar-color: var(--border-color) transparent;
+  scrollbar-width: thin;
+}
+.main-menu .ant-menu-item:hover{
+  color: var(--primary-color) !important
 }
 
 .main-menu .ant-menu-item-selected,
 .ant-menu-light > .main-menu .ant-menu .ant-menu-item-selected {
-  background-color: #023a51;
-  color: white;
+  background-color: rgba(0, 0, 0, 0.08);
+  color: var(--primary-color);
 }
 
 .main-menu .ant-menu-submenu-selected > .ant-menu-submenu-title,
@@ -149,8 +153,8 @@
   > .main-menu.ant-menu
   .ant-menu-submenu-selected
   > .ant-menu-submenu-title {
-  background-color: #024860;
-  color: white;
+  background-color: rgba(0, 0, 0, 0.08);
+  color: var(--primary-color);
 }
 
 .ant-menu .ant-menu-submenu {
@@ -159,7 +163,7 @@
 
 .ant-menu-item,
 .ant-menu-submenu-title {
-  color: white;
+  color: var(--primary-color);
   padding: 1.5rem 1.25rem;
   display: flex;
   align-items: center;
@@ -216,6 +220,7 @@
 .item-details-table {
   overflow: auto;
   scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+  scrollbar-width: thin;
 }
 
 .ant-table-selection-col,
@@ -588,6 +593,7 @@
   overflow-y: auto !important;
   padding-bottom: 4rem;
   scrollbar-color: var(--border-color) transparent;
+  scrollbar-width: thin;
 }
 
 .txn-details-table .ant-table-thead > tr > th,
@@ -645,6 +651,7 @@
   width: 20.5rem;
   overflow: auto;
   scrollbar-color: var(--border-color) transparent;
+  scrollbar-width: thin;
 }
 
 .column-width2 {
@@ -652,7 +659,15 @@
   height: calc(100vh - 10.1925rem);
   overflow: auto;
   scrollbar-color: var(--border-color) transparent;
+  scrollbar-width: thin;
 }
+
+/* @media (max-width: 1279px) {
+  .column-width2,
+  .column-width1 {
+    display: none;
+  }
+} */
 
 /* .txn-detail-column {
   -webkit-animation: slide-left 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
@@ -884,6 +899,7 @@
   overflow: auto;
   box-sizing: border-box;
   scrollbar-color: var(--border-color) transparent;
+  scrollbar-width: thin;
 }
 
 .items-list li {
@@ -939,6 +955,7 @@
 .selected-items-list {
   padding-bottom: 4.5rem;
   scrollbar-color: rgba(128, 128, 128, 0.5) white;
+  scrollbar-width: thin;
 }
 
 .text-center {

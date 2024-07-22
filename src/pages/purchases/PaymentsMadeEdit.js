@@ -75,6 +75,7 @@ const PaymentsMadeEdit = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency?.id
   );
+  const [accountCurrencyId, setAccountCurrencyId] = useState(record?.withdrawAccount?.currency?.id);
 
   const paidBills = useMemo(() => {
     const transformPaidBills = (paidBills) => {
@@ -122,6 +123,7 @@ const PaymentsMadeEdit = () => {
           supplierName: record.supplier?.name,
           branch: record.branch?.id,
           currency: record.currency?.id,
+          exchangeRate: record.exchangeRate,
           paymentDate: dayjs(record.paymentDate),
           paidThrough: record.withdrawAccount?.id || null,
           paymentMode: record.paymentMode?.id || null,
@@ -255,10 +257,11 @@ const PaymentsMadeEdit = () => {
         branchId: selectedBranch,
         supplierId: selectedSupplier.id,
         currencyId: selectedCurrency,
+        exchangeRate: values.exchangeRate,
         amount: paidAmountTotal,
         bankCharges: values.bankCharges,
         paymentDate: values.paymentDate,
-        paymentModeId: values.paymentMode,
+        paymentModeId: values.paymentMode || 0,
         withdrawAccountId: values.paidThrough,
         referenceNumber: values.referenceNumber,
         notes: values.notes,
@@ -312,6 +315,17 @@ const PaymentsMadeEdit = () => {
     } catch (err) {
       openErrorNotification(notiApi, err.message);
     }
+  };
+
+  const handleAccountChange = (id) => {
+    let selectedAccount;
+    accounts.forEach((group) => {
+      const account = group.accounts.find((acc) => acc.id === id);
+      if (account) {
+        selectedAccount = account;
+      }
+    });
+    setAccountCurrencyId(selectedAccount?.currency?.id || null);
   };
 
   const handleModalRowSelect = (record) => {
@@ -409,6 +423,7 @@ const PaymentsMadeEdit = () => {
       title: "Remaining Balance",
       dataIndex: "remainingBalance",
       key: "remainingBalance",
+      align: "right",
       render: (_, record) => (
         <Flex justify="end">
           {record.currency?.symbol}{" "}
@@ -636,65 +651,6 @@ const PaymentsMadeEdit = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item
-                  noStyle
-                  shouldUpdate={(prevValues, currentValues) =>
-                    prevValues.currency !== currentValues.currency
-                  }
-                >
-                  {({ getFieldValue }) =>
-                    getFieldValue("currency") &&
-                    getFieldValue("currency") !== business.baseCurrency.id ? (
-                      <Form.Item
-                        label={
-                          <FormattedMessage
-                            id="label.exchangeRate"
-                            defaultMessage="Exchange Rate"
-                          />
-                        }
-                        name="exchangeRate"
-                        labelAlign="left"
-                        labelCol={{ span: 8 }}
-                        wrapperCol={{ span: 12 }}
-                        rules={[
-                          {
-                            required: true,
-                            message: (
-                              <FormattedMessage
-                                id="label.exchangeRate.required"
-                                defaultMessage="Enter the Exchange Rate"
-                              />
-                            ),
-                          },
-                          () => ({
-                            validator(_, value) {
-                              if (!value) {
-                                return Promise.resolve();
-                              } else if (
-                                isNaN(value) ||
-                                value.length > 20 ||
-                                value < 0
-                              ) {
-                                return Promise.reject(
-                                  intl.formatMessage({
-                                    id: "validation.invalidInput",
-                                    defaultMessage: "Invalid Input",
-                                  })
-                                );
-                              } else {
-                                return Promise.resolve();
-                              }
-                            },
-                          }),
-                        ]}
-                      >
-                        <Input />
-                      </Form.Item>
-                    ) : null
-                  }
-                </Form.Item>
-              </Col>
             </Row>
             <Divider />
             <div
@@ -760,7 +716,11 @@ const PaymentsMadeEdit = () => {
                       },
                     ]}
                   >
-                    <Select showSearch optionFilterProp="label">
+                    <Select
+                      showSearch
+                      optionFilterProp="label"
+                      onChange={handleAccountChange}
+                    >
                       {accounts.map((group) => (
                         <Select.OptGroup
                           key={group.detailType}
@@ -878,6 +838,57 @@ const PaymentsMadeEdit = () => {
                   >
                     <Input maxLength={255}></Input>
                   </Form.Item>
+                </Col>
+                <Col span={12}>
+                  {((accountCurrencyId &&
+                  selectedCurrency !== accountCurrencyId) || 
+                  (selectedCurrency !== business.baseCurrency.id)) && (
+                    <Form.Item
+                      label={
+                        <FormattedMessage
+                          id="label.exchangeRate"
+                          defaultMessage="Exchange Rate"
+                        />
+                      }
+                      name="exchangeRate"
+                      labelAlign="left"
+                      labelCol={{ span: 8 }}
+                      wrapperCol={{ span: 12 }}
+                      rules={[
+                        {
+                          required: true,
+                          message: (
+                            <FormattedMessage
+                              id="label.exchangeRate.required"
+                              defaultMessage="Enter the Exchange Rate"
+                            />
+                          ),
+                        },
+                        () => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            } else if (
+                              isNaN(value) ||
+                              value.length > 20 ||
+                              value < 0
+                            ) {
+                              return Promise.reject(
+                                intl.formatMessage({
+                                  id: "validation.invalidInput",
+                                  defaultMessage: "Invalid Input",
+                                })
+                              );
+                            } else {
+                              return Promise.resolve();
+                            }
+                          },
+                        }),
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                  )}
                 </Col>
               </Row>
               {/* <Flex justify="end">

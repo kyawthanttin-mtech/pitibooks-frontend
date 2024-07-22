@@ -102,10 +102,14 @@ const InvoicesEdit = () => {
       taxRate: detail.detailTax?.rate,
       discount: detail.detailDiscount,
       discountType: detail.detailDiscountType,
-      id: detail.productType + detail.productId,
+      id:
+        detail.productId && detail.productId > 0
+          ? detail.productType + detail.productId
+          : null,
       detailDiscountType: detail.detailDiscountType,
       quantity: detail.detailQty,
       rate: detail.detailUnitRate,
+      inventoryAccountId: detail.product?.inventoryAccount?.id,
     }))
   );
 
@@ -235,7 +239,6 @@ const InvoicesEdit = () => {
   const loading = updateLoading;
 
   useMemo(() => {
-    // const taxId = record?.supplierTaxType + record?.supplierTaxId;
     const parsedRecord = record
       ? {
           customerName: record?.customerName,
@@ -258,6 +261,7 @@ const InvoicesEdit = () => {
           invoiceTaxType: "I",
           // Map transactions to form fields
           ...record?.details.reduce((acc, d, index) => {
+            acc[`product${index + 1}`] = d.name;
             acc[`account${index + 1}`] = d.detailAccount?.id || null;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
@@ -392,10 +396,13 @@ const InvoicesEdit = () => {
     let hasInvalidStock = false;
 
     const details = data.map((item) => {
-      if ((!item.name || item.amount === 0) && !item.isDeletedItem) {
+      if (
+        (!(item.name || values[`product${item.key}`]) || item.amount === 0) &&
+        !item.isDeletedItem
+      ) {
         foundInvalid = true;
       }
-      if (item.currentQty <= 0) {
+      if (item.inventoryAccountId > 0 && item.currentQty <= 0) {
         hasInvalidStock = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -413,10 +420,12 @@ const InvoicesEdit = () => {
       return {
         detailAccountId: values[`account${item.key}`],
         detailId: item.detailId || 0,
-        productId: detailProductId,
-        productType: detailProductType,
-        // batchNumber
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name:
+          item.id || item.isDeletedItem
+            ? item.name
+            : values[`product${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
         detailTaxId,
@@ -428,26 +437,37 @@ const InvoicesEdit = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      intl.formatMessage({
-        id: "validation.invalidProductDetails",
-        defaultMessage: "Invalid Product Details",
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
     if (hasInvalidStock) {
-      const confirmed = await alertModal.confirm({
-        content: (
-          <FormattedMessage
-            id="confirm.invalidStock"
-            defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
-          />
-        ),
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductStock",
+          defaultMessage: "One or more products have 0 or less stock on hand.",
+        })
+      );
+      return;
+      // const confirmed = await alertModal.confirm({
+      //   content: (
+      //     <FormattedMessage
+      //       id="confirm.invalidStock"
+      //       defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
+      //     />
+      //   ),
+      // });
 
-      if (!confirmed) {
-        return;
-      }
+      // if (!confirmed) {
+      //   return;
+      // }
     }
 
     const fileUrls = fileList?.map((file) => ({
@@ -601,6 +621,7 @@ const InvoicesEdit = () => {
       // If the item has detailId mark it as deleted
       newData[keyToRemove - 1] = {
         ...newData[keyToRemove - 1],
+        name: "deleted product",
         isDeletedItem: true,
         amount: 0,
         discount: 0,
@@ -764,6 +785,7 @@ const InvoicesEdit = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.unit = selectedItem.unit;
         newData.account = selectedItem.salesAccount?.id;
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -1019,7 +1041,7 @@ const InvoicesEdit = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -1049,7 +1071,8 @@ const InvoicesEdit = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+                {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -1071,15 +1094,15 @@ const InvoicesEdit = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"
-                    defaultMessage="Select the Product"
+                    defaultMessage="Select/Enter the Product"
                   />
                 ),
               },

@@ -67,7 +67,7 @@ const GET_PAGINATE_PURCHASE_ORDER = gql`
           orderDiscountType
           orderDiscountAmount
           adjustmentAmount
-          isDetailTaxInclusive
+          isTaxInclusive
           orderTax {
             id
             name
@@ -89,6 +89,12 @@ const GET_PAGINATE_PURCHASE_ORDER = gql`
             batchNumber
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

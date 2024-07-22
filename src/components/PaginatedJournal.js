@@ -458,6 +458,8 @@ const PaginatedJournal = ({
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.id}
+                  referenceType="journals"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button

@@ -8,6 +8,7 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
         node {
           id
           customer {
+            id
             name
             email
             phone
@@ -29,6 +30,7 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
             symbol
             decimalPlaces
           }
+          exchangeRate
           amount
           bankCharges
           paymentDate
@@ -43,6 +45,12 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
             mainType
             name
             code
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
             # parentAccount {
             #   id
             #   name
@@ -83,6 +91,7 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
               invoiceTotalTaxAmount
               invoiceTotalAmount
               invoiceTotalPaidAmount
+              remainingBalance
               branch {
                 id
                 name

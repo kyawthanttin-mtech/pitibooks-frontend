@@ -117,10 +117,14 @@ const InvoicesNew = () => {
           taxRate: detail.detailTax.rate,
           discount: detail.detailDiscount,
           discountType: detail.detailDiscountType,
-          id: detail.productType + detail.productId,
+          id:
+          detail.productId && detail.productId > 0
+            ? detail.productType + detail.productId
+            : null,
           detailDiscountType: detail.detailDiscountType,
           quantity: detail.detailQty,
           rate: detail.detailUnitRate,
+          inventoryAccountId: detail.product?.inventoryAccount?.id
         }))
       : [
           {
@@ -388,6 +392,7 @@ const InvoicesNew = () => {
           notes: record?.notes,
           // Map transactions to form fields
           ...record?.details?.reduce((acc, d, index) => {
+            acc[`product${index + 1}`] = d.name;
             acc[`account${index + 1}`] = d.detailAccount.id || null;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
@@ -409,15 +414,14 @@ const InvoicesNew = () => {
   }, [form, record, business]);
 
   const onFinish = async (values) => {
-    console.log("values", values);
     let foundInvalid = false;
     let hasInvalidStock = false;
 
     const details = data.map((item) => {
-      if (!item.name || item.amount === 0) {
+      if (!(item.name || values[`product${item.key}`]) || item.amount === 0) {
         foundInvalid = true;
       }
-      if (item.currentQty <= 0) {
+      if (item.inventoryAccountId > 0 && item.currentQty <= 0) {
         hasInvalidStock = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -433,9 +437,9 @@ const InvoicesNew = () => {
         : 0;
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
-        productId: detailProductId,
-        productType: detailProductType,
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name: item.id ? item.name : values[`product${item.key}`],
         detailAccountId: values[`account${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
@@ -447,26 +451,37 @@ const InvoicesNew = () => {
     });
 
     if (details.length === 0 || foundInvalid) {
-      intl.formatMessage({
-        id: "validation.invalidProductDetails",
-        defaultMessage: "Invalid Product Details",
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductDetails",
+          defaultMessage: "Invalid Product Details",
+        })
+      );
       return;
     }
 
     if (hasInvalidStock) {
-      const confirmed = await alertModal.confirm({
-        content: (
-          <FormattedMessage
-            id="confirm.invalidStock"
-            defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
-          />
-        ),
-      });
+      openErrorNotification(
+        notiApi,
+        intl.formatMessage({
+          id: "validation.invalidProductStock",
+          defaultMessage: "One or more products have 0 or less stock on hand.",
+        })
+      );
+      return;
+      // const confirmed = await alertModal.confirm({
+      //   content: (
+      //     <FormattedMessage
+      //       id="confirm.invalidStock"
+      //       defaultMessage="One or more products have 0 or less stock on hand. Do you still want to proceed?"
+      //     />
+      //   ),
+      // });
 
-      if (!confirmed) {
-        return;
-      }
+      // if (!confirmed) {
+      //   return;
+      // }
     }
 
     const fileUrls = fileList?.map((file) => ({
@@ -711,6 +726,7 @@ const InvoicesNew = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.unit = selectedItem.unit;
         newData.account = selectedItem.salesAccount?.id;
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -966,7 +982,7 @@ const InvoicesNew = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -994,7 +1010,8 @@ const InvoicesNew = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+               {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -1016,15 +1033,15 @@ const InvoicesNew = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"
-                    defaultMessage="Select the Product"
+                    defaultMessage="Select/Enter the Product"
                   />
                 ),
               },

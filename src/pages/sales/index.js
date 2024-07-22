@@ -11,6 +11,7 @@ import InvoicesEdit from "./InvoicesEdit";
 import CreditNotes from "./CreditNotes";
 import CreditNotesNew from "./CreditNotesNew";
 import CreditNotesEdit from "./CreditNotesEdit";
+import WriteOffInvoiceModal from "./WriteOffInvoiceModal";
 
 export {
   Customers,
@@ -26,4 +27,5 @@ export {
   CreditNotes,
   CreditNotesNew,
   CreditNotesEdit,
+  WriteOffInvoiceModal
 };

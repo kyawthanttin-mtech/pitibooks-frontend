@@ -375,7 +375,7 @@ const CustomersNew = () => {
                 type="primary"
                 htmlType="submit"
                 className="page-actions-btn"
-                //   loading={loading}
+                  loading={loading}
               >
                 Save
               </Button>
@@ -384,6 +384,7 @@ const CustomersNew = () => {
                 onClick={() =>
                   navigate(from, { state: location.state, replace: true })
                 }
+                loading={loading}
               >
                 {
                   <FormattedMessage

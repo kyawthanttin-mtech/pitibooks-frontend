@@ -136,6 +136,7 @@ const GET_PAGINATE_SUPPLIER = gql`
             id
             businessId
             purchaseOrderNumber
+            remainingBalance
             billNumber
             referenceNumber
             billDate

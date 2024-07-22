@@ -47,6 +47,12 @@ const GET_PAGINATE_CUSTOMER = gql`
               id
               name
             }
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
             creditNoteNumber
             referenceNumber
             creditNoteDate
@@ -144,45 +150,47 @@ const GET_PAGINATE_CUSTOMER = gql`
             referenceID
           }
           isActive
-          # unpaidInvoices {
-          #   id
-          #   businessId
-          #   purchaseOrderNumber
-          #   invoiceNumber
-          #   referenceNumber
-          #   invoiceDate
-          #   invoiceDueDate
-          #   invoicePaymentTerms
-          #   invoicePaymentTermsCustomDays
-          #   invoiceSubject
-          #   notes
-          #   exchangeRate
-          #   invoiceDiscount
-          #   invoiceDiscountType
-          #   invoiceDiscountAmount
-          #   adjustmentAmount
-          #   isTaxInclusive
-          #   invoiceTaxAmount
-          #   currentStatus
-          #   invoiceSubtotal
-          #   invoiceTotalDiscountAmount
-          #   invoiceTotalTaxAmount
-          #   invoiceTotalAmount
-          #   invoiceTotalPaidAmount
-          #   balanceDue
-          #   createdAt
-          #   updatedAt
-          #   branch {
-          #     id
-          #     name
-          #   }
-          #   currency {
-          #     id
-          #     decimalPlaces
-          #     name
-          #     symbol
-          #   }
-          # }
+          unpaidInvoices {
+            id
+            businessId
+            orderNumber
+            invoiceNumber
+            referenceNumber
+            invoiceDate
+            invoiceDueDate
+            invoicePaymentTerms
+            invoicePaymentTermsCustomDays
+            invoiceSubject
+            notes
+            exchangeRate
+            remainingBalance
+            invoiceDiscount
+            remainingBalance
+            invoiceDiscountType
+            invoiceDiscountAmount
+            adjustmentAmount
+            isTaxInclusive
+            invoiceTaxAmount
+            currentStatus
+            invoiceSubtotal
+            invoiceTotalDiscountAmount
+            invoiceTotalTaxAmount
+            invoiceTotalAmount
+            invoiceTotalPaidAmount
+
+            createdAt
+            updatedAt
+            branch {
+              id
+              name
+            }
+            currency {
+              id
+              decimalPlaces
+              name
+              symbol
+            }
+          }
         }
       }
       pageInfo {

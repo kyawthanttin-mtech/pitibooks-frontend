@@ -113,6 +113,12 @@ const GET_PAGINATE_BILL = gql`
             batchNumber
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

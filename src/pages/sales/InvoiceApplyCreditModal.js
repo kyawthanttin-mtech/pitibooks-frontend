@@ -75,29 +75,31 @@ const InvoiceApplyCreditModal = ({
         });
 
         if (existingData) {
-          const newEdges = existingData.paginateInvoice.edges.map((edge) => {
-            if (edge.node.id === selectedRecord.id) {
-              return {
-                ...edge,
-                node: {
-                  ...edge.node,
-                  appliedCustomerCredits: [
-                    ...(Array.isArray(edge.node.appliedCustomerCredits)
-                      ? edge.node.appliedCustomerCredits
-                      : []),
-                    ...createCustomerApplyCredit,
-                  ],
-                },
-              };
+          const newEdges = existingData.paginateSalesInvoice.edges.map(
+            (edge) => {
+              if (edge.node.id === selectedRecord.id) {
+                return {
+                  ...edge,
+                  node: {
+                    ...edge.node,
+                    appliedCustomerCredits: [
+                      ...(Array.isArray(edge.node.appliedCustomerCredits)
+                        ? edge.node.appliedCustomerCredits
+                        : []),
+                      ...createCustomerApplyCredit,
+                    ],
+                  },
+                };
+              }
+              return edge;
             }
-            return edge;
-          });
+          );
 
           cache.writeQuery({
             query: GET_PAGINATE_INVOICE,
             data: {
               paginateBill: {
-                ...existingData.paginateInvoice,
+                ...existingData.paginateSalesInvoice,
                 edges: newEdges,
               },
             },
@@ -189,12 +191,16 @@ const InvoiceApplyCreditModal = ({
           return true;
         } else {
           return (
-            item.currency.id === business.baseCurrency.id ||
-            item.currency.id === selectedRecord.currency.id
+            item.currentStatus === "Confirmed" &&
+            (item.currency.id === business.baseCurrency.id ||
+              item.currency.id === selectedRecord.currency.id)
           );
         }
       } else if (item.type === "Credit") {
-        return item.currency.id === selectedRecord.currency.id;
+        return (
+          item.currentStatus === "Confirmed" &&
+          item.currency.id === selectedRecord.currency.id
+        );
       }
       return true;
     });

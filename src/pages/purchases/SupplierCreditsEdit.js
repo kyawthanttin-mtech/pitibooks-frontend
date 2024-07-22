@@ -89,9 +89,13 @@ const SupplierCreditsEdit = () => {
       taxRate: detail.detailTax.rate,
       discount: detail.detailDiscount,
       discountType: detail.detailDiscountType,
-      id: detail.productType + detail.productId,
+      id:
+        detail.productId && detail.productId > 0
+          ? detail.productType + detail.productId
+          : null,
       quantity: detail.detailQty,
       detailDiscountType: detail.detailDiscountType,
+      inventoryAccountId: detail.product?.inventoryAccount?.id,
     }))
   );
 
@@ -240,6 +244,7 @@ const SupplierCreditsEdit = () => {
           creditNumber: record?.supplierCreditNumber,
           // Map transactions to form fields
           ...record?.details.reduce((acc, d, index) => {
+            acc[`product${index + 1}`] = d.name;
             acc[`account${index + 1}`] = d.detailAccount?.id || null;
             acc[`quantity${index + 1}`] = d.detailQty;
             acc[`rate${index + 1}`] = d.detailUnitRate;
@@ -365,7 +370,10 @@ const SupplierCreditsEdit = () => {
   const onFinish = async (values) => {
     let foundInvalid = false;
     const details = data.map((item) => {
-      if ((!item.name || item.amount === 0) && !item.isDeletedItem) {
+      if (
+        (!(item.name || values[`product${item.key}`]) || item.amount === 0) &&
+        !item.isDeletedItem
+      ) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -382,10 +390,12 @@ const SupplierCreditsEdit = () => {
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
         detailId: item.detailId || 0,
-        productId: detailProductId,
-        productType: detailProductType,
-        // batchNumber
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name:
+          item.id || item.isDeletedItem
+            ? item.name
+            : values[`product${item.key}`],
         detailAccountId: values[`account${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
@@ -525,6 +535,7 @@ const SupplierCreditsEdit = () => {
       // If the item has detailId mark it as deleted
       newData[keyToRemove - 1] = {
         ...newData[keyToRemove - 1],
+        name: "deleted product",
         isDeletedItem: true,
         amount: 0,
         discount: 0,
@@ -688,6 +699,7 @@ const SupplierCreditsEdit = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.purchaseAccount?.id;
         newData.unit = selectedItem.unit;
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -943,7 +955,7 @@ const SupplierCreditsEdit = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -973,7 +985,8 @@ const SupplierCreditsEdit = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+                {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -995,15 +1008,15 @@ const SupplierCreditsEdit = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"
-                    defaultMessage="Select the Product"
+                    defaultMessage="Select/Enter the Product"
                   />
                 ),
               },

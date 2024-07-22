@@ -35,6 +35,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               businessId
               purchaseOrderNumber
               billNumber
+              remainingBalance
               referenceNumber
               billDate
               billDueDate
@@ -121,6 +122,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
             symbol
             decimalPlaces
           }
+          exchangeRate
           amount
           bankCharges
           paymentDate
@@ -132,6 +134,12 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
           withdrawAccount {
             id
             name
+            currency {
+              id
+              name
+              symbol
+              decimalPlaces
+            }
           }
           referenceNumber
           notes
@@ -169,6 +177,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               billTotalTaxAmount
               billTotalAmount
               billTotalPaidAmount
+              remainingBalance
               balanceDue
               branch {
                 id

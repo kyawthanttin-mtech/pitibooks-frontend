@@ -136,7 +136,7 @@ const ReportLayout = ({ children }) => {
           openKeys={openKeys}
           onOpenChange={onOpenChange}
           style={{
-            height: "calc(100% - 103.19px)",
+            height: "calc(100% - 106px)",
             borderRight: 0,
             overflow: "auto",
             paddingBottom: "2rem",

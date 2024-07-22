@@ -60,11 +60,11 @@ const ProfitAndLoss = () => {
     );
   const noneOperatingIncome =
     queryData?.getProfitAndLossReport[0]?.plAccountGroups.find(
-      (group) => group.groupType === "None Operating Income"
+      (group) => group.groupType === "Non Operating Income"
     );
   const noneOperatingExpense =
     queryData?.getProfitAndLossReport[0]?.plAccountGroups.find(
-      (group) => group.groupType === "None Operating Expense"
+      (group) => group.groupType === "Non Operating Expense"
     );
 
   return (
@@ -298,7 +298,7 @@ const ProfitAndLoss = () => {
 
                 <tr className="mute-hover">
                   <td colSpan="2">
-                    <b>None Operating Income</b>
+                    <b>Non Operating Income</b>
                   </td>
                 </tr>
                 {noneOperatingIncome?.accounts?.map((acc) => (
@@ -322,7 +322,7 @@ const ProfitAndLoss = () => {
                 ))}
                 <tr className="mute-hover">
                   <td>
-                    <b>Total for None Operating Income</b>
+                    <b>Total for Non Operating Income</b>
                   </td>
                   <td></td>
                   <td className="text-align-right">
@@ -343,7 +343,7 @@ const ProfitAndLoss = () => {
 
                 <tr className="mute-hover">
                   <td colSpan="2">
-                    <b>None Operating Expense</b>
+                    <b>Non Operating Expense</b>
                   </td>
                 </tr>
                 {noneOperatingExpense?.accounts?.map((acc) => (
@@ -367,7 +367,7 @@ const ProfitAndLoss = () => {
                 ))}
                 <tr className="mute-hover">
                   <td>
-                    <b>Total for None Operating Expense</b>
+                    <b>Total for Non Operating Expense</b>
                   </td>
                   <td></td>
                   <td className="text-align-right">

@@ -203,9 +203,9 @@ const App = () => {
           <div className="app-logo-container">
             <div className="app-logo">
               <img
-                alt="MKitchen"
+                alt="cashflow"
                 // src={process.env.PUBLIC_URL + "/mkitchen-logo.svg"}
-                src={process.env.PUBLIC_URL + "/pitibooks.png"}
+                src={process.env.PUBLIC_URL + "/cashflow_white.png"}
               />
             </div>
           </div>
@@ -214,10 +214,10 @@ const App = () => {
             className="main-menu"
             mode="inline"
             style={{
-              backgroundColor: Theme.colorPrimary,
+              backgroundColor: Theme.bgColor,
             }}
             // theme="dark"
-            color={Theme.bgColorPrimary}
+            color={Theme.colorPrimary}
             // defaultSelectedKeys={"Home"}
             openKeys={openKeys}
             selectedKeys={[selectedKey]}
@@ -521,7 +521,7 @@ const App = () => {
                     defaultMessage="Accountant"
                   />
                 ),
-                icon: <AccountantOutlined width={20} height={20} />,
+                icon: <AccountantOutlined width={20} height={20} style={{color:"var(--primary-color)"}}/>,
                 children: [
                   {
                     key: "chartOfAccounts",
@@ -566,7 +566,7 @@ const App = () => {
                     defaultMessage="Reports"
                   />
                 ),
-                icon: <ReportOutlined width={20} height={20} />,
+                icon: <ReportOutlined width={20} height={20} style={{color:"var(--primary-color)"}}/>,
               },
               //Settings
               {
@@ -714,7 +714,7 @@ const App = () => {
           <Header
             style={{
               padding: 0,
-              background: Theme.bgColor,
+              background: Theme.colorPrimary,
               marginBottom: 1,
               height: "5rem",
             }}
@@ -724,7 +724,7 @@ const App = () => {
                 <Button
                   type="text"
                   icon={
-                    collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
+                    collapsed ? <MenuUnfoldOutlined style={{color:"white"}}/> : <MenuFoldOutlined style={{color:"white"}}/>
                   }
                   onClick={() => setCollapsed(!collapsed)}
                   style={{
@@ -734,7 +734,7 @@ const App = () => {
                     marginTop: "4px",
                   }}
                 />
-                <Switch
+                {/* <Switch
                   checkedChildren={
                     <FormattedMessage
                       id="locale.english"
@@ -751,16 +751,16 @@ const App = () => {
                   onChange={(checked) =>
                     language.selectLanguage(checked ? "en" : "mm")
                   }
-                />
+                /> */}
               </Space>
               <Space size="middle">
-                <Badge count={1} overflowCount={99}>
+                {/* <Badge count={1} overflowCount={99}>
                   <Avatar
                     style={{ backgroundColor: Theme.colorPrimary }}
                     shape="square"
                     icon={<BellOutlined />}
                   />
-                </Badge>
+                </Badge> */}
                 <Dropdown.Button
                   type="primary"
                   icon={<UserOutlined />}

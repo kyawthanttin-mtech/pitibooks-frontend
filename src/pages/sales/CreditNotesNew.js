@@ -337,7 +337,7 @@ const CreditNotesNew = () => {
     console.log("values", values);
     let foundInvalid = false;
     const details = data.map((item) => {
-      if (!item.name || item.amount === 0) {
+      if (!(item.name || values[`product${item.key}`]) || item.amount === 0) {
         foundInvalid = true;
       }
       const taxId = values[`detailTax${item.key}`];
@@ -353,10 +353,9 @@ const CreditNotesNew = () => {
         : 0;
       if (isNaN(detailProductId)) detailProductId = 0;
       return {
-        productId: detailProductId,
-        productType: detailProductType,
-        // batchNumber
-        name: item.name || values[`product${item.key}`],
+        productId: detailProductId > 0 ? detailProductId : undefined,
+        productType: detailProductId > 0 ? detailProductType : "I",
+        name: item.id ? item.name : values[`product${item.key}`],
         detailAccountId: values[`account${item.key}`],
         detailQty: item.quantity || 0,
         detailUnitRate: item.rate || 0,
@@ -615,6 +614,7 @@ const CreditNotesNew = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.inventoryAccount?.id;
         newData.unit = selectedItem.unit;
+        newData.inventoryAccountId= selectedItem.inventoryAccount?.id
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -870,7 +870,7 @@ const CreditNotesNew = () => {
       width: "20%",
       render: (text, record) => (
         <>
-          {text && (
+          {record.id && (
             <Flex
               vertical
               style={{
@@ -898,7 +898,8 @@ const CreditNotesNew = () => {
                 ) : (
                   <div></div>
                 )}
-                {record.currentQty || record.currentQty === 0 ? (
+               {record.inventoryAccountId > 0 &&
+                (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{
                       fontSize: "var(--small-text)",
@@ -920,15 +921,15 @@ const CreditNotesNew = () => {
             </Flex>
           )}
           <Form.Item
-            hidden={text}
+            hidden={record.id}
             name={`product${record.key}`}
             rules={[
               {
-                required: text ? false : true,
+                required: record.id ? false : true,
                 message: (
                   <FormattedMessage
                     id="label.product.required"
-                    defaultMessage="Select the Product"
+                    defaultMessage="Select/Enter the Product"
                   />
                 ),
               },

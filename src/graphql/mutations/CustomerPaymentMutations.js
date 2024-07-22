@@ -18,6 +18,7 @@ const CREATE_CUSTOMER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -25,6 +26,16 @@ const CREATE_CUSTOMER_PAYMENT = gql`
       paymentMode {
         id
         name
+      }
+      depositAccount {
+        id
+        name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -39,6 +50,7 @@ const CREATE_CUSTOMER_PAYMENT = gql`
         customerPaymentId
         invoice {
           id
+          remainingBalance
         }
         paidAmount
       }
@@ -47,7 +59,7 @@ const CREATE_CUSTOMER_PAYMENT = gql`
 `;
 
 const UPDATE_CUSTOMER_PAYMENT = gql`
-  mutation UpdateCustomerPayment($id: ID!, $input: NewSupplierPayment!) {
+  mutation UpdateCustomerPayment($id: ID!, $input: NewCustomerPayment!) {
     updateCustomerPayment(id: $id, input: $input) {
       id
       customer {
@@ -64,6 +76,7 @@ const UPDATE_CUSTOMER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -75,6 +88,12 @@ const UPDATE_CUSTOMER_PAYMENT = gql`
       depositAccount {
         id
         name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -89,6 +108,7 @@ const UPDATE_CUSTOMER_PAYMENT = gql`
         customerPaymentId
         invoice {
           id
+          remainingBalance
         }
         paidAmount
       }
@@ -113,6 +133,7 @@ const DELETE_CUSTOMER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -124,6 +145,12 @@ const DELETE_CUSTOMER_PAYMENT = gql`
       depositAccount {
         id
         name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -138,6 +165,7 @@ const DELETE_CUSTOMER_PAYMENT = gql`
         customerPaymentId
         invoice {
           id
+          remainingBalance
         }
         paidAmount
       }

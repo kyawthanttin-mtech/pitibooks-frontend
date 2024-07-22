@@ -12,7 +12,7 @@ const CREATE_PRODUCT_GROUP = gql`
       updatedAt
       variants {
         ID
-        productGroupId
+
         name
         sku
         barcode

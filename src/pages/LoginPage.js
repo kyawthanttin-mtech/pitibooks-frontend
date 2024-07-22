@@ -70,6 +70,12 @@ const LoginPage = () => {
         onFinish={onFinish}
         autoComplete="off"
       >
+        <img
+          alt="cashflow"
+          width={250}
+          style={{paddingLeft: 125, paddingTop: 100}}
+          src={process.env.PUBLIC_URL + "/cashflow_black.png"}
+        />
         <Form.Item
           label="Username"
           name="username"

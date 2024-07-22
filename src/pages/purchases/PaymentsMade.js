@@ -52,10 +52,10 @@ const { GET_PAGINATE_SUPPLIER_PAYMENT } = SupplierPaymentQueries;
 const { DELETE_SUPPLIER_PAYMENT } = SupplierPaymentMutations;
 
 const items = [
-  {
-    label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
-    key: "0",
-  },
+  // {
+  //   label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
+  //   key: "0",
+  // },
   {
     label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
     key: "1",
@@ -601,7 +601,7 @@ const PaymentsMade = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -709,6 +709,8 @@ const PaymentsMade = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="supplier_payments"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button

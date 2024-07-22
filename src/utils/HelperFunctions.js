@@ -50,8 +50,8 @@ export function convertTransactionType(type) {
       return "Inventory";
     case "IVA":
       return "InventoryAdjustment";
-    case "WO":
-      return "WriteOff";
+    case "IWO":
+      return "InvoiceWriteOff";
     case "ACP":
       return "AdvanceCustomerPayment";
     case "ASP":
@@ -84,6 +84,12 @@ export function convertTransactionType(type) {
       return "CustomerAdvanceApplied";
     case "CAR":
       return "CustomerAdvanceRefund";
+    case "POS":
+      return "ProductOpeningStock";
+    case "PGOS":
+      return "ProductGroupOpeningStock";
+    case "PCOS":
+      return "ProductCompositeOpeningStock";
     default:
       return "";
   }

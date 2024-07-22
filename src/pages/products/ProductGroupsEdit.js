@@ -77,7 +77,7 @@ const ProductGroupsEdit = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(
     record?.supplier || null
   );
-  const [imageList, setImageList] = useState(null);
+  const [imageList, setImageList] = useState([]);
 
   useEffect(() => {
     renderCount.current += 1;
@@ -337,7 +337,7 @@ const ProductGroupsEdit = () => {
 
     combine(0, []);
 
-    return combinations.map((combination, index) => {
+    return combinations?.map((combination, index) => {
       const combinationObj = {
         key: index,
         name: combination.map((c) => c.value).join(" / "),
@@ -423,7 +423,7 @@ const ProductGroupsEdit = () => {
       optionUnits: item.values.map((item) => item.value).join("|"),
     }));
 
-    const imageUrls = imageList.map((img) => ({
+    const imageUrls = imageList?.map((img) => ({
       imageUrl: img.imageUrl,
       thumbnailUrl: img.thumbnailUrl,
       isDeletedItem: img.isDeletedItem,
@@ -939,7 +939,7 @@ const ProductGroupsEdit = () => {
               ))}
             </Select>
           </Form.Item>
-          {/* <Form.Item
+          <Form.Item
             label={<FormattedMessage id="label.unit" defaultMessage="Unit" />}
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 12 }}
@@ -970,7 +970,7 @@ const ProductGroupsEdit = () => {
                 </Select.Option>
               ))}
             </Select>
-          </Form.Item> */}
+          </Form.Item>
           <Form.Item
             label={
               <FormattedMessage id="label.supplier" defaultMessage="Supplier" />

@@ -78,6 +78,7 @@ const CustomerAdvanceEdit = ({
             toAccountId: selectedRecord.toAccount?.id || null,
             currencyId: selectedRecord.currency?.id || null,
             amount: selectedRecord.amount,
+            exchangeRate: selectedRecord.exchangeRate,
             bankCharges: selectedRecord.bankCharges,
             referenceNumber: selectedRecord.referenceNumber,
             description: selectedRecord.description,

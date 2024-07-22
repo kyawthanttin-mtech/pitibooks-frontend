@@ -107,6 +107,12 @@ const GET_PAGINATE_SUPPLIER_CREDIT = gql`
             batchNumber
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

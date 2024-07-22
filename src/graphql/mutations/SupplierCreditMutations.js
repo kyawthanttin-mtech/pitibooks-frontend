@@ -236,10 +236,23 @@ const DELETE_SUPPLIER_CREDIT = gql`
   }
 `;
 
+const CONFIRM_SUPPLIER_CREDIT = gql`
+  mutation ConfirmSupplierCredit($id: ID!) {
+    confirmSupplierCredit(id: $id) {
+      id
+      supplierCreditNumber
+      referenceNumber
+      supplierCreditDate
+      supplierCreditSubject
+    }
+  }
+`;
+
 const SupplierCreditMutations = {
   CREATE_SUPPLIER_CREDIT,
   UPDATE_SUPPLIER_CREDIT,
   DELETE_SUPPLIER_CREDIT,
+  CONFIRM_SUPPLIER_CREDIT,
 };
 
 export default SupplierCreditMutations;

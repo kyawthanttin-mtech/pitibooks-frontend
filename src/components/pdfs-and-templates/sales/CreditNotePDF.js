@@ -377,14 +377,10 @@ const CreditNotePDF = ({ selectedRecord, business }) => {
         )}
         <CustomText style={styles.boldText}>Total{"\n"}</CustomText>
         {selectedRecord.creditNoteTotalUsedAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
-            Used{"\n"}
-          </CustomText>
+          <CustomText style={[styles.boldText]}>Used{"\n"}</CustomText>
         )}
         {selectedRecord.creditNoteTotalRefundAmount > 0 && (
-          <CustomText style={[styles.boldText, styles.red]}>
-            Refund{"\n"}
-          </CustomText>
+          <CustomText style={[styles.boldText]}>Refund{"\n"}</CustomText>
         )}
         <CustomText style={[styles.boldText]}>Remaining{"\n"}</CustomText>
       </CustomText>

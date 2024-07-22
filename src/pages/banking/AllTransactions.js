@@ -1198,7 +1198,7 @@ const AllTransactions = () => {
             id="label.allTransactions"
             defaultMessage="All Transactions"
           /> */}
-            <Dropdown
+            {/* <Dropdown
               // onChange={(value) => console.log("value")}
               trigger="click"
               menu={{
@@ -1210,7 +1210,7 @@ const AllTransactions = () => {
                 selectable: true,
                 selectedKeys: [selectedAcc?.key],
               }}
-            >
+            > */}
               <div
                 className="page-header-text"
                 style={{
@@ -1223,15 +1223,15 @@ const AllTransactions = () => {
               >
                 <Space>
                   {selectedAcc?.name}
-                  <DownOutlined
+                  {/* <DownOutlined
                     style={{
                       fontSize: "0.9rem",
                       color: "var(--primary-color)",
                     }}
-                  />
+                  /> */}
                 </Space>
               </div>
-            </Dropdown>
+            {/* </Dropdown> */}
             <div>
               <Button type="primary">
                 <Dropdown

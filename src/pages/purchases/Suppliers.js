@@ -500,7 +500,7 @@ const Suppliers = () => {
                 </span>
               )}
             </Button>
-            <Button icon={<MoreOutlined />}></Button>
+            {/* <Button icon={<MoreOutlined />}></Button> */}
           </Space>
         </div>
         <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -692,7 +692,7 @@ const Suppliers = () => {
                       key: "amount",
                       render: (_, record) => (
                         <>
-                          {record.currency.symbol}{" "}
+                          {record?.currency.symbol}{" "}
                           <FormattedNumber
                             value={
                               record?.type === "Credit"
@@ -701,7 +701,7 @@ const Suppliers = () => {
                             }
                             style="decimal"
                             minimumFractionDigits={
-                              record.currency.decimalPlaces
+                              record?.currency.decimalPlaces
                             }
                           />
                           {record?.type === "Credit" && (
@@ -711,12 +711,12 @@ const Suppliers = () => {
                                 opacity: "60%",
                               }}
                             >
-                              Used Amount: {record.currency.symbol}{" "}
+                              Used Amount: {record?.currency.symbol}{" "}
                               <FormattedNumber
                                 value={record?.supplierCreditTotalUsedAmount}
                                 style="decimal"
                                 minimumFractionDigits={
-                                  record.currency.decimalPlaces
+                                  record?.currency.decimalPlaces
                                 }
                               />
                             </div>
@@ -730,7 +730,7 @@ const Suppliers = () => {
                       key: "refundAmount",
                       render: (_, record) => (
                         <>
-                          {record.currency?.symbol}{" "}
+                          {record?.currency?.symbol}{" "}
                           <FormattedNumber
                             value={
                               record.type === "Credit"
@@ -739,7 +739,7 @@ const Suppliers = () => {
                             }
                             style="decimal"
                             minimumFractionDigits={
-                              record.currency?.decimalPlaces
+                              record?.currency?.decimalPlaces
                             }
                           />
                         </>

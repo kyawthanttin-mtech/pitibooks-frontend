@@ -34,6 +34,9 @@ const GET_PAGINATE_INVOICE = gql`
           remainingBalance
           invoiceTotalCreditUsedAmount
           invoiceTotalAdvanceUsedAmount
+          invoiceTotalWriteOffAmount
+          writeOffReason
+          writeOffDate
           appliedCustomerCredits {
             id
             businessId
@@ -67,6 +70,12 @@ const GET_PAGINATE_INVOICE = gql`
             batchNumber
             name
             description
+            product {
+              id
+              inventoryAccount {
+                id
+              }
+            }
             detailAccount {
               id
               name

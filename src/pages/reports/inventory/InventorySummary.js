@@ -87,6 +87,8 @@ const InventorySummary = () => {
                     <th style={{ borderBottom: 0 }}></th>
                     <th style={{ borderBottom: 0 }}></th>
                     <th style={{ borderBottom: 0 }}></th>
+                    <th style={{ borderBottom: 0 }}></th>
+                    <th style={{ borderBottom: 0 }}></th>
                     <th colSpan={3}>Stock Details</th>
                   </tr>
                   <tr>
@@ -104,7 +106,7 @@ const InventorySummary = () => {
                       />
                     </th>
                     <th
-                      className="text-align-right"
+                      className="text-align-left"
                       style={{
                         width: "150px",
                         borderBottom: "1px solid var(--border-color)",
@@ -120,8 +122,8 @@ const InventorySummary = () => {
                       }}
                     >
                       <FormattedMessage
-                        id="label.quantityOrdered"
-                        defaultMessage="Quantity Ordered"
+                        id="label.orderedQty"
+                        defaultMessage="Ordered Qty"
                       />
                     </th>
                     <th
@@ -146,6 +148,30 @@ const InventorySummary = () => {
                       <FormattedMessage
                         id="label.quantityOut"
                         defaultMessage="Quantity Out"
+                      />
+                    </th>
+                    <th
+                      className="text-align-right"
+                      style={{
+                        width: "150px",
+                        borderBottom: "1px solid var(--border-color)",
+                      }}
+                    >
+                      <FormattedMessage
+                        id="label.transferredQty"
+                        defaultMessage="Transferred Qty"
+                      />
+                    </th>
+                    <th
+                      className="text-align-right"
+                      style={{
+                        width: "150px",
+                        borderBottom: "1px solid var(--border-color)",
+                      }}
+                    >
+                      <FormattedMessage
+                        id="label.adjustedQty"
+                        defaultMessage="Adjusted Qty"
                       />
                     </th>
                     <th
@@ -207,9 +233,7 @@ const InventorySummary = () => {
                               </span>
                             )}
                           </td>
-                          <td className="text-align-right">
-                            {data.productSku}
-                          </td>
+                          <td>{data.productSku}</td>
                           <td className="text-align-right">
                             <FormattedNumber
                               value={data.orderQty}
@@ -231,6 +255,24 @@ const InventorySummary = () => {
                           <td className="text-align-right">
                             <FormattedNumber
                               value={data.saleQty}
+                              style="decimal"
+                              minimumFractionDigits={
+                                data.productUnit?.precision
+                              }
+                            />
+                          </td>
+                          <td className="text-align-right">
+                            <FormattedNumber
+                              value={data.transferQty}
+                              style="decimal"
+                              minimumFractionDigits={
+                                data.productUnit?.precision
+                              }
+                            />
+                          </td>
+                          <td className="text-align-right">
+                            <FormattedNumber
+                              value={data.adjustedQty}
                               style="decimal"
                               minimumFractionDigits={
                                 data.productUnit?.precision
@@ -270,7 +312,7 @@ const InventorySummary = () => {
                   ) : (
                     <tr className="empty-row">
                       <td
-                        colSpan={9}
+                        colSpan={11}
                         style={{
                           border: "none",
                           borderBottom: "1px solid var(--border-color)",

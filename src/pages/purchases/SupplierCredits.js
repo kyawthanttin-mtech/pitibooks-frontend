@@ -54,13 +54,23 @@ import SupplierCreditRefundNew from "./SupplierCreditRefundNew";
 import { SupplierCreditPDF } from "../../components/pdfs-and-templates";
 import SupplierCreditRefundEdit from "./SupplierCreditRefundEdit";
 const { GET_PAGINATE_SUPPLIER_CREDIT } = SupplierCreditQueries;
-const { DELETE_SUPPLIER_CREDIT } = SupplierCreditMutations;
+const { DELETE_SUPPLIER_CREDIT, CONFIRM_SUPPLIER_CREDIT } =
+  SupplierCreditMutations;
 const { DELETE_REFUND } = RefundMutations;
 
 const draftActionItems = [
   {
     label: <FormattedMessage id="button.clone" defaultMessage="Clone" />,
     key: "0",
+  },
+  {
+    label: (
+      <FormattedMessage
+        id="button.confirmSupplierCredit"
+        defaultMessage="Confirm Supplier Credit"
+      />
+    ),
+    key: "3",
   },
   {
     label: <FormattedMessage id="button.delete" defaultMessage="Delete" />,
@@ -192,6 +202,43 @@ const SupplierCredits = () => {
     }
   );
 
+  const [confirmSupplierCredit, { loading: confirmLoading }] = useMutation(
+    CONFIRM_SUPPLIER_CREDIT,
+    {
+      onCompleted() {
+        openSuccessMessage(
+          msgApi,
+          <FormattedMessage
+            id="supplierCredit.confirmed"
+            defaultMessage="SupplierCredit Confirmed"
+          />
+        );
+        setSelectedRecord(null);
+      },
+      onError(err) {
+        openErrorNotification(notiApi, err.message);
+      },
+      update(cache, { data }) {
+        const existingSupplierCredits = cache.readQuery({
+          query: GET_PAGINATE_SUPPLIER_CREDIT,
+        });
+        const updatedSupplierCredits =
+          existingSupplierCredits.paginateSupplierCredit.edges.filter(
+            ({ node }) => node.id !== data.confirmSupplierCredit.id
+          );
+        cache.writeQuery({
+          query: GET_PAGINATE_SUPPLIER_CREDIT,
+          data: {
+            paginateSupplierCredit: {
+              ...existingSupplierCredits.paginateSupplierCredit,
+              edges: updatedSupplierCredits,
+            },
+          },
+        });
+      },
+    }
+  );
+
   const branches = useMemo(() => {
     return branchData?.listAllBranch?.filter(
       (branch) => branch.isActive === true
@@ -228,16 +275,16 @@ const SupplierCredits = () => {
   }, [selectedRecord, selectedRowIndex]);
 
   const parseData = (data) => {
-    let bills = [];
+    let supplierCredits = [];
     data?.paginateSupplierCredit?.edges.forEach(({ node }) => {
-      bills.push({
+      supplierCredits.push({
         key: node.id,
         branchName: node.branch?.name,
         supplierName: node.supplier?.name,
         ...node,
       });
     });
-    return bills ? bills : [];
+    return supplierCredits ? supplierCredits : [];
   };
 
   const parsePageInfo = (data) => {
@@ -350,6 +397,29 @@ const SupplierCredits = () => {
                 setSelectedRecord(updatedSelectedRecord);
               }
             }
+          },
+        });
+      } catch (err) {
+        openErrorNotification(notiApi, err.message);
+      }
+    }
+  };
+
+  const handleConfirmSupplierCredit = async (id) => {
+    const confirmed = await deleteModal.confirm({
+      content: (
+        <FormattedMessage
+          id="confirm.confirmSupplierCredit"
+          defaultMessage="Are you sure to confirm supplierCredit?"
+        />
+      ),
+    });
+    console.log(id);
+    if (confirmed) {
+      try {
+        await confirmSupplierCredit({
+          variables: {
+            id: id,
           },
         });
       } catch (err) {
@@ -571,9 +641,9 @@ const SupplierCredits = () => {
       key: "actions",
       render: (_, record) => (
         <Space size="middle">
-          <span className="edit-icon" onClick={setShowRefundFormEdit}>
+          {/* <span className="edit-icon" onClick={setShowRefundFormEdit}>
             <EditOutlined />
-          </span>
+          </span> */}
           <span
             className="delete-icon"
             onClick={() => handleDeleteRefund(record.id)}
@@ -791,7 +861,7 @@ const SupplierCredits = () => {
                   </span>
                 )}
               </Button>
-              <Button icon={<MoreOutlined />}></Button>
+              {/* <Button icon={<MoreOutlined />}></Button> */}
             </Space>
           </div>
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
@@ -905,6 +975,8 @@ const SupplierCredits = () => {
                 <AttachFiles
                   files={selectedRecord?.documents}
                   key={selectedRecord?.key}
+                  referenceType="supplier_credits"
+                  referenceId={selectedRecord.id}
                 />
                 <div style={{ borderRight: "1px solid var(--border-color)" }}>
                   <Button
@@ -934,8 +1006,13 @@ const SupplierCredits = () => {
             </Row>
             <Row className="content-column-action-row">
               <div
-                className="actions"
-                onClick={() => handleEdit(selectedRecord, navigate, location)}
+                className={`actions ${
+                  selectedRecord?.currentStatus === "Closed" && "disable"
+                }`}
+                onClick={() =>
+                  selectedRecord?.currentStatus !== "Closed" &&
+                  handleEdit(selectedRecord, navigate, location)
+                }
               >
                 <EditOutlined />
                 <FormattedMessage id="button.edit" defaultMessage="Edit" />
@@ -954,6 +1031,8 @@ const SupplierCredits = () => {
                     if (key === "0") console.log("clone");
                     else if (key === "1") setShowRefundFormNew(true);
                     else if (key === "2") handleDelete(selectedRecord.id);
+                    else if (key === "3")
+                      handleConfirmSupplierCredit(selectedRecord.id);
                   },
                   items:
                     selectedRecord.currentStatus === "Draft"

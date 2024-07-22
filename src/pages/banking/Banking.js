@@ -26,7 +26,9 @@ import {
   DownCircleFilled,
   BankOutlined,
   DownOutlined,
-  SyncOutlined,LeftOutlined, RightOutlined
+  SyncOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { REPORT_DATE_FORMAT } from "../../config/Constants";
@@ -372,6 +374,38 @@ const Banking = () => {
     },
   ];
 
+  const totalSummary = useMemo(() => {
+    const summary = data?.listBankingAccount?.totalSummary || [];
+
+    const defaultCash = {
+      detailType: "Cash",
+      totalBalance: 0,
+      currencySymbol: "",
+    };
+    const defaultBank1 = {
+      detailType: "Bank",
+      totalBalance: 0,
+      currencySymbol: "",
+    };
+    const defaultBank2 = {
+      detailType: "Bank",
+      totalBalance: 0,
+      currencySymbol: "",
+    };
+
+    const cash =
+      summary.find((item) => item.detailType === "Cash") || defaultCash;
+    const banks = summary.filter((item) => item.detailType === "Bank");
+
+    const bank1 = banks[0] || defaultBank1;
+    const bank2 =
+      banks[1] || (banks.length === 1 ? defaultBank2 : defaultBank1);
+
+    return [cash, bank1, bank2];
+  }, [data]);
+
+  console.log(totalSummary);
+
   // Create filtered array of banking accounts
   const bankingAccounts = useMemo(() => {
     return parsedData?.map((account) => ({
@@ -540,6 +574,7 @@ const Banking = () => {
       title: "",
       dataIndex: "column",
       render: (text, record) => {
+        console.log(record)
         return (
           <div>
             <div className="column-list-item">
@@ -619,7 +654,7 @@ const Banking = () => {
       key: "uncatagorized",
     },
     {
-      title: "Amount In Bank",
+      title: "Balance",
       dataIndex: "balance",
       key: "balance",
       render: (text, record) => (
@@ -635,7 +670,7 @@ const Banking = () => {
     },
 
     {
-      title: "",
+      title: " ",
       dataIndex: "action",
       render: (_, record) =>
         hoveredRow === record.id ? (
@@ -740,8 +775,8 @@ const Banking = () => {
             ? "TransferFund"
             : record?.transactionType === "DepositToAnotherAccount" ||
               record?.transactionType === "DepositFromAnotherAccount"
-                ? "AccountDeposit"
-                : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
+            ? "AccountDeposit"
+            : record?.transactionType.split(/(?=[A-Z])/).join(" ")}
         </>
       ),
     },
@@ -1165,17 +1200,25 @@ const Banking = () => {
           <div className={`page-content ${selectedRecord && "column-width2"}`}>
             {!selectedRecord && (
               <Row gutter={16} style={{ padding: "1.5rem 1rem", margin: 0 }}>
-                <Col span={6}>
+                <Col span={8}>
                   <Card
                     style={{
                       background: "rgba(89, 166, 53, 0.10)",
                       height: "6.5rem",
                     }}
                   >
-                    <Statistic title="Cash In Hand" value={0} prefix="MMK" />
+                    <Statistic
+                      title="Cash In Hand"
+                      value={totalSummary[0]?.totalBalance}
+                      prefix={
+                        totalSummary[0]?.currencySymbol
+                          ? totalSummary[0]?.currencySymbol
+                          : business?.baseCurrency?.symbol
+                      }
+                    />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={8}>
                   <Card
                     style={{
                       background: "rgba(255, 176, 1, 0.10)",
@@ -1184,30 +1227,32 @@ const Banking = () => {
                   >
                     <Statistic
                       title="Bank Balance"
-                      value={0}
-                      precision={1}
-                      prefix="MMK"
+                      value={totalSummary[1]?.totalBalance}
+                      prefix={
+                        totalSummary[1]?.currencySymbol
+                          ? totalSummary[1]?.currencySymbol
+                          : business?.baseCurrency?.symbol
+                      }
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
-                  <Card
-                    style={{
-                      background: "rgba(64, 141, 251, 0.10)",
-                      height: "6.5rem",
-                    }}
-                  >
-                    <Statistic title="Card Balance" value={0} prefix="MMK" />
-                  </Card>
-                </Col>
-                <Col span={6}>
+
+                <Col span={8}>
                   <Card
                     style={{
                       background: "rgba(247, 104, 49, 0.10)",
                       height: "6.5rem",
                     }}
                   >
-                    <Statistic title="Overdue Bills" value={0} prefix="MMK" />
+                    <Statistic
+                      title="Bank Balance"
+                      value={totalSummary[2]?.totalBalance}
+                      prefix={
+                        totalSummary[2]?.currencySymbol
+                          ? totalSummary[2]?.currencySymbol
+                          : business?.baseCurrency?.symbol
+                      }
+                    />
                   </Card>
                 </Col>
               </Row>
@@ -1270,49 +1315,41 @@ const Banking = () => {
               })}
             />
             <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
-          <div style={{ paddingLeft: "1.5rem" }}></div>
-          <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
-            <Tooltip
-              title={
-                <FormattedMessage
-                  id="button.refetch"
-                  defaultMessage="Refetch"
-                />
-              }
-            >
-              <Button
-                icon={<SyncOutlined />}
-                loading={loading}
-                onClick={() => refetch()}
-              />
-            </Tooltip>
-            <Tooltip
-              title={
-                <FormattedMessage
-                  id="button.previous"
-                  defaultMessage="Previous"
-                />
-              }
-            >
-              <Button
-                icon={<LeftOutlined />}
-                loading={loading}
-                disabled
-              />
-            </Tooltip>
-            <Tooltip
-              title={
-                <FormattedMessage id="button.next" defaultMessage="Next" />
-              }
-            >
-              <Button
-                icon={<RightOutlined />}
-                loading={loading}
-                disabled
-              />
-            </Tooltip>
-          </Space>
-        </Row>
+              <div style={{ paddingLeft: "1.5rem" }}></div>
+              <Space style={{ padding: "0.5rem 1.5rem 0 0" }}>
+                <Tooltip
+                  title={
+                    <FormattedMessage
+                      id="button.refetch"
+                      defaultMessage="Refetch"
+                    />
+                  }
+                >
+                  <Button
+                    icon={<SyncOutlined />}
+                    loading={loading}
+                    onClick={() => refetch()}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <FormattedMessage
+                      id="button.previous"
+                      defaultMessage="Previous"
+                    />
+                  }
+                >
+                  <Button icon={<LeftOutlined />} loading={loading} disabled />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <FormattedMessage id="button.next" defaultMessage="Next" />
+                  }
+                >
+                  <Button icon={<RightOutlined />} loading={loading} disabled />
+                </Tooltip>
+              </Space>
+            </Row>
           </div>
         </div>
 

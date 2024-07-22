@@ -116,6 +116,7 @@ const Reports = () => {
               />
               {category.reports.map((report, idx) => (
                 <ReportMenuItem
+                  disable={report.disable}
                   key={idx}
                   icon={<StarOutlined />}
                   labelId={report.labelId}

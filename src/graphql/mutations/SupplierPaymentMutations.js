@@ -18,6 +18,7 @@ const CREATE_SUPPLIER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -29,6 +30,12 @@ const CREATE_SUPPLIER_PAYMENT = gql`
       withdrawAccount {
         id
         name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -46,6 +53,7 @@ const CREATE_SUPPLIER_PAYMENT = gql`
           billDate
           billTotalAmount
           billTotalPaidAmount
+          remainingBalance
         }
         paidAmount
       }
@@ -71,6 +79,7 @@ const UPDATE_SUPPLIER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -82,6 +91,12 @@ const UPDATE_SUPPLIER_PAYMENT = gql`
       withdrawAccount {
         id
         name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -99,6 +114,7 @@ const UPDATE_SUPPLIER_PAYMENT = gql`
           billDate
           billTotalAmount
           billTotalPaidAmount
+          remainingBalance
         }
         paidAmount
       }
@@ -123,6 +139,7 @@ const DELETE_SUPPLIER_PAYMENT = gql`
         symbol
         decimalPlaces
       }
+      exchangeRate
       amount
       bankCharges
       paymentDate
@@ -134,6 +151,12 @@ const DELETE_SUPPLIER_PAYMENT = gql`
       withdrawAccount {
         id
         name
+        currency {
+          id
+          name
+          symbol
+          decimalPlaces
+        }
       }
       referenceNumber
       notes
@@ -151,6 +174,7 @@ const DELETE_SUPPLIER_PAYMENT = gql`
           billDate
           billTotalAmount
           billTotalPaidAmount
+          remainingBalance
         }
         paidAmount
       }

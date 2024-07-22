@@ -5,19 +5,14 @@ import {
   Button,
   Flex,
   Space,
-  Dropdown,
-  Table,
   Modal,
-  Divider,
   Skeleton,
   Timeline,
 } from "antd";
 import {
   CloseOutlined,
   EditOutlined,
-  CaretDownOutlined,
   DeleteOutlined,
-  PaperClipOutlined,
   LoadingOutlined,
   MessageOutlined,
   HistoryOutlined,
@@ -234,6 +229,8 @@ const TxnDetailColumn = ({
                   iconButton={true}
                   files={transactionRecord?.documents}
                   key={transactionRecord?.key}
+                  referenceType="banking_transactions"
+                  referenceId={transactionRecord?.id}
                 />
                 {/* <Button>
                 <Dropdown
