@@ -96,6 +96,7 @@ const GET_PAGINATE_SUPPLIER_PAYMENT = gql`
               billTotalTaxAmount
               billTotalAmount
               billTotalPaidAmount
+              remainingBalance
               balanceDue
               createdAt
               updatedAt

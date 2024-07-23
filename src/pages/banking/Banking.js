@@ -1379,11 +1379,11 @@ const Banking = () => {
                   />
                 </span>
                 <span className="closing-balance-text">
-                  {business.baseCurrency.symbol}{" "}
+                  {selectedRecord.currency.symbol}{" "}
                   <FormattedNumber
                     value={selectedRecord.balance || 0}
                     style="decimal"
-                    minimumFractionDigits={business.baseCurrency.decimalPlaces}
+                    minimumFractionDigits={selectedRecord.currency.decimalPlaces}
                   />
                 </span>
               </Row>

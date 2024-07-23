@@ -138,8 +138,8 @@
   scrollbar-color: var(--border-color) transparent;
   scrollbar-width: thin;
 }
-.main-menu .ant-menu-item:hover{
-  color: var(--primary-color) !important
+.main-menu .ant-menu-item:hover {
+  color: var(--primary-color) !important;
 }
 
 .main-menu .ant-menu-item-selected,
@@ -187,7 +187,7 @@
 }
 
 .ant-menu-item-active {
-  color: #ededed !important;
+  color: var(--primary-color) !important;
   box-shadow: 0px 0.5px 1px 0px rgba(0, 0, 0, 0.1);
 }
 

@@ -120,7 +120,7 @@ const SalesOrdersNew = () => {
           detailDiscountType: detail.detailDiscountType,
           quantity: detail.detailQty,
           rate: detail.detailUnitRate,
-          inventoryAccountId: detail.product?.inventoryAccount?.id
+          inventoryAccountId: detail.product?.inventoryAccount?.id,
         }))
       : [
           {
@@ -166,7 +166,13 @@ const SalesOrdersNew = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
     record?.orderTotalDiscountAmount || 0
   );
-  const [totalAmount, setTotalAmount] = useState(record?.orderTotalAmount || 0);
+  const [totalAmount, setTotalAmount] = useState(
+    record?.isTaxInclusive
+      ? record?.orderTotalAmount +
+          record?.orderTotalTaxAmount -
+          record?.adjustmentAmount
+      : record?.orderTotalAmount - record?.adjustmentAmount || 0
+  );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const [tableKeyCounter, setTableKeyCounter] = useState(
     record?.details?.length
@@ -174,7 +180,7 @@ const SalesOrdersNew = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.orderDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType || "P"
   );
@@ -556,6 +562,12 @@ const SalesOrdersNew = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
+
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 

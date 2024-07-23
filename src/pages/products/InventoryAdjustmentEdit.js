@@ -17,7 +17,6 @@ import {
 import {
   CloseCircleOutlined,
   PlusCircleFilled,
-  UploadOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -77,7 +76,9 @@ const InventoryAdjustmentsEdit = () => {
   const [adjustmentType, setAdjustmentType] = useState(
     record?.adjustmentType === "Quantity" ? "q" : "v"
   );
-  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState(
+    record?.warehouse?.id
+  );
   const [fileList, setFileList] = useState(null);
 
   // Queries

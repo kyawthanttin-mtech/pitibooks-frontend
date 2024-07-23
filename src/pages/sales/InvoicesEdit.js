@@ -159,7 +159,13 @@ const InvoicesEdit = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
     record?.invoiceTotalDiscountAmount
   );
-  const [totalAmount, setTotalAmount] = useState(record?.invoiceTotalAmount);
+  const [totalAmount, setTotalAmount] = useState(
+    record?.isTaxInclusive
+      ? record?.invoiceTotalAmount +
+          record?.invoiceTotalTaxAmount -
+          record?.adjustmentAmount
+      : record?.invoiceTotalAmount - record?.adjustmentAmount
+  );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
   // const [tableKeyCounter, setTableKeyCounter] = useState(
   //   record?.details.length
@@ -657,6 +663,11 @@ const InvoicesEdit = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 

@@ -243,7 +243,10 @@ const PaymentsReceivedNew = () => {
     console.log(unpaidInvoices);
   };
 
-  const handlePaidAmountBlur = () => {
+  const handlePaidAmountBlur = (value, record) => {
+    if (value > record.remainingBalance) {
+      form.setFieldValue(`paidAmount${record.key}`, record.remainingBalance);
+    }
     calculateTotalPaidAmount();
   };
 
@@ -370,7 +373,10 @@ const PaymentsReceivedNew = () => {
               }),
             ]}
           >
-            <Input onBlur={handlePaidAmountBlur} />
+            <Input
+              onBlur={(e) => handlePaidAmountBlur(e.target.value, record)}
+              style={{ textAlign: "right" }}
+            />
           </Form.Item>
           <Flex justify="end">
             <Button
@@ -383,7 +389,7 @@ const PaymentsReceivedNew = () => {
               onClick={() => {
                 form.setFieldValue(
                   `paidAmount${record.key}`,
-                  record.invoiceTotalAmount - record.invoiceTotalPaidAmount
+                  record.remainingBalance
                 );
                 calculateTotalPaidAmount();
               }}
@@ -740,8 +746,8 @@ const PaymentsReceivedNew = () => {
                 </Col>
                 <Col span={12}>
                   {((accountCurrencyId &&
-                  selectedCurrency !== accountCurrencyId) || 
-                  (selectedCurrency !== business.baseCurrency.id)) && (
+                    selectedCurrency !== accountCurrencyId) ||
+                    selectedCurrency !== business.baseCurrency.id) && (
                     <Form.Item
                       label={
                         <FormattedMessage

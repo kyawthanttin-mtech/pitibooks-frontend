@@ -484,6 +484,11 @@ const SupplierCreditsNew = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 
@@ -612,7 +617,7 @@ const SupplierCreditsNew = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.purchaseAccount?.id;
         newData.unit = selectedItem.unit;
-        newData.inventoryAccountId= selectedItem.inventoryAccount?.id
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -896,7 +901,7 @@ const SupplierCreditsNew = () => {
                 ) : (
                   <div></div>
                 )}
-               {record.inventoryAccountId > 0 &&
+                {record.inventoryAccountId > 0 &&
                 (record.currentQty || record.currentQty === 0) ? (
                   <span
                     style={{

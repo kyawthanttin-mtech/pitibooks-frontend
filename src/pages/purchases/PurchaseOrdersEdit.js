@@ -168,7 +168,7 @@ const PurchaseOrdersNew = () => {
     record?.orderTotalTaxAmount
   );
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
-    record?.orderTotalDiscountAmount
+    record?.orderTotalDiscountAmount || 0
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount);
   const [totalAmount, setTotalAmount] = useState(
@@ -719,6 +719,11 @@ const PurchaseOrdersNew = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 
@@ -938,6 +943,7 @@ const PurchaseOrdersNew = () => {
         selectedDiscountType,
         decimalPlaces
       );
+      console.log("new discount amount", newDiscountAmount);
       setDiscountAmount(newDiscountAmount);
       setTotalAmount(newSubTotal + newTotalTaxAmount - newDiscountAmount);
     } else {
@@ -980,7 +986,7 @@ const PurchaseOrdersNew = () => {
     setTotalTaxAmount(totalTaxAmount);
     calculateTotalAmount(subTotal, totalTaxAmount, isAtTransactionLevel);
   };
-
+  console.log("TOTAL DISCOUNT AMOUNT", totalDiscountAmount);
   const handleDiscountChange = (value) => {
     const newDiscount = parseFloat(value) || 0;
     const newDiscountAmount = calculateDiscountAmount(

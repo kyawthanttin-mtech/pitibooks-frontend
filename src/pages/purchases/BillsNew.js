@@ -120,7 +120,7 @@ const BillsNew = () => {
           detailDiscountType: detail.detailDiscountType,
           quantity: detail.detailQty,
           rate: detail.detailUnitRate,
-          inventoryAccountId: detail.product?.inventoryAccount?.id
+          inventoryAccountId: detail.product?.inventoryAccount?.id,
         }))
       : [
           {
@@ -142,7 +142,7 @@ const BillsNew = () => {
     record?.warehouse?.id > 0 ? record.warehouse.id : null
   );
   const [discountPreference, setDiscountPreference] = useState(
-    record?.orderDiscount > 0
+    record?.billDiscount > 0 || record?.orderDiscount > 0
       ? {
           key: "0",
           label: "At Transaction Level",
@@ -150,7 +150,7 @@ const BillsNew = () => {
       : { key: "1", label: "At Line Item Level" }
   );
   const [taxPreference, setTaxPreference] = useState(
-    record?.isDetailTaxInclusive
+    record?.isTaxInclusive
       ? { key: "1", label: "Tax Inclusive" }
       : {
           key: "0",
@@ -168,10 +168,29 @@ const BillsNew = () => {
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(
     record?.orderTotalDiscountAmount || record?.billTotalDiscountAmount || 0
   );
-  const [totalAmount, setTotalAmount] = useState(
-    (record?.orderTotalAmount || record?.billTotalAmount || 0) -
-      (record?.adjustmentAmount || 0)
-  );
+  const [totalAmount, setTotalAmount] = useState(() => {
+    if (!record) return 0;
+
+    if (record.isTaxInclusive) {
+      if (record.orderTotalAmount != null) {
+        return (
+          record.orderTotalAmount +
+          record.orderTotalTaxAmount -
+          record.adjustmentAmount
+        );
+      }
+      return (
+        record.billTotalAmount +
+        record.billTotalTaxAmount -
+        record.adjustmentAmount
+      );
+    } else {
+      if (record.orderTotalAmount != null) {
+        return record.orderTotalAmount - record.adjustmentAmount;
+      }
+      return record.billTotalAmount - record.adjustmentAmount;
+    }
+  });
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   // const [tableKeyCounter, setTableKeyCounter] = useState(
   //   record?.details.length || 1
@@ -189,7 +208,7 @@ const BillsNew = () => {
     record?.orderDiscountAmount || record?.billDiscountAmount || 0
   );
   const [isTaxInclusive, setIsTaxInclusive] = useState(
-    record?.isDetailTaxInclusive || false
+    record?.isTaxInclusive || false
   );
   const [isAtTransactionLevel, setIsAtTransactionLevel] = useState(
     discountPreference.key === "0"
@@ -223,7 +242,6 @@ const BillsNew = () => {
       },
     }
   );
-
   // Mutations
   const [createBill, { loading: createLoading }] = useMutation(CREATE_BILL, {
     onCompleted() {
@@ -359,15 +377,15 @@ const BillsNew = () => {
       ? {
           supplierName: record?.supplierName,
           branch: record?.branch?.id,
-          purchaseOrderId: record?.purchaseOrderId,
+          purchaseOrderId: record?.id,
           purchaseOrderNumber:
             record?.purchaseOrderNumber || record?.orderNumber,
           referenceNumber: record?.referenceNumber,
-          billDate: dayjs(record?.billDate),
+          billDate: dayjs(record?.billDate) || dayjs(record?.orderDate),
           currency: record?.currency?.id,
           exchangeRate: record?.exchangeRate,
           warehouse: record?.warehouse.id || null,
-          discount: record?.billDiscount,
+          discount: record?.billDiscount || record?.orderDiscount,
           adjustment: record?.adjustmentAmount || null,
           subject: record?.billSubject,
           paymentTerms: record?.orderPaymentTerms || record?.billPaymentTerms,
@@ -556,6 +574,11 @@ const BillsNew = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 

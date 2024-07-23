@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Button, Col, Dropdown, Flex, Row, Space } from "antd";
 import "./HomePage.css";
-import { PlusCircleFilled, DownOutlined } from "@ant-design/icons";
+import {
+  PlusCircleFilled,
+  DownOutlined,
+  PlusCircleTwoTone,
+} from "@ant-design/icons";
 import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,6 +19,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { FormattedMessage } from "react-intl";
+import { useLocation, useNavigate } from "react-router-dom";
 
 ChartJS.register(
   CategoryScale,
@@ -113,6 +119,8 @@ const labels = [
 ];
 
 const HomePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [filterCF, setFilterCF] = useState({
     key: "1",
     label: "This Fiscal Year",
@@ -230,17 +238,17 @@ const HomePage = () => {
       },
     ],
   };
-  
-  const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+
+  const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"];
 
   const lineOptions = {
     parsing: false,
     responsive: true,
     plugins: {
-        legend: {
-            display: false,
-        },
-        tooltip: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
         backgroundColor: "white",
         borderColor: "#d7d5e2",
         borderWidth: 1,
@@ -284,31 +292,25 @@ const HomePage = () => {
       },
     },
     scales: {
-        x: {
-            stacked: false,
-            grid: {
-                display: false,
-            },
+      x: {
+        stacked: false,
+        grid: {
+          display: false,
         },
-        y: {
-            beginAtZero: true,
-            min: 0,
-            ticks: {
-                stepSize: 5000000,
-                callback: function (value) {
-                    return value / 1000000 + `${value !== 0 ? "M" : ""}`;
-                },
-            },
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        ticks: {
+          stepSize: 5000000,
+          callback: function (value) {
+            return value / 1000000 + `${value !== 0 ? "M" : ""}`;
+          },
         },
+      },
     },
-};
+  };
 
-
-  
-  
-
-  
-  
   const barData = {
     labels: labels,
     datasets: [
@@ -319,7 +321,7 @@ const HomePage = () => {
           5500,
         ],
         backgroundColor: "rgba(75, 192, 192, 0.6)",
-        barPercentage: 0.7,
+        barPercentage: 0.8,
       },
       {
         label: "Expense",
@@ -327,7 +329,7 @@ const HomePage = () => {
           800, 1500, 2000, 3000, 1000, 2000, 1200, 1800, 3000, 2500, 3500, 4000,
         ],
         backgroundColor: "rgba(255, 99, 132, 0.6)",
-        barPercentage: 0.7,
+        barPercentage: 0.8,
       },
     ],
   };
@@ -489,278 +491,388 @@ const HomePage = () => {
         <p className="page-header-text">Home</p>
       </div>
       <div className="page-content page-content-with-padding">
-        <div
-          className="page-header-text"
-          style={{
-            cursor: "pointer",
-            fontSize: "20px",
-            marginTop: "-0.5rem",
-            marginBottom: "1.5rem",
-            maxWidth: "14rem",
-          }}
-        >
-          Dashboard
-        </div>
-        <Row className="db-row">
-          <Col span={12} style={{ paddingRight: "1rem" }}>
-            <div className="db-card">
-              <div className="db-card-header">
-                <span className="title">Total Receivables</span>
-                <Button
-                  type="link"
-                  icon={<PlusCircleFilled />}
-                  style={{ padding: 0 }}
-                >
-                  New
-                </Button>
-              </div>
-              <div className="db-card-body">
-                <div className="db-unpaid">
-                  Total Unpaid Invoices MMK 1009090090
-                </div>
-                <Flex justify="space-between" style={{ paddingTop: "10px" }}>
-                  <div className="db-current">
-                    <div
-                      style={{
-                        fontSize: "var(--small-text)",
-                        color: "var(--primary-color)",
-                      }}
-                    >
-                      CURRENT
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "1.188rem",
-                        color: "var(--primary-color)",
-                      }}
-                    >
-                      MMK 09349309
-                    </div>
-                  </div>
-                  <div className="db-overdue">
-                    <div
-                      style={{
-                        fontSize: "var(--small-text)",
-                        color: "var(--orange)",
-                      }}
-                    >
-                      OVERDUE
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "1.188rem",
-                      }}
-                    >
-                      MMK 09349309
-                    </div>
-                  </div>
-                </Flex>
-              </div>
-            </div>
-          </Col>
-          <Col span={12} style={{ paddingLeft: "1rem" }}>
-            <div className="db-card">
-              <div className="db-card-header">
-                <span className="title">Total Payables</span>
-                <Button
-                  type="link"
-                  icon={<PlusCircleFilled />}
-                  style={{ padding: 0 }}
-                >
-                  New
-                </Button>
-              </div>
-              <div className="db-card-body">
-                <div className="db-unpaid">
-                  Total Unpaid Bills MMK 1009090090
-                </div>
-                <Flex justify="space-between" style={{ paddingTop: "10px" }}>
-                  <div className="db-current">
-                    <div
-                      style={{
-                        fontSize: "var(--small-text)",
-                        color: "var(--primary-color)",
-                      }}
-                    >
-                      CURRENT
-                    </div>
-                    <div style={{ fontSize: "1.188rem" }}>MMK 09349309</div>
-                  </div>
-                  <div className="db-overdue">
-                    <div
-                      style={{
-                        fontSize: "var(--small-text)",
-                        color: "var(--orange)",
-                      }}
-                    >
-                      OVERDUE
-                    </div>
-                    <div style={{ fontSize: "1.188rem" }}>MMK 09349309</div>
-                  </div>
-                </Flex>
-              </div>
-            </div>
-          </Col>
-        </Row>
-        <Row className="db-row">
-          <div className="db-card">
-            <div className="db-card-header">
-              <span className="title">Cash Flow</span>
-              <Dropdown
-                trigger="click"
-                menu={{
-                  items: filterCFOptions.map((item) => ({
-                    ...item,
-                    onClick: ({ key }) => handleFilterCFChange(key),
-                  })),
-                  selectable: true,
-                  selectedKeys: [filterCF.key],
-                }}
-              >
-                <div
-                  style={{
-                    cursor: "pointer",
-                  }}
-                >
-                  <Space>
-                    {filterCF.label}
-                    <DownOutlined
-                      style={{
-                        fontSize: "0.9rem",
-                        color: "var(--primary-color)",
-                      }}
-                    />
-                  </Space>
-                </div>
-              </Dropdown>
-            </div>
-            <div className="db-card-body" style={{ padding: "5px" }}>
-              <Row>
-                <Col span={18} className="line-chart-container">
-                  <Line data={lineData} options={lineOptions} />
-                </Col>
-                <Col span={8} className="balance-container text-align-right">
-                  <div className="balance-row">
-                    <div style={{ opacity: "70%" }}>Cash as on 01 2024 Jan</div>
-                    <div className="balance">MMK 393490300 </div>
-                  </div>
-                  <div className="balance-row">
-                    <div style={{ color: "var(--dark-green)" }}>Incoming</div>
-                    <div className="balance">MMK 393490300 </div>
-                  </div>
-                  <div className="balance-row">
-                    <div style={{ color: "var(--red)" }}>Outgoing</div>
-                    <div className="balance">MMK 393490300 </div>
-                  </div>
-                  <div className="balance-row">
-                    <div style={{ color: "rgba(75,192,192,1)" }}>
-                      Cash as on 31 2024 Dec
-                    </div>
-                    <div className="balance">MMK 393490300 </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
+        <div className="db-wrapper">
+          <div
+            className="page-header-text"
+            style={{
+              cursor: "pointer",
+              fontSize: "20px",
+              marginTop: "-0.5rem",
+              marginBottom: "1.5rem",
+              maxWidth: "14rem",
+            }}
+          >
+            Dashboard
           </div>
-        </Row>
-        <Row>
-          <Col span={12} style={{ paddingRight: "1rem" }}>
-            <div className="db-card">
-              <div className="db-card-header">
-                <span className="title">Income and Expense</span>
-                <span>
+          <Row className="db-row">
+            <Col span={12} style={{ paddingRight: "1rem" }}>
+              <div className="db-card">
+                <div className="db-card-header">
+                  <span className="title">Total Receivables</span>
                   <Dropdown
                     trigger="click"
                     menu={{
-                      items: filterIEOptions.map((item) => ({
-                        ...item,
-                        onClick: ({ key }) => handleFilterIEChange(key),
-                      })),
-                      selectable: true,
-                      selectedKeys: [filterIE.key],
+                      onClick: ({ key }) => {
+                        if (key === "0")
+                          navigate("invoices/new", {
+                            state: {
+                              ...location.state,
+                              from: { pathname: location.pathname },
+                            },
+                          });
+                        else if (key === "1")
+                          navigate("paymentsReceived/new", {
+                            state: {
+                              ...location.state,
+                              from: { pathname: location.pathname },
+                            },
+                          });
+                      },
+                      items: [
+                        {
+                          label: (
+                            <Space>
+                              <PlusCircleTwoTone twoToneColor="rgb(75, 192, 192)" />
+                              <FormattedMessage
+                                id="button.newInvoice"
+                                defaultMessage="New Invoice"
+                              />
+                            </Space>
+                          ),
+                          key: "0",
+                        },
+                        {
+                          label: (
+                            <Space>
+                              <PlusCircleTwoTone twoToneColor="rgb(75, 192, 192)" />
+                              <FormattedMessage
+                                id="button.newCustomerPayment"
+                                defaultMessage="New Customer Payment"
+                              />
+                            </Space>
+                          ),
+                          key: "1",
+                        },
+                      ],
                     }}
                   >
-                    <div
-                      style={{
-                        cursor: "pointer",
-                      }}
+                    <Button
+                      type="link"
+                      icon={<PlusCircleFilled />}
+                      style={{ padding: 0 }}
                     >
-                      <Space>
-                        {filterIE.label}
-                        <DownOutlined
-                          style={{
-                            fontSize: "0.9rem",
-                            color: "var(--primary-color)",
-                          }}
+                      <span>
+                        <FormattedMessage
+                          id="button.new"
+                          defaultMessage="New"
                         />
-                      </Space>
-                    </div>
+                      </span>
+                    </Button>
                   </Dropdown>
-                </span>
+                </div>
+                <div className="db-card-body">
+                  <div className="db-unpaid">
+                    Total Unpaid Invoices MMK 1009090090
+                  </div>
+                  <Flex justify="space-between" style={{ paddingTop: "10px" }}>
+                    <div className="db-current">
+                      <div
+                        style={{
+                          fontSize: "var(--small-text)",
+                          color: "var(--primary-color)",
+                        }}
+                      >
+                        CURRENT
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "1.188rem",
+                          color: "var(--primary-color)",
+                        }}
+                      >
+                        MMK 09349309
+                      </div>
+                    </div>
+                    <div className="db-overdue">
+                      <div
+                        style={{
+                          fontSize: "var(--small-text)",
+                          color: "var(--orange)",
+                        }}
+                      >
+                        OVERDUE
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "1.188rem",
+                        }}
+                      >
+                        MMK 09349309
+                      </div>
+                    </div>
+                  </Flex>
+                </div>
               </div>
-              <div className="db-card-body bar-chart-container">
-                <Bar data={barData} options={barOptions} />
+            </Col>
+            <Col span={12} style={{ paddingLeft: "1rem" }}>
+              <div className="db-card">
+                <div className="db-card-header">
+                  <span className="title">Total Payables</span>
+                  <Dropdown
+                    trigger="click"
+                    menu={{
+                      onClick: ({ key }) => {
+                        if (key === "0")
+                          navigate("bills/new", {
+                            state: {
+                              ...location.state,
+                              from: { pathname: location.pathname },
+                            },
+                          });
+                        else if (key === "1")
+                          navigate("paymentsMade/new", {
+                            state: {
+                              ...location.state,
+                              from: { pathname: location.pathname },
+                            },
+                          });
+                      },
+                      items: [
+                        {
+                          label: (
+                            <Space>
+                              <PlusCircleTwoTone twoToneColor="rgb(75, 192, 192)" />
+                              <FormattedMessage
+                                id="button.newBill"
+                                defaultMessage="New Bill"
+                              />
+                            </Space>
+                          ),
+                          key: "0",
+                        },
+                        {
+                          label: (
+                            <Space>
+                              <PlusCircleTwoTone twoToneColor="rgb(75, 192, 192)" />
+                              <FormattedMessage
+                                id="button.newSupplierPayment"
+                                defaultMessage="New Supplier Payment"
+                              />
+                            </Space>
+                          ),
+                          key: "1",
+                        },
+                      ],
+                    }}
+                  >
+                    <Button
+                      type="link"
+                      icon={<PlusCircleFilled />}
+                      style={{ padding: 0 }}
+                    >
+                      <span>
+                        <FormattedMessage
+                          id="button.new"
+                          defaultMessage="New"
+                        />
+                      </span>
+                    </Button>
+                  </Dropdown>
+                </div>
+                <div className="db-card-body">
+                  <div className="db-unpaid">
+                    Total Unpaid Bills MMK 1009090090
+                  </div>
+                  <Flex justify="space-between" style={{ paddingTop: "10px" }}>
+                    <div className="db-current">
+                      <div
+                        style={{
+                          fontSize: "var(--small-text)",
+                          color: "var(--primary-color)",
+                        }}
+                      >
+                        CURRENT
+                      </div>
+                      <div style={{ fontSize: "1.188rem" }}>MMK 09349309</div>
+                    </div>
+                    <div className="db-overdue">
+                      <div
+                        style={{
+                          fontSize: "var(--small-text)",
+                          color: "var(--orange)",
+                        }}
+                      >
+                        OVERDUE
+                      </div>
+                      <div style={{ fontSize: "1.188rem" }}>MMK 09349309</div>
+                    </div>
+                  </Flex>
+                </div>
               </div>
-              <Row className="total-section">
-                <Col
-                  span={12}
-                  style={{
-                    padding: "10px",
-                    borderRight: "1px solid var(--border-color)",
+            </Col>
+          </Row>
+          <Row className="db-row">
+            <div className="db-card">
+              <div className="db-card-header">
+                <span className="title">Cash Flow</span>
+                <Dropdown
+                  trigger="click"
+                  menu={{
+                    items: filterCFOptions.map((item) => ({
+                      ...item,
+                      onClick: ({ key }) => handleFilterCFChange(key),
+                    })),
+                    selectable: true,
+                    selectedKeys: [filterCF.key],
                   }}
                 >
-                  <div style={{ color: "var(--light-green)" }}>
-                    Total Income
-                  </div>
-                  <div style={{ fontSize: "1.188rem" }}>MMK 939843128</div>
-                </Col>
-                <Col span={12} style={{ padding: "10px" }}>
-                  <div style={{ color: "var(--red)" }}>Total Expense</div>
-                  <div style={{ fontSize: "1.188rem" }}>MMK 939843128</div>
-                </Col>
-              </Row>
-            </div>
-          </Col>
-          <Col span={12} style={{ paddingLeft: "1rem" }}>
-            <div className="db-card">
-              <div className="db-card-header">
-                <span className="title">Top Expenses</span>
-                <span>
-                  <Dropdown
-                    trigger="click"
-                    menu={{
-                      items: filterEOptions.map((item) => ({
-                        ...item,
-                        onClick: ({ key }) => handleFilterEChange(key),
-                      })),
-                      selectable: true,
-                      selectedKeys: [filterE.key],
+                  <div
+                    style={{
+                      cursor: "pointer",
                     }}
                   >
-                    <div
-                      style={{
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Space>
-                        {filterE.label}
-                        <DownOutlined
-                          style={{
-                            fontSize: "0.9rem",
-                            color: "var(--primary-color)",
-                          }}
-                        />
-                      </Space>
-                    </div>
-                  </Dropdown>
-                </span>
+                    <Space>
+                      {filterCF.label}
+                      <DownOutlined
+                        style={{
+                          fontSize: "0.9rem",
+                          color: "var(--primary-color)",
+                        }}
+                      />
+                    </Space>
+                  </div>
+                </Dropdown>
               </div>
-              <div className="db-card-body pie-chart-container">
-                <Pie data={pieData} options={pieOptions}></Pie>
+              <div className="db-card-body" style={{ padding: "5px" }}>
+                <Row className="line-chart-row">
+                  <Col span={18} className="line-chart-container">
+                    <Line data={lineData} options={lineOptions} />
+                  </Col>
+                  <Col span={8} className="balance-container text-align-right">
+                    <div className="balance-row">
+                      <div style={{ opacity: "70%" }}>
+                        Cash as on 01 2024 Jan
+                      </div>
+                      <div className="balance">MMK 393490300 </div>
+                    </div>
+                    <div className="balance-row">
+                      <div style={{ color: "var(--dark-green)" }}>Incoming</div>
+                      <div className="balance">MMK 393490300 </div>
+                    </div>
+                    <div className="balance-row">
+                      <div style={{ color: "var(--red)" }}>Outgoing</div>
+                      <div className="balance">MMK 393490300 </div>
+                    </div>
+                    <div className="balance-row">
+                      <div style={{ color: "rgba(75,192,192,1)" }}>
+                        Cash as on 31 2024 Dec
+                      </div>
+                      <div className="balance">MMK 393490300 </div>
+                    </div>
+                  </Col>
+                </Row>
               </div>
             </div>
-          </Col>
-        </Row>
+          </Row>
+          <Row>
+            <Col span={12} style={{ paddingRight: "1rem" }}>
+              <div className="db-card">
+                <div className="db-card-header">
+                  <span className="title">Income and Expense</span>
+                  <span>
+                    <Dropdown
+                      trigger="click"
+                      menu={{
+                        items: filterIEOptions.map((item) => ({
+                          ...item,
+                          onClick: ({ key }) => handleFilterIEChange(key),
+                        })),
+                        selectable: true,
+                        selectedKeys: [filterIE.key],
+                      }}
+                    >
+                      <div
+                        style={{
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Space>
+                          {filterIE.label}
+                          <DownOutlined
+                            style={{
+                              fontSize: "0.9rem",
+                              color: "var(--primary-color)",
+                            }}
+                          />
+                        </Space>
+                      </div>
+                    </Dropdown>
+                  </span>
+                </div>
+                <div className="db-card-body bar-chart-container">
+                  <Bar data={barData} options={barOptions} />
+                </div>
+                <Row className="total-section">
+                  <Col
+                    span={12}
+                    style={{
+                      padding: "10px",
+                      borderRight: "1px solid var(--border-color)",
+                    }}
+                  >
+                    <div style={{ color: "var(--light-green)" }}>
+                      Total Income
+                    </div>
+                    <div style={{ fontSize: "1.188rem" }}>MMK 939843128</div>
+                  </Col>
+                  <Col span={12} style={{ padding: "10px" }}>
+                    <div style={{ color: "var(--red)" }}>Total Expense</div>
+                    <div style={{ fontSize: "1.188rem" }}>MMK 939843128</div>
+                  </Col>
+                </Row>
+              </div>
+            </Col>
+            <Col span={12} style={{ paddingLeft: "1rem" }}>
+              <div className="db-card">
+                <div className="db-card-header">
+                  <span className="title">Top Expenses</span>
+                  <span>
+                    <Dropdown
+                      trigger="click"
+                      menu={{
+                        items: filterEOptions.map((item) => ({
+                          ...item,
+                          onClick: ({ key }) => handleFilterEChange(key),
+                        })),
+                        selectable: true,
+                        selectedKeys: [filterE.key],
+                      }}
+                    >
+                      <div
+                        style={{
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Space>
+                          {filterE.label}
+                          <DownOutlined
+                            style={{
+                              fontSize: "0.9rem",
+                              color: "var(--primary-color)",
+                            }}
+                          />
+                        </Space>
+                      </div>
+                    </Dropdown>
+                  </span>
+                </div>
+                <div className="db-card-body pie-chart-container">
+                  <Pie data={pieData} options={pieOptions}></Pie>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </div>
       </div>
     </>
   );

@@ -207,11 +207,6 @@ export const reportData = [
         label: "Receivable Details",
         to: "receivableDetails",
       },
-      {
-        labelId: "report.supplierBalanceDetails",
-        label: "Supplier Balance Details",
-        to: "supplierBalanceDetails",
-      },
     ],
     icon: <InventoryOutlined />,
   },

@@ -75,7 +75,9 @@ const PaymentsReceivedEdit = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency?.id
   );
-  const [accountCurrencyId, setAccountCurrencyId] = useState(record?.depositAccount?.currency?.id);
+  const [accountCurrencyId, setAccountCurrencyId] = useState(
+    record?.depositAccount?.currency?.id
+  );
 
   const paidInvoices = useMemo(() => {
     const transformPaidInvoices = (paidInvoices) => {
@@ -91,23 +93,62 @@ const PaymentsReceivedEdit = () => {
       : [];
   }, [record.paidInvoices]);
 
+  // const filteredData = useMemo(() => {
+  //   if (selectedCustomer && selectedBranch && selectedCurrency) {
+  //     const unpaidInvoices = selectedCustomer.unpaidInvoices || [];
+
+  //     const combinedInvoices = [...paidInvoices, ...unpaidInvoices].map(
+  //       (invoice) => ({
+  //         ...invoice,
+  //       })
+  //     );
+
+  //     const filtered = combinedInvoices.filter(
+  //       (invoice) =>
+  //         invoice.branch?.id === selectedBranch &&
+  //         invoice.currency?.id === selectedCurrency
+  //     );
+
+  //     return filtered.map((invoice, index) => ({
+  //       ...invoice,
+  //       key: index + 1,
+  //     }));
+  //   }
+  //   return [];
+  // }, [selectedCustomer, selectedBranch, selectedCurrency, paidInvoices]);
+
   const filteredData = useMemo(() => {
     if (selectedCustomer && selectedBranch && selectedCurrency) {
       const unpaidInvoices = selectedCustomer.unpaidInvoices || [];
 
-      const combinedInvoices = [...paidInvoices, ...unpaidInvoices].map(
-        (invoice) => ({
-          ...invoice,
-        })
-      );
+      // Create a Map to store invoices by their IDs
+      const invoiceMap = new Map();
 
+      // Add unpaid invoices to the map
+      unpaidInvoices.forEach((invoice) => {
+        invoiceMap.set(invoice.id, { ...invoice, isPaid: false });
+      });
+
+      // Add paid invoices to the map, overwriting any unpaid invoices with the same ID
+      paidInvoices.forEach((invoice) => {
+        invoiceMap.set(invoice.id, { ...invoice, isPaid: true });
+      });
+
+      // Convert the map values to an array
+      const combinedInvoices = Array.from(invoiceMap.values());
+
+      // Filter the combined invoices based on the selected branch and currency
       const filtered = combinedInvoices.filter(
         (invoice) =>
           invoice.branch?.id === selectedBranch &&
           invoice.currency?.id === selectedCurrency
       );
 
-      return filtered.map((invoice, index) => ({
+      // Sort the filtered invoices so that paid invoices come first
+      const sorted = filtered.sort((a, b) => b.isPaid - a.isPaid);
+
+      // Add a key to each invoice
+      return sorted.map((invoice, index) => ({
         ...invoice,
         key: index + 1,
       }));
@@ -211,7 +252,7 @@ const PaymentsReceivedEdit = () => {
 
       data.forEach((item) => {
         let paidAmount = parseFloat(values[`paidAmount${item.key}`]) || 0;
-        if (paidAmount > 0) {
+        if (paidAmount > 0 || item.paidInvoiceId) {
           if (item.paidInvoiceId) {
             paidInvoices.push({
               invoiceId: item.id,
@@ -345,7 +386,10 @@ const PaymentsReceivedEdit = () => {
     console.log(unpaidInvoices);
   };
 
-  const handlePaidAmountBlur = () => {
+  const handlePaidAmountBlur = (value, record) => {
+    if (value > record.remainingBalance) {
+      form.setFieldValue(`paidAmount${record.key}`, record.remainingBalance);
+    }
     calculateTotalPaidAmount();
   };
 
@@ -452,7 +496,7 @@ const PaymentsReceivedEdit = () => {
             noStyle
             name={`paidAmount${record.key}`}
             initialValue={
-              record.invoiceTotalPaidAmount && record.invoiceTotalPaidAmount
+              record.paidAmount && record.paidInvoiceId ? record.paidAmount : 0
             }
             rules={[
               () => ({
@@ -473,7 +517,10 @@ const PaymentsReceivedEdit = () => {
               }),
             ]}
           >
-            <Input onBlur={handlePaidAmountBlur} />
+            <Input
+              onBlur={(e) => handlePaidAmountBlur(e.target.value, record)}
+              style={{ textAlign: "right" }}
+            />
           </Form.Item>
           <Flex justify="end">
             <Button
@@ -486,7 +533,7 @@ const PaymentsReceivedEdit = () => {
               onClick={() => {
                 form.setFieldValue(
                   `paidAmount${record.key}`,
-                  record.invoiceTotalAmount - record.invoiceTotalPaidAmount
+                  record.remainingBalance
                 );
                 calculateTotalPaidAmount();
               }}
@@ -845,8 +892,8 @@ const PaymentsReceivedEdit = () => {
                 </Col>
                 <Col span={12}>
                   {((accountCurrencyId &&
-                  selectedCurrency !== accountCurrencyId) || 
-                  (selectedCurrency !== business.baseCurrency.id)) && (
+                    selectedCurrency !== accountCurrencyId) ||
+                    selectedCurrency !== business.baseCurrency.id) && (
                     <Form.Item
                       label={
                         <FormattedMessage

@@ -19,6 +19,47 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
               rate
               type
             }
+            unpaidInvoices {
+              id
+              businessId
+              orderNumber
+              invoiceNumber
+              referenceNumber
+              invoiceDate
+              invoiceDueDate
+              invoicePaymentTerms
+              invoicePaymentTermsCustomDays
+              invoiceSubject
+              notes
+              exchangeRate
+              invoiceDiscount
+              invoiceDiscountType
+              invoiceDiscountAmount
+              adjustmentAmount
+              isTaxInclusive
+              invoiceTaxAmount
+              currentStatus
+              invoiceSubtotal
+              invoiceTotalDiscountAmount
+              invoiceTotalTaxAmount
+              invoiceTotalAmount
+              invoiceTotalPaidAmount
+              remainingBalance
+
+              createdAt
+              updatedAt
+              branch {
+                id
+                name
+              }
+              currency {
+                id
+                decimalPlaces
+                # exchangeRate
+                name
+                symbol
+              }
+            }
           }
           branch {
             id
@@ -103,6 +144,7 @@ const GET_PAGINATE_CUSTOMER_PAYMENT = gql`
                 symbol
               }
             }
+
             paidAmount
           }
         }

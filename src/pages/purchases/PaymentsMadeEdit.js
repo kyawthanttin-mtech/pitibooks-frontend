@@ -75,8 +75,10 @@ const PaymentsMadeEdit = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency?.id
   );
-  const [accountCurrencyId, setAccountCurrencyId] = useState(record?.withdrawAccount?.currency?.id);
-
+  const [accountCurrencyId, setAccountCurrencyId] = useState(
+    record?.withdrawAccount?.currency?.id
+  );
+  console.log("paid total", paidAmountTotal);
   const paidBills = useMemo(() => {
     const transformPaidBills = (paidBills) => {
       return paidBills.map((paidBill) => ({
@@ -93,17 +95,34 @@ const PaymentsMadeEdit = () => {
     if (selectedSupplier && selectedBranch && selectedCurrency) {
       const unpaidBills = selectedSupplier.unpaidBills || [];
 
-      const combinedBills = [...paidBills, ...unpaidBills].map((bill) => ({
-        ...bill,
-      }));
+      // Create a Map to store bills by their IDs
+      const billMap = new Map();
 
+      // Add unpaid bills to the map
+      unpaidBills.forEach((bill) => {
+        billMap.set(bill.id, { ...bill, isPaid: false });
+      });
+
+      // Add paid bills to the map, overwriting any unpaid bills with the same ID
+      paidBills.forEach((bill) => {
+        billMap.set(bill.id, { ...bill, isPaid: true });
+      });
+
+      // Convert the map values to an array
+      const combinedBills = Array.from(billMap.values());
+
+      // Filter the combined bills based on the selected branch and currency
       const filtered = combinedBills.filter(
         (bill) =>
           bill.branch?.id === selectedBranch &&
           bill.currency?.id === selectedCurrency
       );
 
-      return filtered.map((bill, index) => ({
+      // Sort the filtered bills so that paid bills come first
+      const sorted = filtered.sort((a, b) => b.isPaid - a.isPaid);
+
+      // Add a key to each bill
+      return sorted.map((bill, index) => ({
         ...bill,
         key: index + 1,
       }));
@@ -207,7 +226,7 @@ const PaymentsMadeEdit = () => {
 
       data.forEach((item) => {
         let paidAmount = parseFloat(values[`paidAmount${item.key}`]) || 0;
-        if (paidAmount > 0) {
+        if (paidAmount > 0 || item.paidBIllId) {
           if (item.paidBillId) {
             paidBills.push({
               billId: item.id,
@@ -342,7 +361,10 @@ const PaymentsMadeEdit = () => {
     console.log(unpaidBills);
   };
 
-  const handlePaidAmountBlur = () => {
+  const handlePaidAmountBlur = (value, record) => {
+    if (value > record.remainingBalance) {
+      form.setFieldValue(`paidAmount${record.key}`, record.remainingBalance);
+    }
     calculateTotalPaidAmount();
   };
 
@@ -446,7 +468,7 @@ const PaymentsMadeEdit = () => {
             noStyle
             name={`paidAmount${record.key}`}
             initialValue={
-              record.billTotalPaidAmount && record.billTotalPaidAmount
+              record.paidAmount && record.paidBillId ? record.paidAmount : 0
             }
             rules={[
               () => ({
@@ -467,7 +489,10 @@ const PaymentsMadeEdit = () => {
               }),
             ]}
           >
-            <Input onBlur={handlePaidAmountBlur} />
+            <Input
+              onBlur={(e) => handlePaidAmountBlur(e.target.value, record)}
+              style={{ textAlign: "right" }}
+            />
           </Form.Item>
           <Flex justify="end">
             <Button
@@ -480,7 +505,7 @@ const PaymentsMadeEdit = () => {
               onClick={() => {
                 form.setFieldValue(
                   `paidAmount${record.key}`,
-                  record.billTotalAmount - record.billTotalPaidAmount
+                  record.remainingBalance
                 );
                 calculateTotalPaidAmount();
               }}
@@ -841,8 +866,8 @@ const PaymentsMadeEdit = () => {
                 </Col>
                 <Col span={12}>
                   {((accountCurrencyId &&
-                  selectedCurrency !== accountCurrencyId) || 
-                  (selectedCurrency !== business.baseCurrency.id)) && (
+                    selectedCurrency !== accountCurrencyId) ||
+                    selectedCurrency !== business.baseCurrency.id) && (
                     <Form.Item
                       label={
                         <FormattedMessage

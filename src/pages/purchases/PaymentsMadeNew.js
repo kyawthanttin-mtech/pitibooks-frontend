@@ -215,7 +215,7 @@ const PaymentsMadeNew = () => {
         paidBills,
         documents: fileUrls,
       };
-
+      console.log("input", input);
       await createSupplierPayment({ variables: { input: input } });
     } catch (err) {
       openErrorNotification(notiApi, err.message);
@@ -243,7 +243,10 @@ const PaymentsMadeNew = () => {
     console.log(unpaidBills);
   };
 
-  const handlePaidAmountBlur = () => {
+  const handlePaidAmountBlur = (value, record) => {
+    if (value > record.remainingBalance) {
+      form.setFieldValue(`paidAmount${record.key}`, record.remainingBalance);
+    }
     calculateTotalPaidAmount();
   };
 
@@ -367,7 +370,10 @@ const PaymentsMadeNew = () => {
               }),
             ]}
           >
-            <Input onBlur={handlePaidAmountBlur} />
+            <Input
+              onBlur={(e) => handlePaidAmountBlur(e.target.value, record)}
+              style={{ textAlign: "right" }}
+            />
           </Form.Item>
           <Flex justify="end">
             <Button
@@ -380,7 +386,7 @@ const PaymentsMadeNew = () => {
               onClick={() => {
                 form.setFieldValue(
                   `paidAmount${record.key}`,
-                  record.billTotalAmount - record.billTotalPaidAmount
+                  record.remainingBalance
                 );
                 calculateTotalPaidAmount();
               }}
@@ -734,8 +740,8 @@ const PaymentsMadeNew = () => {
                 </Col>
                 <Col span={12}>
                   {((accountCurrencyId &&
-                  selectedCurrency !== accountCurrencyId) || 
-                  (selectedCurrency !== business.baseCurrency.id)) && (
+                    selectedCurrency !== accountCurrencyId) ||
+                    selectedCurrency !== business.baseCurrency.id) && (
                     <Form.Item
                       label={
                         <FormattedMessage

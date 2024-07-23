@@ -521,7 +521,7 @@ const App = () => {
                     defaultMessage="Accountant"
                   />
                 ),
-                icon: <AccountantOutlined width={20} height={20} style={{color:"var(--primary-color)"}}/>,
+                icon: <AccountantOutlined width={20} height={20} />,
                 children: [
                   {
                     key: "chartOfAccounts",
@@ -566,7 +566,7 @@ const App = () => {
                     defaultMessage="Reports"
                   />
                 ),
-                icon: <ReportOutlined width={20} height={20} style={{color:"var(--primary-color)"}}/>,
+                icon: <ReportOutlined width={20} height={20} />,
               },
               //Settings
               {
@@ -724,7 +724,11 @@ const App = () => {
                 <Button
                   type="text"
                   icon={
-                    collapsed ? <MenuUnfoldOutlined style={{color:"white"}}/> : <MenuFoldOutlined style={{color:"white"}}/>
+                    collapsed ? (
+                      <MenuUnfoldOutlined style={{ color: "white" }} />
+                    ) : (
+                      <MenuFoldOutlined style={{ color: "white" }} />
+                    )
                   }
                   onClick={() => setCollapsed(!collapsed)}
                   style={{

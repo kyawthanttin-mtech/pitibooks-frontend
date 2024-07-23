@@ -542,26 +542,26 @@ const PaginatedExpense = ({
                   defaultMessage="PDF/Print"
                 />
               </div>
-              <div>
-                <Dropdown
-                  loading={loading}
-                  trigger="click"
-                  // key={record.key}
-                  menu={{
-                    onClick: ({ key }) => {
-                      if (key === "0") console.log("Clone");
-                      else if (key === "1") setShowRefundForm(true);
-                      else if (key === "2") {
-                        if (onDelete(selectedRecord.id))
-                          setSelectedRecord(null);
-                      }
-                    },
-                    items: actionItems,
-                  }}
-                >
-                  <MoreOutlined />
-                </Dropdown>
-              </div>
+
+              <Dropdown
+                loading={loading}
+                trigger="click"
+                // key={record.key}
+                menu={{
+                  onClick: ({ key }) => {
+                    if (key === "0") console.log("Clone");
+                    else if (key === "1") setShowRefundForm(true);
+                    else if (key === "2") {
+                      if (onDelete(selectedRecord.id)) setSelectedRecord(null);
+                    }
+                  },
+                  items: actionItems,
+                }}
+              >
+                <div>
+                  <MoreOutlined style={{ fontSize: "1.1rem" }} />
+                </div>
+              </Dropdown>
             </Row>
             <div
               className="content-column-full-row"

@@ -128,13 +128,13 @@ const PurchaseOrdersNew = () => {
           discount: detail.detailDiscount,
           discountType: detail.detailDiscountType,
           id:
-          detail.productId && detail.productId > 0
-            ? detail.productType + detail.productId
-            : null,
+            detail.productId && detail.productId > 0
+              ? detail.productType + detail.productId
+              : null,
           detailDiscountType: detail.detailDiscountType,
           quantity: detail.detailQty,
           rate: detail.detailUnitRate,
-          inventoryAccountId: detail.product?.inventoryAccount?.id
+          inventoryAccountId: detail.product?.inventoryAccount?.id,
         }))
       : [
           {
@@ -181,7 +181,11 @@ const PurchaseOrdersNew = () => {
     record?.orderTotalDiscountAmount || 0
   );
   const [totalAmount, setTotalAmount] = useState(
-    (record?.orderTotalAmount || 0) - (record?.adjustmentAmount || 0)
+    record?.isTaxInclusive
+      ? record?.orderTotalAmount +
+          record?.orderTotalTaxAmount -
+          record?.adjustmentAmount
+      : record?.orderTotalAmount - record?.adjustmentAmount
   );
   const [adjustment, setAdjustment] = useState(record?.adjustmentAmount || 0);
   const client = useApolloClient();
@@ -191,7 +195,7 @@ const PurchaseOrdersNew = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     record?.currency.id || business.baseCurrency.id
   );
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(record?.orderDiscount || 0);
   const [selectedDiscountType, setSelectedDiscountType] = useState(
     record?.orderDiscountType || "P"
   );
@@ -629,6 +633,11 @@ const PurchaseOrdersNew = () => {
     );
     setDiscountPreference(discountPreference);
     setIsAtTransactionLevel(key === "0");
+    const fieldsToReset = data.map((record) => ({
+      name: [`detailDiscount${record.key}`],
+      value: null,
+    }));
+    form.setFields(fieldsToReset);
     recalculateTotalAmount(data, isTaxInclusive, key === "0");
   };
 
@@ -757,7 +766,7 @@ const PurchaseOrdersNew = () => {
         newData.currentQty = selectedItem.currentQty;
         newData.account = selectedItem.inventoryAccount?.id;
         newData.unit = selectedItem.unit;
-        newData.inventoryAccountId= selectedItem.inventoryAccount?.id
+        newData.inventoryAccountId = selectedItem.inventoryAccount?.id;
       }
       const [amount, discountAmount, taxAmount] = calculateItemAmount(newData);
       newData.amount = amount;
@@ -838,6 +847,7 @@ const PurchaseOrdersNew = () => {
         selectedDiscountType,
         decimalPlaces
       );
+      console.log("new discount amount", newDiscountAmount);
       setDiscountAmount(newDiscountAmount);
       setTotalAmount(newSubTotal + newTotalTaxAmount - newDiscountAmount);
     } else {
@@ -873,7 +883,9 @@ const PurchaseOrdersNew = () => {
       subTotal += amount;
       totalDiscountAmount += discountAmount;
       totalTaxAmount += taxAmount;
+      console.log("discount AMOUNT", discountAmount);
     });
+    console.log("t discount", totalDiscountAmount);
     setData(newData);
     setSubTotal(subTotal);
     setTotalDiscountAmount(totalDiscountAmount);

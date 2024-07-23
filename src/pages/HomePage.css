@@ -1,3 +1,8 @@
+.db-wrapper {
+  max-width: 1200px;
+  margin-bottom: 50px;
+}
+
 .db-card {
   border: 1px solid var(--border-color);
   border-radius: 0.625rem;
@@ -58,7 +63,7 @@
 .balance-container .balance-row {
   position: relative;
   padding-right: 17px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .balance-container .balance-row:last-of-type {
@@ -85,12 +90,13 @@
   max-height: 257px;
 }
 
-.bar-chart-container, .pie-chart-container{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding: 15px !important;
+.bar-chart-container,
+.pie-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 15px !important;
 }
 
 .pie-chart-container {
@@ -101,15 +107,15 @@
   height: 260px;
 }
 
-.bar-chart-container canvas{
-    width: 100%;
-    max-height: 326px;
+.bar-chart-container canvas {
+  width: 100%;
+  max-height: 326px;
 }
 
 .pie-chart-container canvas {
   max-height: 220px;
 }
 
-.total-section{
+.total-section {
   padding: 10px;
 }

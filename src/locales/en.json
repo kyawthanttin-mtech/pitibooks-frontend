@@ -63,7 +63,10 @@
   "button.voidInvoice": "Void Invoice",
   "button.writeOff": "Write Off",
   "button.cancelWriteOff": "Cancel Write-Off",
-  
+  "button.newInvoice": "New Invoice",
+  "button.newBill": "New Bill",
+  "button.newCustomerPayment": "New Customer Payment",
+  "button.newSupplierPayment": "New Supplier Payment",
 
   "business.updated": "Business Updated",
   "transactionLocking.updated": "Transaction Locking Updated",
@@ -315,7 +318,7 @@
   "label.stockOnHand": "Stock On Hand",
   "label.committedStock": "Committed Stock",
   "label.availableStock": "Available Stock",
-  "label.writeOffInvoice":"Write Off Invoice",
+  "label.writeOffInvoice": "Write Off Invoice",
   "label.product.required": "Select/Enter the Product",
 
   "menu.home": "Home",
@@ -648,7 +651,7 @@
   "validation.enterAtLeastOneCredit": "Enter At Least One Credit",
   "validation.sameWarehouse": "Transfers cannot be made within the same warehouse.",
   "validation.pleaseSelectAdAdvance": "Please select an advance",
-  "validation.invalidProductStock":"One or more products have 0 or less stock on hand.",
+  "validation.invalidProductStock": "One or more products have 0 or less stock on hand.",
 
   "error.productIsAlreadyAdded": "Product is already added",
   "error.atLeastOneSearchCriteria": "Please fill in at least one search criteria",
